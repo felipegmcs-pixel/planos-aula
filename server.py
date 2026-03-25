@@ -862,6 +862,56 @@ def admin_desativar(uid):
     conn.close()
     return redirect(url_for('admin'))
 
+# ─── Conta / Perfil ───────────────────────────────────────────────────────────
+
+@app.route('/conta')
+@login_required
+def conta():
+    conn = get_db()
+    rows = conn.execute(
+        'SELECT num_aulas, disciplina FROM historico WHERE usuario_id = ?',
+        (current_user.id,)
+    ).fetchall()
+    conn.close()
+    stats = {
+        'total':       len(rows),
+        'aulas':       sum(int(r['num_aulas'] or 0) for r in rows),
+        'disciplinas': len(set(r['disciplina'] for r in rows if r['disciplina']))
+    }
+    return render_template('conta.html', stats=stats)
+
+@app.route('/conta/senha', methods=['POST'])
+@login_required
+def conta_senha():
+    senha_atual = request.form.get('senha_atual', '')
+    senha_nova  = request.form.get('senha_nova', '')
+    senha_conf  = request.form.get('senha_conf', '')
+
+    conn = get_db()
+    row  = conn.execute('SELECT senha FROM usuarios WHERE id = ?', (current_user.id,)).fetchone()
+
+    if not check_password_hash(row['senha'], senha_atual):
+        conn.close()
+        flash('Senha atual incorreta.', 'erro')
+        return redirect(url_for('conta'))
+
+    if senha_nova != senha_conf:
+        conn.close()
+        flash('As senhas não coincidem.', 'erro')
+        return redirect(url_for('conta'))
+
+    if len(senha_nova) < 6:
+        conn.close()
+        flash('A nova senha deve ter pelo menos 6 caracteres.', 'erro')
+        return redirect(url_for('conta'))
+
+    conn.execute('UPDATE usuarios SET senha = ? WHERE id = ?',
+                 (generate_password_hash(senha_nova), current_user.id))
+    conn.commit()
+    conn.close()
+    flash('Senha atualizada com sucesso!', 'ok')
+    return redirect(url_for('conta'))
+
 # ─── Rotas principais ─────────────────────────────────────────────────────────
 
 @app.route('/')

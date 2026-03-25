@@ -425,7 +425,10 @@
 
 <nav>
   <a class="nav-logo" href="/">Plano de Aula <span>IA</span></a>
-  <a class="nav-link" href="/historico">Histórico →</a>
+  <div style="display:flex; align-items:center; gap:20px;">
+    <a class="nav-link" href="/historico">Histórico</a>
+    <a class="nav-link" href="/conta" style="color:var(--preto); font-weight:600;">Olá, {{ current_user.nome.split()[0] }} →</a>
+  </div>
 </nav>
 
 <div class="hero">
