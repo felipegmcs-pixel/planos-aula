@@ -1,0 +1,8 @@
+historico.db
+__pycache__/
+*.pyc
+build/
+dist/
+*.spec
+*.bat
+.env
