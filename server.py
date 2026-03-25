@@ -21,7 +21,11 @@ from reportlab.lib.units import cm as rcm
 from reportlab.lib.styles import ParagraphStyle
 from reportlab.lib.enums import TA_CENTER, TA_LEFT
 from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer
-import mercadopago
+try:
+    import mercadopago as _mp
+    _mp_SDK = getattr(_mp, 'SDK', None)
+except ImportError:
+    _mp_SDK = None
 
 # ─── App ──────────────────────────────────────────────────────────────────────
 
@@ -35,7 +39,7 @@ login_manager.login_message = None
 client = Anthropic(api_key=os.environ.get('ANTHROPIC_API_KEY'))
 
 MP_ACCESS_TOKEN = os.environ.get('MP_ACCESS_TOKEN', '')
-mp_sdk = mercadopago.SDK(MP_ACCESS_TOKEN) if MP_ACCESS_TOKEN else None
+mp_sdk = _mp_SDK(MP_ACCESS_TOKEN) if (MP_ACCESS_TOKEN and _mp_SDK) else None
 
 NUPAY_MERCHANT_KEY   = os.environ.get('NUPAY_MERCHANT_KEY', '')
 NUPAY_MERCHANT_TOKEN = os.environ.get('NUPAY_MERCHANT_TOKEN', '')
