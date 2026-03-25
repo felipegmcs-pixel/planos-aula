@@ -1,0 +1,128 @@
+﻿<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Planos — Plano de Aula IA</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet"/>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root { --preto: #0a0a0a; --branco: #ffffff; --cinza-100: #f5f5f5; --cinza-200: #e2e2e2; --cinza-400: #a0a0a0; --cinza-600: #555555; --azul: #2b4fc7; --linha: #e2e2e2; --verde: #059669; }
+    body { font-family: 'Inter', sans-serif; background: var(--branco); color: var(--preto); min-height: 100vh; }
+    .top-bar { height: 3px; background: var(--azul); }
+    nav { padding: 0 40px; height: 60px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--linha); position: sticky; top: 0; background: var(--branco); z-index: 100; }
+    .nav-logo { font-weight: 800; font-size: 0.92rem; letter-spacing: .5px; text-transform: uppercase; color: var(--preto); text-decoration: none; }
+    .nav-logo span { color: var(--azul); }
+    .nav-link { font-size: 0.82rem; font-weight: 500; color: var(--cinza-600); text-decoration: none; letter-spacing: .3px; transition: color .2s; }
+    .nav-link:hover { color: var(--preto); }
+    .hero { padding: 64px 40px 48px; border-bottom: 1px solid var(--linha); max-width: 900px; margin: 0 auto; text-align: center; }
+    .hero-tag { font-size: 0.68rem; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; color: var(--azul); margin-bottom: 20px; display: inline-flex; align-items: center; gap: 10px; }
+    .hero-tag::after { content: ''; display: block; height: 1px; width: 40px; background: var(--azul); }
+    h1 { font-size: clamp(2rem, 5vw, 3.2rem); font-weight: 900; letter-spacing: -1.5px; text-transform: uppercase; line-height: 1; margin-bottom: 12px; }
+    .hero p { font-size: 0.9rem; color: var(--cinza-600); line-height: 1.6; }
+    .container { max-width: 900px; margin: 0 auto; padding: 48px 40px 100px; }
+    .status-ativo { background: #ecfdf5; border: 1px solid #a7f3d0; padding: 16px 20px; margin-bottom: 32px; display: flex; align-items: center; gap: 12px; }
+    .status-ativo-icon { font-size: 1.2rem; color: var(--verde); }
+    .status-ativo-texto { flex: 1; }
+    .status-ativo-titulo { font-size: 0.82rem; font-weight: 700; letter-spacing: .5px; text-transform: uppercase; color: var(--verde); margin-bottom: 3px; }
+    .status-ativo-desc { font-size: 0.78rem; color: #065f46; }
+    .planos-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-top: 40px; }
+    .plano-card { border: 1px solid var(--linha); padding: 32px 28px; position: relative; }
+    .plano-nome { font-size: 0.72rem; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; color: var(--cinza-600); margin-bottom: 12px; }
+    .plano-preco { font-size: 3rem; font-weight: 900; letter-spacing: -2px; line-height: 1; margin-bottom: 4px; }
+    .plano-preco small { font-size: 1rem; font-weight: 600; color: var(--cinza-400); }
+    .plano-periodo { font-size: 0.78rem; color: var(--cinza-400); margin-bottom: 24px; }
+    .plano-features { list-style: none; margin-bottom: 28px; }
+    .plano-features li { font-size: 0.82rem; color: var(--cinza-600); padding: 8px 0; border-bottom: 1px solid var(--cinza-200); }
+    .plano-features li:last-child { border-bottom: none; }
+    .btn-plano { width: 100%; padding: 14px; background: var(--preto); color: var(--branco); border: none; font-size: 0.78rem; font-weight: 700; font-family: 'Inter', sans-serif; letter-spacing: 1px; text-transform: uppercase; cursor: pointer; transition: background .2s; }
+    .btn-plano:hover { background: var(--azul); }
+    .btn-plano:disabled { background: var(--cinza-200); color: var(--cinza-400); cursor: not-allowed; }
+    .btn-plano-outline { width: 100%; padding: 14px; background: var(--branco); color: var(--preto); border: 1.5px solid var(--preto); font-size: 0.78rem; font-weight: 700; font-family: 'Inter', sans-serif; letter-spacing: 1px; text-transform: uppercase; cursor: pointer; transition: all .2s; margin-top: 8px; }
+    .btn-plano-outline:hover { background: var(--preto); color: var(--branco); }
+    .pagamento-sep { font-size: 0.65rem; letter-spacing: 1.5px; text-transform: uppercase; color: var(--cinza-400); text-align: center; margin: 10px 0 2px; font-weight: 600; }
+    .plano-card.destaque { border: 2px solid var(--azul); }
+    .plano-badge { position: absolute; top: -12px; left: 28px; background: var(--azul); color: var(--branco); font-size: 0.68rem; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; padding: 4px 12px; }
+    @media (max-width: 700px) {
+      nav { padding: 0 20px; }
+      .hero { padding: 40px 20px 32px; }
+      .container { padding: 32px 20px 80px; }
+      .planos-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+<div class="top-bar"></div>
+<nav>
+  <a class="nav-logo" href="/">Plano de Aula <span>IA</span></a>
+  {% if assinatura_ativa %}
+    <a class="nav-link" href="/logout">Sair →</a>
+  {% else %}
+    <a class="nav-link" href="/login">Login</a>
+  {% endif %}
+</nav>
+<div class="hero">
+  <div class="hero-tag">Escolha seu plano</div>
+  <h1>Planos</h1>
+  <p>Escolha o melhor plano para você e comece a gerar planos de aula em segundos.</p>
+</div>
+<div class="container">
+  {% if assinatura_ativa %}
+  <div class="status-ativo">
+    <div class="status-ativo-icon">✓</div>
+    <div class="status-ativo-texto">
+      <div class="status-ativo-titulo">Assinatura ativa</div>
+      <div class="status-ativo-desc">Plano {{ plano_atual|title }} válido até {{ valido_ate }}</div>
+    </div>
+  </div>
+  {% endif %}
+  <div class="planos-grid">
+    <div class="plano-card">
+      <div class="plano-nome">Professor</div>
+      <div class="plano-preco">R$ {{ "%.0f"|format(planos.professor.preco) }}<small>/mês</small></div>
+      <div class="plano-periodo">Acesso individual</div>
+      <ul class="plano-features">
+        <li>Geração ilimitada de planos</li>
+        <li>Exportação em .docx e PDF</li>
+        <li>Histórico completo</li>
+        <li>Material de referência (PDF)</li>
+      </ul>
+      {% if assinatura_ativa and plano_atual == 'professor' %}
+        <button class="btn-plano" disabled>Plano atual</button>
+      {% else %}
+        <form method="POST" action="/pagamento/criar/professor">
+          <button type="submit" class="btn-plano">Mercado Pago</button>
+        </form>
+        <div class="pagamento-sep">ou</div>
+        <form method="POST" action="/pagamento/nupay/criar/professor">
+          <button type="submit" class="btn-plano-outline">NuPay (Nubank)</button>
+        </form>
+      {% endif %}
+    </div>
+    <div class="plano-card destaque">
+      <div class="plano-badge">Mais popular</div>
+      <div class="plano-nome">Escola</div>
+      <div class="plano-preco">R$ {{ "%.0f"|format(planos.escola.preco) }}<small>/mês</small></div>
+      <div class="plano-periodo">Acesso para toda a equipe</div>
+      <ul class="plano-features">
+        <li>Tudo do plano Professor</li>
+        <li>Múltiplos usuários</li>
+        <li>Painel administrativo</li>
+        <li>Suporte prioritário</li>
+      </ul>
+      {% if assinatura_ativa and plano_atual == 'escola' %}
+        <button class="btn-plano" disabled>Plano atual</button>
+      {% else %}
+        <form method="POST" action="/pagamento/criar/escola">
+          <button type="submit" class="btn-plano">Mercado Pago</button>
+        </form>
+        <div class="pagamento-sep">ou</div>
+        <form method="POST" action="/pagamento/nupay/criar/escola">
+          <button type="submit" class="btn-plano-outline">NuPay (Nubank)</button>
+        </form>
+      {% endif %}
+    </div>
+  </div>
+</div>
+</body>
+</html>

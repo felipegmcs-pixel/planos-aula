@@ -4,485 +4,583 @@
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Plano de Aula IA</title>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet"/>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     :root {
-      --azul: #2b4fc7;
-      --azul-escuro: #1a3399;
-      --azul-claro: #f0f4ff;
-      --azul-mid: #e0e8ff;
-      --texto: #1a1a2e;
-      --cinza: #6b7280;
-      --borda: #e5e7eb;
+      --preto: #0a0a0a;
       --branco: #ffffff;
-      --verde: #059669;
+      --cinza-100: #f5f5f5;
+      --cinza-200: #e8e8e8;
+      --cinza-400: #a0a0a0;
+      --cinza-600: #555555;
+      --azul: #2b4fc7;
+      --linha: #e2e2e2;
     }
+
+    html { font-size: 16px; }
 
     body {
       font-family: 'Inter', sans-serif;
-      background: linear-gradient(135deg, #f0f4ff 0%, #e8eeff 100%);
+      background: var(--branco);
+      color: var(--preto);
       min-height: 100vh;
-      color: var(--texto);
     }
 
-    /* ── Navbar ── */
+    /* ── Barra de topo ── */
+    .top-bar {
+      height: 3px;
+      background: var(--azul);
+      width: 100%;
+    }
+
+    /* ── Nav ── */
     nav {
-      background: var(--branco);
-      border-bottom: 1px solid var(--borda);
-      padding: 0 32px;
+      padding: 0 40px;
+      height: 60px;
       display: flex;
       align-items: center;
       justify-content: space-between;
-      height: 60px;
+      border-bottom: 1px solid var(--linha);
       position: sticky;
       top: 0;
+      background: var(--branco);
       z-index: 100;
-      box-shadow: 0 1px 8px rgba(43,79,199,.08);
     }
 
     .nav-logo {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      font-weight: 700;
-      font-size: 1.05rem;
-      color: var(--azul);
+      font-weight: 800;
+      font-size: 0.92rem;
+      letter-spacing: .5px;
+      text-transform: uppercase;
+      color: var(--preto);
       text-decoration: none;
     }
 
     .nav-logo span {
-      font-size: 1.3rem;
-    }
-
-    nav a.nav-link {
-      font-size: 0.87rem;
-      font-weight: 500;
-      color: var(--cinza);
-      text-decoration: none;
-      padding: 6px 14px;
-      border-radius: 8px;
-      transition: all .2s;
-    }
-
-    nav a.nav-link:hover {
-      background: var(--azul-claro);
       color: var(--azul);
     }
+
+    .nav-link {
+      font-size: 0.82rem;
+      font-weight: 500;
+      color: var(--cinza-600);
+      text-decoration: none;
+      letter-spacing: .3px;
+      transition: color .2s;
+    }
+
+    .nav-link:hover { color: var(--preto); }
 
     /* ── Hero ── */
     .hero {
-      text-align: center;
-      padding: 52px 16px 36px;
-    }
-
-    .hero-badge {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      background: var(--azul-mid);
-      color: var(--azul);
-      font-size: 0.78rem;
-      font-weight: 600;
-      padding: 5px 14px;
-      border-radius: 20px;
-      margin-bottom: 18px;
-      letter-spacing: .3px;
-    }
-
-    .hero h1 {
-      font-size: 2rem;
-      font-weight: 700;
-      color: var(--texto);
-      line-height: 1.2;
-      margin-bottom: 10px;
-    }
-
-    .hero h1 span { color: var(--azul); }
-
-    .hero p {
-      color: var(--cinza);
-      font-size: 0.95rem;
-      max-width: 480px;
+      padding: 72px 40px 64px;
+      border-bottom: 1px solid var(--linha);
+      max-width: 900px;
       margin: 0 auto;
     }
 
-    /* ── Container ── */
-    .container { max-width: 720px; margin: 0 auto; padding: 0 16px 60px; }
-
-    /* ── Card ── */
-    .card {
-      background: var(--branco);
-      border-radius: 18px;
-      padding: 28px;
-      box-shadow: 0 2px 24px rgba(43,79,199,.07);
-      margin-bottom: 18px;
-      border: 1px solid rgba(43,79,199,.06);
-    }
-
-    .card-header {
+    .hero-tag {
+      font-size: 0.72rem;
+      font-weight: 700;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: var(--azul);
+      margin-bottom: 24px;
       display: flex;
       align-items: center;
       gap: 10px;
-      margin-bottom: 22px;
-      padding-bottom: 14px;
-      border-bottom: 1.5px solid var(--azul-claro);
     }
 
-    .card-icon {
-      width: 34px;
-      height: 34px;
-      background: var(--azul-claro);
-      border-radius: 9px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
+    .hero-tag::after {
+      content: '';
+      display: block;
+      height: 1px;
+      width: 40px;
+      background: var(--azul);
+    }
+
+    .hero h1 {
+      font-size: clamp(2.8rem, 6vw, 4.5rem);
+      font-weight: 900;
+      line-height: 1.0;
+      letter-spacing: -2px;
+      color: var(--preto);
+      margin-bottom: 24px;
+      text-transform: uppercase;
+    }
+
+    .hero h1 em {
+      font-style: normal;
+      color: var(--azul);
+    }
+
+    .hero-desc {
       font-size: 1rem;
-      flex-shrink: 0;
+      font-weight: 400;
+      color: var(--cinza-600);
+      max-width: 440px;
+      line-height: 1.7;
     }
 
-    .card-header h2 {
+    /* ── Container form ── */
+    .container {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 0 40px 100px;
+    }
+
+    /* ── Seção ── */
+    .secao {
+      border-bottom: 1px solid var(--linha);
+      padding: 48px 0;
+      display: grid;
+      grid-template-columns: 180px 1fr;
+      gap: 40px;
+    }
+
+    .secao-esquerda {
+      padding-top: 4px;
+    }
+
+    .secao-num {
+      font-size: 0.68rem;
+      font-weight: 700;
+      letter-spacing: 2.5px;
+      text-transform: uppercase;
+      color: var(--azul);
+      margin-bottom: 8px;
+    }
+
+    .secao-titulo {
       font-size: 0.95rem;
-      font-weight: 600;
-      color: var(--texto);
+      font-weight: 700;
+      color: var(--preto);
+      letter-spacing: -.2px;
+      margin-bottom: 4px;
     }
 
-    .card-header p {
-      font-size: 0.78rem;
-      color: var(--cinza);
-      margin-top: 2px;
+    .secao-desc {
+      font-size: 0.76rem;
+      color: var(--cinza-400);
+      line-height: 1.5;
     }
 
     /* ── Grid ── */
-    .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
-    .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px; }
+    .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+    .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; }
     .full { grid-column: 1 / -1; }
 
-    /* ── Inputs ── */
-    .field { display: flex; flex-direction: column; gap: 5px; }
+    /* ── Campo ── */
+    .field { display: flex; flex-direction: column; gap: 7px; }
 
     label {
-      font-size: 0.78rem;
-      font-weight: 600;
-      color: #374151;
-      letter-spacing: .2px;
+      font-size: 0.68rem;
+      font-weight: 700;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      color: var(--cinza-600);
     }
 
-    input[type=text], input[type=number], input[type=url], input[type=email], select {
+    input[type=text],
+    input[type=number],
+    input[type=url],
+    select {
       width: 100%;
-      padding: 10px 13px;
-      border: 1.5px solid var(--borda);
-      border-radius: 10px;
-      font-size: 0.88rem;
+      padding: 11px 0;
+      border: none;
+      border-bottom: 1.5px solid var(--cinza-200);
+      border-radius: 0;
+      font-size: 0.92rem;
       font-family: 'Inter', sans-serif;
-      color: var(--texto);
-      background: #fafbff;
-      transition: border-color .2s, box-shadow .2s;
+      font-weight: 400;
+      color: var(--preto);
+      background: transparent;
+      transition: border-color .2s;
+      -webkit-appearance: none;
     }
 
     input:focus, select:focus {
       outline: none;
-      border-color: var(--azul);
-      background: var(--branco);
-      box-shadow: 0 0 0 3px rgba(43,79,199,.1);
+      border-bottom-color: var(--preto);
     }
 
-    input::placeholder { color: #b0b8cc; }
+    input::placeholder { color: var(--cinza-400); font-weight: 300; }
+
+    select {
+      cursor: pointer;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23555' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 4px center;
+      padding-right: 20px;
+    }
 
     /* ── Temas ── */
-    #temas-lista { display: flex; flex-direction: column; gap: 10px; }
+    #temas-lista { display: flex; flex-direction: column; gap: 0; }
 
     .tema-item {
       display: flex;
-      gap: 8px;
       align-items: center;
+      gap: 16px;
+      border-bottom: 1px solid var(--cinza-200);
+      padding: 4px 0;
+      transition: border-color .2s;
     }
+
+    .tema-item:focus-within { border-bottom-color: var(--preto); }
 
     .tema-num {
-      width: 30px;
-      height: 30px;
-      background: var(--azul);
-      color: white;
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 0.75rem;
+      font-size: 0.72rem;
       font-weight: 700;
+      letter-spacing: 1px;
+      color: var(--azul);
+      width: 24px;
       flex-shrink: 0;
     }
 
-    .tema-item input { margin: 0; flex: 1; }
+    .tema-item input {
+      flex: 1;
+      border: none;
+      padding: 11px 0;
+      font-size: 0.92rem;
+    }
+
+    .tema-item input:focus { border: none; outline: none; }
 
     .btn-remove {
-      width: 30px;
-      height: 30px;
-      background: #fef2f2;
-      border: 1px solid #fecaca;
-      border-radius: 8px;
-      color: #dc2626;
+      width: 28px;
+      height: 28px;
+      background: none;
+      border: 1px solid var(--cinza-200);
+      border-radius: 50%;
+      color: var(--cinza-400);
       cursor: pointer;
-      font-size: 1rem;
+      font-size: 0.9rem;
       flex-shrink: 0;
       display: flex;
       align-items: center;
       justify-content: center;
-      transition: background .2s;
+      transition: all .2s;
+      line-height: 1;
     }
 
-    .btn-remove:hover { background: #fee2e2; }
+    .btn-remove:hover {
+      border-color: #dc2626;
+      color: #dc2626;
+    }
 
     .btn-add {
-      margin-top: 12px;
-      background: var(--azul-claro);
-      border: 1.5px dashed var(--azul);
-      color: var(--azul);
-      padding: 10px;
-      border-radius: 10px;
-      width: 100%;
+      margin-top: 16px;
+      background: none;
+      border: 1px solid var(--cinza-200);
+      color: var(--cinza-600);
+      padding: 10px 18px;
+      border-radius: 0;
       cursor: pointer;
-      font-size: 0.84rem;
+      font-size: 0.78rem;
       font-weight: 600;
       font-family: 'Inter', sans-serif;
-      transition: background .2s;
+      letter-spacing: .5px;
+      transition: all .2s;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
     }
 
-    .btn-add:hover { background: var(--azul-mid); }
+    .btn-add:hover {
+      border-color: var(--preto);
+      color: var(--preto);
+    }
 
-    /* ── Botão gerar ── */
-    .btn-gerar {
-      width: 100%;
-      padding: 16px;
-      background: linear-gradient(135deg, var(--azul) 0%, var(--azul-escuro) 100%);
-      color: white;
+    /* ── PDF lista ── */
+    #pdfs-lista { display: flex; flex-direction: column; gap: 0; }
+
+    .pdf-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      border-bottom: 1px solid var(--cinza-200);
+    }
+
+    .pdf-item input {
+      flex: 1;
       border: none;
-      border-radius: 14px;
-      font-size: 1rem;
+      padding: 11px 0;
+    }
+
+    .pdf-item input:focus { border: none; outline: none; }
+
+    /* ── Formato ── */
+    .formato-group {
+      display: flex;
+      gap: 0;
+      border: 1px solid var(--cinza-200);
+      width: fit-content;
+    }
+
+    .formato-op { cursor: pointer; }
+    .formato-op input { display: none; }
+
+    .formato-btn {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 22px;
+      font-size: 0.82rem;
+      font-weight: 600;
+      font-family: 'Inter', sans-serif;
+      letter-spacing: .3px;
+      color: var(--cinza-400);
+      transition: all .2s;
+      cursor: pointer;
+      border-right: 1px solid var(--cinza-200);
+      user-select: none;
+    }
+
+    .formato-op:last-child .formato-btn { border-right: none; }
+
+    .formato-op input:checked + .formato-btn {
+      background: var(--preto);
+      color: var(--branco);
+    }
+
+    /* ── Ação final ── */
+    .secao-acao {
+      padding: 56px 0 0;
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 24px;
+    }
+
+    .btn-gerar {
+      padding: 18px 48px;
+      background: var(--preto);
+      color: var(--branco);
+      border: none;
+      font-size: 0.9rem;
       font-weight: 700;
       font-family: 'Inter', sans-serif;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
       cursor: pointer;
-      transition: transform .15s, box-shadow .2s;
-      box-shadow: 0 4px 16px rgba(43,79,199,.35);
-      margin-top: 6px;
-      letter-spacing: .3px;
+      transition: all .2s;
+      display: inline-flex;
+      align-items: center;
+      gap: 12px;
     }
 
-    .btn-gerar:hover {
-      transform: translateY(-1px);
-      box-shadow: 0 6px 20px rgba(43,79,199,.45);
-    }
-
+    .btn-gerar:hover { background: var(--azul); }
     .btn-gerar:active { transform: scale(.98); }
-    .btn-gerar:disabled { background: #9ca3af; cursor: not-allowed; box-shadow: none; transform: none; }
+    .btn-gerar:disabled { background: var(--cinza-400); cursor: not-allowed; }
 
     /* ── Loading ── */
-    .loading {
-      display: none;
-      text-align: center;
-      padding: 24px;
-      color: var(--azul);
-      font-size: 0.9rem;
-    }
-
-    .loading.active { display: block; }
+    .loading { display: none; }
+    .loading.active { display: flex; align-items: center; gap: 14px; }
 
     .spinner {
-      width: 36px;
-      height: 36px;
-      border: 3px solid var(--azul-mid);
-      border-top-color: var(--azul);
+      width: 18px;
+      height: 18px;
+      border: 2px solid var(--cinza-200);
+      border-top-color: var(--preto);
       border-radius: 50%;
       animation: spin 1s linear infinite;
-      margin: 0 auto 12px;
+      flex-shrink: 0;
     }
 
     @keyframes spin { to { transform: rotate(360deg); } }
 
-    .nota {
-      font-size: 0.76rem;
-      color: #9ca3af;
-      text-align: center;
-      margin-top: 12px;
-    }
-
-    /* ── Seção colapsável escola ── */
-    .toggle-escola {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      background: none;
-      border: none;
-      color: var(--azul);
+    .loading-text {
       font-size: 0.82rem;
-      font-weight: 600;
-      font-family: 'Inter', sans-serif;
-      cursor: pointer;
-      margin-bottom: 14px;
-      padding: 0;
+      font-weight: 500;
+      color: var(--cinza-600);
+      letter-spacing: .2px;
     }
 
-    .toggle-escola svg {
-      transition: transform .2s;
+    .nota {
+      font-size: 0.72rem;
+      color: var(--cinza-400);
+      letter-spacing: .3px;
     }
 
-    .toggle-escola.open svg { transform: rotate(90deg); }
-
-    .escola-fields { display: none; }
-    .escola-fields.open { display: block; }
-
-    @media (max-width: 600px) {
+    /* ── Responsivo ── */
+    @media (max-width: 700px) {
+      nav { padding: 0 20px; }
+      .hero { padding: 48px 20px 40px; }
+      .container { padding: 0 20px 80px; }
+      .secao { grid-template-columns: 1fr; gap: 24px; }
+      .secao-esquerda { padding-bottom: 0; border-bottom: none; }
       .grid, .grid-3 { grid-template-columns: 1fr; }
-      .hero h1 { font-size: 1.5rem; }
+      .hero h1 { font-size: 2.4rem; }
+      .btn-gerar { width: 100%; justify-content: center; }
+      .formato-group { width: 100%; }
+      .formato-btn { flex: 1; justify-content: center; }
     }
   </style>
 </head>
 <body>
 
+<div class="top-bar"></div>
+
 <nav>
-  <a class="nav-logo" href="/">
-    <span>📚</span> Plano de Aula IA
-  </a>
-  <a class="nav-link" href="/historico">Histórico</a>
+  <a class="nav-logo" href="/">Plano de Aula <span>IA</span></a>
+  <a class="nav-link" href="/historico">Histórico →</a>
 </nav>
 
 <div class="hero">
-  <div class="hero-badge">
-    <span>✦</span> Powered by IA
-  </div>
-  <h1>Crie planos de aula<br><span>em segundos</span></h1>
-  <p>Preencha os dados abaixo e a IA gera um plano completo no formato .docx pronto para usar.</p>
+  <div class="hero-tag">Inteligência Artificial</div>
+  <h1>Gere planos<br>de aula em<br><em>segundos.</em></h1>
+  <p class="hero-desc">Preencha os dados abaixo e a IA cria um plano completo e pedagógico, pronto para usar no formato oficial.</p>
 </div>
 
 <div class="container">
   <form id="form" action="/gerar" method="POST">
 
-    <!-- Card: Escola -->
-    <div class="card">
-      <div class="card-header">
-        <div class="card-icon">🏫</div>
-        <div>
-          <h2>Dados da Escola</h2>
-          <p>Aparecerão no cabeçalho do documento</p>
-        </div>
+    <!-- 01 Escola -->
+    <div class="secao">
+      <div class="secao-esquerda">
+        <div class="secao-num">01</div>
+        <div class="secao-titulo">Dados da Escola</div>
+        <div class="secao-desc">Aparecerão no cabeçalho do documento</div>
       </div>
-
-      <div class="grid">
-        <div class="field full">
-          <label>Nome da Escola</label>
-          <input type="text" name="escola" placeholder="Ex: E.E. Prof. João da Silva"/>
-        </div>
-        <div class="field full">
-          <label>Diretoria de Ensino</label>
-          <input type="text" name="diretoria" placeholder="Ex: Diretoria de Ensino – Região de Campinas"/>
-        </div>
-        <div class="field full">
-          <label>Endereço</label>
-          <input type="text" name="endereco" placeholder="Ex: Rua das Flores, 100 – CEP 00000-000 – Cidade/SP"/>
-        </div>
-        <div class="field full">
-          <label>Ano Letivo</label>
-          <input type="number" name="ano_letivo" value="2026" min="2020" max="2040"/>
-        </div>
-      </div>
-    </div>
-
-    <!-- Card: Aula -->
-    <div class="card">
-      <div class="card-header">
-        <div class="card-icon">👩‍🏫</div>
-        <div>
-          <h2>Dados da Aula</h2>
-          <p>Informações do professor e da turma</p>
-        </div>
-      </div>
-
-      <div class="grid">
-        <div class="field">
-          <label>Professor(a)</label>
-          <input type="text" name="professor" placeholder="Nome do professor" required/>
-        </div>
-        <div class="field">
-          <label>Componente Curricular</label>
-          <input type="text" name="disciplina" placeholder="Ex: Arte, Matemática..." required/>
-        </div>
-        <div class="field">
-          <label>Turma</label>
-          <input type="text" name="turma" placeholder="Ex: 6º Ano A e B" required/>
-        </div>
-        <div class="field">
-          <label>Nº de Aulas</label>
-          <input type="number" name="num_aulas" value="2" min="1" max="10" required/>
-        </div>
-        <div class="field">
-          <label>Número da primeira aula</label>
-          <input type="number" name="aula_inicio" value="1" min="1" required/>
-        </div>
-        <div class="field">
-          <label>Período</label>
-          <select name="periodo">
-            <option value="quinzenal">Quinzenal</option>
-            <option value="semanal">Semanal</option>
-            <option value="mensal">Mensal</option>
-          </select>
-        </div>
-        <div class="field full">
-          <label>Datas</label>
-          <input type="text" name="datas" placeholder="Ex: 23/03/2026 a 04/04/2026" required/>
+      <div>
+        <div class="grid" style="gap:0; flex-direction:column; display:flex; gap:20px;">
+          <div class="field">
+            <label>Nome da Escola</label>
+            <input type="text" name="escola" placeholder="E.E. Prof. João da Silva"/>
+          </div>
+          <div class="field">
+            <label>Diretoria de Ensino</label>
+            <input type="text" name="diretoria" placeholder="Diretoria de Ensino – Região de Campinas"/>
+          </div>
+          <div class="field">
+            <label>Endereço</label>
+            <input type="text" name="endereco" placeholder="Rua das Flores, 100 – CEP 00000-000"/>
+          </div>
+          <div class="field" style="max-width: 140px;">
+            <label>Ano Letivo</label>
+            <input type="number" name="ano_letivo" value="2026" min="2020" max="2040"/>
+          </div>
         </div>
       </div>
     </div>
 
-    <!-- Card: PDF -->
-    <div class="card">
-      <div class="card-header">
-        <div class="card-icon">📎</div>
-        <div>
-          <h2>Material de Referência</h2>
-          <p>Opcional — cole links de PDFs que a IA usará como base</p>
+    <!-- 02 Aula -->
+    <div class="secao">
+      <div class="secao-esquerda">
+        <div class="secao-num">02</div>
+        <div class="secao-titulo">Dados da Aula</div>
+        <div class="secao-desc">Professor, disciplina e período</div>
+      </div>
+      <div>
+        <div class="grid">
+          <div class="field">
+            <label>Professor(a)</label>
+            <input type="text" name="professor" placeholder="Nome completo" required/>
+          </div>
+          <div class="field">
+            <label>Componente Curricular</label>
+            <input type="text" name="disciplina" placeholder="Arte, Matemática..." required/>
+          </div>
+          <div class="field">
+            <label>Turma</label>
+            <input type="text" name="turma" placeholder="6º Ano A e B" required/>
+          </div>
+          <div class="field">
+            <label>Nº de Aulas</label>
+            <input type="number" name="num_aulas" value="2" min="1" max="10" required/>
+          </div>
+          <div class="field">
+            <label>Número da 1ª Aula</label>
+            <input type="number" name="aula_inicio" value="1" min="1" required/>
+          </div>
+          <div class="field">
+            <label>Período</label>
+            <select name="periodo">
+              <option value="quinzenal">Quinzenal</option>
+              <option value="semanal">Semanal</option>
+              <option value="mensal">Mensal</option>
+            </select>
+          </div>
+          <div class="field full">
+            <label>Datas</label>
+            <input type="text" name="datas" placeholder="23/03/2026 a 04/04/2026" required/>
+          </div>
         </div>
       </div>
-
-      <div id="pdfs-lista" style="display:flex; flex-direction:column; gap:10px;">
-        <div class="pdf-item" style="display:flex; gap:8px; align-items:center;">
-          <input type="url" name="urls_pdf[]" placeholder="https://..."/>
-        </div>
-      </div>
-      <button type="button" class="btn-add" onclick="addPdf()" style="margin-top:12px;">+ Adicionar outro PDF</button>
     </div>
 
-    <!-- Card: Temas -->
-    <div class="card">
-      <div class="card-header">
-        <div class="card-icon">📝</div>
-        <div>
-          <h2>Temas das Aulas</h2>
-          <p>Um tema por aula — a IA gera o conteúdo completo</p>
+    <!-- 03 Material -->
+    <div class="secao">
+      <div class="secao-esquerda">
+        <div class="secao-num">03</div>
+        <div class="secao-titulo">Material de Referência</div>
+        <div class="secao-desc">Opcional — links de PDFs usados como base pela IA</div>
+      </div>
+      <div>
+        <div id="pdfs-lista">
+          <div class="pdf-item">
+            <input type="url" name="urls_pdf[]" placeholder="https://..."/>
+          </div>
+        </div>
+        <button type="button" class="btn-add" onclick="addPdf()" style="margin-top:16px;">+ Adicionar PDF</button>
+      </div>
+    </div>
+
+    <!-- 04 Temas -->
+    <div class="secao">
+      <div class="secao-esquerda">
+        <div class="secao-num">04</div>
+        <div class="secao-titulo">Temas das Aulas</div>
+        <div class="secao-desc">Um tema por aula</div>
+      </div>
+      <div>
+        <div id="temas-lista">
+          <div class="tema-item">
+            <span class="tema-num">01</span>
+            <input type="text" name="temas[]" placeholder="Dança brasileira e expressão corporal" required/>
+          </div>
+          <div class="tema-item">
+            <span class="tema-num">02</span>
+            <input type="text" name="temas[]" placeholder="Aprimorando a coreografia" required/>
+          </div>
+        </div>
+        <button type="button" class="btn-add" onclick="addTema()">+ Adicionar tema</button>
+      </div>
+    </div>
+
+    <!-- Ação -->
+    <div class="secao-acao">
+
+      <div>
+        <div style="font-size:.68rem; font-weight:700; letter-spacing:1.5px; text-transform:uppercase; color:var(--cinza-600); margin-bottom:12px;">Formato do arquivo</div>
+        <div class="formato-group">
+          <label class="formato-op">
+            <input type="radio" name="formato" value="docx" checked/>
+            <span class="formato-btn">📝 Word (.docx)</span>
+          </label>
+          <label class="formato-op">
+            <input type="radio" name="formato" value="pdf"/>
+            <span class="formato-btn">📄 PDF</span>
+          </label>
         </div>
       </div>
 
-      <div id="temas-lista">
-        <div class="tema-item">
-          <div class="tema-num">1</div>
-          <input type="text" name="temas[]" placeholder="Ex: Dança brasileira e expressão corporal" required/>
+      <div style="display:flex; flex-direction:column; gap:16px; width:100%;">
+        <button type="submit" class="btn-gerar" id="btn-gerar">
+          Gerar Plano
+        </button>
+
+        <div class="loading" id="loading">
+          <div class="spinner"></div>
+          <div class="loading-text">A IA está criando seu plano — até 30 segundos</div>
         </div>
-        <div class="tema-item">
-          <div class="tema-num">2</div>
-          <input type="text" name="temas[]" placeholder="Ex: Aprimorando a coreografia" required/>
-        </div>
+
+        <span class="nota">O arquivo será baixado automaticamente</span>
       </div>
-      <button type="button" class="btn-add" onclick="addTema()">+ Adicionar tema</button>
+
     </div>
-
-    <button type="submit" class="btn-gerar" id="btn-gerar">✨ Gerar Plano com IA</button>
-
-    <div class="loading" id="loading">
-      <div class="spinner"></div>
-      A IA está gerando o plano de aula...<br>
-      <small style="color:#9ca3af;">Isso pode levar até 30 segundos</small>
-    </div>
-
-    <p class="nota">O arquivo .docx será baixado automaticamente no formato oficial</p>
 
   </form>
 </div>
@@ -492,9 +590,8 @@
     const lista = document.getElementById('pdfs-lista');
     const div = document.createElement('div');
     div.className = 'pdf-item';
-    div.style.cssText = 'display:flex; gap:8px; align-items:center;';
     div.innerHTML = `
-      <input type="url" name="urls_pdf[]" placeholder="https://..." style="margin:0; flex:1;"/>
+      <input type="url" name="urls_pdf[]" placeholder="https://..."/>
       <button type="button" class="btn-remove" onclick="this.parentElement.remove()">×</button>
     `;
     lista.appendChild(div);
@@ -502,12 +599,12 @@
 
   function addTema() {
     const lista = document.getElementById('temas-lista');
-    const num = lista.children.length + 1;
+    const num = String(lista.children.length + 1).padStart(2, '0');
     const div = document.createElement('div');
     div.className = 'tema-item';
     div.innerHTML = `
-      <div class="tema-num">${num}</div>
-      <input type="text" name="temas[]" placeholder="Tema da aula ${num}" required style="margin:0; flex:1;"/>
+      <span class="tema-num">${num}</span>
+      <input type="text" name="temas[]" placeholder="Tema da aula ${num}" required/>
       <button type="button" class="btn-remove" onclick="removeTema(this)">×</button>
     `;
     lista.appendChild(div);
@@ -518,7 +615,7 @@
     if (lista.children.length > 1) {
       btn.parentElement.remove();
       Array.from(lista.children).forEach((item, i) => {
-        item.querySelector('.tema-num').textContent = i + 1;
+        item.querySelector('.tema-num').textContent = String(i + 1).padStart(2, '0');
       });
     }
   }

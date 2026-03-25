@@ -1,0 +1,52 @@
+﻿<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Cadastro — Plano de Aula IA</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet"/>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root { --preto: #0a0a0a; --branco: #ffffff; --cinza-200: #e2e2e2; --cinza-400: #a0a0a0; --cinza-600: #555555; --azul: #2b4fc7; --linha: #e2e2e2; }
+    body { font-family: 'Inter', sans-serif; background: var(--branco); color: var(--preto); min-height: 100vh; display: flex; flex-direction: column; }
+    .top-bar { height: 3px; background: var(--azul); }
+    .container { flex: 1; display: flex; align-items: center; justify-content: center; padding: 40px 20px; }
+    .box { width: 100%; max-width: 420px; }
+    .logo { font-weight: 800; font-size: 0.92rem; letter-spacing: .5px; text-transform: uppercase; color: var(--preto); text-decoration: none; margin-bottom: 48px; display: block; }
+    .logo span { color: var(--azul); }
+    h1 { font-size: clamp(2rem, 5vw, 2.8rem); font-weight: 900; line-height: 1; letter-spacing: -1.5px; text-transform: uppercase; margin-bottom: 12px; }
+    .desc { font-size: 0.9rem; color: var(--cinza-600); margin-bottom: 40px; line-height: 1.6; }
+    .alert { background: #fef2f2; border: 1px solid #fecaca; color: #dc2626; padding: 12px 16px; font-size: 0.82rem; margin-bottom: 24px; font-weight: 500; }
+    .field { margin-bottom: 24px; }
+    label { font-size: 0.68rem; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; color: var(--cinza-600); display: block; margin-bottom: 8px; }
+    input[type=text], input[type=email], input[type=password] { width: 100%; padding: 11px 0; border: none; border-bottom: 1.5px solid var(--cinza-200); font-size: 0.92rem; font-family: 'Inter', sans-serif; font-weight: 400; color: var(--preto); background: transparent; transition: border-color .2s; }
+    input:focus { outline: none; border-bottom-color: var(--preto); }
+    input::placeholder { color: var(--cinza-400); font-weight: 300; }
+    .btn { width: 100%; padding: 18px; background: var(--preto); color: var(--branco); border: none; font-size: 0.9rem; font-weight: 700; font-family: 'Inter', sans-serif; letter-spacing: 1.5px; text-transform: uppercase; cursor: pointer; transition: background .2s; margin-top: 32px; }
+    .btn:hover { background: var(--azul); }
+    .link-block { margin-top: 24px; padding-top: 24px; border-top: 1px solid var(--linha); text-align: center; font-size: 0.82rem; color: var(--cinza-600); }
+    .link-block a { color: var(--preto); font-weight: 600; text-decoration: none; border-bottom: 1px solid var(--preto); }
+    .link-block a:hover { color: var(--azul); border-color: var(--azul); }
+  </style>
+</head>
+<body>
+<div class="top-bar"></div>
+<div class="container">
+  <div class="box">
+    <a class="logo" href="/">Plano de Aula <span>IA</span></a>
+    <h1>Cadastro</h1>
+    <p class="desc">Crie sua conta para começar a gerar planos de aula.</p>
+    {% with messages = get_flashed_messages() %}
+      {% if messages %}<div class="alert">{{ messages[0] }}</div>{% endif %}
+    {% endwith %}
+    <form method="POST">
+      <div class="field"><label>Nome completo</label><input type="text" name="nome" placeholder="Seu nome" required autofocus/></div>
+      <div class="field"><label>E-mail</label><input type="email" name="email" placeholder="seu@email.com" required/></div>
+      <div class="field"><label>Senha</label><input type="password" name="senha" placeholder="••••••••" required minlength="6"/></div>
+      <button type="submit" class="btn">Criar conta</button>
+    </form>
+    <div class="link-block">Já tem conta? <a href="/login">Fazer login</a></div>
+  </div>
+</div>
+</body>
+</html>

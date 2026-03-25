@@ -1,0 +1,106 @@
+﻿<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Admin — Plano de Aula IA</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet"/>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root { --preto: #0a0a0a; --branco: #ffffff; --cinza-100: #f5f5f5; --cinza-200: #e2e2e2; --cinza-400: #a0a0a0; --cinza-600: #555555; --azul: #2b4fc7; --linha: #e2e2e2; --verde: #059669; --vermelho: #dc2626; }
+    body { font-family: 'Inter', sans-serif; background: var(--branco); color: var(--preto); min-height: 100vh; }
+    .top-bar { height: 3px; background: var(--azul); }
+    nav { padding: 0 40px; height: 60px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--linha); position: sticky; top: 0; background: var(--branco); z-index: 100; }
+    .nav-logo { font-weight: 800; font-size: 0.92rem; letter-spacing: .5px; text-transform: uppercase; color: var(--preto); text-decoration: none; }
+    .nav-logo span { color: var(--azul); }
+    .nav-link { font-size: 0.82rem; font-weight: 500; color: var(--cinza-600); text-decoration: none; letter-spacing: .3px; transition: color .2s; }
+    .nav-link:hover { color: var(--preto); }
+    .hero { padding: 64px 40px 48px; border-bottom: 1px solid var(--linha); max-width: 1200px; margin: 0 auto; }
+    .hero-tag { font-size: 0.68rem; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; color: var(--azul); margin-bottom: 20px; display: inline-flex; align-items: center; gap: 10px; }
+    .hero-tag::after { content: ''; display: block; height: 1px; width: 40px; background: var(--azul); }
+    h1 { font-size: clamp(2rem, 5vw, 3.2rem); font-weight: 900; letter-spacing: -1.5px; text-transform: uppercase; line-height: 1; margin-bottom: 12px; }
+    .hero p { font-size: 0.9rem; color: var(--cinza-600); line-height: 1.6; }
+    .container { max-width: 1200px; margin: 0 auto; padding: 48px 40px 100px; }
+    table { width: 100%; border-collapse: collapse; font-size: 0.82rem; }
+    thead { border-bottom: 2px solid var(--linha); }
+    th { font-size: 0.68rem; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; color: var(--cinza-600); text-align: left; padding: 12px 16px; }
+    td { padding: 16px; border-bottom: 1px solid var(--linha); }
+    tbody tr:hover { background: var(--cinza-100); }
+    .badge { display: inline-block; font-size: 0.68rem; font-weight: 700; letter-spacing: .5px; text-transform: uppercase; padding: 4px 10px; border: 1px solid; }
+    .badge-ativo { color: var(--verde); background: #ecfdf5; border-color: #a7f3d0; }
+    .badge-inativo { color: var(--cinza-600); background: var(--cinza-100); border-color: var(--cinza-200); }
+    .acoes { display: flex; gap: 8px; }
+    .btn-sm { padding: 6px 12px; font-size: 0.72rem; font-weight: 600; font-family: 'Inter', sans-serif; letter-spacing: .5px; text-transform: uppercase; border: 1px solid var(--linha); background: var(--branco); color: var(--preto); cursor: pointer; transition: all .2s; }
+    .btn-sm:hover { background: var(--preto); color: var(--branco); border-color: var(--preto); }
+    .btn-vermelho:hover { background: var(--vermelho); border-color: var(--vermelho); }
+    @media (max-width: 900px) {
+      nav { padding: 0 20px; }
+      .hero { padding: 40px 20px 32px; }
+      .container { padding: 32px 20px 80px; overflow-x: auto; }
+      table { min-width: 800px; }
+    }
+  </style>
+</head>
+<body>
+<div class="top-bar"></div>
+<nav>
+  <a class="nav-logo" href="/">Plano de Aula <span>IA</span></a>
+  <a class="nav-link" href="/logout">Sair →</a>
+</nav>
+<div class="hero">
+  <div class="hero-tag">Administração</div>
+  <h1>Usuários</h1>
+  <p>Gerencie contas e assinaturas de todos os usuários do sistema.</p>
+</div>
+<div class="container">
+  <table>
+    <thead>
+      <tr>
+        <th>ID</th>
+        <th>Nome</th>
+        <th>E-mail</th>
+        <th>Plano</th>
+        <th>Status</th>
+        <th>Válido até</th>
+        <th>Cadastro</th>
+        <th>Ações</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for u in users %}
+      <tr>
+        <td>{{ u.id }}</td>
+        <td>{{ u.nome }}</td>
+        <td>{{ u.email }}</td>
+        <td>{{ u.plano|title if u.plano else '—' }}</td>
+        <td>
+          {% if u.ativo %}
+            <span class="badge badge-ativo">Ativo</span>
+          {% else %}
+            <span class="badge badge-inativo">Inativo</span>
+          {% endif %}
+        </td>
+        <td>{{ u.valido_ate if u.valido_ate else '—' }}</td>
+        <td>{{ u.criado_em }}</td>
+        <td>
+          <div class="acoes">
+            {% if u.ativo %}
+              <form method="POST" action="/admin/desativar/{{ u.id }}" style="display:inline;">
+                <button type="submit" class="btn-sm btn-vermelho">Desativar</button>
+              </form>
+            {% else %}
+              <form method="POST" action="/admin/ativar/{{ u.id }}" style="display:inline;">
+                <input type="hidden" name="dias" value="30"/>
+                <input type="hidden" name="plano" value="professor"/>
+                <button type="submit" class="btn-sm">Ativar 30d</button>
+              </form>
+            {% endif %}
+          </div>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+</body>
+</html>

@@ -2,8 +2,12 @@ import os
 import io
 import json
 import sqlite3
-from datetime import datetime
-from flask import Flask, render_template, request, send_file, jsonify
+from datetime import datetime, timedelta
+from flask import (Flask, render_template, request, send_file,
+                   jsonify, redirect, url_for, flash)
+from flask_login import (LoginManager, UserMixin, login_user,
+                         logout_user, login_required, current_user)
+from werkzeug.security import generate_password_hash, check_password_hash
 from anthropic import Anthropic
 from docx import Document
 from docx.shared import Pt, RGBColor, Cm
@@ -11,37 +15,276 @@ from docx.enum.text import WD_ALIGN_PARAGRAPH
 from docx.enum.table import WD_ALIGN_VERTICAL
 from docx.oxml.ns import qn
 from docx.oxml import OxmlElement
+from reportlab.lib import colors
+from reportlab.lib.pagesizes import A4
+from reportlab.lib.units import cm as rcm
+from reportlab.lib.styles import ParagraphStyle
+from reportlab.lib.enums import TA_CENTER, TA_LEFT
+from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer
+import mercadopago
+
+# ─── App ──────────────────────────────────────────────────────────────────────
 
 app = Flask(__name__)
-client = Anthropic(api_key=os.environ.get("ANTHROPIC_API_KEY"))
+app.secret_key = os.environ.get('SECRET_KEY', 'dev-secret-troque-em-producao')
+
+login_manager = LoginManager(app)
+login_manager.login_view = 'login'
+login_manager.login_message = None
+
+client = Anthropic(api_key=os.environ.get('ANTHROPIC_API_KEY'))
+
+MP_ACCESS_TOKEN = os.environ.get('MP_ACCESS_TOKEN', '')
+mp_sdk = mercadopago.SDK(MP_ACCESS_TOKEN) if MP_ACCESS_TOKEN else None
+
+NUPAY_MERCHANT_KEY   = os.environ.get('NUPAY_MERCHANT_KEY', '')
+NUPAY_MERCHANT_TOKEN = os.environ.get('NUPAY_MERCHANT_TOKEN', '')
+NUPAY_API_URL        = 'https://api.spinpay.com.br'   # produção
+# NUPAY_API_URL      = 'https://sandbox-api.spinpay.com.br'  # testes
+
+SITE_URL    = os.environ.get('SITE_URL', 'http://localhost:5001')
+ADMIN_EMAIL = os.environ.get('ADMIN_EMAIL', '')
+
+PLANOS = {
+    'professor': {'nome': 'Professor', 'preco': 49.00,  'dias': 30},
+    'escola':    {'nome': 'Escola',    'preco': 199.00, 'dias': 30},
+}
 
 # ─── Banco de dados ───────────────────────────────────────────────────────────
 
-def init_db():
+def get_db():
     conn = sqlite3.connect('historico.db')
+    conn.row_factory = sqlite3.Row
+    return conn
+
+def init_db():
+    conn = get_db()
     c = conn.cursor()
+
+    c.execute('''
+        CREATE TABLE IF NOT EXISTS usuarios (
+            id         INTEGER PRIMARY KEY AUTOINCREMENT,
+            nome       TEXT NOT NULL,
+            email      TEXT UNIQUE NOT NULL,
+            senha      TEXT NOT NULL,
+            plano      TEXT DEFAULT '',
+            ativo      INTEGER DEFAULT 0,
+            valido_ate TEXT DEFAULT '',
+            criado_em  TEXT
+        )
+    ''')
+
     c.execute('''
         CREATE TABLE IF NOT EXISTS historico (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            data TEXT,
-            professor TEXT,
-            escola TEXT,
-            disciplina TEXT,
-            turma TEXT,
-            num_aulas INTEGER,
-            periodo TEXT,
-            datas TEXT,
-            temas TEXT,
-            arquivo BLOB,
+            id           INTEGER PRIMARY KEY AUTOINCREMENT,
+            usuario_id   INTEGER DEFAULT 0,
+            data         TEXT,
+            professor    TEXT,
+            escola       TEXT,
+            disciplina   TEXT,
+            turma        TEXT,
+            num_aulas    INTEGER,
+            periodo      TEXT,
+            datas        TEXT,
+            temas        TEXT,
+            arquivo      BLOB,
             nome_arquivo TEXT
         )
     ''')
+
+    # Migração: adiciona usuario_id se não existir (banco antigo)
+    try:
+        c.execute('ALTER TABLE historico ADD COLUMN usuario_id INTEGER DEFAULT 0')
+    except Exception:
+        pass
+
     conn.commit()
     conn.close()
 
 init_db()
 
-# ─── PDF ──────────────────────────────────────────────────────────────────────
+# ─── Modelo de usuário ────────────────────────────────────────────────────────
+
+class Usuario(UserMixin):
+    def __init__(self, row):
+        self.id        = row['id']
+        self.nome      = row['nome']
+        self.email     = row['email']
+        self.plano     = row['plano']
+        self.ativo     = row['ativo']
+        self.valido_ate= row['valido_ate']
+
+    @property
+    def assinatura_ativa(self):
+        if not self.ativo or not self.valido_ate:
+            return False
+        try:
+            valido = datetime.strptime(self.valido_ate, '%Y-%m-%d')
+            return valido >= datetime.now()
+        except Exception:
+            return False
+
+    @property
+    def is_admin(self):
+        return ADMIN_EMAIL and self.email == ADMIN_EMAIL
+
+@login_manager.user_loader
+def load_user(user_id):
+    conn = get_db()
+    row = conn.execute('SELECT * FROM usuarios WHERE id = ?', (user_id,)).fetchone()
+    conn.close()
+    return Usuario(row) if row else None
+
+# ─── Helper: verificar assinatura ─────────────────────────────────────────────
+
+def assinatura_required(f):
+    from functools import wraps
+    @wraps(f)
+    def decorated(*args, **kwargs):
+        if not current_user.is_authenticated:
+            return redirect(url_for('login'))
+        if not current_user.assinatura_ativa and not current_user.is_admin:
+            return redirect(url_for('planos'))
+        return f(*args, **kwargs)
+    return decorated
+
+# ─── PDF (reportlab) ──────────────────────────────────────────────────────────
+
+AZUL        = colors.HexColor('#2b4fc7')
+AZUL_ESCURO = colors.HexColor('#1a3399')
+AZUL_CLARO  = colors.HexColor('#eef2ff')
+BRANCO      = colors.white
+TEXTO       = colors.HexColor('#1a1a2e')
+CINZA       = colors.HexColor('#6b7280')
+
+def criar_pdf(dados_form, aulas_ia):
+    buf = io.BytesIO()
+    doc = SimpleDocTemplate(buf, pagesize=A4,
+        leftMargin=1.8*rcm, rightMargin=1.8*rcm,
+        topMargin=1.5*rcm, bottomMargin=1.5*rcm)
+
+    escola     = dados_form.get('escola', '').strip()
+    diretoria  = dados_form.get('diretoria', '').strip()
+    endereco   = dados_form.get('endereco', '').strip()
+    ano_letivo = dados_form.get('ano_letivo', str(datetime.now().year))
+
+    st_centro_negrito = ParagraphStyle('cn', fontName='Helvetica-Bold', fontSize=10,
+                                        alignment=TA_CENTER, textColor=TEXTO, leading=14)
+    st_centro         = ParagraphStyle('c',  fontName='Helvetica', fontSize=9,
+                                        alignment=TA_CENTER, textColor=TEXTO, leading=13)
+    st_centro_pequeno = ParagraphStyle('cp', fontName='Helvetica', fontSize=8,
+                                        alignment=TA_CENTER, textColor=CINZA, leading=12)
+    st_header_tabela  = ParagraphStyle('ht', fontName='Helvetica-Bold', fontSize=8,
+                                        alignment=TA_CENTER, textColor=BRANCO, leading=11)
+    st_celula_titulo  = ParagraphStyle('ct', fontName='Helvetica-Bold', fontSize=8.5,
+                                        alignment=TA_CENTER, textColor=AZUL, leading=12)
+    st_celula         = ParagraphStyle('ce', fontName='Helvetica', fontSize=7.5,
+                                        textColor=TEXTO, leading=11)
+    st_sub            = ParagraphStyle('s',  fontName='Helvetica-Bold', fontSize=7.5,
+                                        textColor=AZUL, leading=11)
+    st_rodape         = ParagraphStyle('r',  fontName='Helvetica-Oblique', fontSize=7,
+                                        alignment=TA_CENTER, textColor=CINZA, leading=10)
+
+    story = []
+
+    if escola or diretoria:
+        story.append(Paragraph("GOVERNO DO ESTADO DE SÃO PAULO", st_centro_negrito))
+        story.append(Paragraph("SECRETARIA DE ESTADO DA EDUCAÇÃO", st_centro))
+        if diretoria:
+            story.append(Paragraph(diretoria.upper(), st_centro))
+        if escola:
+            story.append(Paragraph(escola.upper(), st_centro_negrito))
+        if endereco:
+            story.append(Paragraph(endereco, st_centro_pequeno))
+        story.append(Spacer(1, 8))
+
+    titulo_data = [[Paragraph(f"PLANEJAMENTO DE AULA  {ano_letivo}", ParagraphStyle(
+        'tit', fontName='Helvetica-Bold', fontSize=13,
+        alignment=TA_CENTER, textColor=BRANCO, leading=16))]]
+    t_titulo = Table(titulo_data, colWidths=[doc.width])
+    t_titulo.setStyle(TableStyle([
+        ('BACKGROUND',    (0,0), (-1,-1), AZUL),
+        ('TOPPADDING',    (0,0), (-1,-1), 10),
+        ('BOTTOMPADDING', (0,0), (-1,-1), 10),
+    ]))
+    story.append(t_titulo)
+    story.append(Spacer(1, 10))
+
+    def info(label, valor):
+        return Paragraph(f'<font color="#2b4fc7"><b>{label}:</b></font> {valor}',
+                         ParagraphStyle('inf', fontName='Helvetica', fontSize=8.5,
+                                        textColor=TEXTO, leading=13))
+
+    w = doc.width
+    t_info = Table([
+        [info("Professor(a)", dados_form.get('professor', ''))],
+        [info("Componente Curricular", dados_form.get('disciplina', '')),
+         info("Nº de Aulas", str(dados_form.get('num_aulas', '')))],
+        [info("Ano/Série/Turma", dados_form.get('turma', '')),
+         info("Período", f"{dados_form.get('periodo','')}  |  {dados_form.get('datas','')}")],
+    ], colWidths=[w*0.65, w*0.35])
+    t_info.setStyle(TableStyle([
+        ('SPAN',         (0,0), (1,0)),
+        ('GRID',         (0,0), (-1,-1), 0.5, colors.HexColor('#c0c8e8')),
+        ('TOPPADDING',    (0,0), (-1,-1), 6),
+        ('BOTTOMPADDING', (0,0), (-1,-1), 6),
+        ('LEFTPADDING',   (0,0), (-1,-1), 8),
+        ('RIGHTPADDING',  (0,0), (-1,-1), 8),
+        ('VALIGN',       (0,0), (-1,-1), 'MIDDLE'),
+    ]))
+    story.append(t_info)
+    story.append(Spacer(1, 10))
+
+    col_w = [2.5*rcm, 5.2*rcm, 4.0*rcm, 2.9*rcm, 3.2*rcm]
+    headers = [Paragraph(h, st_header_tabela) for h in
+               ['AULA / DATA', 'CONTEÚDO E OBJETIVOS', 'ESTRATÉGIAS DIDÁTICAS', 'RECURSOS', 'AVALIAÇÃO']]
+    rows = [headers]
+
+    for i, aula in enumerate(aulas_ia):
+        bg = AZUL_CLARO if i % 2 == 0 else BRANCO
+        partes = aula['titulo'].split(' - ', 1)
+        col0 = [Paragraph(partes[0], st_celula_titulo),
+                Paragraph(partes[1] if len(partes) > 1 else '', ParagraphStyle(
+                    's0', fontName='Helvetica', fontSize=7.5,
+                    alignment=TA_CENTER, textColor=CINZA, leading=11))]
+        col1 = [Paragraph("CONTEÚDOS", st_sub)]
+        for c in aula.get('conteudos', []):
+            col1.append(Paragraph(f"• {c}", st_celula))
+        col1.append(Spacer(1, 4))
+        col1.append(Paragraph("OBJETIVOS", st_sub))
+        for o in aula.get('objetivos', []):
+            col1.append(Paragraph(f"• {o}", st_celula))
+        rows.append([col0, col1,
+                     [Paragraph(aula.get('estrategias', ''), st_celula)],
+                     [Paragraph(aula.get('recursos', ''), st_celula)],
+                     [Paragraph(aula.get('avaliacao', ''), st_celula)]])
+
+    t_main = Table(rows, colWidths=col_w, repeatRows=1)
+    style = [
+        ('BACKGROUND',    (0,0), (-1,0), AZUL),
+        ('GRID',         (0,0), (-1,-1), 0.5, colors.HexColor('#c0c8e8')),
+        ('VALIGN',       (0,0), (-1,-1), 'TOP'),
+        ('TOPPADDING',    (0,0), (-1,-1), 6),
+        ('BOTTOMPADDING', (0,0), (-1,-1), 6),
+        ('LEFTPADDING',   (0,0), (-1,-1), 6),
+        ('RIGHTPADDING',  (0,0), (-1,-1), 6),
+        ('ALIGN',        (0,1), (0,-1), 'CENTER'),
+        ('VALIGN',       (0,1), (0,-1), 'MIDDLE'),
+    ]
+    for i in range(len(aulas_ia)):
+        bg = AZUL_CLARO if i % 2 == 0 else BRANCO
+        style.append(('BACKGROUND', (0, i+1), (-1, i+1), bg))
+    t_main.setStyle(TableStyle(style))
+    story.append(t_main)
+    story.append(Spacer(1, 10))
+    story.append(Paragraph(
+        f"Gerado em {datetime.now().strftime('%d/%m/%Y às %H:%M')}  •  Plano de Aula IA",
+        st_rodape))
+    doc.build(story)
+    buf.seek(0)
+    return buf
+
+# ─── PDF extrator ──────────────────────────────────────────────────────────────
 
 def extrair_pdf(url):
     try:
@@ -66,7 +309,7 @@ def extrair_pdf(url):
 def gerar_conteudo_ia(disciplina, turma, temas, periodo, datas, aula_inicio=1, conteudo_pdf=None):
     referencia_pdf = ""
     if conteudo_pdf:
-        referencia_pdf = f"\n\nMATERIAL DE REFERÊNCIA:\n{conteudo_pdf}\n\nUse esse material como base para os conteúdos e objetivos."
+        referencia_pdf = f"\n\nMATERIAL DE REFERÊNCIA:\n{conteudo_pdf}\n\nUse esse material como base."
 
     prompt = f"""Você é um assistente especializado em educação brasileira.
 Gere o conteúdo para um plano de aula seguindo EXATAMENTE este formato JSON.
@@ -87,7 +330,7 @@ Retorne SOMENTE um JSON válido neste formato (sem markdown, sem explicações):
       "titulo": "Aula {aula_inicio} - [título baseado no tema]",
       "conteudos": ["conteúdo 1", "conteúdo 2", "conteúdo 3"],
       "objetivos": ["objetivo 1", "objetivo 2", "objetivo 3"],
-      "estrategias": "Descrição das estratégias didáticas da aula em 2-3 frases.",
+      "estrategias": "Descrição das estratégias didáticas em 2-3 frases.",
       "recursos": "Kit Multimídia, quadro branco, [outros recursos relevantes]",
       "avaliacao": "Observar participação e desempenho dos alunos. [avaliação específica]"
     }}
@@ -101,14 +344,12 @@ Gere {len(temas)} aulas, uma para cada tema. A primeira aula é número {aula_in
         max_tokens=4000,
         messages=[{"role": "user", "content": prompt}]
     )
-
     texto = resposta.content[0].text.strip()
     if texto.startswith("```"):
         texto = texto.split("```")[1]
         if texto.startswith("json"):
             texto = texto[4:]
-    texto = texto.strip()
-    return json.loads(texto)
+    return json.loads(texto.strip())
 
 # ─── DOCX ─────────────────────────────────────────────────────────────────────
 
@@ -149,7 +390,6 @@ def add_run(paragraph, text, bold=False, size=9, color='1a1a2e', italic=False):
 
 def criar_docx(dados_form, aulas_ia):
     doc = Document()
-
     for section in doc.sections:
         section.top_margin = Cm(1.5)
         section.bottom_margin = Cm(1.5)
@@ -183,7 +423,6 @@ def criar_docx(dados_form, aulas_ia):
 
     doc.add_paragraph().paragraph_format.space_after = Pt(2)
 
-    # Título azul
     t0 = doc.add_table(rows=1, cols=1)
     t0.style = 'Table Grid'
     cell = t0.cell(0, 0)
@@ -197,7 +436,6 @@ def criar_docx(dados_form, aulas_ia):
 
     doc.add_paragraph().paragraph_format.space_after = Pt(4)
 
-    # Info professor
     t1 = doc.add_table(rows=3, cols=2)
     t1.style = 'Table Grid'
 
@@ -222,10 +460,8 @@ def criar_docx(dados_form, aulas_ia):
 
     doc.add_paragraph().paragraph_format.space_after = Pt(4)
 
-    # Tabela principal
     t2 = doc.add_table(rows=1 + len(aulas_ia), cols=5)
     t2.style = 'Table Grid'
-
     headers = ['AULA / DATA', 'CONTEÚDO E OBJETIVOS', 'ESTRATÉGIAS DIDÁTICAS', 'RECURSOS', 'AVALIAÇÃO']
     widths  = [Cm(2.8), Cm(5.8), Cm(4.5), Cm(3.3), Cm(3.6)]
 
@@ -246,7 +482,6 @@ def criar_docx(dados_form, aulas_ia):
         ri = i + 1
         bg = 'f0f4ff' if i % 2 == 0 else 'FFFFFF'
 
-        # Aula / número
         cell = t2.cell(ri, 0)
         cell.paragraphs[0].clear()
         p = cell.paragraphs[0]
@@ -260,7 +495,6 @@ def criar_docx(dados_form, aulas_ia):
         cell.vertical_alignment = WD_ALIGN_VERTICAL.CENTER
         set_cell_bg(cell, bg)
 
-        # Conteúdo e objetivos
         cell = t2.cell(ri, 1)
         cell.paragraphs[0].clear()
         p = cell.paragraphs[0]
@@ -274,37 +508,18 @@ def criar_docx(dados_form, aulas_ia):
             add_run(p, f"• {o}\n", size=8)
         set_cell_bg(cell, bg)
 
-        # Estratégias
-        cell = t2.cell(ri, 2)
-        cell.paragraphs[0].clear()
-        p = cell.paragraphs[0]
-        p.paragraph_format.space_before = Pt(3)
-        p.paragraph_format.space_after = Pt(3)
-        add_run(p, aula['estrategias'], size=8)
-        set_cell_bg(cell, bg)
-
-        # Recursos
-        cell = t2.cell(ri, 3)
-        cell.paragraphs[0].clear()
-        p = cell.paragraphs[0]
-        p.paragraph_format.space_before = Pt(3)
-        p.paragraph_format.space_after = Pt(3)
-        add_run(p, aula['recursos'], size=8)
-        set_cell_bg(cell, bg)
-
-        # Avaliação
-        cell = t2.cell(ri, 4)
-        cell.paragraphs[0].clear()
-        p = cell.paragraphs[0]
-        p.paragraph_format.space_before = Pt(3)
-        p.paragraph_format.space_after = Pt(3)
-        add_run(p, aula['avaliacao'], size=8)
-        set_cell_bg(cell, bg)
+        for col_i, key in enumerate(['estrategias', 'recursos', 'avaliacao'], start=2):
+            cell = t2.cell(ri, col_i)
+            cell.paragraphs[0].clear()
+            p = cell.paragraphs[0]
+            p.paragraph_format.space_before = Pt(3)
+            p.paragraph_format.space_after = Pt(3)
+            add_run(p, aula[key], size=8)
+            set_cell_bg(cell, bg)
 
         for ci in range(5):
             set_cell_border(t2.cell(ri, ci))
 
-    # Rodapé
     doc.add_paragraph()
     p = doc.add_paragraph()
     p.alignment = WD_ALIGN_PARAGRAPH.RIGHT
@@ -318,58 +533,403 @@ def criar_docx(dados_form, aulas_ia):
     buf.seek(0)
     return buf
 
-# ─── Rotas ────────────────────────────────────────────────────────────────────
+# ─── Auth ─────────────────────────────────────────────────────────────────────
+
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    if current_user.is_authenticated:
+        return redirect(url_for('index'))
+    if request.method == 'POST':
+        email = request.form.get('email', '').strip().lower()
+        senha = request.form.get('senha', '')
+        conn  = get_db()
+        row   = conn.execute('SELECT * FROM usuarios WHERE email = ?', (email,)).fetchone()
+        conn.close()
+        if row and check_password_hash(row['senha'], senha):
+            login_user(Usuario(row))
+            return redirect(url_for('index'))
+        flash('E-mail ou senha incorretos.')
+    return render_template('login.html')
+
+@app.route('/logout')
+@login_required
+def logout():
+    logout_user()
+    return redirect(url_for('login'))
+
+@app.route('/cadastro', methods=['GET', 'POST'])
+def cadastro():
+    if current_user.is_authenticated:
+        return redirect(url_for('index'))
+    if request.method == 'POST':
+        nome  = request.form.get('nome', '').strip()
+        email = request.form.get('email', '').strip().lower()
+        senha = request.form.get('senha', '')
+        if not nome or not email or not senha:
+            flash('Preencha todos os campos.')
+            return render_template('cadastro.html')
+        conn = get_db()
+        existe = conn.execute('SELECT id FROM usuarios WHERE email = ?', (email,)).fetchone()
+        if existe:
+            conn.close()
+            flash('Este e-mail já está cadastrado.')
+            return render_template('cadastro.html')
+        conn.execute(
+            'INSERT INTO usuarios (nome, email, senha, criado_em) VALUES (?, ?, ?, ?)',
+            (nome, email, generate_password_hash(senha), datetime.now().strftime('%Y-%m-%d'))
+        )
+        conn.commit()
+        row = conn.execute('SELECT * FROM usuarios WHERE email = ?', (email,)).fetchone()
+        conn.close()
+        login_user(Usuario(row))
+        return redirect(url_for('planos'))
+    return render_template('cadastro.html')
+
+# ─── Planos e Pagamento ───────────────────────────────────────────────────────
+
+@app.route('/planos')
+@login_required
+def planos():
+    return render_template('planos.html', planos=PLANOS,
+                           assinatura_ativa=current_user.assinatura_ativa,
+                           valido_ate=current_user.valido_ate,
+                           plano_atual=current_user.plano)
+
+@app.route('/pagamento/criar/<plano_id>', methods=['POST'])
+@login_required
+def pagamento_criar(plano_id):
+    if plano_id not in PLANOS:
+        return redirect(url_for('planos'))
+
+    if not mp_sdk:
+        flash('Pagamento não configurado ainda. Entre em contato com o suporte.')
+        return redirect(url_for('planos'))
+
+    plano = PLANOS[plano_id]
+
+    preference_data = {
+        "items": [{
+            "title": f"Plano {plano['nome']} — Plano de Aula IA",
+            "quantity": 1,
+            "unit_price": plano['preco'],
+            "currency_id": "BRL"
+        }],
+        "payer": {"email": current_user.email},
+        "back_urls": {
+            "success": f"{SITE_URL}/pagamento/sucesso",
+            "failure": f"{SITE_URL}/pagamento/falha",
+            "pending": f"{SITE_URL}/pagamento/pendente"
+        },
+        "auto_return": "approved",
+        "notification_url": f"{SITE_URL}/pagamento/webhook",
+        "external_reference": f"{current_user.id}|{plano_id}"
+    }
+
+    result = mp_sdk.preference().create(preference_data)
+    pref   = result.get("response", {})
+
+    if "init_point" not in pref:
+        flash('Erro ao criar pagamento. Tente novamente.')
+        return redirect(url_for('planos'))
+
+    return redirect(pref["init_point"])
+
+@app.route('/pagamento/webhook', methods=['POST'])
+def pagamento_webhook():
+    if not mp_sdk:
+        return jsonify({'ok': False}), 400
+
+    data = request.get_json(silent=True) or {}
+    topic = data.get('type') or request.args.get('type', '')
+    payment_id = data.get('data', {}).get('id') or request.args.get('id')
+
+    if topic != 'payment' or not payment_id:
+        return jsonify({'ok': True})
+
+    result  = mp_sdk.payment().get(payment_id)
+    payment = result.get("response", {})
+
+    if payment.get("status") != "approved":
+        return jsonify({'ok': True})
+
+    external_ref = payment.get("external_reference", "")
+    try:
+        usuario_id, plano_id = external_ref.split("|")
+        usuario_id = int(usuario_id)
+    except Exception:
+        return jsonify({'ok': False}), 400
+
+    if plano_id not in PLANOS:
+        return jsonify({'ok': False}), 400
+
+    dias = PLANOS[plano_id]['dias']
+    valido_ate = (datetime.now() + timedelta(days=dias)).strftime('%Y-%m-%d')
+
+    conn = get_db()
+    conn.execute(
+        'UPDATE usuarios SET ativo = 1, plano = ?, valido_ate = ? WHERE id = ?',
+        (plano_id, valido_ate, usuario_id)
+    )
+    conn.commit()
+    conn.close()
+
+    return jsonify({'ok': True})
+
+@app.route('/pagamento/sucesso')
+@login_required
+def pagamento_sucesso():
+    # Atualiza dados do usuário da sessão
+    conn = get_db()
+    row  = conn.execute('SELECT * FROM usuarios WHERE id = ?', (current_user.id,)).fetchone()
+    conn.close()
+    if row:
+        login_user(Usuario(row))
+    return render_template('pagamento_status.html',
+                           status='sucesso',
+                           titulo='Pagamento aprovado!',
+                           mensagem='Sua conta está ativa. Bom trabalho!')
+
+@app.route('/pagamento/pendente')
+@login_required
+def pagamento_pendente():
+    return render_template('pagamento_status.html',
+                           status='pendente',
+                           titulo='Pagamento pendente',
+                           mensagem='Assim que confirmarmos seu pagamento, sua conta será ativada.')
+
+@app.route('/pagamento/falha')
+@login_required
+def pagamento_falha():
+    return render_template('pagamento_status.html',
+                           status='falha',
+                           titulo='Pagamento não realizado',
+                           mensagem='Ocorreu um problema. Tente novamente ou escolha outro método.')
+
+# ─── NuPay ────────────────────────────────────────────────────────────────────
+
+@app.route('/pagamento/nupay/criar/<plano_id>', methods=['POST'])
+@login_required
+def nupay_criar(plano_id):
+    if plano_id not in PLANOS:
+        return redirect(url_for('planos'))
+
+    if not NUPAY_MERCHANT_KEY or not NUPAY_MERCHANT_TOKEN:
+        flash('NuPay não configurado ainda. Escolha outro método de pagamento.')
+        return redirect(url_for('planos'))
+
+    import requests, uuid
+    plano = PLANOS[plano_id]
+
+    payload = {
+        "merchantOrderReference": f"order-{current_user.id}-{uuid.uuid4().hex[:8]}",
+        "referenceId": f"{current_user.id}|{plano_id}",
+        "amount": {
+            "value": int(plano['preco'] * 100),
+            "currency": "BRL"
+        },
+        "shopper": {
+            "email": current_user.email,
+            "fullName": current_user.nome
+        },
+        "authorizationOptions": {
+            "type": "CIBA"
+        },
+        "callbackUrls": {
+            "success": f"{SITE_URL}/pagamento/nupay/sucesso",
+            "failure": f"{SITE_URL}/pagamento/falha",
+            "pending": f"{SITE_URL}/pagamento/pendente"
+        },
+        "notificationUrl": f"{SITE_URL}/pagamento/nupay/webhook"
+    }
+
+    try:
+        resp = requests.post(
+            f"{NUPAY_API_URL}/v1/checkouts/payments",
+            json=payload,
+            headers={
+                "X-Merchant-Key":   NUPAY_MERCHANT_KEY,
+                "X-Merchant-Token": NUPAY_MERCHANT_TOKEN,
+                "Content-Type":     "application/json"
+            },
+            timeout=15
+        )
+        data = resp.json()
+        payment_url = data.get("paymentUrl")
+        if not payment_url:
+            raise ValueError("paymentUrl não retornado")
+        return redirect(payment_url)
+    except Exception as e:
+        flash('Erro ao criar pagamento NuPay. Tente Mercado Pago ou tente novamente.')
+        return redirect(url_for('planos'))
+
+@app.route('/pagamento/nupay/webhook', methods=['POST'])
+def nupay_webhook():
+    data = request.get_json(silent=True) or {}
+
+    status        = data.get('status', '')
+    reference_id  = data.get('referenceId', '')
+    psp_reference = data.get('pspReferenceId', '')
+
+    if status != 'COMPLETED' or not reference_id:
+        return jsonify({'ok': True})
+
+    try:
+        import requests as req
+        resp = req.get(
+            f"{NUPAY_API_URL}/v1/checkouts/payments/{psp_reference}/status",
+            headers={
+                "X-Merchant-Key":   NUPAY_MERCHANT_KEY,
+                "X-Merchant-Token": NUPAY_MERCHANT_TOKEN
+            },
+            timeout=10
+        )
+        confirmed_status = resp.json().get('status', '')
+        if confirmed_status not in ('COMPLETED', 'AUTHORIZED'):
+            return jsonify({'ok': True})
+    except Exception:
+        return jsonify({'ok': False}), 400
+
+    try:
+        usuario_id, plano_id = reference_id.split('|')
+        usuario_id = int(usuario_id)
+    except Exception:
+        return jsonify({'ok': False}), 400
+
+    if plano_id not in PLANOS:
+        return jsonify({'ok': False}), 400
+
+    dias       = PLANOS[plano_id]['dias']
+    valido_ate = (datetime.now() + timedelta(days=dias)).strftime('%Y-%m-%d')
+
+    conn = get_db()
+    conn.execute(
+        'UPDATE usuarios SET ativo = 1, plano = ?, valido_ate = ? WHERE id = ?',
+        (plano_id, valido_ate, usuario_id)
+    )
+    conn.commit()
+    conn.close()
+
+    return jsonify({'ok': True})
+
+@app.route('/pagamento/nupay/sucesso')
+@login_required
+def nupay_sucesso():
+    conn = get_db()
+    row  = conn.execute('SELECT * FROM usuarios WHERE id = ?', (current_user.id,)).fetchone()
+    conn.close()
+    if row:
+        login_user(Usuario(row))
+    return render_template('pagamento_status.html',
+                           status='sucesso',
+                           titulo='Pagamento aprovado!',
+                           mensagem='Sua conta está ativa. Bom trabalho!')
+
+# ─── Admin ────────────────────────────────────────────────────────────────────
+
+@app.route('/admin')
+@login_required
+def admin():
+    if not current_user.is_admin:
+        return redirect(url_for('index'))
+    conn  = get_db()
+    users = conn.execute('SELECT * FROM usuarios ORDER BY id DESC').fetchall()
+    conn.close()
+    return render_template('admin.html', users=users)
+
+@app.route('/admin/ativar/<int:uid>', methods=['POST'])
+@login_required
+def admin_ativar(uid):
+    if not current_user.is_admin:
+        return redirect(url_for('index'))
+    dias = int(request.form.get('dias', 30))
+    plano = request.form.get('plano', 'professor')
+    valido_ate = (datetime.now() + timedelta(days=dias)).strftime('%Y-%m-%d')
+    conn = get_db()
+    conn.execute('UPDATE usuarios SET ativo = 1, plano = ?, valido_ate = ? WHERE id = ?',
+                 (plano, valido_ate, uid))
+    conn.commit()
+    conn.close()
+    return redirect(url_for('admin'))
+
+@app.route('/admin/desativar/<int:uid>', methods=['POST'])
+@login_required
+def admin_desativar(uid):
+    if not current_user.is_admin:
+        return redirect(url_for('index'))
+    conn = get_db()
+    conn.execute('UPDATE usuarios SET ativo = 0 WHERE id = ?', (uid,))
+    conn.commit()
+    conn.close()
+    return redirect(url_for('admin'))
+
+# ─── Rotas principais ─────────────────────────────────────────────────────────
 
 @app.route('/')
+@login_required
+@assinatura_required
 def index():
     return render_template('index.html')
 
 @app.route('/historico')
+@login_required
+@assinatura_required
 def historico_page():
     return render_template('historico.html')
 
 @app.route('/api/historico')
+@login_required
+@assinatura_required
 def api_historico():
-    conn = sqlite3.connect('historico.db')
-    c = conn.cursor()
-    c.execute('''SELECT id, data, professor, escola, disciplina, turma, num_aulas, periodo, datas, temas, nome_arquivo
-                 FROM historico ORDER BY id DESC LIMIT 100''')
-    rows = c.fetchall()
+    conn = get_db()
+    rows = conn.execute(
+        '''SELECT id, data, professor, escola, disciplina, turma,
+                  num_aulas, periodo, datas, temas, nome_arquivo
+           FROM historico WHERE usuario_id = ? ORDER BY id DESC LIMIT 100''',
+        (current_user.id,)
+    ).fetchall()
     conn.close()
     result = []
     for r in rows:
         result.append({
-            'id': r[0], 'data': r[1], 'professor': r[2], 'escola': r[3],
-            'disciplina': r[4], 'turma': r[5], 'num_aulas': r[6],
-            'periodo': r[7], 'datas': r[8],
-            'temas': json.loads(r[9]) if r[9] else [],
-            'nome_arquivo': r[10]
+            'id': r['id'], 'data': r['data'], 'professor': r['professor'],
+            'escola': r['escola'], 'disciplina': r['disciplina'],
+            'turma': r['turma'], 'num_aulas': r['num_aulas'],
+            'periodo': r['periodo'], 'datas': r['datas'],
+            'temas': json.loads(r['temas']) if r['temas'] else [],
+            'nome_arquivo': r['nome_arquivo']
         })
     return jsonify(result)
 
 @app.route('/download/<int:item_id>')
+@login_required
+@assinatura_required
 def download_historico(item_id):
-    conn = sqlite3.connect('historico.db')
-    c = conn.cursor()
-    c.execute('SELECT arquivo, nome_arquivo FROM historico WHERE id = ?', (item_id,))
-    row = c.fetchone()
+    conn = get_db()
+    row  = conn.execute(
+        'SELECT arquivo, nome_arquivo FROM historico WHERE id = ? AND usuario_id = ?',
+        (item_id, current_user.id)
+    ).fetchone()
     conn.close()
     if not row:
         return 'Não encontrado', 404
-    buf = io.BytesIO(row[0])
-    return send_file(buf, as_attachment=True, download_name=row[1],
+    buf = io.BytesIO(row['arquivo'])
+    return send_file(buf, as_attachment=True, download_name=row['nome_arquivo'],
                      mimetype='application/vnd.openxmlformats-officedocument.wordprocessingml.document')
 
 @app.route('/deletar/<int:item_id>', methods=['DELETE'])
+@login_required
+@assinatura_required
 def deletar_historico(item_id):
-    conn = sqlite3.connect('historico.db')
-    c = conn.cursor()
-    c.execute('DELETE FROM historico WHERE id = ?', (item_id,))
+    conn = get_db()
+    conn.execute('DELETE FROM historico WHERE id = ? AND usuario_id = ?',
+                 (item_id, current_user.id))
     conn.commit()
     conn.close()
     return jsonify({'ok': True})
 
 @app.route('/gerar', methods=['POST'])
+@login_required
+@assinatura_required
 def gerar():
     dados = {
         'professor':  request.form.get('professor', ''),
@@ -384,45 +944,49 @@ def gerar():
         'periodo':    request.form.get('periodo', 'quinzenal'),
         'datas':      request.form.get('datas', ''),
     }
-    temas = request.form.getlist('temas[]')
+    temas    = request.form.getlist('temas[]')
     urls_pdf = [u.strip() for u in request.form.getlist('urls_pdf[]') if u.strip()]
+    formato  = request.form.get('formato', 'docx')
 
     conteudo_pdf = None
     if urls_pdf:
-        partes = []
-        for i, url in enumerate(urls_pdf):
-            texto = extrair_pdf(url)
-            if texto:
-                partes.append(f"--- PDF {i+1} ---\n{texto}")
+        partes = [f"--- PDF {i+1} ---\n{t}" for i, u in enumerate(urls_pdf)
+                  if (t := extrair_pdf(u))]
         if partes:
             conteudo_pdf = "\n\n".join(partes)
 
-    conteudo = gerar_conteudo_ia(
-        dados['disciplina'], dados['turma'],
-        temas, dados['periodo'], dados['datas'],
-        int(dados.get('aula_inicio', 1)),
-        conteudo_pdf
+    conteudo  = gerar_conteudo_ia(dados['disciplina'], dados['turma'], temas,
+                                   dados['periodo'], dados['datas'],
+                                   int(dados.get('aula_inicio', 1)), conteudo_pdf)
+    base_nome = f"Plano_{dados['disciplina'].replace(' ', '_')}_{dados['turma'].replace(' ', '_')}"
+
+    if formato == 'pdf':
+        buf        = criar_pdf(dados, conteudo['aulas'])
+        file_bytes = buf.read()
+        nome       = base_nome + '.pdf'
+        mimetype   = 'application/pdf'
+    else:
+        buf        = criar_docx(dados, conteudo['aulas'])
+        file_bytes = buf.read()
+        nome       = base_nome + '.docx'
+        mimetype   = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+
+    conn = get_db()
+    conn.execute(
+        '''INSERT INTO historico
+           (usuario_id, data, professor, escola, disciplina, turma,
+            num_aulas, periodo, datas, temas, arquivo, nome_arquivo)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)''',
+        (current_user.id, datetime.now().strftime('%d/%m/%Y %H:%M'),
+         dados['professor'], dados['escola'], dados['disciplina'],
+         dados['turma'], dados['num_aulas'], dados['periodo'],
+         dados['datas'], json.dumps(temas), file_bytes, nome)
     )
-
-    buf = criar_docx(dados, conteudo['aulas'])
-    docx_bytes = buf.read()
-
-    nome = f"Plano_{dados['disciplina'].replace(' ', '_')}_{dados['turma'].replace(' ', '_')}.docx"
-
-    conn = sqlite3.connect('historico.db')
-    c = conn.cursor()
-    c.execute('''INSERT INTO historico
-                 (data, professor, escola, disciplina, turma, num_aulas, periodo, datas, temas, arquivo, nome_arquivo)
-                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)''',
-              (datetime.now().strftime('%d/%m/%Y %H:%M'),
-               dados['professor'], dados['escola'], dados['disciplina'],
-               dados['turma'], dados['num_aulas'], dados['periodo'],
-               dados['datas'], json.dumps(temas), docx_bytes, nome))
     conn.commit()
     conn.close()
 
-    return send_file(io.BytesIO(docx_bytes), as_attachment=True, download_name=nome,
-                     mimetype='application/vnd.openxmlformats-officedocument.wordprocessingml.document')
+    return send_file(io.BytesIO(file_bytes), as_attachment=True,
+                     download_name=nome, mimetype=mimetype)
 
 if __name__ == '__main__':
     port = int(os.environ.get("PORT", 5001))

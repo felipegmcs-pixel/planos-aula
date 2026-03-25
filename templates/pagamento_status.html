@@ -1,0 +1,42 @@
+﻿<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>{% if status == 'sucesso' %}Pagamento aprovado{% elif status == 'pendente' %}Pagamento pendente{% else %}Pagamento não realizado{% endif %} — Plano de Aula IA</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet"/>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root { --preto: #0a0a0a; --branco: #ffffff; --cinza-400: #a0a0a0; --cinza-600: #555555; --azul: #2b4fc7; --verde: #059669; --amarelo: #f59e0b; --vermelho: #dc2626; }
+    body { font-family: 'Inter', sans-serif; background: var(--branco); color: var(--preto); min-height: 100vh; display: flex; flex-direction: column; }
+    .top-bar { height: 3px; background: {% if status == 'sucesso' %}var(--verde){% elif status == 'pendente' %}var(--amarelo){% else %}var(--vermelho){% endif %}; }
+    .container { flex: 1; display: flex; align-items: center; justify-content: center; padding: 40px 20px; }
+    .box { width: 100%; max-width: 500px; text-align: center; }
+    .icone { font-size: 4rem; margin-bottom: 24px; line-height: 1; }
+    .icone-sucesso { color: var(--verde); }
+    .icone-pendente { color: var(--amarelo); }
+    .icone-falha { color: var(--vermelho); }
+    h1 { font-size: clamp(1.8rem, 5vw, 2.4rem); font-weight: 900; line-height: 1.1; letter-spacing: -1px; text-transform: uppercase; margin-bottom: 16px; }
+    .mensagem { font-size: 0.95rem; color: var(--cinza-600); line-height: 1.6; margin-bottom: 40px; }
+    .btn { display: inline-flex; align-items: center; gap: 8px; padding: 16px 32px; background: var(--preto); color: var(--branco); border: none; font-size: 0.85rem; font-weight: 700; font-family: 'Inter', sans-serif; letter-spacing: 1px; text-transform: uppercase; text-decoration: none; cursor: pointer; transition: background .2s; }
+    .btn:hover { background: var(--azul); }
+  </style>
+</head>
+<body>
+<div class="top-bar"></div>
+<div class="container">
+  <div class="box">
+    {% if status == 'sucesso' %}
+      <div class="icone icone-sucesso">✓</div>
+    {% elif status == 'pendente' %}
+      <div class="icone icone-pendente">⏱</div>
+    {% else %}
+      <div class="icone icone-falha">✕</div>
+    {% endif %}
+    <h1>{{ titulo }}</h1>
+    <p class="mensagem">{{ mensagem }}</p>
+    <a href="/" class="btn">Ir para o gerador →</a>
+  </div>
+</div>
+</body>
+</html>
