@@ -1,7 +1,8 @@
 import os
 import io
 import json
-import sqlite3
+import psycopg2
+import psycopg2.extras
 from datetime import datetime, timedelta
 from flask import (Flask, render_template, request, send_file,
                    jsonify, redirect, url_for, flash)
@@ -39,6 +40,7 @@ login_manager.login_message = None
 client = Anthropic(api_key=os.environ.get('ANTHROPIC_API_KEY'))
 
 MP_ACCESS_TOKEN = os.environ.get('MP_ACCESS_TOKEN', '')
+MP_PUBLIC_KEY   = os.environ.get('MP_PUBLIC_KEY', '')
 mp_sdk = _mp_SDK(MP_ACCESS_TOKEN) if (MP_ACCESS_TOKEN and _mp_SDK) else None
 
 NUPAY_MERCHANT_KEY   = os.environ.get('NUPAY_MERCHANT_KEY', '')
@@ -56,18 +58,38 @@ PLANOS = {
 
 # ─── Banco de dados ───────────────────────────────────────────────────────────
 
+DATABASE_URL = os.environ.get('DATABASE_URL', '').replace('postgres://', 'postgresql://', 1)
+
+class _DbConn:
+    """Wrapper que faz psycopg2 se comportar como sqlite3 no resto do código."""
+    def __init__(self, conn):
+        self._conn = conn
+
+    def execute(self, sql, params=()):
+        sql = sql.replace('?', '%s')
+        params = tuple(
+            psycopg2.Binary(p) if isinstance(p, (bytes, bytearray)) else p
+            for p in params
+        )
+        cur = self._conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+        cur.execute(sql, params)
+        return cur
+
+    def commit(self):
+        self._conn.commit()
+
+    def close(self):
+        self._conn.close()
+
 def get_db():
-    conn = sqlite3.connect('historico.db')
-    conn.row_factory = sqlite3.Row
-    return conn
+    conn = psycopg2.connect(DATABASE_URL)
+    return _DbConn(conn)
 
 def init_db():
     conn = get_db()
-    c = conn.cursor()
-
-    c.execute('''
+    conn.execute('''
         CREATE TABLE IF NOT EXISTS usuarios (
-            id         INTEGER PRIMARY KEY AUTOINCREMENT,
+            id         SERIAL PRIMARY KEY,
             nome       TEXT NOT NULL,
             email      TEXT UNIQUE NOT NULL,
             senha      TEXT NOT NULL,
@@ -77,10 +99,9 @@ def init_db():
             criado_em  TEXT
         )
     ''')
-
-    c.execute('''
+    conn.execute('''
         CREATE TABLE IF NOT EXISTS historico (
-            id           INTEGER PRIMARY KEY AUTOINCREMENT,
+            id           SERIAL PRIMARY KEY,
             usuario_id   INTEGER DEFAULT 0,
             data         TEXT,
             professor    TEXT,
@@ -91,17 +112,11 @@ def init_db():
             periodo      TEXT,
             datas        TEXT,
             temas        TEXT,
-            arquivo      BLOB,
+            arquivo      BYTEA,
             nome_arquivo TEXT
         )
     ''')
-
-    # Migração: adiciona usuario_id se não existir (banco antigo)
-    try:
-        c.execute('ALTER TABLE historico ADD COLUMN usuario_id INTEGER DEFAULT 0')
-    except Exception:
-        pass
-
+    conn.execute('ALTER TABLE historico ADD COLUMN IF NOT EXISTS usuario_id INTEGER DEFAULT 0')
     conn.commit()
     conn.close()
 
@@ -637,6 +652,81 @@ def pagamento_criar(plano_id):
         return redirect(url_for('planos'))
 
     return redirect(pref["init_point"])
+
+@app.route('/pagamento/checkout/<plano_id>')
+@login_required
+def pagamento_checkout(plano_id):
+    if plano_id not in PLANOS:
+        return redirect(url_for('planos'))
+    plano = PLANOS[plano_id]
+    return render_template('pagamento_checkout.html',
+                           plano_id=plano_id,
+                           plano=plano,
+                           public_key=MP_PUBLIC_KEY,
+                           usuario_email=current_user.email)
+
+@app.route('/pagamento/processar', methods=['POST'])
+@login_required
+def pagamento_processar():
+    import requests as req
+    data = request.get_json(silent=True) or {}
+    plano_id           = data.get('plano_id')
+    token              = data.get('token')
+    payment_method_id  = data.get('payment_method_id')
+    installments       = int(data.get('installments', 1))
+    issuer_id          = data.get('issuer_id')
+
+    if not token or plano_id not in PLANOS:
+        return jsonify({'error': 'Dados inválidos'}), 400
+    if not MP_ACCESS_TOKEN:
+        return jsonify({'error': 'Pagamento não configurado'}), 500
+
+    plano = PLANOS[plano_id]
+    payment_data = {
+        'id': payment_method_id,
+        'type': 'credit_card',
+        'token': token,
+        'installments': installments,
+    }
+    if issuer_id:
+        payment_data['issuer_id'] = str(issuer_id)
+
+    order_body = {
+        'type': 'online',
+        'processing_mode': 'automatic',
+        'external_reference': f'{current_user.id}|{plano_id}',
+        'total_amount': f'{plano["preco"]:.2f}',
+        'payer': {'email': current_user.email},
+        'transactions': {
+            'payments': [{'amount': f'{plano["preco"]:.2f}', 'payment_method': payment_data}]
+        }
+    }
+
+    headers = {
+        'Authorization': f'Bearer {MP_ACCESS_TOKEN}',
+        'Content-Type': 'application/json',
+        'X-Idempotency-Key': f'{current_user.id}-{plano_id}-{token[:10]}',
+    }
+
+    resp   = req.post('https://api.mercadopago.com/v1/orders', json=order_body, headers=headers)
+    result = resp.json()
+
+    payments = result.get('transactions', {}).get('payments', [{}])
+    pay_status = payments[0].get('status', '') if payments else ''
+    order_status = result.get('status', '')
+
+    if order_status in ('processed',) or pay_status in ('processed', 'accredited'):
+        dias = plano['dias']
+        valido_ate = (datetime.now() + timedelta(days=dias)).strftime('%Y-%m-%d')
+        conn = get_db()
+        conn.execute('UPDATE usuarios SET ativo = 1, plano = ?, valido_ate = ? WHERE id = ?',
+                     (plano_id, valido_ate, current_user.id))
+        conn.commit()
+        conn.close()
+        return jsonify({'status': 'approved'})
+
+    detail = result.get('status_detail') or pay_status or order_status
+    return jsonify({'status': 'rejected', 'detail': detail})
 
 @app.route('/pagamento/webhook', methods=['POST'])
 def pagamento_webhook():

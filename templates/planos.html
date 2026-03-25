@@ -90,13 +90,7 @@
       {% if assinatura_ativa and plano_atual == 'professor' %}
         <button class="btn-plano" disabled>Plano atual</button>
       {% else %}
-        <form method="POST" action="/pagamento/criar/professor">
-          <button type="submit" class="btn-plano">Mercado Pago</button>
-        </form>
-        <div class="pagamento-sep">ou</div>
-        <form method="POST" action="/pagamento/nupay/criar/professor">
-          <button type="submit" class="btn-plano-outline">NuPay (Nubank)</button>
-        </form>
+        <a href="/pagamento/checkout/professor" class="btn-plano" style="display:block;text-align:center;text-decoration:none;">Assinar agora</a>
       {% endif %}
     </div>
     <div class="plano-card destaque">
@@ -113,13 +107,7 @@
       {% if assinatura_ativa and plano_atual == 'escola' %}
         <button class="btn-plano" disabled>Plano atual</button>
       {% else %}
-        <form method="POST" action="/pagamento/criar/escola">
-          <button type="submit" class="btn-plano">Mercado Pago</button>
-        </form>
-        <div class="pagamento-sep">ou</div>
-        <form method="POST" action="/pagamento/nupay/criar/escola">
-          <button type="submit" class="btn-plano-outline">NuPay (Nubank)</button>
-        </form>
+        <a href="/pagamento/checkout/escola" class="btn-plano" style="display:block;text-align:center;text-decoration:none;">Assinar agora</a>
       {% endif %}
     </div>
   </div>
