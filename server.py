@@ -82,6 +82,8 @@ class _DbConn:
         self._conn.close()
 
 def get_db():
+    if not DATABASE_URL:
+        raise RuntimeError('DATABASE_URL não configurada. Adicione a variável de ambiente no Render.')
     conn = psycopg2.connect(DATABASE_URL)
     return _DbConn(conn)
 
