@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Planejamento Anual — ProfeIA</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet"/>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root { --preto: #0a0a0a; --branco: #ffffff; --cinza-100: #f5f5f5; --cinza-200: #e8e8e8; --cinza-400: #a0a0a0; --cinza-600: #555555; --azul: #2b4fc7; --linha: #e2e2e2; }
+    body { font-family: 'Inter', sans-serif; background: var(--branco); color: var(--preto); min-height: 100vh; }
+    .top-bar { height: 3px; background: var(--azul); }
+    nav { padding: 0 40px; height: 56px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--linha); position: sticky; top: 0; background: var(--branco); z-index: 100; }
+    .nav-logo { font-weight: 800; font-size: 0.88rem; letter-spacing: .5px; text-transform: uppercase; color: var(--preto); text-decoration: none; }
+    .nav-logo span { color: var(--azul); }
+    .nav-links { display: flex; align-items: center; gap: 20px; }
+    .nav-link { font-size: 0.78rem; font-weight: 500; color: var(--cinza-600); text-decoration: none; transition: color .2s; }
+    .nav-link:hover { color: var(--preto); }
+    .nav-link.active { color: var(--azul); font-weight: 600; }
+
+    .hero { padding: 56px 40px 40px; border-bottom: 1px solid var(--linha); max-width: 860px; margin: 0 auto; }
+    .hero-tag { font-size: 0.68rem; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; color: var(--azul); margin-bottom: 16px; display: inline-flex; align-items: center; gap: 10px; }
+    .hero-tag::after { content: ''; display: block; height: 1px; width: 40px; background: var(--azul); }
+    h1 { font-size: clamp(1.8rem, 4vw, 2.8rem); font-weight: 900; letter-spacing: -1px; text-transform: uppercase; line-height: 1; margin-bottom: 10px; }
+    .hero p { font-size: 0.85rem; color: var(--cinza-600); line-height: 1.6; }
+
+    .container { max-width: 860px; margin: 0 auto; padding: 40px 40px 80px; }
+
+    /* Formulário */
+    .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 24px; }
+    .form-group { display: flex; flex-direction: column; gap: 6px; }
+    .form-group.full { grid-column: 1 / -1; }
+    label { font-size: 0.72rem; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; color: var(--cinza-600); }
+    input, select {
+      padding: 10px 12px; border: 1.5px solid var(--linha); font-family: 'Inter', sans-serif;
+      font-size: 0.85rem; color: var(--preto); background: var(--branco); outline: none; transition: border-color .2s;
+    }
+    input:focus, select:focus { border-color: var(--azul); }
+
+    .btn-gerar {
+      padding: 14px 32px; background: var(--preto); color: var(--branco); border: none;
+      font-family: 'Inter', sans-serif; font-size: 0.8rem; font-weight: 700; letter-spacing: 1.5px;
+      text-transform: uppercase; cursor: pointer; transition: background .2s;
+    }
+    .btn-gerar:hover:not(:disabled) { background: var(--azul); }
+    .btn-gerar:disabled { background: var(--cinza-200); color: var(--cinza-400); cursor: not-allowed; }
+
+    /* Resultado */
+    .resultado { margin-top: 40px; display: none; }
+    .resultado-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; padding-bottom: 16px; border-bottom: 1px solid var(--linha); }
+    .resultado-titulo { font-size: 0.72rem; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; color: var(--cinza-600); }
+    .btn-copiar {
+      padding: 8px 16px; border: 1.5px solid var(--linha); background: var(--branco);
+      font-family: 'Inter', sans-serif; font-size: 0.72rem; font-weight: 700; letter-spacing: 1px;
+      text-transform: uppercase; cursor: pointer; transition: all .2s; color: var(--cinza-600);
+    }
+    .btn-copiar:hover { border-color: var(--azul); color: var(--azul); }
+
+    .conteudo-box {
+      background: var(--cinza-100); padding: 28px 32px;
+      font-size: 0.875rem; line-height: 1.75; color: var(--preto); white-space: pre-wrap;
+    }
+
+    /* Loading */
+    .loading { display: none; align-items: center; gap: 12px; padding: 20px 0; color: var(--cinza-600); font-size: 0.85rem; }
+    .spinner { width: 20px; height: 20px; border: 2px solid var(--cinza-200); border-top-color: var(--azul); border-radius: 50%; animation: spin .7s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    @media (max-width: 600px) {
+      nav { padding: 0 16px; }
+      .hero { padding: 36px 20px 28px; }
+      .container { padding: 28px 20px 60px; }
+      .form-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+<div class="top-bar"></div>
+<nav>
+  <a class="nav-logo" href="/">Profe<span>IA</span></a>
+  <div class="nav-links">
+    <a class="nav-link" href="/chat">Chat</a>
+    <a class="nav-link" href="/">Plano de Aula</a>
+    <a class="nav-link active" href="/planejamento">Planejamento Anual</a>
+    <a class="nav-link" href="/historico">Histórico</a>
+    <a class="nav-link" href="/logout">Sair →</a>
+  </div>
+</nav>
+
+<div class="hero">
+  <div class="hero-tag">IA para professores</div>
+  <h1>Planejamento Anual</h1>
+  <p>Gere o planejamento bimestral completo da sua disciplina em segundos, alinhado à BNCC e pronto para entregar à coordenação.</p>
+</div>
+
+<div class="container">
+  <div class="form-grid">
+    <div class="form-group">
+      <label>Disciplina</label>
+      <input type="text" id="disciplina" placeholder="Ex: Matemática, História, Português..." />
+    </div>
+    <div class="form-group">
+      <label>Turma / Série</label>
+      <input type="text" id="turma" placeholder="Ex: 7º ano A, 9º ano B..." />
+    </div>
+    <div class="form-group">
+      <label>Ano Letivo</label>
+      <input type="number" id="ano" value="2025" min="2024" max="2030" />
+    </div>
+    <div class="form-group">
+      <label>Aulas por semana</label>
+      <select id="aulas_semana">
+        <option value="1">1 aula</option>
+        <option value="2" selected>2 aulas</option>
+        <option value="3">3 aulas</option>
+        <option value="4">4 aulas</option>
+        <option value="5">5 aulas</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label>Início do ano letivo</label>
+      <input type="text" id="inicio" placeholder="Ex: 03/02/2025" value="03/02/2025" />
+    </div>
+    <div class="form-group">
+      <label>Fim do ano letivo</label>
+      <input type="text" id="fim" placeholder="Ex: 28/11/2025" value="28/11/2025" />
+    </div>
+  </div>
+
+  <button class="btn-gerar" id="btnGerar" onclick="gerar()">Gerar Planejamento Anual</button>
+
+  <div class="loading" id="loading">
+    <div class="spinner"></div>
+    <span>Gerando planejamento com a BNCC... isso pode levar alguns segundos</span>
+  </div>
+
+  <div class="resultado" id="resultado">
+    <div class="resultado-header">
+      <div class="resultado-titulo">Planejamento Gerado</div>
+      <button class="btn-copiar" onclick="copiar()">Copiar tudo</button>
+    </div>
+    <div class="conteudo-box" id="conteudo"></div>
+  </div>
+</div>
+
+<script>
+  async function gerar() {
+    const disciplina   = document.getElementById('disciplina').value.trim();
+    const turma        = document.getElementById('turma').value.trim();
+    const ano          = document.getElementById('ano').value;
+    const aulas_semana = document.getElementById('aulas_semana').value;
+    const inicio       = document.getElementById('inicio').value.trim();
+    const fim          = document.getElementById('fim').value.trim();
+
+    if (!disciplina || !turma) {
+      alert('Preencha a disciplina e a turma.');
+      return;
+    }
+
+    const btn = document.getElementById('btnGerar');
+    const loading = document.getElementById('loading');
+    const resultado = document.getElementById('resultado');
+
+    btn.disabled = true;
+    loading.style.display = 'flex';
+    resultado.style.display = 'none';
+
+    try {
+      const resp = await fetch('/api/planejamento', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ disciplina, turma, ano, aulas_semana, inicio, fim })
+      });
+
+      const data = await resp.json();
+      if (!resp.ok) throw new Error(data.erro || 'Erro ao gerar');
+
+      document.getElementById('conteudo').textContent = data.conteudo;
+      resultado.style.display = 'block';
+      resultado.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    } catch (err) {
+      alert('Erro: ' + err.message);
+    } finally {
+      btn.disabled = false;
+      loading.style.display = 'none';
+    }
+  }
+
+  function copiar() {
+    const texto = document.getElementById('conteudo').textContent;
+    navigator.clipboard.writeText(texto);
+    const btn = document.querySelector('.btn-copiar');
+    btn.textContent = 'Copiado!';
+    setTimeout(() => btn.textContent = 'Copiar tudo', 2000);
+  }
+</script>
+</body>
+</html>

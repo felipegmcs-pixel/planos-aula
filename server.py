@@ -52,9 +52,31 @@ SITE_URL    = os.environ.get('SITE_URL', 'http://localhost:5001')
 ADMIN_EMAIL = os.environ.get('ADMIN_EMAIL', '')
 
 PLANOS = {
-    'professor': {'nome': 'Professor', 'preco': 49.00,  'dias': 30},
-    'escola':    {'nome': 'Escola',    'preco': 199.00, 'dias': 30},
+    'pro':       {'nome': 'Pro',     'preco': 29.00,  'dias': 30},
+    'professor': {'nome': 'Premium', 'preco': 49.00,  'dias': 30},
+    'escola':    {'nome': 'Escola',  'preco': 199.00, 'dias': 30},
 }
+
+LIMITE_GRATIS = 5  # gerações gratuitas por mês no plano grátis
+
+SYSTEM_PROMPT = """Você é o ProfeIA, assistente especializado em ajudar professores brasileiros.
+
+Você cria materiais pedagógicos de alta qualidade, incluindo:
+- Planos de aula completos (objetivos, conteúdo, metodologia, avaliação)
+- Provas e avaliações (questões abertas e múltipla escolha, com gabarito)
+- Caça-palavras (lista de palavras + grade de letras formatada)
+- Atividades e exercícios lúdicos
+- Planejamento anual (distribuição por bimestre)
+- Resumos de conteúdo para alunos
+- Rubricas de avaliação
+- Bilhetes para os pais
+
+Quando o professor pedir um material:
+1. Se faltar informação essencial (disciplina, série, tema), pergunte de forma direta e simples
+2. Gere o material completo, bem estruturado e formatado
+3. Use linguagem clara e pedagógica, seguindo a BNCC
+
+Responda sempre em português brasileiro. Seja prático, objetivo e útil."""
 
 # ─── Banco de dados ───────────────────────────────────────────────────────────
 
@@ -119,6 +141,26 @@ def init_db():
         )
     ''')
     conn.execute('ALTER TABLE historico ADD COLUMN IF NOT EXISTS usuario_id INTEGER DEFAULT 0')
+    conn.execute('''
+        CREATE TABLE IF NOT EXISTS chat_messages (
+            id         SERIAL PRIMARY KEY,
+            usuario_id INTEGER,
+            role       TEXT,
+            content    TEXT,
+            criado_em  TEXT
+        )
+    ''')
+    conn.execute('''
+        CREATE TABLE IF NOT EXISTS planejamento_anual (
+            id         SERIAL PRIMARY KEY,
+            usuario_id INTEGER,
+            disciplina TEXT,
+            turma      TEXT,
+            ano        TEXT,
+            conteudo   TEXT,
+            criado_em  TEXT
+        )
+    ''')
     conn.commit()
     conn.close()
 
@@ -1133,6 +1175,148 @@ def gerar():
 
     return send_file(io.BytesIO(file_bytes), as_attachment=True,
                      download_name=nome, mimetype=mimetype)
+
+# ─── Helpers de plano ─────────────────────────────────────────────────────────
+
+def get_geracoes_mes(usuario_id):
+    mes_atual = datetime.now().strftime('%Y-%m')
+    conn = get_db()
+    row = conn.execute(
+        "SELECT COUNT(*) as total FROM chat_messages WHERE usuario_id = ? AND role = 'assistant' AND criado_em LIKE ?",
+        (usuario_id, f'{mes_atual}%')
+    ).fetchone()
+    conn.close()
+    return row['total'] if row else 0
+
+# ─── Chat ──────────────────────────────────────────────────────────────────────
+
+@app.route('/chat')
+@login_required
+def chat():
+    geracoes = get_geracoes_mes(current_user.id)
+    tem_plano = current_user.assinatura_ativa or current_user.is_admin
+    limite_atingido = not tem_plano and geracoes >= LIMITE_GRATIS
+    return render_template('chat.html',
+                           geracoes=geracoes,
+                           limite=LIMITE_GRATIS,
+                           limite_atingido=limite_atingido,
+                           tem_plano=tem_plano,
+                           plano=current_user.plano)
+
+
+@app.route('/api/chat', methods=['POST'])
+@login_required
+def api_chat():
+    from flask import Response, stream_with_context
+
+    if not current_user.assinatura_ativa and not current_user.is_admin:
+        geracoes = get_geracoes_mes(current_user.id)
+        if geracoes >= LIMITE_GRATIS:
+            return jsonify({'erro': 'limite_atingido', 'geracoes': geracoes}), 403
+
+    data = request.json
+    messages = data.get('messages', [])
+    if not messages:
+        return jsonify({'erro': 'Mensagem vazia'}), 400
+
+    conn = get_db()
+    conn.execute(
+        "INSERT INTO chat_messages (usuario_id, role, content, criado_em) VALUES (?, ?, ?, ?)",
+        (current_user.id, 'user', messages[-1]['content'],
+         datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
+    )
+    conn.commit()
+    conn.close()
+
+    def generate():
+        resposta_completa = []
+        try:
+            with client.messages.stream(
+                model="claude-opus-4-6",
+                max_tokens=4000,
+                system=SYSTEM_PROMPT,
+                messages=messages
+            ) as stream:
+                for text in stream.text_stream:
+                    resposta_completa.append(text)
+                    yield f"data: {json.dumps({'text': text})}\n\n"
+
+            conn2 = get_db()
+            conn2.execute(
+                "INSERT INTO chat_messages (usuario_id, role, content, criado_em) VALUES (?, ?, ?, ?)",
+                (current_user.id, 'assistant', ''.join(resposta_completa),
+                 datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
+            )
+            conn2.commit()
+            conn2.close()
+        except Exception as e:
+            yield f"data: {json.dumps({'erro': str(e)})}\n\n"
+        finally:
+            yield "data: [DONE]\n\n"
+
+    return Response(stream_with_context(generate()),
+                    mimetype='text/event-stream',
+                    headers={'Cache-Control': 'no-cache', 'X-Accel-Buffering': 'no'})
+
+# ─── Planejamento Anual ────────────────────────────────────────────────────────
+
+@app.route('/planejamento')
+@login_required
+def planejamento():
+    if not current_user.assinatura_ativa and not current_user.is_admin:
+        return redirect(url_for('planos'))
+    return render_template('planejamento.html')
+
+
+@app.route('/api/planejamento', methods=['POST'])
+@login_required
+def api_planejamento():
+    if not current_user.assinatura_ativa and not current_user.is_admin:
+        return jsonify({'erro': 'Plano necessário'}), 403
+
+    data = request.json
+    disciplina    = data.get('disciplina', '')
+    turma         = data.get('turma', '')
+    ano           = data.get('ano', str(datetime.now().year))
+    aulas_semana  = int(data.get('aulas_semana', 2))
+    inicio        = data.get('inicio', f'01/02/{ano}')
+    fim           = data.get('fim',   f'30/11/{ano}')
+
+    prompt = f"""Crie um planejamento anual completo para professor brasileiro.
+
+Dados:
+- Disciplina: {disciplina}
+- Turma/Série: {turma}
+- Ano letivo: {ano}
+- Aulas por semana: {aulas_semana}
+- Período: {inicio} até {fim}
+
+Gere um planejamento bimestral detalhado seguindo a BNCC com:
+- Divisão por bimestre (4 bimestres)
+- Conteúdos de cada bimestre
+- Habilidades trabalhadas (códigos BNCC quando aplicável)
+- Sugestão de avaliações
+
+Formato: texto estruturado e claro, pronto para entregar à coordenação."""
+
+    resposta = client.messages.create(
+        model="claude-opus-4-6",
+        max_tokens=6000,
+        messages=[{"role": "user", "content": prompt}]
+    )
+    conteudo = resposta.content[0].text
+
+    conn = get_db()
+    conn.execute(
+        "INSERT INTO planejamento_anual (usuario_id, disciplina, turma, ano, conteudo, criado_em) VALUES (?, ?, ?, ?, ?, ?)",
+        (current_user.id, disciplina, turma, ano, conteudo,
+         datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
+    )
+    conn.commit()
+    conn.close()
+
+    return jsonify({'conteudo': conteudo})
+
 
 if __name__ == '__main__':
     port = int(os.environ.get("PORT", 5001))
