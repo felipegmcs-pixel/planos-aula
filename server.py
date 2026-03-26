@@ -1054,9 +1054,8 @@ def conta_senha():
 
 @app.route('/')
 @login_required
-@assinatura_required
 def index():
-    return render_template('index.html')
+    return redirect(url_for('chat'))
 
 @app.route('/historico')
 @login_required
