@@ -1231,7 +1231,7 @@ def api_chat():
         resposta_completa = []
         try:
             with client.messages.stream(
-                model="claude-opus-4-6",
+                model="claude-sonnet-4-6",
                 max_tokens=4000,
                 system=SYSTEM_PROMPT,
                 messages=messages
@@ -1249,8 +1249,9 @@ def api_chat():
             conn2.commit()
             conn2.close()
         except Exception as e:
-            yield f"data: {json.dumps({'erro': str(e)})}\n\n"
-        finally:
+            yield f"data: {json.dumps({'text': f'Erro: {str(e)}'})}\n\n"
+            yield "data: [DONE]\n\n"
+        else:
             yield "data: [DONE]\n\n"
 
     return Response(stream_with_context(generate()),
