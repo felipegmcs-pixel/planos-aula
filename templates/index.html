@@ -2,8 +2,13 @@
 <html lang="pt-BR" data-theme="light">
 <head>
   <meta charset="UTF-8"/>
-  <meta name="color-scheme" content="only light"/>
-  <script>/* Landing page — always light */document.documentElement.setAttribute('data-theme','light');document.documentElement.style.colorScheme='only light';</script>
+  <meta name="color-scheme" content="light"/>
+  <meta name="supported-color-schemes" content="light"/>
+  <script>
+    document.documentElement.setAttribute('data-theme','light');
+    document.documentElement.style.colorScheme='light';
+    document.documentElement.style.backgroundColor='#ffffff';
+  </script>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>ProfessorIA™ — Assistente Pedagógico de IA</title>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet"/>
@@ -19,8 +24,25 @@
       --linha:   rgba(0,0,0,0.08);
       --linha-f: rgba(0,0,0,0.14);
     }
-    html { scroll-behavior: smooth; }
-    body { font-family: 'Inter', sans-serif; background: #ffffff; color: #0a0a0a; overflow-x: hidden; }
+    html {
+      scroll-behavior: smooth;
+      background: #ffffff !important;
+      color-scheme: light !important;
+      -webkit-color-scheme: light;
+    }
+    body {
+      font-family: 'Inter', sans-serif;
+      background: #ffffff !important;
+      color: #0a0a0a !important;
+      overflow-x: hidden;
+    }
+    /* garante branco em todos os blocos principais */
+    nav, .ticker + *, section, .prova, .features-header,
+    .features-grid, .manifesto, .testemunho, .planos,
+    .quote, .cta, footer { background-color: #ffffff !important; }
+    /* exceções que devem permanecer com sua própria cor */
+    .ticker { background-color: #0a0a0a !important; }
+    .hero   { background-color: #ffffff !important; }
     ::selection { background: #f0e000; color: #0a0a0a; }
 
     /* ── NAV ── */
