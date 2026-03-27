@@ -1,23 +1,24 @@
 /* ═══════════════════════════════════════════════
-   ProfessorIA™ — Theme System (light / dark / system)
+   ProfessorIA™ — Theme System
    ═══════════════════════════════════════════════ */
 
-/* ── LIGHT (default) ── */
+/* ── LIGHT ── */
 :root {
-  color-scheme: light;
+  color-scheme: only light;
   --preto:   #0a0a0a;
   --branco:  #ffffff;
   --cinza:   #666660;
   --amarelo: #f0e000;
   --linha:   rgba(0,0,0,0.08);
   --linha-f: rgba(0,0,0,0.14);
-  --nav-bg:  rgba(255,255,255,0.96);
+  --nav-bg:  rgba(255,255,255,0.97);
   --input-border: rgba(0,0,0,0.14);
   --tag-bg:  rgba(0,0,0,0.04);
   --hover-bg: rgba(0,0,0,0.02);
-  --card-highlight: rgba(240,224,0,0.06);
-  --card-highlight-hover: rgba(240,224,0,0.1);
+  --card-hl: rgba(240,224,0,0.06);
+  --card-hl-h: rgba(240,224,0,0.11);
   --pre-bg:  #f5f5f5;
+  --grad-hero: rgba(255,255,255,0.72);
 }
 
 /* ── DARK ── */
@@ -33,69 +34,80 @@
   --input-border: rgba(255,255,255,0.18);
   --tag-bg:  rgba(255,255,255,0.05);
   --hover-bg: rgba(255,255,255,0.03);
-  --card-highlight: rgba(240,224,0,0.07);
-  --card-highlight-hover: rgba(240,224,0,0.13);
+  --card-hl: rgba(240,224,0,0.07);
+  --card-hl-h: rgba(240,224,0,0.13);
   --pre-bg:  rgba(255,255,255,0.06);
+  --grad-hero: rgba(17,17,16,0.72);
 }
 
-/* ── NAV (common override) ── */
-nav { background: var(--nav-bg) !important; }
+/* ── Force white background in light mode (Brave/Chrome dark override) ── */
+html:not([data-theme="dark"]),
+html:not([data-theme="dark"]) body {
+  background-color: #ffffff !important;
+  color: #0a0a0a !important;
+}
 
-/* ── Dark nav border ── */
+/* ── NAV ── */
+nav { background: var(--nav-bg) !important; }
 [data-theme="dark"] nav { border-bottom-color: var(--linha) !important; }
 
-/* ── Ticker stays dark always ── */
+/* ── Ticker always dark ── */
 [data-theme="dark"] .ticker { background: #1a1a18 !important; }
 
 /* ── Inputs ── */
-input[type=text], input[type=email], input[type=password], textarea {
+input[type=text],
+input[type=email],
+input[type=password],
+textarea {
   border-bottom-color: var(--input-border) !important;
 }
 
-/* ── Dark scrollbar ── */
-[data-theme="dark"] ::-webkit-scrollbar { background: #1a1a18; }
-[data-theme="dark"] ::-webkit-scrollbar-thumb { background: #333330; }
-
-/* ── Feature/plan cards highlight ── */
-.plano-card.destaque          { background: var(--card-highlight) !important; }
-.plano-card.destaque:hover    { background: var(--card-highlight-hover) !important; }
-.feat:hover                   { background: var(--hover-bg) !important; }
-.plano-card:not(.destaque):hover { background: var(--hover-bg) !important; }
-
-/* ── pre / code blocks ── */
-.msg-bubble pre, .msg-bubble th { background: var(--pre-bg) !important; }
-
-/* ── Tags ── */
-.tag { background: var(--tag-bg) !important; }
-
-/* ── Left dark panels (login/cadastro) — kept dark in dark mode ── */
+/* ── Left panels (login/cadastro) stay dark in dark mode ── */
 [data-theme="dark"] .left {
   background: #0a0a0a !important;
   color: #f0f0ec !important;
   border-right-color: var(--linha) !important;
 }
 
-/* ── Divider label bg ── */
-.divider::after { background: var(--branco) !important; }
+/* ── Cards ── */
+.plano-card.destaque            { background: var(--card-hl)   !important; }
+.plano-card.destaque:hover      { background: var(--card-hl-h) !important; }
+.feat:hover                     { background: var(--hover-bg)  !important; }
+.plano-card:not(.destaque):hover{ background: var(--hover-bg)  !important; }
 
-/* ═══════════════════════════════════════
+/* ── Code/pre ── */
+.msg-bubble pre, .msg-bubble th { background: var(--pre-bg) !important; }
+
+/* ── Tags ── */
+.tag { background: var(--tag-bg) !important; }
+
+/* ── Divider label ── */
+.divider::after { background: var(--branco) !important; color: var(--cinza) !important; }
+
+/* ═══════════════════════════
    THEME TOGGLE BUTTON
-   ═══════════════════════════════════════ */
+   ═══════════════════════════ */
 #theme-toggle {
-  display: inline-flex; align-items: center;
+  display: inline-flex;
+  align-items: center;
   border: 1px solid var(--linha-f);
-  overflow: hidden; flex-shrink: 0;
+  overflow: hidden;
+  flex-shrink: 0;
   margin-left: 8px;
 }
 #theme-toggle button {
-  background: none; border: none;
+  background: none;
+  border: none;
   padding: 5px 9px;
-  font-size: 0.65rem; line-height: 1;
-  color: var(--cinza); cursor: pointer;
+  font-size: 0.65rem;
+  line-height: 1;
+  color: var(--cinza);
+  cursor: pointer;
   transition: background .15s, color .15s;
   font-family: 'Inter', sans-serif;
 }
 #theme-toggle button:hover { color: var(--preto); }
 #theme-toggle button.on {
-  background: var(--preto); color: var(--branco);
+  background: var(--preto);
+  color: var(--branco);
 }

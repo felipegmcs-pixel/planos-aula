@@ -1,4 +1,4 @@
-/* ProfessorIA™ — Theme toggle (light / dark / system) */
+/* ProfessorIA™ — Theme toggle */
 (function () {
   var KEY = 'pia-theme';
   var current = localStorage.getItem(KEY) || 'light';
@@ -10,11 +10,12 @@
   }
 
   function apply(t) {
-    document.documentElement.setAttribute('data-theme', actual(t));
-    document.documentElement.style.colorScheme = actual(t);
+    var a = actual(t);
+    document.documentElement.setAttribute('data-theme', a);
+    /* "only light" blocks Brave/Chrome forced-dark override */
+    document.documentElement.style.colorScheme = a === 'dark' ? 'dark' : 'only light';
   }
 
-  /* apply immediately to avoid flash */
   apply(current);
 
   document.addEventListener('DOMContentLoaded', function () {
@@ -23,11 +24,10 @@
 
     var wrap = document.createElement('div');
     wrap.id = 'theme-toggle';
-    wrap.title = 'Tema';
     wrap.innerHTML =
-      '<button data-v="light"  title="Claro">☀</button>' +
-      '<button data-v="system" title="Sistema">⬡</button>' +
-      '<button data-v="dark"   title="Escuro">☾</button>';
+      '<button data-v="light"  title="Claro">&#9728;</button>' +
+      '<button data-v="system" title="Sistema">&#11041;</button>' +
+      '<button data-v="dark"   title="Escuro">&#9790;</button>';
 
     function sync() {
       wrap.querySelectorAll('button').forEach(function (b) {
@@ -42,7 +42,6 @@
       localStorage.setItem(KEY, current);
       apply(current);
       sync();
-      /* update Three.js materials if scene is loaded */
       if (window.__sceneUpdate) window.__sceneUpdate(actual(current));
     });
 
@@ -50,7 +49,6 @@
     nav.appendChild(wrap);
   });
 
-  /* watch OS preference */
   window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', function () {
     if (current === 'system') apply('system');
   });

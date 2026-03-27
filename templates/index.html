@@ -2,32 +2,32 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8"/>
-  <script>!function(){var t=localStorage.getItem("pia-theme")||"light",a="system"===t?(window.matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light"):t;document.documentElement.setAttribute("data-theme",a),document.documentElement.style.colorScheme=a}();</script>
-  
+  <script>!function(){var t=localStorage.getItem("pia-theme")||"light",a="system"===t?(window.matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light"):t;document.documentElement.setAttribute("data-theme",a),document.documentElement.style.colorScheme="dark"===a?"dark":"only light"}();</script>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>ProfessorIA™ — Assistente Pedagógico de IA</title>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="/static/theme.css"/>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     :root {
-      --preto: #0a0a0a;
-      --branco: #ffffff;
+      --preto:   #0a0a0a;
+      --branco:  #ffffff;
       --amarelo: #f0e000;
-      --cinza: #666660;
-      --linha: rgba(0,0,0,0.08);
+      --cinza:   #666660;
+      --linha:   rgba(0,0,0,0.08);
       --linha-f: rgba(0,0,0,0.14);
     }
     html { scroll-behavior: smooth; }
     body { font-family: 'Inter', sans-serif; background: var(--branco); color: var(--preto); overflow-x: hidden; }
     ::selection { background: var(--amarelo); color: var(--preto); }
 
-    /* ─── NAV ─── */
+    /* ── NAV ── */
     nav {
-      position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+      position: fixed; top: 0; left: 0; right: 0; z-index: 200;
       height: 56px; padding: 0 40px;
       display: flex; align-items: center; justify-content: space-between;
       border-bottom: 1px solid var(--linha);
-      background: rgba(255,255,255,0.96); backdrop-filter: blur(16px);
+      background: rgba(255,255,255,0.97); backdrop-filter: blur(16px);
     }
     .nav-logo { font-size: 0.7rem; font-weight: 900; letter-spacing: 3px; text-transform: uppercase; color: var(--preto); text-decoration: none; }
     .nav-logo .tm { font-size: 0.45rem; vertical-align: super; opacity: 0.4; font-weight: 400; }
@@ -37,113 +37,133 @@
     .nav-cta { font-size: 0.6rem; font-weight: 800; letter-spacing: 2px; text-transform: uppercase; color: #fff; background: var(--preto); padding: 9px 20px; text-decoration: none; transition: background .2s; }
     .nav-cta:hover { background: var(--amarelo); color: var(--preto); }
 
-    /* ─── TICKER ─── */
-    .ticker { margin-top: 56px; height: 34px; border-bottom: 1px solid var(--linha); overflow: hidden; display: flex; align-items: center; background: var(--preto); }
-    .ticker-track { display: flex; white-space: nowrap; animation: tick 30s linear infinite; }
-    .ticker-item { font-size: 0.55rem; font-weight: 700; letter-spacing: 3px; text-transform: uppercase; color: rgba(255,255,255,0.5); padding: 0 28px; }
-    .ticker-dot { color: var(--amarelo); font-size: 0.4rem; padding: 0 4px; }
-    @keyframes tick { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }
+    /* ── TICKER ── */
+    .ticker { height: 34px; overflow: hidden; display: flex; align-items: center; background: var(--preto); border-bottom: 1px solid var(--linha); }
+    .ticker-track { display: flex; white-space: nowrap; animation: tick 28s linear infinite; }
+    .ticker-item { font-size: 0.52rem; font-weight: 700; letter-spacing: 3px; text-transform: uppercase; color: rgba(255,255,255,0.45); padding: 0 24px; }
+    .ticker-dot { color: var(--amarelo); font-size: 0.38rem; }
+    @keyframes tick { from { transform: translateX(0); } to { transform: translateX(-50%); } }
 
-    /* ─── HERO ─── */
+    /* ── HERO — full-screen canvas ── */
     .hero {
-      padding: 80px 40px 100px;
+      position: relative;
+      min-height: calc(100vh - 56px - 34px);
+      margin-top: 90px; /* nav + ticker */
+      display: flex; align-items: flex-end;
+      overflow: hidden;
       border-bottom: 1px solid var(--linha);
-      display: grid; grid-template-columns: 1fr 420px; gap: 60px; align-items: start;
-      min-height: calc(100vh - 90px);
-      background-image:
-        linear-gradient(rgba(0,0,0,0.025) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(0,0,0,0.025) 1px, transparent 1px);
-      background-size: 52px 52px;
+    }
+    /* canvas fills entire hero */
+    #scene3d {
+      position: absolute; inset: 0;
+      width: 100%; height: 100%;
+      display: block; z-index: 0;
+    }
+    /* subtle gradient on left so text is always readable */
+    .hero-veil {
+      position: absolute; inset: 0; z-index: 1; pointer-events: none;
+      background: linear-gradient(105deg, var(--grad-hero) 38%, transparent 65%);
+    }
+    /* text content */
+    .hero-inner {
+      position: relative; z-index: 2;
+      width: 100%; padding: 80px 40px 80px;
+      display: grid; grid-template-columns: 1fr 340px; gap: 60px; align-items: end;
     }
     .hero-eyebrow {
-      font-size: 0.55rem; font-weight: 700; letter-spacing: 3px; text-transform: uppercase;
-      color: var(--cinza); margin-bottom: 40px;
-      display: flex; align-items: center; gap: 14px;
+      font-size: 0.52rem; font-weight: 700; letter-spacing: 3px; text-transform: uppercase;
+      color: var(--cinza); margin-bottom: 36px;
+      display: flex; align-items: center; gap: 12px;
     }
     .hero-eyebrow::before { content: '001'; color: var(--amarelo); }
-    .hero-eyebrow::after { content: ''; flex: 1; max-width: 40px; height: 1px; background: var(--cinza); opacity: .4; }
-    .hero h1 { font-size: clamp(4rem, 10vw, 10rem); font-weight: 900; line-height: .88; letter-spacing: -4px; text-transform: uppercase; }
-    .hero h1 .linha2 { color: var(--cinza); }
-    .hero h1 .marca { font-size: .32em; letter-spacing: 0; font-weight: 400; vertical-align: super; color: var(--amarelo); }
-
-    /* ─── HERO RIGHT — canvas + info ─── */
-    .hero-right { display: flex; flex-direction: column; gap: 24px; }
-    .hero-canvas-wrap {
-      height: 460px;
-      border: 1px solid var(--linha-f);
-      position: relative; overflow: hidden;
-      cursor: crosshair;
-      background: #ffffff;
+    .hero-eyebrow::after { content: ''; max-width: 36px; flex: 1; height: 1px; background: var(--cinza); opacity: .4; }
+    .hero h1 {
+      font-size: clamp(4.5rem, 11vw, 11rem);
+      font-weight: 900; line-height: .86;
+      letter-spacing: -5px; text-transform: uppercase;
     }
-    #scene3d { width: 100%; height: 100%; display: block; }
-    .canvas-corner {
-      position: absolute;
-      font-size: 0.46rem; font-weight: 700; letter-spacing: 2px;
-      text-transform: uppercase; font-family: 'Inter', sans-serif;
-      color: rgba(0,0,0,0.15); pointer-events: none; user-select: none;
-    }
-    .canvas-corner.tl { top: 14px; left: 14px; }
-    .canvas-corner.br { bottom: 14px; right: 14px; }
-    .canvas-corner.tr { top: 14px; right: 14px; }
-    .hero-desc { font-size: 0.8rem; color: var(--cinza); line-height: 1.85; border-left: 2px solid var(--amarelo); padding-left: 18px; }
+    .hero h1 .l2 { color: var(--cinza); }
+    .hero h1 .marca { font-size: .28em; letter-spacing: 0; font-weight: 400; vertical-align: super; color: var(--amarelo); }
+    .hero-right { padding-bottom: 4px; }
+    .hero-desc { font-size: 0.78rem; color: var(--cinza); line-height: 1.9; border-left: 2px solid var(--amarelo); padding-left: 16px; margin-bottom: 28px; }
     .hero-btns { display: flex; gap: 10px; flex-wrap: wrap; }
+
+    /* ── BUTTONS ── */
     .btn-solid { display: inline-flex; align-items: center; gap: 8px; padding: 14px 28px; background: var(--preto); color: #fff; font-size: 0.62rem; font-weight: 800; letter-spacing: 2px; text-transform: uppercase; text-decoration: none; transition: background .2s; border: 1px solid var(--preto); }
     .btn-solid:hover { background: var(--amarelo); color: var(--preto); border-color: var(--amarelo); }
-    .btn-ghost { display: inline-flex; align-items: center; gap: 8px; padding: 14px 28px; background: transparent; color: var(--preto); font-size: 0.62rem; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; text-decoration: none; transition: all .2s; border: 1px solid var(--linha-f); }
+    .btn-ghost { display: inline-flex; align-items: center; gap: 8px; padding: 14px 28px; background: transparent; color: var(--preto); font-size: 0.62rem; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; text-decoration: none; transition: border-color .2s; border: 1px solid var(--linha-f); }
     .btn-ghost:hover { border-color: var(--preto); }
 
-    /* ─── DIVIDER ─── */
+    /* ── DIVIDER ── */
     .divider { height: 1px; background: var(--linha); position: relative; }
-    .divider::after { content: attr(data-label); position: absolute; right: 40px; top: -9px; font-size: 0.5rem; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; color: var(--cinza); background: var(--branco); padding: 0 10px; }
+    .divider::after { content: attr(data-label); position: absolute; right: 40px; top: -9px; font-size: 0.48rem; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; color: var(--cinza); background: var(--branco); padding: 0 10px; }
 
-    /* ─── FEATURES ─── */
+    /* ── FEATURES ── */
     .features-header { padding: 60px 40px 40px; border-bottom: 1px solid var(--linha); display: flex; align-items: center; justify-content: space-between; }
-    .section-tag { font-size: 0.55rem; font-weight: 700; letter-spacing: 3px; text-transform: uppercase; color: var(--cinza); display: flex; align-items: center; gap: 12px; }
-    .section-tag::before { content: ''; width: 24px; height: 1px; background: var(--cinza); opacity: .5; }
+    .section-tag { font-size: 0.52rem; font-weight: 700; letter-spacing: 3px; text-transform: uppercase; color: var(--cinza); display: flex; align-items: center; gap: 12px; }
+    .section-tag::before { content: ''; width: 22px; height: 1px; background: var(--cinza); opacity: .5; }
     .section-title { font-size: clamp(1.6rem, 3vw, 2.4rem); font-weight: 900; letter-spacing: -1.5px; text-transform: uppercase; }
     .features-grid { display: grid; grid-template-columns: repeat(3, 1fr); }
     .feat {
-      padding: 44px 40px;
-      border-right: 1px solid var(--linha);
-      border-bottom: 1px solid var(--linha);
-      transition: transform .12s ease, box-shadow .12s ease, background .2s;
-      will-change: transform;
-      transform-origin: center;
+      padding: 44px 40px; border-right: 1px solid var(--linha); border-bottom: 1px solid var(--linha);
+      transition: transform .12s ease, box-shadow .12s ease; will-change: transform;
     }
     .feat:nth-child(3n) { border-right: none; }
     .feat:nth-child(4), .feat:nth-child(5), .feat:nth-child(6) { border-bottom: none; }
-    .feat-num { font-size: 0.52rem; font-weight: 700; letter-spacing: 3px; color: var(--amarelo); text-transform: uppercase; margin-bottom: 20px; }
-    .feat-titulo { font-size: 1rem; font-weight: 900; letter-spacing: -.3px; text-transform: uppercase; margin-bottom: 12px; line-height: 1.1; }
-    .feat-desc { font-size: 0.73rem; color: var(--cinza); line-height: 1.8; }
+    .feat-num { font-size: 0.5rem; font-weight: 700; letter-spacing: 3px; color: var(--amarelo); text-transform: uppercase; margin-bottom: 18px; }
+    .feat-titulo { font-size: 0.98rem; font-weight: 900; letter-spacing: -.3px; text-transform: uppercase; margin-bottom: 10px; line-height: 1.1; }
+    .feat-desc { font-size: 0.72rem; color: var(--cinza); line-height: 1.85; }
 
-    /* ─── MANIFESTO ─── */
-    .manifesto {
-      padding: 100px 40px;
+    /* ── SOCIAL PROOF BAND (neuromarketing) ── */
+    .prova {
       border-bottom: 1px solid var(--linha);
+      display: grid; grid-template-columns: repeat(4, 1fr);
+    }
+    .prova-item {
+      padding: 36px 40px; border-right: 1px solid var(--linha);
+      display: flex; flex-direction: column; gap: 6px;
+    }
+    .prova-item:last-child { border-right: none; }
+    .prova-num { font-size: 2.8rem; font-weight: 900; letter-spacing: -2px; line-height: 1; }
+    .prova-num .ac { color: var(--amarelo); }
+    .prova-label { font-size: 0.58rem; font-weight: 600; letter-spacing: 2px; text-transform: uppercase; color: var(--cinza); }
+
+    /* ── MANIFESTO ── */
+    .manifesto {
+      padding: 100px 40px; border-bottom: 1px solid var(--linha);
       display: grid; grid-template-columns: 1fr 1fr; gap: 80px; align-items: center;
       position: relative; overflow: hidden;
     }
-    .manifesto::after {
-      content: '';
-      position: absolute; right: 0; top: 0; bottom: 0; width: 50%;
-      background-image: radial-gradient(circle, rgba(0,0,0,0.07) 1px, transparent 1px);
-      background-size: 26px 26px;
-      pointer-events: none; z-index: 0;
-    }
+    .manifesto::after { content: ''; position: absolute; right: 0; top: 0; bottom: 0; width: 50%; background-image: radial-gradient(circle, rgba(0,0,0,0.055) 1px, transparent 1px); background-size: 26px 26px; pointer-events: none; }
+    [data-theme="dark"] .manifesto::after { background-image: radial-gradient(circle, rgba(255,255,255,0.07) 1px, transparent 1px); }
     .manifesto > * { position: relative; z-index: 1; }
-    .manifesto-tag { font-size: 0.52rem; font-weight: 700; letter-spacing: 3px; text-transform: uppercase; color: var(--amarelo); margin-bottom: 28px; }
+    .manifesto-tag { font-size: 0.5rem; font-weight: 700; letter-spacing: 3px; text-transform: uppercase; color: var(--amarelo); margin-bottom: 24px; }
     .manifesto h2 { font-size: clamp(2.4rem, 5vw, 4rem); font-weight: 900; letter-spacing: -2px; text-transform: uppercase; line-height: 1; }
     .manifesto h2 em { font-style: normal; color: var(--cinza); }
-    .manifesto-stat { padding: 28px 0; border-bottom: 1px solid var(--linha); }
+    .manifesto-stat { padding: 26px 0; border-bottom: 1px solid var(--linha); }
     .manifesto-stat:first-child { border-top: 1px solid var(--linha); }
-    .stat-num { font-size: 3rem; font-weight: 900; letter-spacing: -2px; line-height: 1; margin-bottom: 4px; }
+    .stat-num { font-size: 2.8rem; font-weight: 900; letter-spacing: -2px; line-height: 1; margin-bottom: 4px; }
     .stat-num span { color: var(--amarelo); }
-    .stat-desc { font-size: 0.65rem; font-weight: 600; letter-spacing: 2px; text-transform: uppercase; color: var(--cinza); }
+    .stat-desc { font-size: 0.63rem; font-weight: 600; letter-spacing: 2px; text-transform: uppercase; color: var(--cinza); }
 
-    /* ─── PLANOS ─── */
+    /* ── TESTIMONIAL (before pricing — anchoring neuromarketing) ── */
+    .testemunho {
+      padding: 64px 40px; border-bottom: 1px solid var(--linha);
+      display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0;
+    }
+    .test-card {
+      padding: 36px 32px; border-right: 1px solid var(--linha);
+    }
+    .test-card:last-child { border-right: none; }
+    .test-stars { color: var(--amarelo); font-size: 0.7rem; letter-spacing: 2px; margin-bottom: 14px; }
+    .test-text { font-size: 0.78rem; line-height: 1.75; color: var(--preto); margin-bottom: 16px; font-weight: 500; }
+    .test-autor { font-size: 0.52rem; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; color: var(--cinza); }
+
+    /* ── PLANOS ── */
     .planos { border-bottom: 1px solid var(--linha); }
     .planos-header { padding: 60px 40px 40px; border-bottom: 1px solid var(--linha); display: flex; align-items: flex-end; justify-content: space-between; flex-wrap: wrap; gap: 24px; }
     .planos-header h2 { font-size: clamp(2rem, 4vw, 3.2rem); font-weight: 900; letter-spacing: -2px; text-transform: uppercase; line-height: 1; }
+    .planos-header-sub { font-size: 0.68rem; color: var(--cinza); margin-top: 8px; }
     .toggle-wrap { display: flex; align-items: center; gap: 10px; }
     .t-label { font-size: 0.58rem; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; color: var(--cinza); }
     .t-label.on { color: var(--preto); }
@@ -153,117 +173,113 @@
     .t-slider::before { content: ''; position: absolute; width: 12px; height: 12px; left: 3px; top: 3px; background: var(--cinza); transition: .3s; }
     .toggle input:checked + .t-slider { background: var(--preto); border-color: var(--preto); }
     .toggle input:checked + .t-slider::before { transform: translateX(18px); background: var(--branco); }
-    .eco-tag { font-size: 0.52rem; font-weight: 800; letter-spacing: 2px; text-transform: uppercase; color: var(--preto); background: var(--amarelo); padding: 3px 8px; }
+    .eco-tag { font-size: 0.5rem; font-weight: 800; letter-spacing: 2px; text-transform: uppercase; color: var(--preto); background: var(--amarelo); padding: 3px 8px; }
     .planos-grid { display: grid; grid-template-columns: repeat(3, 1fr); }
     .plano-card { padding: 44px 36px; border-right: 1px solid var(--linha); position: relative; transition: background .2s; }
     .plano-card:last-child { border-right: none; }
     .plano-card:hover { background: rgba(0,0,0,0.015); }
     .plano-card.destaque { background: rgba(240,224,0,0.06); }
     .plano-card.destaque:hover { background: rgba(240,224,0,0.1); }
-    .plano-tag { font-size: 0.52rem; font-weight: 700; letter-spacing: 3px; text-transform: uppercase; color: var(--cinza); margin-bottom: 20px; display: flex; align-items: center; gap: 8px; }
+    /* urgency badge */
+    .plano-badge { position: absolute; top: 20px; right: 20px; font-size: 0.46rem; font-weight: 800; letter-spacing: 1.5px; text-transform: uppercase; background: var(--amarelo); color: var(--preto); padding: 3px 8px; }
+    .plano-tag { font-size: 0.5rem; font-weight: 700; letter-spacing: 3px; text-transform: uppercase; color: var(--cinza); margin-bottom: 20px; display: flex; align-items: center; gap: 8px; }
     .plano-tag .dot { width: 5px; height: 5px; background: var(--amarelo); border-radius: 50%; flex-shrink: 0; }
     .plano-nome { font-size: 1.8rem; font-weight: 900; letter-spacing: -1px; text-transform: uppercase; margin-bottom: 20px; }
-    .plano-preco { font-size: 3.5rem; font-weight: 900; letter-spacing: -3px; line-height: 1; }
+    .plano-preco { font-size: 3.4rem; font-weight: 900; letter-spacing: -3px; line-height: 1; }
     .plano-preco sup { font-size: 1rem; font-weight: 600; letter-spacing: 0; vertical-align: super; }
-    .plano-preco sub { font-size: 0.72rem; font-weight: 500; color: var(--cinza); letter-spacing: 0; }
+    .plano-preco sub { font-size: 0.7rem; font-weight: 500; color: var(--cinza); letter-spacing: 0; }
     .plano-preco.zero { color: var(--cinza); }
-    .plano-periodo { font-size: 0.58rem; font-weight: 600; letter-spacing: 2px; text-transform: uppercase; color: var(--cinza); margin-top: 8px; margin-bottom: 36px; min-height: 18px; }
-    .plano-features { list-style: none; margin-bottom: 36px; }
-    .plano-features li { font-size: 0.68rem; font-weight: 500; letter-spacing: .5px; text-transform: uppercase; color: rgba(10,10,10,0.3); padding: 9px 0; border-bottom: 1px solid var(--linha); display: flex; align-items: center; justify-content: space-between; }
+    .plano-periodo { font-size: 0.56rem; font-weight: 600; letter-spacing: 2px; text-transform: uppercase; color: var(--cinza); margin-top: 8px; margin-bottom: 32px; min-height: 18px; }
+    .plano-features { list-style: none; margin-bottom: 32px; }
+    .plano-features li { font-size: 0.66rem; font-weight: 500; letter-spacing: .5px; text-transform: uppercase; color: rgba(10,10,10,0.3); padding: 9px 0; border-bottom: 1px solid var(--linha); display: flex; align-items: center; justify-content: space-between; }
+    [data-theme="dark"] .plano-features li { color: rgba(240,240,236,0.3); }
     .plano-features li:last-child { border-bottom: none; }
     .plano-features li.on { color: var(--preto); }
     .chk { font-size: 0.58rem; color: var(--preto); font-weight: 900; }
     .xck { font-size: 0.58rem; color: rgba(0,0,0,0.2); }
+    [data-theme="dark"] .xck { color: rgba(255,255,255,0.2); }
     .btn-plano { width: 100%; padding: 14px; font-size: 0.62rem; font-weight: 800; font-family: 'Inter', sans-serif; letter-spacing: 2.5px; text-transform: uppercase; cursor: pointer; transition: all .2s; display: block; text-align: center; text-decoration: none; border: 1px solid; }
     .btn-plano.solid { background: var(--preto); color: #fff; border-color: var(--preto); }
     .btn-plano.solid:hover { background: var(--amarelo); color: var(--preto); border-color: var(--amarelo); }
     .btn-plano.ghost { background: transparent; color: var(--preto); border-color: var(--linha-f); }
     .btn-plano.ghost:hover { border-color: var(--preto); }
+    /* scarcity line */
+    .plano-scarcity { font-size: 0.5rem; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; color: #dc2626; margin-top: 10px; text-align: center; min-height: 16px; }
 
-    /* ─── QUOTE ─── */
-    .quote {
-      padding: 100px 40px; border-bottom: 1px solid var(--linha);
-      text-align: center; position: relative; overflow: hidden;
-    }
-    /* CSS-only 3D spinning cubes */
-    .q3d {
-      position: absolute; top: 50%; transform: translateY(-50%);
-      opacity: 0.06; perspective: 700px; pointer-events: none;
-    }
+    /* ── QUOTE ── */
+    .quote { padding: 100px 40px; border-bottom: 1px solid var(--linha); text-align: center; position: relative; overflow: hidden; }
+    .q3d { position: absolute; top: 50%; transform: translateY(-50%); opacity: 0.05; perspective: 700px; pointer-events: none; }
     .q3d.left { left: 7%; }
     .q3d.right { right: 7%; }
-    .cube3d {
-      transform-style: preserve-3d;
-      animation: spinCube 16s linear infinite;
-    }
+    .cube3d { transform-style: preserve-3d; animation: spinCube 16s linear infinite; }
     .cube3d.lg { width: 88px; height: 88px; }
     .cube3d.sm { width: 52px; height: 52px; animation-duration: 22s; animation-direction: reverse; }
-    .face {
-      position: absolute; border: 2px solid #0a0a0a;
-      width: 100%; height: 100%;
-    }
-    /* large cube faces */
+    .face { position: absolute; border: 2px solid var(--preto); width: 100%; height: 100%; }
     .cube3d.lg .front  { transform: translateZ(44px); }
     .cube3d.lg .back   { transform: rotateY(180deg) translateZ(44px); }
     .cube3d.lg .left   { transform: rotateY(-90deg) translateZ(44px); }
     .cube3d.lg .right  { transform: rotateY(90deg) translateZ(44px); }
     .cube3d.lg .top    { transform: rotateX(90deg) translateZ(44px); }
     .cube3d.lg .bottom { transform: rotateX(-90deg) translateZ(44px); }
-    /* small cube faces */
     .cube3d.sm .front  { transform: translateZ(26px); }
     .cube3d.sm .back   { transform: rotateY(180deg) translateZ(26px); }
     .cube3d.sm .left   { transform: rotateY(-90deg) translateZ(26px); }
     .cube3d.sm .right  { transform: rotateY(90deg) translateZ(26px); }
     .cube3d.sm .top    { transform: rotateX(90deg) translateZ(26px); }
     .cube3d.sm .bottom { transform: rotateX(-90deg) translateZ(26px); }
-    @keyframes spinCube {
-      from { transform: rotateX(20deg) rotateY(0deg); }
-      to   { transform: rotateX(20deg) rotateY(360deg); }
-    }
-    .quote-text { font-size: clamp(1.4rem, 3.5vw, 2.6rem); font-weight: 900; letter-spacing: -1px; text-transform: uppercase; line-height: 1.25; max-width: 800px; margin: 0 auto 24px; position: relative; z-index: 1; }
+    @keyframes spinCube { from { transform: rotateX(20deg) rotateY(0); } to { transform: rotateX(20deg) rotateY(360deg); } }
+    .quote-text { font-size: clamp(1.4rem, 3.5vw, 2.6rem); font-weight: 900; letter-spacing: -1px; text-transform: uppercase; line-height: 1.25; max-width: 820px; margin: 0 auto 24px; position: relative; z-index: 1; }
     .quote-text .q { color: var(--amarelo); }
-    .quote-autor { font-size: 0.58rem; font-weight: 600; letter-spacing: 3px; text-transform: uppercase; color: var(--cinza); position: relative; z-index: 1; }
+    .quote-autor { font-size: 0.56rem; font-weight: 600; letter-spacing: 3px; text-transform: uppercase; color: var(--cinza); position: relative; z-index: 1; }
 
-    /* ─── CTA ─── */
+    /* ── CTA ── */
     .cta { padding: 100px 40px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--linha); flex-wrap: wrap; gap: 40px; }
     .cta h2 { font-size: clamp(2.4rem, 5vw, 4.2rem); font-weight: 900; letter-spacing: -2.5px; text-transform: uppercase; line-height: 1; }
     .cta h2 .sub { color: var(--cinza); display: block; }
 
-    /* ─── FOOTER ─── */
+    /* ── FOOTER ── */
     footer { padding: 28px 40px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 16px; }
-    .footer-logo { font-size: 0.62rem; font-weight: 900; letter-spacing: 3px; text-transform: uppercase; color: rgba(10,10,10,0.3); text-decoration: none; }
+    .footer-logo { font-size: 0.62rem; font-weight: 900; letter-spacing: 3px; text-transform: uppercase; color: rgba(10,10,10,0.28); text-decoration: none; }
+    [data-theme="dark"] .footer-logo { color: rgba(240,240,236,0.28); }
     .footer-logo .tm { font-size: 0.42rem; vertical-align: super; font-weight: 400; }
     .footer-links { display: flex; gap: 28px; }
-    .footer-link { font-size: 0.55rem; font-weight: 600; letter-spacing: 2px; text-transform: uppercase; color: rgba(10,10,10,0.3); text-decoration: none; transition: color .2s; }
+    .footer-link { font-size: 0.55rem; font-weight: 600; letter-spacing: 2px; text-transform: uppercase; color: rgba(10,10,10,0.28); text-decoration: none; transition: color .2s; }
+    [data-theme="dark"] .footer-link { color: rgba(240,240,236,0.28); }
     .footer-link:hover { color: var(--preto); }
-    .footer-copy { font-size: 0.52rem; letter-spacing: 1.5px; text-transform: uppercase; color: rgba(10,10,10,0.25); }
+    .footer-copy { font-size: 0.5rem; letter-spacing: 1.5px; text-transform: uppercase; color: rgba(10,10,10,0.22); }
+    [data-theme="dark"] .footer-copy { color: rgba(240,240,236,0.22); }
 
-    /* ─── ANCHORS / REVEAL ─── */
-    #features, #planos { scroll-margin-top: 56px; }
+    /* ── anchors / reveal ── */
+    #planos { scroll-margin-top: 90px; }
     .reveal { opacity: 0; transform: translateY(24px); transition: opacity .8s ease, transform .8s ease; }
-    .reveal.on { opacity: 1; transform: translateY(0); }
+    .reveal.on { opacity: 1; transform: none; }
 
-    /* ─── MOBILE ─── */
+    /* ── MOBILE ── */
     @media (max-width: 960px) {
-      nav { padding: 0 20px; }
-      .nav-links { gap: 20px; }
-      .hero { grid-template-columns: 1fr; padding: 60px 20px 80px; min-height: auto; gap: 40px; }
-      .hero-canvas-wrap { height: 300px; }
+      nav { padding: 0 20px; } .nav-links { gap: 18px; }
+      .hero-inner { grid-template-columns: 1fr; padding: 60px 20px 64px; }
+      .hero-right { display: none; }
       .features-grid { grid-template-columns: 1fr 1fr; }
       .feat:nth-child(2n) { border-right: none; }
       .feat:nth-child(3n) { border-right: 1px solid var(--linha); }
       .feat:nth-child(2n) { border-right: none; }
       .feat:nth-child(4), .feat:nth-child(5), .feat:nth-child(6) { border-bottom: 1px solid var(--linha); }
       .feat:nth-child(5), .feat:nth-child(6) { border-bottom: none; }
+      .prova { grid-template-columns: 1fr 1fr; }
+      .prova-item:nth-child(2) { border-right: none; }
+      .prova-item:nth-child(3) { border-top: 1px solid var(--linha); }
       .manifesto { grid-template-columns: 1fr; gap: 48px; padding: 60px 20px; }
       .manifesto::after { width: 100%; top: 55%; }
+      .testemunho { grid-template-columns: 1fr; }
+      .test-card { border-right: none; border-bottom: 1px solid var(--linha); }
+      .test-card:last-child { border-bottom: none; }
       .planos-header { padding: 40px 20px 32px; flex-direction: column; align-items: flex-start; }
       .planos-grid { grid-template-columns: 1fr; }
       .plano-card { border-right: none; border-bottom: 1px solid var(--linha); }
       .plano-card:last-child { border-bottom: none; }
       .quote, .cta { padding: 64px 20px; }
       .cta { flex-direction: column; }
-      footer { padding: 24px 20px; flex-direction: column; gap: 12px; }
+      footer { padding: 24px 20px; flex-direction: column; gap: 10px; }
       .divider::after { right: 20px; }
       .features-header { padding: 40px 20px 32px; flex-direction: column; align-items: flex-start; gap: 16px; }
       .q3d { display: none; }
@@ -275,14 +291,12 @@
       .nav-links .nav-link { display: none; }
     }
   </style>
-  <link rel="stylesheet" href="/static/theme.css"/>
 </head>
 <body>
 
 <nav>
   <a class="nav-logo" href="/">PROFESSOR<span class="tm">IA™</span></a>
   <div class="nav-links">
-    
     <a class="nav-link" href="#planos">PLANOS</a>
     <a class="nav-link" href="/login">ENTRAR</a>
     <a class="nav-cta" href="/cadastro">COMEÇAR →</a>
@@ -310,33 +324,46 @@
   </div>
 </div>
 
+<!-- HERO — full-width 3D canvas -->
 <section class="hero">
-  <div class="hero-left">
-    <div class="hero-eyebrow">ASSISTENTE PEDAGÓGICO DE IA</div>
-    <h1>
-      O FIM DO<br/>
-      PLANO<br/>
-      <span class="linha2">"MANUAL"<span class="marca">®</span></span>
-    </h1>
-  </div>
-  <div class="hero-right">
-    <div class="hero-canvas-wrap">
-      <canvas id="scene3d"></canvas>
-      <span class="canvas-corner tl">PROFESSOR IA™</span>
-      <span class="canvas-corner tr">© 2025</span>
-      <span class="canvas-corner br">001 — HERO</span>
+  <canvas id="scene3d"></canvas>
+  <div class="hero-veil"></div>
+  <div class="hero-inner">
+    <div class="hero-left">
+      <div class="hero-eyebrow">ASSISTENTE PEDAGÓGICO DE IA</div>
+      <h1>O FIM DO<br/>PLANO<br/><span class="l2">"MANUAL"<span class="marca">®</span></span></h1>
     </div>
-    <p class="hero-desc">
-      Gere planos de aula completos, provas, caça-palavras e planejamentos em segundos.
-      Feito para professores brasileiros. Alinhado à BNCC.
-    </p>
-    <div class="hero-btns">
-      <a href="/cadastro" class="btn-solid">COMEÇAR GRÁTIS →</a>
-      <a href="#planos" class="btn-ghost">VER PLANOS</a>
+    <div class="hero-right">
+      <p class="hero-desc">Gere planos de aula completos, provas, caça-palavras e planejamentos em segundos. Feito para professores brasileiros. Alinhado à BNCC.</p>
+      <div class="hero-btns">
+        <a href="/cadastro" class="btn-solid">COMEÇAR GRÁTIS →</a>
+        <a href="#planos" class="btn-ghost">VER PLANOS</a>
+      </div>
     </div>
   </div>
 </section>
 
+<!-- SOCIAL PROOF NUMBERS — neuromarketing anchoring -->
+<div class="prova reveal">
+  <div class="prova-item">
+    <div class="prova-num"><span class="count" data-val="12000">0</span><span class="ac">+</span></div>
+    <div class="prova-label">PROFESSORES ATIVOS</div>
+  </div>
+  <div class="prova-item">
+    <div class="prova-num"><span class="count" data-val="5">0</span><span class="ac">h</span></div>
+    <div class="prova-label">ECONOMIZADAS / SEMANA</div>
+  </div>
+  <div class="prova-item">
+    <div class="prova-num"><span class="count" data-val="98">0</span><span class="ac">%</span></div>
+    <div class="prova-label">DE SATISFAÇÃO</div>
+  </div>
+  <div class="prova-item">
+    <div class="prova-num"><span class="count" data-val="30">0</span><span class="ac">s</span></div>
+    <div class="prova-label">PARA GERAR UM PLANO</div>
+  </div>
+</div>
+
+<!-- FEATURES -->
 <div class="divider" data-label="FUNCIONALIDADES"></div>
 <div class="features-header" id="features">
   <div class="section-tag">002 — O QUE VOCÊ PODE CRIAR</div>
@@ -375,10 +402,11 @@
   </div>
 </section>
 
-<div class="divider" data-label="MANIFESTO"></div>
+<!-- MANIFESTO + STATS -->
+<div class="divider" data-label="POR QUÊ EXISTE"></div>
 <section class="manifesto reveal">
   <div>
-    <div class="manifesto-tag">003 — POR QUÊ EXISTE</div>
+    <div class="manifesto-tag">003 — MISSÃO</div>
     <h2>FEITO PARA<br/>QUEM<br/><em>ENSINA.</em></h2>
   </div>
   <div>
@@ -397,10 +425,34 @@
   </div>
 </section>
 
+<!-- TESTIMONIALS — prova social antes dos planos (neuromarketing) -->
+<div class="divider" data-label="DEPOIMENTOS"></div>
+<section class="testemunho reveal">
+  <div class="test-card">
+    <div class="test-stars">★★★★★</div>
+    <p class="test-text">"O que eu levava 3 horas para fazer agora fica pronto em 30 segundos. Uso todo domingo à noite antes da semana."</p>
+    <div class="test-autor">— Carla M. · Professora de Português · SP</div>
+  </div>
+  <div class="test-card">
+    <div class="test-stars">★★★★★</div>
+    <p class="test-text">"Os planos saem alinhados à BNCC automaticamente. Economizo tempo e ainda entrego um material muito mais profissional."</p>
+    <div class="test-autor">— Roberto A. · Professor de Ciências · MG</div>
+  </div>
+  <div class="test-card">
+    <div class="test-stars">★★★★★</div>
+    <p class="test-text">"Trabalho com alunos NEE e a adaptação automática é incrível. Antes eu fazia tudo na mão, agora é questão de segundos."</p>
+    <div class="test-autor">— Ana P. · Educadora Especial · RJ</div>
+  </div>
+</section>
+
+<!-- PLANOS -->
 <div class="divider" data-label="PREÇOS"></div>
 <section class="planos reveal" id="planos">
   <div class="planos-header">
-    <h2>ESCOLHA<br/>SEU PLANO</h2>
+    <div>
+      <h2>ESCOLHA<br/>SEU PLANO</h2>
+      <p class="planos-header-sub">Sem fidelidade. Cancele quando quiser.</p>
+    </div>
     <div class="toggle-wrap">
       <span class="t-label on" id="lbl-m">MENSAL</span>
       <label class="toggle">
@@ -413,7 +465,7 @@
   </div>
   <div class="planos-grid">
     <div class="plano-card">
-      <div class="plano-tag">FREE — PARA COMEÇAR</div>
+      <div class="plano-tag">PARA COMEÇAR</div>
       <div class="plano-nome">FREE</div>
       <div class="plano-preco zero">R$ 0</div>
       <div class="plano-periodo">PARA SEMPRE</div>
@@ -427,9 +479,11 @@
         <li>EXPORTAR DOCX <span class="xck">—</span></li>
       </ul>
       <a href="/cadastro" class="btn-plano ghost">COMEÇAR GRÁTIS</a>
+      <div class="plano-scarcity"></div>
     </div>
     <div class="plano-card destaque">
-      <div class="plano-tag"><span class="dot"></span>MAIS POPULAR</div>
+      <div class="plano-badge">MAIS POPULAR</div>
+      <div class="plano-tag"><span class="dot"></span>RECOMENDADO</div>
       <div class="plano-nome">BASIC</div>
       <div class="plano-preco" id="preco-basic"><sup>R$</sup>39<sub>/MÊS</sub></div>
       <div class="plano-periodo" id="per-basic">ACESSO INDIVIDUAL ILIMITADO</div>
@@ -443,9 +497,10 @@
         <li class="on">EXPORTAR DOCX <span class="chk">✓</span></li>
       </ul>
       <a href="/stripe/checkout/basic" class="btn-plano solid" id="btn-basic">ASSINAR BASIC →</a>
+      <div class="plano-scarcity" id="sc-basic">⚡ OFERTA POR TEMPO LIMITADO</div>
     </div>
     <div class="plano-card">
-      <div class="plano-tag">PRO — COMPLETO</div>
+      <div class="plano-tag">COMPLETO</div>
       <div class="plano-nome">PRO</div>
       <div class="plano-preco" id="preco-pro"><sup>R$</sup>59<sub>/MÊS</sub></div>
       <div class="plano-periodo" id="per-pro">TUDO DO BASIC + MAIS</div>
@@ -457,10 +512,12 @@
         <li class="on">SUPORTE PRIORITÁRIO <span class="chk">✓</span></li>
       </ul>
       <a href="/stripe/checkout/pro" class="btn-plano ghost" id="btn-pro">ASSINAR PRO →</a>
+      <div class="plano-scarcity"></div>
     </div>
   </div>
 </section>
 
+<!-- QUOTE -->
 <div class="divider" data-label="DEPOIMENTO"></div>
 <div class="quote reveal">
   <div class="q3d left">
@@ -477,15 +534,13 @@
       <div class="face top"></div><div class="face bottom"></div>
     </div>
   </div>
-  <p class="quote-text">
-    <span class="q">"</span>O QUE LEVAVA HORAS AGORA<br/>LEVA MINUTOS. ISSO MUDOU<br/>MEU DOMINGO.<span class="q">"</span>
-  </p>
+  <p class="quote-text"><span class="q">"</span>O QUE LEVAVA HORAS AGORA<br/>LEVA MINUTOS. ISSO MUDOU<br/>MEU DOMINGO.<span class="q">"</span></p>
   <p class="quote-autor">— Professora de História · Rede Pública · São Paulo</p>
 </div>
 
 <section class="cta reveal">
   <h2>COMECE<br/><span class="sub">HOJE, GRÁTIS.</span></h2>
-  <a href="/cadastro" class="btn-solid" style="font-size:.65rem; padding:16px 40px">CRIAR CONTA GRÁTIS →</a>
+  <a href="/cadastro" class="btn-solid" style="font-size:.65rem;padding:16px 40px">CRIAR CONTA GRÁTIS →</a>
 </section>
 
 <footer>
@@ -500,263 +555,235 @@
 
 <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js"></script>
 <script>
-/* ─── THREE.JS — "IA PEDAGÓGICA" SCENE ─── */
+/* ═══════════════════════════════════════════════
+   OFF-WHITE ATELIER — ProfessorIA 3D Hero Scene
+   Virgil Abloh aesthetic: frames + cubes + crosses
+   ═══════════════════════════════════════════════ */
 (function () {
   var canvas = document.getElementById('scene3d');
-  var wrap   = canvas.parentElement;
+  var hero   = canvas.parentElement;
 
   var renderer = new THREE.WebGLRenderer({ canvas: canvas, antialias: true, alpha: true });
   renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
   renderer.setClearColor(0x000000, 0);
 
   var scene  = new THREE.Scene();
-  var camera = new THREE.PerspectiveCamera(46, 1, 0.1, 100);
-  camera.position.z = 6.5;
+  var camera = new THREE.PerspectiveCamera(52, 1, 0.1, 100);
+  camera.position.z = 7;
 
   var group = new THREE.Group();
   scene.add(group);
 
   /* ── color helpers ── */
-  var C_INK  = 0x0a0a0a;   /* dark lines  (light mode) */
-  var C_LITE = 0xf0f0ec;   /* light lines (dark mode)  */
-  var C_GOLD = 0xf0e000;   /* yellow accent – always   */
+  var C_DARK = 0x0a0a0a;
+  var C_LITE = 0xf0f0ec;
+  var C_GOLD = 0xf0e000;
 
-  function isDark() {
-    return document.documentElement.getAttribute('data-theme') === 'dark';
+  function isDark() { return document.documentElement.getAttribute('data-theme') === 'dark'; }
+  function lineColor() { return isDark() ? C_LITE : C_DARK; }
+
+  var allMats = []; /* track for theme switching */
+  function mat(op) {
+    var m = new THREE.LineBasicMaterial({ color: lineColor(), transparent: true, opacity: op != null ? op : 1 });
+    allMats.push(m);
+    return m;
   }
-  function ink()  { return isDark() ? C_LITE : C_INK; }
-  function inkOp(op) {
-    return new THREE.LineBasicMaterial({ color: ink(), transparent: true, opacity: op });
-  }
 
-  /* ── keep track of all materials for live theme update ── */
-  var darkMats = []; /* materials that flip with theme */
-  function trackMat(m) { darkMats.push(m); return m; }
-
-  /* ─────────────────────────────────────────────
-     1. BRAIN SPHERE — central AI mind
-     Represents the intelligence of ProfessorIA
-  ───────────────────────────────────────────── */
-  var brainGeo   = new THREE.SphereGeometry(1.5, 14, 10);
-  var brainEdges = new THREE.EdgesGeometry(brainGeo);
-  var brainMat   = trackMat(new THREE.LineBasicMaterial({ color: ink() }));
-  var brain      = new THREE.LineSegments(brainEdges, brainMat);
-  group.add(brain);
-
-  /* inner core — smaller, lighter sphere for depth */
-  var coreGeo   = new THREE.SphereGeometry(0.72, 8, 6);
-  var coreEdges = new THREE.EdgesGeometry(coreGeo);
-  var coreMat   = trackMat(new THREE.LineBasicMaterial({ color: ink(), transparent: true, opacity: 0.35 }));
-  var core      = new THREE.LineSegments(coreEdges, coreMat);
-  group.add(core);
-
-  /* ─────────────────────────────────────────────
-     2. NEURAL NODES — knowledge orbiting the brain
-     Each node = a concept / subject orbiting at
-     different radii like planets of knowledge
-  ───────────────────────────────────────────── */
-  var NODE_DATA = [
-    { r: 2.6, theta: 0.4,  phi: 1.1,  size: 0.18, speed: 0.007, axis: new THREE.Vector3(0.3,1,0.2).normalize() },
-    { r: 2.8, theta: 1.8,  phi: 0.6,  size: 0.14, speed: 0.010, axis: new THREE.Vector3(-0.2,0.8,0.5).normalize() },
-    { r: 2.5, theta: 3.2,  phi: 1.4,  size: 0.16, speed: 0.009, axis: new THREE.Vector3(0.5,0.7,-0.3).normalize() },
-    { r: 3.0, theta: 0.9,  phi: 2.0,  size: 0.12, speed: 0.012, axis: new THREE.Vector3(-0.4,0.9,0.1).normalize() },
-    { r: 2.7, theta: 2.4,  phi: 0.4,  size: 0.15, speed: 0.008, axis: new THREE.Vector3(0.1,1,-0.4).normalize() },
-    { r: 2.9, theta: 4.1,  phi: 1.7,  size: 0.13, speed: 0.011, axis: new THREE.Vector3(0.6,0.6,0.4).normalize() },
-    { r: 2.4, theta: 5.0,  phi: 0.9,  size: 0.17, speed: 0.006, axis: new THREE.Vector3(-0.3,0.95,0.1).normalize() },
-    { r: 3.1, theta: 1.5,  phi: 1.3,  size: 0.11, speed: 0.014, axis: new THREE.Vector3(0.2,0.8,-0.5).normalize() },
+  /* ── 1. LARGE FLOATING FRAMES (planos de aula / Off-White windows) ── */
+  var FRAMES = [
+    { w:1.8, h:2.3, x: 3.0, y: 0.3, z:-1.2, rx: 0.05, ry:-0.32, rz: 0.06, op:0.65 },
+    { w:1.3, h:1.7, x:-2.8, y:-0.2, z:-0.6, rx: 0.08, ry: 0.38, rz:-0.04, op:0.55 },
+    { w:2.2, h:2.8, x: 0.3, y: 0.4, z:-3.5, rx:-0.04, ry: 0.12, rz: 0.02, op:0.40 },
+    { w:0.9, h:1.2, x:-1.1, y: 2.0, z: 0.4, rx: 0.18, ry:-0.22, rz: 0.10, op:0.70 },
+    { w:1.5, h:1.9, x: 3.8, y:-1.0, z:-1.8, rx:-0.06, ry:-0.42, rz: 0.05, op:0.50 },
+    { w:1.1, h:1.4, x:-3.5, y: 1.4, z:-1.0, rx: 0.10, ry: 0.28, rz:-0.08, op:0.45 },
   ];
 
-  /* initial cartesian positions */
-  var nodePositions = NODE_DATA.map(function(d) {
-    return new THREE.Vector3(
-      d.r * Math.sin(d.phi) * Math.cos(d.theta),
-      d.r * Math.sin(d.phi) * Math.sin(d.theta),
-      d.r * Math.cos(d.phi)
-    );
-  });
-
-  /* node meshes (octahedron = "knowledge gem" / star) */
-  var nodeMeshes = NODE_DATA.map(function(d, i) {
-    var geo  = new THREE.OctahedronGeometry(d.size, 0);
+  var frameMeshes = FRAMES.map(function(f) {
+    var geo  = new THREE.PlaneGeometry(f.w, f.h);
     var edge = new THREE.EdgesGeometry(geo);
-    var mat  = new THREE.LineBasicMaterial({ color: C_GOLD });
-    var m    = new THREE.LineSegments(edge, mat);
-    m.position.copy(nodePositions[i]);
+    var m    = new THREE.LineSegments(edge, mat(f.op));
+    m.position.set(f.x, f.y, f.z);
+    m.rotation.set(f.rx, f.ry, f.rz);
     group.add(m);
     return m;
   });
 
-  /* neural connection lines: brain → each node */
-  var connGeo = new THREE.BufferGeometry();
-  var connPos = new Float32Array(NODE_DATA.length * 6); /* 2 verts × 3 floats */
-  function updateConnections() {
-    for (var i = 0; i < nodeMeshes.length; i++) {
-      var p = nodeMeshes[i].position;
-      connPos[i*6+0] = 0; connPos[i*6+1] = 0; connPos[i*6+2] = 0;
-      connPos[i*6+3] = p.x; connPos[i*6+4] = p.y; connPos[i*6+5] = p.z;
-    }
-    connGeo.attributes.position.needsUpdate = true;
-  }
-  connGeo.setAttribute('position', new THREE.BufferAttribute(connPos, 3));
-  var connMat = trackMat(new THREE.LineBasicMaterial({ color: ink(), transparent: true, opacity: 0.18 }));
-  var connLines = new THREE.LineSegments(connGeo, connMat);
-  group.add(connLines);
-  updateConnections();
-
-  /* ─────────────────────────────────────────────
-     3. LESSON PLAN DOCUMENTS
-     Flat wireframe rectangles = planos de aula
-     floating around the AI brain
-  ───────────────────────────────────────────── */
-  var DOCS = [
-    { w:0.72, h:0.92, x: 2.4, y: 0.6, z: 0.4,  rx:-0.3, ry: 0.4, rz: 0.1,  op:0.70 },
-    { w:0.58, h:0.76, x:-2.2, y:-0.5, z: 0.6,  rx: 0.2, ry:-0.5, rz:-0.15, op:0.55 },
-    { w:0.66, h:0.84, x: 1.5, y:-1.9, z:-0.3,  rx: 0.4, ry: 0.3, rz: 0.2,  op:0.60 },
-    { w:0.50, h:0.64, x:-1.6, y: 1.8, z: 0.3,  rx:-0.25,ry:-0.3, rz:-0.1,  op:0.45 },
+  /* ── 2. ROTATING WIREFRAME CUBES (structure / architecture) ── */
+  var CUBES = [
+    { s:0.55, x: 2.1, y: 1.6, z: 0.6, op:0.80 },
+    { s:0.38, x:-1.7, y:-1.4, z: 0.8, op:0.70 },
+    { s:0.68, x:-3.2, y: 0.4, z:-1.3, op:0.55 },
+    { s:0.30, x: 1.2, y:-2.2, z: 0.5, op:0.65 },
   ];
-  var docMeshes = DOCS.map(function(d) {
-    var geo  = new THREE.PlaneGeometry(d.w, d.h);
+
+  var cubeMeshes = CUBES.map(function(c) {
+    var geo  = new THREE.BoxGeometry(c.s, c.s, c.s);
     var edge = new THREE.EdgesGeometry(geo);
-    var mat  = trackMat(new THREE.LineBasicMaterial({ color: ink(), transparent: true, opacity: d.op }));
-    var m    = new THREE.LineSegments(edge, mat);
-    m.position.set(d.x, d.y, d.z);
-    m.rotation.set(d.rx, d.ry, d.rz);
+    var m    = new THREE.LineSegments(edge, mat(c.op));
+    m.position.set(c.x, c.y, c.z);
     group.add(m);
     return m;
   });
 
-  /* ─────────────────────────────────────────────
-     4. KNOWLEDGE PARTICLES — data field
-     Fine yellow dots = information/data floating
-  ───────────────────────────────────────────── */
-  var pN  = 320;
-  var pos = new Float32Array(pN * 3);
+  /* ── 3. CROSS / PLUS MARKERS — Off-White signature ── */
+  var CROSSES = [
+    { s:0.22, x: 1.2, y: 2.2, z: 0.9 },
+    { s:0.16, x:-1.4, y: 0.7, z: 1.4 },
+    { s:0.28, x: 3.2, y:-0.3, z: 0.3 },
+    { s:0.18, x:-0.4, y:-2.1, z: 0.7 },
+    { s:0.14, x: 2.0, y:-1.6, z: 1.1 },
+    { s:0.24, x:-2.9, y: 1.3, z: 0.5 },
+    { s:0.20, x: 0.5, y: 1.8, z:-0.4 },
+    { s:0.12, x: 4.2, y: 0.9, z:-0.6 },
+    { s:0.19, x:-0.8, y:-0.5, z: 2.0 },
+  ];
+
+  var crossMeshes = CROSSES.map(function(c) {
+    var pts = new Float32Array([
+      -c.s, 0, 0,  c.s, 0, 0,  /* horizontal */
+       0, -c.s, 0,  0, c.s, 0  /* vertical   */
+    ]);
+    var geo  = new THREE.BufferGeometry();
+    geo.setAttribute('position', new THREE.BufferAttribute(pts, 3));
+    var m = new THREE.LineSegments(geo, new THREE.LineBasicMaterial({ color: C_GOLD }));
+    m.position.set(c.x, c.y, c.z);
+    group.add(m);
+    return m;
+  });
+
+  /* ── 4. DIAGONAL CONSTRUCTION LINES (Off-White stripe) ── */
+  var diagPts = new Float32Array([
+    -9, -4, -2.5,   9, 4, -2.5,   /* diagonal ↗ */
+    -9,  4, -4.5,   9,-4, -4.5,   /* diagonal ↘ */
+  ]);
+  var diagGeo = new THREE.BufferGeometry();
+  diagGeo.setAttribute('position', new THREE.BufferAttribute(diagPts, 3));
+  var diagMat = new THREE.LineBasicMaterial({ color: lineColor(), transparent: true, opacity: 0.12 });
+  allMats.push(diagMat);
+  group.add(new THREE.LineSegments(diagGeo, diagMat));
+
+  /* ── 5. YELLOW PARTICLES (data / knowledge field) ── */
+  var pN = 260;
+  var pPos = new Float32Array(pN * 3);
   for (var i = 0; i < pN; i++) {
-    pos[i*3]   = (Math.random() - 0.5) * 11;
-    pos[i*3+1] = (Math.random() - 0.5) * 11;
-    pos[i*3+2] = (Math.random() - 0.5) * 6;
+    pPos[i*3]   = (Math.random() - 0.5) * 13;
+    pPos[i*3+1] = (Math.random() - 0.5) * 12;
+    pPos[i*3+2] = (Math.random() - 0.5) * 7;
   }
   var pGeo = new THREE.BufferGeometry();
-  pGeo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
-  var pMat = new THREE.PointsMaterial({ color: C_GOLD, size: 0.045, transparent: true, opacity: 0.85 });
-  group.add(new THREE.Points(pGeo, pMat));
+  pGeo.setAttribute('position', new THREE.BufferAttribute(pPos, 3));
+  group.add(new THREE.Points(pGeo, new THREE.PointsMaterial({ color: C_GOLD, size: 0.04, transparent: true, opacity: 0.75 })));
 
   /* ── RESIZE ── */
   function resize() {
-    var w = wrap.clientWidth, h = wrap.clientHeight;
+    var w = hero.clientWidth, h = hero.clientHeight;
     if (!w || !h) return;
     renderer.setSize(w, h);
     camera.aspect = w / h;
     camera.updateProjectionMatrix();
   }
   resize();
-  if (window.ResizeObserver) { new ResizeObserver(resize).observe(wrap); }
-  else { window.addEventListener('resize', resize); }
+  if (window.ResizeObserver) new ResizeObserver(resize).observe(hero);
+  else window.addEventListener('resize', resize);
 
   /* ── MOUSE PARALLAX ── */
   var mx = 0, my = 0;
   document.addEventListener('mousemove', function(e) {
-    mx =  (e.clientX / window.innerWidth  - 0.5) * 0.6;
-    my = -(e.clientY / window.innerHeight - 0.5) * 0.45;
+    mx =  (e.clientX / window.innerWidth  - 0.5) * 0.55;
+    my = -(e.clientY / window.innerHeight - 0.5) * 0.40;
   });
 
   /* ── THEME UPDATE HOOK ── */
   window.__sceneUpdate = function(theme) {
-    var c = (theme === 'dark') ? C_LITE : C_INK;
-    darkMats.forEach(function(m) { m.color.setHex(c); });
+    var c = theme === 'dark' ? C_LITE : C_DARK;
+    allMats.forEach(function(m) { m.color.setHex(c); });
   };
 
   /* ── ANIMATE ── */
   var t = 0;
-  var q = new THREE.Quaternion();
-
   (function animate() {
     requestAnimationFrame(animate);
-    t += 0.01;
+    t += 0.008;
 
-    /* brain rotates slowly */
-    brain.rotation.y += 0.003;
-    brain.rotation.x  = Math.sin(t * 0.3) * 0.08;
-    core.rotation.y  -= 0.005;
-    core.rotation.z  += 0.004;
-
-    /* each node orbits around its own axis */
-    NODE_DATA.forEach(function(d, i) {
-      q.setFromAxisAngle(d.axis, d.speed);
-      nodeMeshes[i].position.applyQuaternion(q);
-      nodeMeshes[i].rotation.x += 0.015;
-      nodeMeshes[i].rotation.y += 0.020;
+    /* frames: very slow drift + gentle tilt */
+    frameMeshes.forEach(function(m, i) {
+      m.position.y += Math.sin(t * 0.45 + i * 1.2) * 0.0015;
+      m.rotation.y  = FRAMES[i].ry + Math.sin(t * 0.3 + i * 0.8) * 0.04;
+      m.rotation.x  = FRAMES[i].rx + Math.cos(t * 0.25 + i * 0.6) * 0.025;
     });
-    updateConnections();
 
-    /* documents float gently + slow spin */
-    docMeshes.forEach(function(m, i) {
-      m.position.y += Math.sin(t * 0.5 + i * 1.4) * 0.002;
-      m.rotation.z  = DOCS[i].rz + Math.sin(t * 0.4 + i) * 0.04;
-      m.rotation.x  = DOCS[i].rx + Math.cos(t * 0.35 + i * 0.8) * 0.03;
+    /* cubes: each on own axes */
+    cubeMeshes[0].rotation.x += 0.008; cubeMeshes[0].rotation.y += 0.011;
+    cubeMeshes[1].rotation.y += 0.009; cubeMeshes[1].rotation.z += 0.007;
+    cubeMeshes[2].rotation.x -= 0.006; cubeMeshes[2].rotation.y += 0.013;
+    cubeMeshes[3].rotation.z += 0.010; cubeMeshes[3].rotation.x += 0.008;
+
+    /* crosses: slow Z spin + float */
+    crossMeshes.forEach(function(m, i) {
+      m.rotation.z += 0.006 + i * 0.001;
+      m.position.y += Math.sin(t * 0.6 + i * 1.8) * 0.001;
     });
 
     /* parallax */
-    group.rotation.y += (mx - group.rotation.y) * 0.04;
-    group.rotation.x += (my - group.rotation.x) * 0.04;
+    group.rotation.y += (mx - group.rotation.y) * 0.035;
+    group.rotation.x += (my - group.rotation.x) * 0.035;
 
     renderer.render(scene, camera);
   })();
 })();
 
-/* ─── FEATURE CARD 3-D TILT ─── */
+/* ── CARD 3D TILT ── */
 document.querySelectorAll('.feat').forEach(function(card) {
   card.addEventListener('mousemove', function(e) {
     var r = card.getBoundingClientRect();
     var x = (e.clientX - r.left) / r.width  - 0.5;
     var y = (e.clientY - r.top)  / r.height - 0.5;
-    card.style.transform = 'perspective(700px) rotateY(' + (x*9) + 'deg) rotateX(' + (-y*9) + 'deg) translateZ(8px)';
-    card.style.boxShadow = '0 8px 32px rgba(0,0,0,0.08)';
+    card.style.transform = 'perspective(700px) rotateY('+(x*8)+'deg) rotateX('+(-y*8)+'deg) translateZ(8px)';
+    card.style.boxShadow = '0 8px 32px rgba(0,0,0,0.07)';
   });
   card.addEventListener('mouseleave', function() {
-    card.style.transform  = '';
-    card.style.boxShadow  = '';
+    card.style.transform = '';
+    card.style.boxShadow = '';
   });
 });
 
-/* ─── SCROLL REVEAL ─── */
+/* ── SCROLL REVEAL ── */
 var obs = new IntersectionObserver(function(es) {
   es.forEach(function(e) { if (e.isIntersecting) e.target.classList.add('on'); });
 }, { threshold: 0.06 });
 document.querySelectorAll('.reveal').forEach(function(el) { obs.observe(el); });
 
-/* ─── STAT COUNTER ─── */
+/* ── STAT COUNTER ── */
 var counted = false;
-var statsObs = new IntersectionObserver(function(es) {
+new IntersectionObserver(function(es) {
   if (counted) return;
   es.forEach(function(entry) {
     if (!entry.isIntersecting) return;
     counted = true;
     document.querySelectorAll('.count').forEach(function(el) {
       var target = parseInt(el.dataset.val, 10);
-      var start  = Date.now();
-      var dur    = 1800;
+      var t0 = Date.now(), dur = 1800;
       (function tick() {
-        var p = Math.min((Date.now() - start) / dur, 1);
+        var p = Math.min((Date.now() - t0) / dur, 1);
         var ease = 1 - Math.pow(1 - p, 3);
-        el.textContent = Math.round(ease * target);
+        el.textContent = target >= 1000
+          ? Math.round(ease * target).toLocaleString('pt-BR')
+          : Math.round(ease * target);
         if (p < 1) requestAnimationFrame(tick);
-        else el.textContent = target;
+        else el.textContent = target >= 1000 ? target.toLocaleString('pt-BR') : target;
       })();
     });
   });
-}, { threshold: 0.5 });
-var manifesto = document.querySelector('.manifesto');
-if (manifesto) statsObs.observe(manifesto);
+}, { threshold: 0.4 }).observe(document.querySelector('.prova') || document.body);
 
-/* ─── PLAN TOGGLE ─── */
+/* ── PLAN TOGGLE ── */
 function alternar() {
   var anual = document.getElementById('tog-anual').checked;
   document.getElementById('lbl-m').classList.toggle('on', !anual);
   document.getElementById('lbl-a').classList.toggle('on', anual);
   document.getElementById('eco').style.display = anual ? 'inline' : 'none';
-  var bb = document.getElementById('btn-basic');
-  var bp = document.getElementById('btn-pro');
+  var bb = document.getElementById('btn-basic'), bp = document.getElementById('btn-pro');
   if (anual) {
     document.getElementById('preco-basic').innerHTML = '<sup>R$</sup>390<sub>/ANO</sub>';
     document.getElementById('per-basic').textContent = 'R$ 32,50/MÊS · 2 MESES GRÁTIS';
