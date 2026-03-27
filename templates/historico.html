@@ -3,374 +3,121 @@
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Histórico — Plano de Aula IA</title>
+  <title>Histórico — ProfessorIA</title>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet"/>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
-    :root {
-      --preto: #0a0a0a;
-      --branco: #ffffff;
-      --cinza-100: #f5f5f5;
-      --cinza-200: #e2e2e2;
-      --cinza-400: #a0a0a0;
-      --cinza-600: #555555;
-      --azul: #2b4fc7;
-      --linha: #e2e2e2;
-    }
-
-    body {
-      font-family: 'Inter', sans-serif;
-      background: var(--branco);
-      color: var(--preto);
-      min-height: 100vh;
-    }
-
-    .top-bar {
-      height: 3px;
-      background: var(--azul);
-    }
+    :root { --preto: #0a0a0a; --branco: #f5f4f0; --amarelo: #f0e000; --cinza: #888880; --cinza-escuro: #2a2a28; --linha: rgba(245,244,240,0.08); }
+    body { font-family: 'Inter', sans-serif; background: var(--preto); color: var(--branco); min-height: 100vh; }
+    ::selection { background: var(--amarelo); color: var(--preto); }
 
     nav {
-      padding: 0 40px;
-      height: 60px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
+      padding: 0 40px; height: 56px;
+      display: flex; align-items: center; justify-content: space-between;
       border-bottom: 1px solid var(--linha);
-      position: sticky;
-      top: 0;
-      background: var(--branco);
-      z-index: 100;
+      position: sticky; top: 0; z-index: 10;
+      background: rgba(10,10,10,0.95); backdrop-filter: blur(12px);
     }
+    .nav-logo { font-size: 0.72rem; font-weight: 900; letter-spacing: 3px; text-transform: uppercase; color: var(--branco); text-decoration: none; display: flex; align-items: center; gap: 10px; }
+    .nav-logo .tm { font-size: 0.5rem; vertical-align: super; opacity: 0.4; font-weight: 400; }
+    .nav-links { display: flex; gap: 32px; align-items: center; }
+    .nav-link { font-size: 0.62rem; font-weight: 600; letter-spacing: 2px; text-transform: uppercase; color: var(--cinza); text-decoration: none; transition: color .2s; }
+    .nav-link:hover, .nav-link.on { color: var(--branco); }
 
-    .nav-logo {
-      font-weight: 800;
-      font-size: 0.92rem;
-      letter-spacing: .5px;
-      text-transform: uppercase;
-      color: var(--preto);
-      text-decoration: none;
-    }
+    .page-header { padding: 60px 40px 48px; border-bottom: 1px solid var(--linha); max-width: 960px; margin: 0 auto; }
+    .page-tag { font-size: 0.55rem; font-weight: 700; letter-spacing: 3px; text-transform: uppercase; color: var(--amarelo); margin-bottom: 20px; display: flex; align-items: center; gap: 12px; }
+    .page-tag::before { content: ''; width: 24px; height: 1px; background: var(--amarelo); }
+    h1 { font-size: clamp(2.2rem, 5vw, 3.5rem); font-weight: 900; letter-spacing: -2.5px; text-transform: uppercase; line-height: 1; margin-bottom: 10px; }
+    .page-sub { font-size: 0.78rem; color: var(--cinza); }
 
-    .nav-logo span { color: var(--azul); }
+    .container { max-width: 960px; margin: 0 auto; padding: 0 40px 100px; }
 
-    .nav-link {
-      font-size: 0.82rem;
-      font-weight: 600;
-      color: var(--preto);
-      text-decoration: none;
-      letter-spacing: .3px;
-    }
-
-    /* ── Header ── */
-    .page-header {
-      padding: 64px 40px 48px;
-      border-bottom: 1px solid var(--linha);
-      max-width: 900px;
-      margin: 0 auto;
-    }
-
-    .page-header-tag {
-      font-size: 0.68rem;
-      font-weight: 700;
-      letter-spacing: 2px;
-      text-transform: uppercase;
-      color: var(--azul);
-      margin-bottom: 20px;
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    }
-
-    .page-header-tag::after {
-      content: '';
-      display: block;
-      height: 1px;
-      width: 40px;
-      background: var(--azul);
-    }
-
-    .page-header h1 {
-      font-size: clamp(2rem, 5vw, 3.2rem);
-      font-weight: 900;
-      letter-spacing: -1.5px;
-      text-transform: uppercase;
-      line-height: 1;
-      margin-bottom: 12px;
-    }
-
-    .page-header p {
-      font-size: 0.9rem;
-      color: var(--cinza-600);
-      line-height: 1.6;
-    }
-
-    /* ── Container ── */
-    .container { max-width: 900px; margin: 0 auto; padding: 0 40px 100px; }
-
-    /* ── Stats ── */
-    .stats {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      border-bottom: 1px solid var(--linha);
-      margin-top: 0;
-    }
-
-    .stat-card {
-      padding: 36px 0;
-      border-right: 1px solid var(--linha);
-    }
-
+    .stats { display: grid; grid-template-columns: repeat(3, 1fr); border-bottom: 1px solid var(--linha); }
+    .stat-card { padding: 36px 0; border-right: 1px solid var(--linha); }
     .stat-card:last-child { border-right: none; }
+    .stat-num { display: block; font-size: 3rem; font-weight: 900; letter-spacing: -2px; line-height: 1; margin-bottom: 8px; }
+    .stat-label { font-size: 0.55rem; font-weight: 700; letter-spacing: 3px; text-transform: uppercase; color: var(--cinza); }
 
-    .stat-num {
-      display: block;
-      font-size: 3rem;
-      font-weight: 900;
-      color: var(--preto);
-      letter-spacing: -2px;
-      line-height: 1;
-      margin-bottom: 8px;
-    }
+    .busca-wrap { padding: 20px 0; border-bottom: 1px solid var(--linha); display: flex; align-items: center; gap: 14px; }
+    .busca-wrap input { flex: 1; border: none; font-size: 0.85rem; font-family: 'Inter', sans-serif; color: var(--branco); background: transparent; outline: none; letter-spacing: .3px; }
+    .busca-wrap input::placeholder { color: rgba(136,136,128,0.5); }
+    .busca-arrow { font-size: 0.8rem; color: var(--cinza); flex-shrink: 0; }
 
-    .stat-label {
-      font-size: 0.72rem;
-      font-weight: 600;
-      letter-spacing: 1px;
-      text-transform: uppercase;
-      color: var(--cinza-400);
-    }
-
-    /* ── Busca ── */
-    .busca-wrap {
-      padding: 24px 0;
-      border-bottom: 1px solid var(--linha);
-      display: flex;
-      align-items: center;
-      gap: 14px;
-    }
-
-    .busca-wrap input {
-      flex: 1;
-      border: none;
-      font-size: 0.92rem;
-      font-family: 'Inter', sans-serif;
-      color: var(--preto);
-      background: transparent;
-      outline: none;
-    }
-
-    .busca-wrap input::placeholder { color: var(--cinza-400); }
-
-    .busca-icon {
-      font-size: 0.9rem;
-      color: var(--cinza-400);
-      flex-shrink: 0;
-    }
-
-    /* ── Lista ── */
     .lista { display: flex; flex-direction: column; }
+    .item-card { display: grid; grid-template-columns: 1fr auto; gap: 20px; align-items: center; padding: 24px 0; border-bottom: 1px solid var(--linha); transition: background .15s; }
+    .item-card:hover { background: rgba(245,244,240,0.02); padding-left: 12px; padding-right: 12px; margin: 0 -12px; }
+    .item-titulo { font-size: 0.9rem; font-weight: 700; letter-spacing: -.3px; margin-bottom: 6px; text-transform: uppercase; }
+    .item-meta { font-size: 0.68rem; color: var(--cinza); display: flex; flex-wrap: wrap; gap: 14px; margin-bottom: 10px; letter-spacing: .5px; text-transform: uppercase; }
+    .item-temas { display: flex; flex-wrap: wrap; gap: 6px; }
+    .tag { font-size: 0.58rem; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; background: rgba(245,244,240,0.04); color: var(--cinza); padding: 3px 10px; border: 1px solid var(--linha); }
 
-    .item-card {
-      display: grid;
-      grid-template-columns: 1fr auto;
-      gap: 20px;
-      align-items: center;
-      padding: 24px 0;
-      border-bottom: 1px solid var(--linha);
-      transition: background .15s;
-    }
+    .item-acoes { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+    .btn-baixar { display: inline-flex; align-items: center; gap: 7px; background: var(--branco); color: var(--preto); border: none; padding: 9px 18px; font-size: 0.62rem; font-weight: 900; font-family: 'Inter', sans-serif; letter-spacing: 2px; text-transform: uppercase; text-decoration: none; cursor: pointer; transition: background .2s; white-space: nowrap; }
+    .btn-baixar:hover { background: var(--amarelo); }
+    .btn-del { display: flex; align-items: center; justify-content: center; background: none; border: 1px solid var(--linha); width: 34px; height: 34px; cursor: pointer; font-size: 0.85rem; color: var(--cinza); transition: all .2s; font-family: 'Inter', sans-serif; }
+    .btn-del:hover { border-color: rgba(239,68,68,0.5); color: #fca5a5; }
 
-    .item-card:hover { background: var(--cinza-100); margin: 0 -20px; padding: 24px 20px; }
+    .vazio { padding: 80px 0; }
+    .vazio-label { font-size: 0.55rem; font-weight: 700; letter-spacing: 3px; text-transform: uppercase; color: var(--cinza); margin-bottom: 20px; }
+    .vazio h3 { font-size: 2rem; font-weight: 900; letter-spacing: -1.5px; text-transform: uppercase; margin-bottom: 8px; }
+    .vazio p { font-size: 0.82rem; color: var(--cinza); margin-bottom: 32px; }
+    .btn-novo { display: inline-flex; align-items: center; gap: 8px; background: var(--branco); color: var(--preto); border: none; padding: 13px 28px; font-size: 0.65rem; font-weight: 900; font-family: 'Inter', sans-serif; letter-spacing: 2.5px; text-transform: uppercase; text-decoration: none; cursor: pointer; transition: background .2s; }
+    .btn-novo:hover { background: var(--amarelo); }
 
-    .item-titulo {
-      font-size: 1rem;
-      font-weight: 700;
-      color: var(--preto);
-      margin-bottom: 6px;
-      letter-spacing: -.2px;
-    }
-
-    .item-meta {
-      font-size: 0.76rem;
-      color: var(--cinza-400);
-      display: flex;
-      flex-wrap: wrap;
-      gap: 14px;
-      margin-bottom: 10px;
-    }
-
-    .item-temas {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 6px;
-    }
-
-    .tag {
-      font-size: 0.68rem;
-      font-weight: 600;
-      letter-spacing: .5px;
-      text-transform: uppercase;
-      background: var(--cinza-100);
-      color: var(--cinza-600);
-      padding: 3px 10px;
-      border: 1px solid var(--cinza-200);
-    }
-
-    .item-acoes {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      flex-shrink: 0;
-    }
-
-    .btn-baixar {
-      display: inline-flex;
-      align-items: center;
-      gap: 7px;
-      background: var(--preto);
-      color: var(--branco);
-      border: none;
-      padding: 10px 20px;
-      font-size: 0.78rem;
-      font-weight: 700;
-      font-family: 'Inter', sans-serif;
-      letter-spacing: 1px;
-      text-transform: uppercase;
-      text-decoration: none;
-      cursor: pointer;
-      transition: background .2s;
-      white-space: nowrap;
-    }
-
-    .btn-baixar:hover { background: var(--azul); }
-
-    .btn-del {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      background: none;
-      border: 1px solid var(--cinza-200);
-      width: 36px;
-      height: 36px;
-      cursor: pointer;
-      font-size: 0.85rem;
-      color: var(--cinza-400);
-      transition: all .2s;
-    }
-
-    .btn-del:hover { border-color: #dc2626; color: #dc2626; }
-
-    /* ── Vazio ── */
-    .vazio {
-      padding: 80px 0;
-      border-bottom: 1px solid var(--linha);
-    }
-
-    .vazio-label {
-      font-size: 0.68rem;
-      font-weight: 700;
-      letter-spacing: 2px;
-      text-transform: uppercase;
-      color: var(--cinza-400);
-      margin-bottom: 16px;
-    }
-
-    .vazio h3 {
-      font-size: 1.6rem;
-      font-weight: 900;
-      letter-spacing: -1px;
-      text-transform: uppercase;
-      margin-bottom: 8px;
-    }
-
-    .vazio p {
-      font-size: 0.88rem;
-      color: var(--cinza-600);
-      margin-bottom: 24px;
-    }
-
-    .btn-novo {
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      background: var(--preto);
-      color: var(--branco);
-      border: none;
-      padding: 13px 28px;
-      font-size: 0.82rem;
-      font-weight: 700;
-      font-family: 'Inter', sans-serif;
-      letter-spacing: 1px;
-      text-transform: uppercase;
-      text-decoration: none;
-      cursor: pointer;
-      transition: background .2s;
-    }
-
-    .btn-novo:hover { background: var(--azul); }
-
-    .loading-estado {
-      padding: 60px 0;
-      font-size: 0.88rem;
-      color: var(--cinza-400);
-      letter-spacing: .5px;
-    }
+    .loading-estado { padding: 60px 0; font-size: 0.72rem; color: var(--cinza); letter-spacing: 2px; text-transform: uppercase; }
 
     @media (max-width: 700px) {
-      nav { padding: 0 20px; }
+      nav { padding: 0 20px; } .nav-links { gap: 16px; }
       .page-header { padding: 40px 20px 32px; }
       .container { padding: 0 20px 80px; }
       .stats { grid-template-columns: 1fr 1fr; }
-      .stat-card:nth-child(3) { grid-column: 1 / -1; border-right: none; }
+      .stat-card:nth-child(3) { grid-column: 1/-1; border-right: none; border-top: 1px solid var(--linha); }
       .item-card { grid-template-columns: 1fr; }
-      .item-acoes { flex-direction: row; }
     }
   </style>
 </head>
 <body>
 
-<div class="top-bar"></div>
-
 <nav>
-  <a class="nav-logo" href="/">Plano de Aula <span>IA</span></a>
-  <div style="display:flex; align-items:center; gap:20px;">
-    <a class="nav-link ativo" href="/historico">Histórico</a>
-    <a class="nav-link" href="/conta" style="color:var(--preto); font-weight:600;">Olá, {{ current_user.nome.split()[0] }} →</a>
+  <a class="nav-logo" href="/">
+    <img src="/static/logo.svg" width="26" height="26" alt=""/>
+    PROFESSOR<span class="tm">IA™</span>
+  </a>
+  <div class="nav-links">
+    <a class="nav-link on" href="/historico">HISTÓRICO</a>
+    <a class="nav-link" href="/chat">CHAT</a>
+    <a class="nav-link" href="/conta">{{ current_user.nome.split()[0].upper() }} →</a>
   </div>
 </nav>
 
 <div class="page-header">
-  <div class="page-header-tag">Seus planos</div>
-  <h1>Histórico</h1>
-  <p>Todos os planos gerados — baixe novamente a qualquer momento.</p>
+  <div class="page-tag">SEUS MATERIAIS</div>
+  <h1>HISTÓRICO</h1>
+  <p class="page-sub">Todos os materiais gerados — baixe novamente a qualquer momento.</p>
 </div>
 
 <div class="container">
-
   <div class="stats">
     <div class="stat-card">
       <span class="stat-num" id="stat-total">—</span>
-      <div class="stat-label">Planos gerados</div>
+      <div class="stat-label">MATERIAIS GERADOS</div>
     </div>
-    <div class="stat-card" style="padding-left: 32px;">
+    <div class="stat-card" style="padding-left:32px">
       <span class="stat-num" id="stat-disc">—</span>
-      <div class="stat-label">Disciplinas</div>
+      <div class="stat-label">DISCIPLINAS</div>
     </div>
-    <div class="stat-card" style="padding-left: 32px;">
+    <div class="stat-card" style="padding-left:32px">
       <span class="stat-num" id="stat-aulas">—</span>
-      <div class="stat-label">Aulas planejadas</div>
+      <div class="stat-label">AULAS PLANEJADAS</div>
     </div>
   </div>
 
   <div class="busca-wrap">
-    <span class="busca-icon">→</span>
-    <input type="text" id="busca" placeholder="Buscar por disciplina, turma ou professor..."/>
+    <span class="busca-arrow">→</span>
+    <input type="text" id="busca" placeholder="Buscar por disciplina, turma..."/>
   </div>
 
-  <div id="conteudo" class="loading-estado">Carregando...</div>
-
+  <div id="conteudo" class="loading-estado">CARREGANDO...</div>
 </div>
 
 <script>
@@ -383,7 +130,7 @@
       renderStats();
       renderLista(todos);
     } catch(e) {
-      document.getElementById('conteudo').innerHTML = '<p style="padding:40px 0; color:#a0a0a0;">Erro ao carregar histórico.</p>';
+      document.getElementById('conteudo').innerHTML = '<p style="padding:40px 0; color:var(--cinza);">Erro ao carregar histórico.</p>';
     }
   }
 
@@ -398,16 +145,14 @@
   function renderLista(lista) {
     const el = document.getElementById('conteudo');
     if (!lista.length) {
-      el.innerHTML = `
-        <div class="vazio">
-          <div class="vazio-label">Sem resultados</div>
-          <h3>Nenhum plano<br>encontrado.</h3>
-          <p>Os planos gerados aparecerão aqui.</p>
-          <a class="btn-novo" href="/">Gerar novo plano →</a>
-        </div>`;
+      el.innerHTML = `<div class="vazio">
+        <div class="vazio-label">SEM RESULTADOS</div>
+        <h3>NENHUM MATERIAL<br>ENCONTRADO.</h3>
+        <p>Os materiais gerados aparecerão aqui.</p>
+        <a class="btn-novo" href="/chat">GERAR MATERIAL →</a>
+      </div>`;
       return;
     }
-
     el.innerHTML = '<div class="lista">' + lista.map(item => `
       <div class="item-card" id="item-${item.id}">
         <div class="item-body">
@@ -416,25 +161,19 @@
             ${item.professor ? `<span>${item.professor}</span>` : ''}
             ${item.escola ? `<span>${item.escola}</span>` : ''}
             <span>${item.data || '—'}</span>
-            <span>${item.num_aulas} aula${item.num_aulas != 1 ? 's' : ''}</span>
-            ${item.datas ? `<span>${item.datas}</span>` : ''}
+            <span>${item.num_aulas} AULA${item.num_aulas != 1 ? 'S' : ''}</span>
           </div>
-          ${item.temas && item.temas.length ? `
-            <div class="item-temas">
-              ${item.temas.slice(0, 4).map(t => `<span class="tag">${t}</span>`).join('')}
-              ${item.temas.length > 4 ? `<span class="tag">+${item.temas.length - 4}</span>` : ''}
-            </div>` : ''}
+          ${item.temas && item.temas.length ? `<div class="item-temas">${item.temas.slice(0,4).map(t=>`<span class="tag">${t}</span>`).join('')}${item.temas.length > 4 ? `<span class="tag">+${item.temas.length-4}</span>` : ''}</div>` : ''}
         </div>
         <div class="item-acoes">
-          <a class="btn-baixar" href="/download/${item.id}">↓ Baixar</a>
+          <a class="btn-baixar" href="/download/${item.id}">↓ BAIXAR</a>
           <button class="btn-del" onclick="deletar(${item.id})" title="Excluir">×</button>
         </div>
-      </div>
-    `).join('') + '</div>';
+      </div>`).join('') + '</div>';
   }
 
   async function deletar(id) {
-    if (!confirm('Excluir este plano do histórico?')) return;
+    if (!confirm('Excluir este material?')) return;
     await fetch(`/deletar/${id}`, { method: 'DELETE' });
     todos = todos.filter(i => i.id !== id);
     renderStats();
@@ -445,17 +184,13 @@
     const q = document.getElementById('busca').value.toLowerCase();
     if (!q) return todos;
     return todos.filter(i =>
-      (i.disciplina || '').toLowerCase().includes(q) ||
-      (i.turma || '').toLowerCase().includes(q) ||
-      (i.professor || '').toLowerCase().includes(q) ||
-      (i.escola || '').toLowerCase().includes(q)
+      (i.disciplina||'').toLowerCase().includes(q) ||
+      (i.turma||'').toLowerCase().includes(q) ||
+      (i.professor||'').toLowerCase().includes(q)
     );
   }
 
-  document.getElementById('busca').addEventListener('input', () => {
-    renderLista(filtrar());
-  });
-
+  document.getElementById('busca').addEventListener('input', () => renderLista(filtrar()));
   carregar();
 </script>
 </body>

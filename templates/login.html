@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8"/>
@@ -7,44 +7,111 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet"/>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-    :root { --preto: #0a0a0a; --branco: #ffffff; --cinza-200: #e2e2e2; --cinza-400: #a0a0a0; --cinza-600: #555555; --azul: #2b4fc7; --linha: #e2e2e2; }
-    body { font-family: 'Inter', sans-serif; background: var(--branco); color: var(--preto); min-height: 100vh; display: flex; flex-direction: column; }
-    .top-bar { height: 3px; background: var(--azul); }
-    .container { flex: 1; display: flex; align-items: center; justify-content: center; padding: 40px 20px; }
-    .box { width: 100%; max-width: 420px; }
-    .logo { font-weight: 800; font-size: 0.92rem; letter-spacing: .5px; text-transform: uppercase; color: var(--preto); text-decoration: none; margin-bottom: 48px; display: block; }
-    .logo span { color: var(--azul); }
-    h1 { font-size: clamp(2rem, 5vw, 2.8rem); font-weight: 900; line-height: 1; letter-spacing: -1.5px; text-transform: uppercase; margin-bottom: 12px; }
-    .desc { font-size: 0.9rem; color: var(--cinza-600); margin-bottom: 40px; line-height: 1.6; }
-    .alert { background: #fef2f2; border: 1px solid #fecaca; color: #dc2626; padding: 12px 16px; font-size: 0.82rem; margin-bottom: 24px; font-weight: 500; }
-    .field { margin-bottom: 24px; }
-    label { font-size: 0.68rem; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; color: var(--cinza-600); display: block; margin-bottom: 8px; }
-    input[type=email], input[type=password] { width: 100%; padding: 11px 0; border: none; border-bottom: 1.5px solid var(--cinza-200); font-size: 0.92rem; font-family: 'Inter', sans-serif; font-weight: 400; color: var(--preto); background: transparent; transition: border-color .2s; }
-    input:focus { outline: none; border-bottom-color: var(--preto); }
-    input::placeholder { color: var(--cinza-400); font-weight: 300; }
-    .btn { width: 100%; padding: 18px; background: var(--preto); color: var(--branco); border: none; font-size: 0.9rem; font-weight: 700; font-family: 'Inter', sans-serif; letter-spacing: 1.5px; text-transform: uppercase; cursor: pointer; transition: background .2s; margin-top: 32px; }
-    .btn:hover { background: var(--azul); }
-    .link-block { margin-top: 24px; padding-top: 24px; border-top: 1px solid var(--linha); text-align: center; font-size: 0.82rem; color: var(--cinza-600); }
-    .link-block a { color: var(--preto); font-weight: 600; text-decoration: none; border-bottom: 1px solid var(--preto); }
-    .link-block a:hover { color: var(--azul); border-color: var(--azul); }
+    :root { --preto: #0a0a0a; --branco: #f5f4f0; --amarelo: #f0e000; --cinza: #888880; --linha: rgba(245,244,240,0.08); }
+    body { font-family: 'Inter', sans-serif; background: var(--preto); color: var(--branco); min-height: 100vh; display: flex; flex-direction: column; }
+    ::selection { background: var(--amarelo); color: var(--preto); }
+
+    nav {
+      padding: 0 40px; height: 56px;
+      display: flex; align-items: center; justify-content: space-between;
+      border-bottom: 1px solid var(--linha);
+      position: fixed; top: 0; left: 0; right: 0; z-index: 10;
+      background: rgba(10,10,10,0.95); backdrop-filter: blur(12px);
+    }
+    .nav-logo { font-size: 0.72rem; font-weight: 900; letter-spacing: 3px; text-transform: uppercase; color: var(--branco); text-decoration: none; display: flex; align-items: center; gap: 10px; }
+    .nav-logo .tm { font-size: 0.5rem; vertical-align: super; opacity: 0.4; font-weight: 400; }
+    .nav-link { font-size: 0.62rem; font-weight: 600; letter-spacing: 2px; text-transform: uppercase; color: var(--cinza); text-decoration: none; transition: color .2s; }
+    .nav-link:hover { color: var(--branco); }
+
+    .container { flex: 1; display: flex; align-items: center; justify-content: center; padding: 80px 20px 40px; }
+    .box { width: 100%; max-width: 400px; }
+
+    .box-num { font-size: 0.55rem; font-weight: 700; letter-spacing: 3px; text-transform: uppercase; color: var(--cinza); margin-bottom: 32px; display: flex; align-items: center; gap: 12px; }
+    .box-num::after { content: ''; flex: 1; max-width: 40px; height: 1px; background: var(--cinza); opacity: 0.4; }
+
+    h1 { font-size: clamp(2.4rem, 6vw, 3.5rem); font-weight: 900; letter-spacing: -3px; text-transform: uppercase; line-height: 0.95; margin-bottom: 40px; }
+
+    .alert { border: 1px solid rgba(239,68,68,0.4); background: rgba(239,68,68,0.07); color: #fca5a5; padding: 12px 16px; font-size: 0.75rem; font-weight: 600; letter-spacing: .5px; margin-bottom: 28px; }
+
+    .field { margin-bottom: 28px; }
+    label { font-size: 0.55rem; font-weight: 700; letter-spacing: 3px; text-transform: uppercase; color: var(--cinza); display: block; margin-bottom: 10px; }
+    input[type=email], input[type=password] {
+      width: 100%; padding: 12px 0; border: none;
+      border-bottom: 1px solid rgba(245,244,240,0.15);
+      font-size: 0.92rem; font-family: 'Inter', sans-serif; font-weight: 400;
+      color: var(--branco); background: transparent;
+      transition: border-color .2s;
+    }
+    input:focus { outline: none; border-bottom-color: var(--amarelo); }
+    input::placeholder { color: rgba(136,136,128,0.5); font-weight: 300; }
+
+    .btn {
+      width: 100%; padding: 16px;
+      background: var(--branco); color: var(--preto);
+      border: none; font-size: 0.65rem; font-weight: 900;
+      font-family: 'Inter', sans-serif; letter-spacing: 3px;
+      text-transform: uppercase; cursor: pointer;
+      transition: background .2s; margin-top: 8px;
+    }
+    .btn:hover { background: var(--amarelo); }
+
+    .link-block {
+      margin-top: 28px; padding-top: 28px;
+      border-top: 1px solid var(--linha);
+      font-size: 0.62rem; font-weight: 600; letter-spacing: 1.5px;
+      text-transform: uppercase; color: var(--cinza);
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .link-block a { color: var(--branco); text-decoration: none; transition: color .2s; }
+    .link-block a:hover { color: var(--amarelo); }
+
+    .diag { position: fixed; inset: 0; pointer-events: none; overflow: hidden; }
+    .diag svg { width: 100%; height: 100%; opacity: 0.04; }
   </style>
 </head>
 <body>
-<div class="top-bar"></div>
+
+<div class="diag">
+  <svg viewBox="0 0 100 100" preserveAspectRatio="none">
+    <line x1="0" y1="100" x2="100" y2="0" stroke="#f5f4f0" stroke-width="0.3"/>
+    <line x1="-20" y1="100" x2="80" y2="0" stroke="#f5f4f0" stroke-width="0.3"/>
+    <line x1="20" y1="100" x2="120" y2="0" stroke="#f5f4f0" stroke-width="0.3"/>
+  </svg>
+</div>
+
+<nav>
+  <a class="nav-logo" href="/">
+    <img src="/static/logo.svg" width="26" height="26" alt=""/>
+    PROFESSOR<span class="tm">IA™</span>
+  </a>
+  <a class="nav-link" href="/cadastro">CRIAR CONTA →</a>
+</nav>
+
 <div class="container">
   <div class="box">
-    <a class="logo" href="/">Professor<span>IA</span></a>
-    <h1>Login</h1>
-    <p class="desc">Entre com seu e-mail e senha para continuar.</p>
+    <div class="box-num">001 — ACESSO</div>
+    <h1>ENTRAR</h1>
+
     {% with messages = get_flashed_messages() %}
       {% if messages %}<div class="alert">{{ messages[0] }}</div>{% endif %}
     {% endwith %}
+
     <form method="POST">
-      <div class="field"><label>E-mail</label><input type="email" name="email" placeholder="seu@email.com" required autofocus/></div>
-      <div class="field"><label>Senha</label><input type="password" name="senha" placeholder="••••••••" required/></div>
-      <button type="submit" class="btn">Entrar</button>
+      <div class="field">
+        <label>E-mail</label>
+        <input type="email" name="email" placeholder="seu@email.com" required autofocus/>
+      </div>
+      <div class="field">
+        <label>Senha</label>
+        <input type="password" name="senha" placeholder="••••••••" required/>
+      </div>
+      <button type="submit" class="btn">ENTRAR →</button>
     </form>
-    <div class="link-block">Ainda não tem conta? <a href="/cadastro">Criar conta</a></div>
+
+    <div class="link-block">
+      <span>NÃO TEM CONTA?</span>
+      <a href="/cadastro">CRIAR CONTA →</a>
+    </div>
   </div>
 </div>
 </body>
