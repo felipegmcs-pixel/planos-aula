@@ -3,20 +3,18 @@
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>ProfessorIA — O assistente de IA para professores brasileiros</title>
+  <title>ProfessorIA</title>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet"/>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     :root {
-      --preto: #08080f;
-      --branco: #ffffff;
-      --azul: #3b63f7;
-      --azul-claro: #6b8fff;
-      --azul-escuro: #1a2f7a;
-      --cinza: #a0a8c0;
-      --linha: rgba(255,255,255,0.08);
-      --card-bg: rgba(255,255,255,0.04);
+      --preto: #0a0a0a;
+      --branco: #f5f4f0;
+      --amarelo: #f0e000;
+      --cinza: #888880;
+      --cinza-escuro: #2a2a28;
+      --linha: rgba(245,244,240,0.1);
     }
 
     html { scroll-behavior: smooth; }
@@ -26,434 +24,359 @@
       background: var(--preto);
       color: var(--branco);
       overflow-x: hidden;
+      cursor: default;
     }
 
-    /* ── NAV ── */
+    /* ─ SELEÇÃO ─ */
+    ::selection { background: var(--amarelo); color: var(--preto); }
+
+    /* ─ NAV ─ */
     nav {
       position: fixed; top: 0; left: 0; right: 0; z-index: 100;
-      padding: 0 48px; height: 64px;
+      padding: 0 40px; height: 56px;
       display: flex; align-items: center; justify-content: space-between;
-      background: rgba(8,8,15,0.8);
-      backdrop-filter: blur(20px);
       border-bottom: 1px solid var(--linha);
-      transition: all .3s;
+      background: rgba(10,10,10,0.95);
+      backdrop-filter: blur(12px);
     }
     .nav-logo {
-      font-weight: 900; font-size: 1rem; letter-spacing: .5px;
+      font-size: 0.72rem; font-weight: 900; letter-spacing: 3px;
       text-transform: uppercase; color: var(--branco); text-decoration: none;
     }
-    .nav-logo span { color: var(--azul-claro); }
-    .nav-links { display: flex; align-items: center; gap: 32px; }
+    .nav-logo .tm { font-size: 0.5rem; vertical-align: super; opacity: 0.5; font-weight: 400; }
+    .nav-links { display: flex; align-items: center; gap: 40px; }
     .nav-link {
-      font-size: 0.82rem; font-weight: 500; color: var(--cinza);
-      text-decoration: none; letter-spacing: .3px; transition: color .2s;
+      font-size: 0.62rem; font-weight: 600; letter-spacing: 2px;
+      text-transform: uppercase; color: var(--cinza); text-decoration: none;
+      transition: color .2s;
     }
     .nav-link:hover { color: var(--branco); }
     .nav-cta {
-      padding: 8px 20px; background: var(--azul); color: var(--branco);
-      font-size: 0.78rem; font-weight: 700; letter-spacing: 1px;
-      text-transform: uppercase; text-decoration: none;
-      transition: background .2s; border: none;
+      font-size: 0.62rem; font-weight: 700; letter-spacing: 2px;
+      text-transform: uppercase; color: var(--preto); background: var(--branco);
+      padding: 8px 18px; text-decoration: none; transition: background .2s;
     }
-    .nav-cta:hover { background: var(--azul-claro); }
+    .nav-cta:hover { background: var(--amarelo); }
 
-    /* ── HERO ── */
+    /* ─ TICKER ─ */
+    .ticker {
+      overflow: hidden; border-bottom: 1px solid var(--linha);
+      height: 36px; display: flex; align-items: center;
+      background: var(--preto);
+      margin-top: 56px;
+    }
+    .ticker-track {
+      display: flex; white-space: nowrap;
+      animation: ticker 25s linear infinite;
+    }
+    .ticker-item {
+      font-size: 0.6rem; font-weight: 700; letter-spacing: 3px;
+      text-transform: uppercase; color: var(--cinza);
+      padding: 0 32px;
+    }
+    .ticker-sep { color: var(--amarelo); padding: 0 8px; }
+    @keyframes ticker {
+      0%   { transform: translateX(0); }
+      100% { transform: translateX(-50%); }
+    }
+
+    /* ─ HERO ─ */
     .hero {
-      min-height: 100vh;
-      display: flex; flex-direction: column;
-      align-items: center; justify-content: center;
-      text-align: center;
-      padding: 120px 24px 80px;
-      position: relative;
-      overflow: hidden;
-    }
-
-    /* grade animada */
-    .hero::before {
-      content: '';
-      position: absolute; inset: 0;
-      background-image:
-        linear-gradient(rgba(59,99,247,0.07) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(59,99,247,0.07) 1px, transparent 1px);
-      background-size: 60px 60px;
-      mask-image: radial-gradient(ellipse 80% 70% at 50% 50%, black 30%, transparent 100%);
-      animation: gridMove 20s linear infinite;
-    }
-    @keyframes gridMove {
-      0%   { background-position: 0 0; }
-      100% { background-position: 60px 60px; }
-    }
-
-    /* brilho central */
-    .hero::after {
-      content: '';
-      position: absolute;
-      width: 600px; height: 600px;
-      background: radial-gradient(ellipse, rgba(59,99,247,0.18) 0%, transparent 70%);
-      top: 50%; left: 50%;
-      transform: translate(-50%, -60%);
-      pointer-events: none;
-    }
-
-    .hero-badge {
-      display: inline-flex; align-items: center; gap: 8px;
-      border: 1px solid rgba(107,143,255,0.3);
-      background: rgba(59,99,247,0.1);
-      padding: 6px 16px; margin-bottom: 32px;
-      font-size: 0.72rem; font-weight: 600; letter-spacing: 1.5px;
-      text-transform: uppercase; color: var(--azul-claro);
-      position: relative; z-index: 1;
-      animation: fadeUp .8s ease both;
-    }
-    .hero-badge-dot {
-      width: 6px; height: 6px; background: var(--azul-claro);
-      border-radius: 50%;
-      animation: pulse 2s ease infinite;
-    }
-    @keyframes pulse {
-      0%, 100% { opacity: 1; transform: scale(1); }
-      50% { opacity: 0.4; transform: scale(0.7); }
-    }
-
-    .hero h1 {
-      font-size: clamp(2.8rem, 7vw, 5.5rem);
-      font-weight: 900; line-height: 1.0; letter-spacing: -3px;
-      text-transform: uppercase;
-      position: relative; z-index: 1;
-      animation: fadeUp .8s ease .1s both;
-    }
-    .hero h1 .destaque {
-      background: linear-gradient(135deg, var(--azul-claro), #a78bfa);
-      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
-      background-clip: text;
-    }
-
-    .hero-sub {
-      font-size: 1.05rem; color: var(--cinza); max-width: 520px;
-      line-height: 1.7; margin-top: 24px;
-      position: relative; z-index: 1;
-      animation: fadeUp .8s ease .2s both;
-    }
-
-    .hero-btns {
-      display: flex; gap: 16px; margin-top: 40px; flex-wrap: wrap; justify-content: center;
-      position: relative; z-index: 1;
-      animation: fadeUp .8s ease .3s both;
-    }
-    .btn-primary {
-      padding: 16px 36px; background: var(--azul);
-      color: var(--branco); font-size: 0.85rem; font-weight: 700;
-      letter-spacing: 1px; text-transform: uppercase;
-      text-decoration: none; transition: all .2s;
-      border: 1px solid var(--azul);
-    }
-    .btn-primary:hover {
-      background: var(--azul-claro); border-color: var(--azul-claro);
-      transform: translateY(-2px);
-      box-shadow: 0 12px 40px rgba(59,99,247,0.4);
-    }
-    .btn-secondary {
-      padding: 16px 36px; background: transparent;
-      color: var(--branco); font-size: 0.85rem; font-weight: 700;
-      letter-spacing: 1px; text-transform: uppercase;
-      text-decoration: none; border: 1px solid rgba(255,255,255,0.2);
-      transition: all .2s;
-    }
-    .btn-secondary:hover {
-      border-color: rgba(255,255,255,0.5);
-      transform: translateY(-2px);
-    }
-
-    .hero-social {
-      display: flex; align-items: center; gap: 24px; margin-top: 56px;
-      position: relative; z-index: 1;
-      animation: fadeUp .8s ease .4s both;
-    }
-    .hero-social-text { font-size: 0.75rem; color: var(--cinza); letter-spacing: .5px; }
-    .avatares { display: flex; }
-    .avatar {
-      width: 32px; height: 32px; border-radius: 50%;
-      border: 2px solid var(--preto); margin-left: -8px;
-      background: linear-gradient(135deg, var(--azul-escuro), var(--azul));
-      display: flex; align-items: center; justify-content: center;
-      font-size: 0.65rem; font-weight: 700; color: var(--branco);
-    }
-    .avatares .avatar:first-child { margin-left: 0; }
-
-    /* ── LOGOS / CONFIANÇA ── */
-    .confianca {
-      padding: 40px 48px;
-      border-top: 1px solid var(--linha);
+      padding: 80px 40px 100px;
       border-bottom: 1px solid var(--linha);
-      text-align: center;
-    }
-    .confianca-texto {
-      font-size: 0.7rem; font-weight: 600; letter-spacing: 2px;
-      text-transform: uppercase; color: rgba(160,168,192,0.5);
-      margin-bottom: 28px;
-    }
-    .confianca-items {
-      display: flex; align-items: center; justify-content: center;
-      gap: 48px; flex-wrap: wrap;
-    }
-    .confianca-item {
-      font-size: 0.82rem; font-weight: 700; letter-spacing: 1px;
-      text-transform: uppercase; color: rgba(160,168,192,0.4);
-      transition: color .3s;
-    }
-    .confianca-item:hover { color: var(--cinza); }
-
-    /* ── FEATURES ── */
-    .section { padding: 100px 48px; max-width: 1100px; margin: 0 auto; }
-    .section-tag {
-      font-size: 0.68rem; font-weight: 700; letter-spacing: 2px;
-      text-transform: uppercase; color: var(--azul-claro);
-      display: inline-flex; align-items: center; gap: 10px; margin-bottom: 20px;
-    }
-    .section-tag::before { content: ''; display: block; width: 24px; height: 1px; background: var(--azul-claro); }
-    .section h2 {
-      font-size: clamp(2rem, 4vw, 3rem); font-weight: 900;
-      letter-spacing: -2px; text-transform: uppercase;
-      line-height: 1.05; margin-bottom: 16px;
-    }
-    .section-sub {
-      font-size: 0.95rem; color: var(--cinza); max-width: 500px; line-height: 1.7;
-      margin-bottom: 64px;
-    }
-
-    .features-grid {
-      display: grid; grid-template-columns: repeat(3, 1fr); gap: 1px;
-      background: var(--linha); border: 1px solid var(--linha);
-    }
-    .feature-card {
-      background: var(--preto); padding: 36px 32px;
-      transition: background .3s; cursor: default;
-    }
-    .feature-card:hover { background: var(--card-bg); }
-    .feature-icon {
-      width: 44px; height: 44px;
-      background: rgba(59,99,247,0.12);
-      border: 1px solid rgba(59,99,247,0.25);
-      display: flex; align-items: center; justify-content: center;
-      font-size: 1.2rem; margin-bottom: 20px;
-      transition: all .3s;
-    }
-    .feature-card:hover .feature-icon {
-      background: rgba(59,99,247,0.25);
-      box-shadow: 0 0 24px rgba(59,99,247,0.3);
-    }
-    .feature-titulo {
-      font-size: 0.9rem; font-weight: 700; letter-spacing: -.3px;
-      margin-bottom: 10px; text-transform: uppercase;
-    }
-    .feature-desc { font-size: 0.8rem; color: var(--cinza); line-height: 1.6; }
-
-    /* ── DEMO / CHAT PREVIEW ── */
-    .demo-section {
-      padding: 100px 48px;
-      background: linear-gradient(180deg, transparent, rgba(59,99,247,0.04), transparent);
-    }
-    .demo-inner { max-width: 900px; margin: 0 auto; }
-    .demo-window {
-      border: 1px solid var(--linha);
-      background: rgba(255,255,255,0.02);
-      overflow: hidden;
-      box-shadow: 0 40px 100px rgba(0,0,0,0.5), 0 0 0 1px var(--linha);
-      animation: floatWindow 6s ease-in-out infinite;
-    }
-    @keyframes floatWindow {
-      0%, 100% { transform: translateY(0); }
-      50% { transform: translateY(-10px); }
-    }
-    .demo-bar {
-      padding: 14px 20px;
-      background: rgba(255,255,255,0.03);
-      border-bottom: 1px solid var(--linha);
-      display: flex; align-items: center; gap: 8px;
-    }
-    .demo-dot { width: 10px; height: 10px; border-radius: 50%; }
-    .demo-dot.vermelho { background: #ff5f57; }
-    .demo-dot.amarelo { background: #febc2e; }
-    .demo-dot.verde { background: #28c840; }
-    .demo-url {
-      flex: 1; text-align: center; font-size: 0.72rem;
-      color: rgba(160,168,192,0.4); letter-spacing: .5px;
-    }
-    .demo-chat { padding: 32px; display: flex; flex-direction: column; gap: 20px; }
-    .demo-msg {
-      display: flex; gap: 12px; align-items: flex-start;
-      animation: fadeUp .5s ease both;
-    }
-    .demo-msg.usuario { flex-direction: row-reverse; }
-    .demo-avatar {
-      width: 32px; height: 32px; border-radius: 50%; flex-shrink: 0;
-      display: flex; align-items: center; justify-content: center;
-      font-size: 0.72rem; font-weight: 700;
-    }
-    .demo-avatar.ia { background: linear-gradient(135deg, var(--azul-escuro), var(--azul)); }
-    .demo-avatar.user { background: rgba(255,255,255,0.1); color: var(--cinza); }
-    .demo-bubble {
-      max-width: 75%; padding: 14px 18px;
-      font-size: 0.82rem; line-height: 1.6; color: rgba(255,255,255,0.85);
-      background: rgba(255,255,255,0.05);
-      border: 1px solid var(--linha);
-    }
-    .demo-msg.usuario .demo-bubble {
-      background: rgba(59,99,247,0.15);
-      border-color: rgba(59,99,247,0.25);
-      color: var(--branco);
-    }
-    .demo-typing { display: flex; gap: 4px; padding: 6px 0; }
-    .demo-typing span {
-      width: 6px; height: 6px; border-radius: 50%;
-      background: var(--azul-claro); opacity: 0.4;
-      animation: blink 1.2s ease infinite;
-    }
-    .demo-typing span:nth-child(2) { animation-delay: .2s; }
-    .demo-typing span:nth-child(3) { animation-delay: .4s; }
-    @keyframes blink {
-      0%, 100% { opacity: 0.4; transform: scale(1); }
-      50% { opacity: 1; transform: scale(1.3); }
-    }
-
-    /* ── PLANOS ── */
-    .planos-section { padding: 100px 48px; max-width: 1100px; margin: 0 auto; }
-    .toggle-wrap {
-      display: flex; align-items: center; gap: 12px; margin-bottom: 56px;
-    }
-    .toggle-label { font-size: 0.82rem; font-weight: 600; color: var(--cinza); }
-    .toggle-label.ativo { color: var(--branco); }
-    .toggle { position: relative; width: 48px; height: 26px; cursor: pointer; }
-    .toggle input { opacity: 0; width: 0; height: 0; }
-    .toggle-slider {
-      position: absolute; inset: 0; background: rgba(255,255,255,0.1);
-      transition: .3s; border-radius: 26px;
-    }
-    .toggle-slider::before {
-      content: ''; position: absolute; width: 20px; height: 20px;
-      left: 3px; bottom: 3px; background: var(--branco);
-      transition: .3s; border-radius: 50%;
-    }
-    .toggle input:checked + .toggle-slider { background: var(--azul); }
-    .toggle input:checked + .toggle-slider::before { transform: translateX(22px); }
-    .economia-tag {
-      background: rgba(59,99,247,0.15); border: 1px solid rgba(59,99,247,0.3);
-      color: var(--azul-claro); font-size: 0.68rem; font-weight: 700;
-      letter-spacing: 1px; text-transform: uppercase; padding: 3px 10px;
-    }
-
-    .planos-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1px; background: var(--linha); border: 1px solid var(--linha); }
-    .plano-card { background: var(--preto); padding: 36px 32px; position: relative; transition: background .3s; }
-    .plano-card:hover { background: var(--card-bg); }
-    .plano-card.destaque { background: rgba(59,99,247,0.07); }
-    .plano-card.destaque:hover { background: rgba(59,99,247,0.12); }
-    .plano-badge {
-      display: inline-block; background: var(--azul); color: var(--branco);
-      font-size: 0.62rem; font-weight: 700; letter-spacing: 1.5px;
-      text-transform: uppercase; padding: 3px 10px; margin-bottom: 20px;
-    }
-    .plano-nome {
-      font-size: 0.68rem; font-weight: 700; letter-spacing: 2px;
-      text-transform: uppercase; color: var(--cinza); margin-bottom: 12px;
-    }
-    .plano-preco {
-      font-size: 3rem; font-weight: 900; letter-spacing: -2px;
-      line-height: 1; margin-bottom: 4px;
-    }
-    .plano-preco small { font-size: 0.95rem; font-weight: 500; color: var(--cinza); }
-    .plano-preco.gratis { font-size: 2.2rem; }
-    .plano-periodo { font-size: 0.75rem; color: var(--cinza); margin-bottom: 28px; min-height: 18px; }
-    .plano-features { list-style: none; margin-bottom: 28px; }
-    .plano-features li {
-      font-size: 0.78rem; color: rgba(160,168,192,0.8);
-      padding: 8px 0; border-bottom: 1px solid var(--linha);
-      display: flex; align-items: center; gap: 10px;
-    }
-    .plano-features li:last-child { border-bottom: none; }
-    .plano-features li .check { color: var(--azul-claro); font-weight: 700; flex-shrink: 0; }
-    .plano-features li.off { color: rgba(160,168,192,0.3); }
-    .plano-features li.off .check { color: rgba(160,168,192,0.2); }
-    .btn-plano {
-      width: 100%; padding: 13px; background: rgba(255,255,255,0.06);
-      color: var(--branco); border: 1px solid rgba(255,255,255,0.12);
-      font-size: 0.75rem; font-weight: 700; font-family: 'Inter', sans-serif;
-      letter-spacing: 1px; text-transform: uppercase; cursor: pointer;
-      transition: all .2s; display: block; text-align: center; text-decoration: none;
-    }
-    .btn-plano:hover { background: rgba(255,255,255,0.1); border-color: rgba(255,255,255,0.25); }
-    .btn-plano.principal {
-      background: var(--azul); border-color: var(--azul);
-    }
-    .btn-plano.principal:hover {
-      background: var(--azul-claro); border-color: var(--azul-claro);
-      box-shadow: 0 8px 30px rgba(59,99,247,0.4);
-    }
-    .btn-plano:disabled {
-      opacity: 0.35; cursor: not-allowed;
-      box-shadow: none !important;
-    }
-
-    /* ── CTA FINAL ── */
-    .cta-section {
-      padding: 120px 48px; text-align: center;
-      border-top: 1px solid var(--linha);
       position: relative; overflow: hidden;
     }
-    .cta-section::before {
-      content: '';
-      position: absolute; width: 500px; height: 500px;
-      background: radial-gradient(ellipse, rgba(59,99,247,0.12) 0%, transparent 70%);
-      top: 50%; left: 50%; transform: translate(-50%,-50%);
-      pointer-events: none;
+    .hero-numero {
+      font-size: 0.58rem; font-weight: 700; letter-spacing: 3px;
+      color: var(--cinza); text-transform: uppercase; margin-bottom: 48px;
+      display: flex; align-items: center; gap: 16px;
     }
-    .cta-section h2 {
-      font-size: clamp(2rem, 5vw, 3.5rem); font-weight: 900;
-      letter-spacing: -2px; text-transform: uppercase;
-      margin-bottom: 16px; position: relative; z-index: 1;
+    .hero-numero::after {
+      content: ''; flex: 1; max-width: 60px; height: 1px; background: var(--cinza);
     }
-    .cta-section p {
-      font-size: 0.95rem; color: var(--cinza); margin-bottom: 40px;
-      position: relative; z-index: 1;
+    .hero h1 {
+      font-size: clamp(3.5rem, 9vw, 9rem);
+      font-weight: 900; line-height: 0.9;
+      letter-spacing: -4px; text-transform: uppercase;
+      max-width: 1000px;
     }
-    .cta-section .btn-primary { position: relative; z-index: 1; }
+    .hero h1 .aspas {
+      font-size: 0.35em; font-weight: 400; letter-spacing: 0;
+      vertical-align: super; color: var(--amarelo); font-style: normal;
+    }
+    .hero h1 .linha2 { color: var(--cinza); }
 
-    /* ── FOOTER ── */
+    .hero-rodape {
+      margin-top: 60px;
+      display: flex; align-items: flex-end; justify-content: space-between;
+      flex-wrap: wrap; gap: 32px;
+    }
+    .hero-desc {
+      font-size: 0.78rem; color: var(--cinza); line-height: 1.8;
+      max-width: 360px; font-weight: 400;
+      border-left: 1px solid var(--cinza-escuro); padding-left: 20px;
+    }
+    .hero-btns { display: flex; gap: 12px; flex-wrap: wrap; }
+    .btn-p {
+      font-size: 0.62rem; font-weight: 700; letter-spacing: 2.5px;
+      text-transform: uppercase; padding: 14px 28px;
+      text-decoration: none; transition: all .2s; border: 1px solid;
+    }
+    .btn-p.solid {
+      background: var(--branco); color: var(--preto); border-color: var(--branco);
+    }
+    .btn-p.solid:hover { background: var(--amarelo); border-color: var(--amarelo); }
+    .btn-p.outline {
+      background: transparent; color: var(--branco); border-color: var(--linha);
+    }
+    .btn-p.outline:hover { border-color: var(--branco); }
+
+    /* ─ DIAGONAL LINE ─ */
+    .diag-line {
+      height: 1px; background: var(--linha);
+      position: relative; overflow: visible;
+    }
+    .diag-line::before {
+      content: attr(data-label);
+      position: absolute; right: 40px; top: -10px;
+      font-size: 0.55rem; font-weight: 700; letter-spacing: 2px;
+      text-transform: uppercase; color: var(--cinza);
+      background: var(--preto); padding: 0 12px;
+    }
+
+    /* ─ FEATURES ─ */
+    .features {
+      display: grid; grid-template-columns: repeat(3, 1fr);
+    }
+    .feat {
+      padding: 48px 40px;
+      border-right: 1px solid var(--linha);
+      border-bottom: 1px solid var(--linha);
+      transition: background .3s;
+    }
+    .feat:nth-child(3n) { border-right: none; }
+    .feat:nth-child(4), .feat:nth-child(5), .feat:nth-child(6) { border-bottom: none; }
+    .feat:hover { background: rgba(245,244,240,0.025); }
+    .feat-num {
+      font-size: 0.55rem; font-weight: 700; letter-spacing: 3px;
+      color: var(--amarelo); text-transform: uppercase; margin-bottom: 28px;
+      font-variant-numeric: tabular-nums;
+    }
+    .feat-titulo {
+      font-size: 1.05rem; font-weight: 800; letter-spacing: -0.5px;
+      text-transform: uppercase; margin-bottom: 16px; line-height: 1.1;
+    }
+    .feat-titulo .q { color: var(--amarelo); font-size: 0.7em; font-weight: 400; }
+    .feat-desc {
+      font-size: 0.75rem; color: var(--cinza); line-height: 1.8; font-weight: 400;
+    }
+
+    /* ─ MANIFESTO ─ */
+    .manifesto {
+      padding: 100px 40px;
+      border-bottom: 1px solid var(--linha);
+      display: grid; grid-template-columns: 1fr 1fr; gap: 80px;
+      align-items: center;
+    }
+    .manifesto-left {}
+    .manifesto-tag {
+      font-size: 0.55rem; font-weight: 700; letter-spacing: 3px;
+      text-transform: uppercase; color: var(--amarelo); margin-bottom: 32px;
+    }
+    .manifesto h2 {
+      font-size: clamp(2rem, 4vw, 3.5rem); font-weight: 900;
+      letter-spacing: -2px; text-transform: uppercase;
+      line-height: 1.0;
+    }
+    .manifesto h2 em {
+      font-style: normal; color: var(--cinza);
+    }
+    .manifesto-right {}
+    .manifesto-stat {
+      padding: 28px 0;
+      border-bottom: 1px solid var(--linha);
+    }
+    .manifesto-stat:first-child { border-top: 1px solid var(--linha); }
+    .manifesto-stat-num {
+      font-size: 2.8rem; font-weight: 900; letter-spacing: -2px;
+      line-height: 1;
+    }
+    .manifesto-stat-num span { color: var(--amarelo); }
+    .manifesto-stat-desc {
+      font-size: 0.68rem; font-weight: 600; letter-spacing: 2px;
+      text-transform: uppercase; color: var(--cinza); margin-top: 6px;
+    }
+
+    /* ─ PLANOS ─ */
+    .planos { border-bottom: 1px solid var(--linha); }
+    .planos-header {
+      padding: 60px 40px 40px;
+      display: flex; align-items: flex-end; justify-content: space-between;
+      border-bottom: 1px solid var(--linha); flex-wrap: wrap; gap: 24px;
+    }
+    .planos-header h2 {
+      font-size: clamp(2rem, 4vw, 3.2rem); font-weight: 900;
+      letter-spacing: -2px; text-transform: uppercase; line-height: 1;
+    }
+    .toggle-wrap {
+      display: flex; align-items: center; gap: 12px;
+    }
+    .t-label {
+      font-size: 0.6rem; font-weight: 700; letter-spacing: 2px;
+      text-transform: uppercase; color: var(--cinza);
+    }
+    .t-label.on { color: var(--branco); }
+    .toggle { position: relative; width: 40px; height: 22px; cursor: pointer; }
+    .toggle input { opacity: 0; width: 0; height: 0; }
+    .t-slider {
+      position: absolute; inset: 0; background: var(--cinza-escuro);
+      border: 1px solid var(--linha); transition: .3s;
+    }
+    .t-slider::before {
+      content: ''; position: absolute;
+      width: 14px; height: 14px; left: 3px; top: 3px;
+      background: var(--cinza); transition: .3s;
+    }
+    .toggle input:checked + .t-slider { background: var(--amarelo); border-color: var(--amarelo); }
+    .toggle input:checked + .t-slider::before { transform: translateX(18px); background: var(--preto); }
+    .eco-tag {
+      font-size: 0.55rem; font-weight: 700; letter-spacing: 2px;
+      text-transform: uppercase; color: var(--preto); background: var(--amarelo);
+      padding: 3px 8px;
+    }
+
+    .planos-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; }
+    .plano-card {
+      padding: 48px 40px;
+      border-right: 1px solid var(--linha);
+      transition: background .3s; position: relative;
+    }
+    .plano-card:last-child { border-right: none; }
+    .plano-card:hover { background: rgba(245,244,240,0.02); }
+    .plano-card.destaque { background: rgba(240,224,0,0.03); }
+    .plano-card.destaque:hover { background: rgba(240,224,0,0.06); }
+    .plano-label-top {
+      font-size: 0.55rem; font-weight: 700; letter-spacing: 3px;
+      text-transform: uppercase; color: var(--amarelo); margin-bottom: 32px;
+      display: flex; align-items: center; gap: 10px;
+    }
+    .plano-label-top .dot {
+      width: 5px; height: 5px; background: var(--amarelo); border-radius: 50%;
+    }
+    .plano-nome {
+      font-size: 1.8rem; font-weight: 900; letter-spacing: -1px;
+      text-transform: uppercase; line-height: 1; margin-bottom: 24px;
+    }
+    .plano-preco-val {
+      font-size: 3.5rem; font-weight: 900; letter-spacing: -3px;
+      line-height: 1;
+    }
+    .plano-preco-val sup { font-size: 1rem; font-weight: 600; letter-spacing: 0; vertical-align: super; }
+    .plano-preco-val sub { font-size: 0.75rem; font-weight: 500; letter-spacing: 0; color: var(--cinza); }
+    .plano-preco-val.zero { color: var(--cinza); }
+    .plano-periodo {
+      font-size: 0.6rem; font-weight: 600; letter-spacing: 2px;
+      text-transform: uppercase; color: var(--cinza); margin-top: 6px;
+      margin-bottom: 40px; min-height: 16px;
+    }
+    .plano-features { list-style: none; margin-bottom: 40px; }
+    .plano-features li {
+      font-size: 0.7rem; font-weight: 500; letter-spacing: .5px;
+      color: rgba(245,244,240,0.6);
+      padding: 10px 0; border-bottom: 1px solid var(--linha);
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .plano-features li:last-child { border-bottom: none; }
+    .plano-features li.on { color: var(--branco); }
+    .plano-features .check-icon { font-size: 0.6rem; color: var(--amarelo); font-weight: 700; }
+    .plano-features .x-icon { font-size: 0.6rem; color: rgba(245,244,240,0.2); }
+    .btn-plano {
+      width: 100%; padding: 14px; border: 1px solid;
+      font-size: 0.62rem; font-weight: 700; font-family: 'Inter', sans-serif;
+      letter-spacing: 2.5px; text-transform: uppercase; cursor: pointer;
+      transition: all .2s; display: block; text-align: center; text-decoration: none;
+    }
+    .btn-plano.solid {
+      background: var(--branco); color: var(--preto); border-color: var(--branco);
+    }
+    .btn-plano.solid:hover { background: var(--amarelo); border-color: var(--amarelo); }
+    .btn-plano.ghost {
+      background: transparent; color: var(--branco); border-color: var(--linha);
+    }
+    .btn-plano.ghost:hover { border-color: rgba(245,244,240,0.4); }
+    .btn-plano:disabled { opacity: 0.3; cursor: not-allowed; }
+
+    /* ─ QUOTE ─ */
+    .quote-section {
+      padding: 100px 40px;
+      border-bottom: 1px solid var(--linha);
+      text-align: center;
+    }
+    .quote-text {
+      font-size: clamp(1.4rem, 3vw, 2.4rem); font-weight: 800;
+      letter-spacing: -1px; text-transform: uppercase; line-height: 1.3;
+      max-width: 800px; margin: 0 auto;
+    }
+    .quote-text .aq { color: var(--amarelo); }
+    .quote-autor {
+      margin-top: 32px; font-size: 0.6rem; font-weight: 600;
+      letter-spacing: 3px; text-transform: uppercase; color: var(--cinza);
+    }
+
+    /* ─ CTA ─ */
+    .cta {
+      padding: 100px 40px;
+      display: flex; align-items: center; justify-content: space-between;
+      border-bottom: 1px solid var(--linha); flex-wrap: wrap; gap: 40px;
+    }
+    .cta h2 {
+      font-size: clamp(2rem, 4.5vw, 3.8rem); font-weight: 900;
+      letter-spacing: -2.5px; text-transform: uppercase; line-height: 1;
+    }
+    .cta h2 .sub { color: var(--cinza); display: block; }
+
+    /* ─ FOOTER ─ */
     footer {
-      padding: 40px 48px;
-      border-top: 1px solid var(--linha);
+      padding: 32px 40px;
       display: flex; align-items: center; justify-content: space-between;
       flex-wrap: wrap; gap: 16px;
     }
     .footer-logo {
-      font-weight: 900; font-size: 0.85rem; letter-spacing: .5px;
-      text-transform: uppercase; color: rgba(255,255,255,0.4); text-decoration: none;
+      font-size: 0.65rem; font-weight: 900; letter-spacing: 3px;
+      text-transform: uppercase; color: rgba(245,244,240,0.3); text-decoration: none;
     }
-    .footer-logo span { color: rgba(107,143,255,0.6); }
-    .footer-copy { font-size: 0.75rem; color: rgba(160,168,192,0.4); }
+    .footer-logo .tm { font-size: 0.45rem; vertical-align: super; font-weight: 400; }
+    .footer-links { display: flex; gap: 32px; }
+    .footer-link {
+      font-size: 0.58rem; font-weight: 600; letter-spacing: 2px;
+      text-transform: uppercase; color: rgba(245,244,240,0.2);
+      text-decoration: none; transition: color .2s;
+    }
+    .footer-link:hover { color: rgba(245,244,240,0.5); }
 
-    /* ── ANIMAÇÕES ── */
-    @keyframes fadeUp {
-      from { opacity: 0; transform: translateY(20px); }
-      to   { opacity: 1; transform: translateY(0); }
-    }
-    .reveal {
-      opacity: 0; transform: translateY(30px);
-      transition: opacity .7s ease, transform .7s ease;
-    }
-    .reveal.visivel { opacity: 1; transform: translateY(0); }
+    /* ─ REVEAL ─ */
+    .reveal { opacity: 0; transform: translateY(24px); transition: opacity .8s ease, transform .8s ease; }
+    .reveal.on { opacity: 1; transform: translateY(0); }
 
-    /* ── MOBILE ── */
-    @media (max-width: 768px) {
+    /* ─ MOBILE ─ */
+    @media (max-width: 800px) {
       nav { padding: 0 20px; }
       .nav-links { display: none; }
-      .hero { padding: 100px 20px 60px; }
+      .hero { padding: 56px 20px 64px; }
       .hero h1 { letter-spacing: -2px; }
-      .section, .planos-section, .demo-section { padding: 60px 20px; }
-      .features-grid, .planos-grid { grid-template-columns: 1fr; }
-      .confianca { padding: 32px 20px; }
-      .confianca-items { gap: 24px; }
-      footer { padding: 32px 20px; flex-direction: column; text-align: center; }
-      .toggle-wrap { flex-wrap: wrap; }
+      .hero-rodape { flex-direction: column; align-items: flex-start; }
+      .features { grid-template-columns: 1fr; }
+      .feat { border-right: none; }
+      .feat:nth-child(n) { border-bottom: 1px solid var(--linha); }
+      .feat:last-child { border-bottom: none; }
+      .manifesto { grid-template-columns: 1fr; gap: 48px; padding: 60px 20px; }
+      .planos-header { padding: 40px 20px 32px; }
+      .planos-grid { grid-template-columns: 1fr; }
+      .plano-card { border-right: none; border-bottom: 1px solid var(--linha); }
+      .plano-card:last-child { border-bottom: none; }
+      .quote-section, .cta { padding: 64px 20px; }
+      .cta { flex-direction: column; }
+      footer { padding: 28px 20px; flex-direction: column; }
     }
   </style>
 </head>
@@ -461,238 +384,247 @@
 
 <!-- NAV -->
 <nav>
-  <a class="nav-logo" href="/">Professor<span>IA</span></a>
+  <a class="nav-logo" href="/">PROFESSOR<span class="tm">IA™</span></a>
   <div class="nav-links">
-    <a class="nav-link" href="#funcionalidades">Funcionalidades</a>
-    <a class="nav-link" href="#planos">Planos</a>
-    <a class="nav-link" href="/login">Entrar</a>
-    <a class="nav-cta" href="/cadastro">Começar grátis</a>
+    <a class="nav-link" href="#features">FEATURES</a>
+    <a class="nav-link" href="#planos">PLANOS</a>
+    <a class="nav-link" href="/login">ENTRAR</a>
+    <a class="nav-cta" href="/cadastro">COMEÇAR</a>
   </div>
 </nav>
 
+<!-- TICKER -->
+<div class="ticker">
+  <div class="ticker-track">
+    <span class="ticker-item">PLANOS DE AULA</span><span class="ticker-sep">—</span>
+    <span class="ticker-item">PROVAS E AVALIAÇÕES</span><span class="ticker-sep">—</span>
+    <span class="ticker-item">CAÇA-PALAVRAS</span><span class="ticker-sep">—</span>
+    <span class="ticker-item">PLANEJAMENTO ANUAL</span><span class="ticker-sep">—</span>
+    <span class="ticker-item">BILHETES AOS PAIS</span><span class="ticker-sep">—</span>
+    <span class="ticker-item">ATIVIDADES LÚDICAS</span><span class="ticker-sep">—</span>
+    <span class="ticker-item">RUBRICAS</span><span class="ticker-sep">—</span>
+    <span class="ticker-item">RESUMOS DE CONTEÚDO</span><span class="ticker-sep">—</span>
+    <span class="ticker-item">PLANOS DE AULA</span><span class="ticker-sep">—</span>
+    <span class="ticker-item">PROVAS E AVALIAÇÕES</span><span class="ticker-sep">—</span>
+    <span class="ticker-item">CAÇA-PALAVRAS</span><span class="ticker-sep">—</span>
+    <span class="ticker-item">PLANEJAMENTO ANUAL</span><span class="ticker-sep">—</span>
+    <span class="ticker-item">BILHETES AOS PAIS</span><span class="ticker-sep">—</span>
+    <span class="ticker-item">ATIVIDADES LÚDICAS</span><span class="ticker-sep">—</span>
+    <span class="ticker-item">RUBRICAS</span><span class="ticker-sep">—</span>
+    <span class="ticker-item">RESUMOS DE CONTEÚDO</span><span class="ticker-sep">—</span>
+  </div>
+</div>
+
 <!-- HERO -->
 <section class="hero">
-  <div class="hero-badge">
-    <span class="hero-badge-dot"></span>
-    Assistente de IA para professores
-  </div>
-  <h1>Crie materiais<br/><span class="destaque">em segundos</span></h1>
-  <p class="hero-sub">
-    Planos de aula, provas, caça-palavras, atividades e muito mais.
-    O ProfessorIA economiza horas do seu planejamento todo dia.
-  </p>
-  <div class="hero-btns">
-    <a href="/cadastro" class="btn-primary">Começar grátis</a>
-    <a href="#funcionalidades" class="btn-secondary">Ver funcionalidades</a>
-  </div>
-  <div class="hero-social">
-    <div class="avatares">
-      <div class="avatar">MA</div>
-      <div class="avatar">JS</div>
-      <div class="avatar">CR</div>
-      <div class="avatar">PT</div>
-    </div>
-    <span class="hero-social-text">Professores já usando o ProfessorIA</span>
-  </div>
-</section>
-
-<!-- CONFIANÇA -->
-<div class="confianca">
-  <p class="confianca-texto">Compatível com</p>
-  <div class="confianca-items">
-    <span class="confianca-item">BNCC</span>
-    <span class="confianca-item">Ensino Fundamental</span>
-    <span class="confianca-item">Ensino Médio</span>
-    <span class="confianca-item">EJA</span>
-    <span class="confianca-item">Ed. Infantil</span>
-    <span class="confianca-item">Todas as disciplinas</span>
-  </div>
-</div>
-
-<!-- FUNCIONALIDADES -->
-<section class="section reveal" id="funcionalidades">
-  <div class="section-tag">Funcionalidades</div>
-  <h2>Tudo que você<br/>precisa em um lugar</h2>
-  <p class="section-sub">Descreva o que precisa em linguagem natural e receba o material completo em segundos.</p>
-
-  <div class="features-grid">
-    <div class="feature-card">
-      <div class="feature-icon">📋</div>
-      <div class="feature-titulo">Planos de aula</div>
-      <p class="feature-desc">Objetivos, conteúdo, metodologia e avaliação seguindo a BNCC. Completo e pronto para usar.</p>
-    </div>
-    <div class="feature-card">
-      <div class="feature-icon">📝</div>
-      <div class="feature-titulo">Provas e avaliações</div>
-      <p class="feature-desc">Questões abertas e múltipla escolha com gabarito automático. Defina o nível de dificuldade.</p>
-    </div>
-    <div class="feature-card">
-      <div class="feature-icon">🔤</div>
-      <div class="feature-titulo">Caça-palavras</div>
-      <p class="feature-desc">Grade formatada e lista de palavras sobre qualquer tema. Pronto para imprimir.</p>
-    </div>
-    <div class="feature-card">
-      <div class="feature-icon">🎯</div>
-      <div class="feature-titulo">Atividades lúdicas</div>
-      <p class="feature-desc">Exercícios criativos e dinâmicas adaptadas à faixa etária e disciplina.</p>
-    </div>
-    <div class="feature-card">
-      <div class="feature-icon">📅</div>
-      <div class="feature-titulo">Planejamento anual</div>
-      <p class="feature-desc">Distribua os conteúdos por bimestre alinhado com o calendário escolar e a BNCC.</p>
-    </div>
-    <div class="feature-card">
-      <div class="feature-icon">✉️</div>
-      <div class="feature-titulo">Bilhetes e comunicados</div>
-      <p class="feature-desc">Mensagens para os pais redigidas com clareza e profissionalismo em segundos.</p>
+  <div class="hero-numero">001 &nbsp;/&nbsp; ASSISTENTE DE IA</div>
+  <h1>
+    O FIM DO<br/>
+    PLANEJAMENTO<br/>
+    <span class="linha2"><em class="aspas">"</em>MANUAL<em class="aspas">"</em></span>
+  </h1>
+  <div class="hero-rodape">
+    <p class="hero-desc">
+      Gere planos de aula, provas, caça-palavras e atividades em segundos.
+      Feito para professores brasileiros. Alinhado à BNCC.
+    </p>
+    <div class="hero-btns">
+      <a href="/cadastro" class="btn-p solid">COMEÇAR GRÁTIS</a>
+      <a href="#features" class="btn-p outline">VER MAIS</a>
     </div>
   </div>
 </section>
 
-<!-- DEMO -->
-<div class="demo-section reveal">
-  <div class="demo-inner">
-    <div style="text-align:center; margin-bottom: 48px;">
-      <div class="section-tag" style="justify-content:center">Interface</div>
-      <h2 style="font-size:clamp(1.8rem,3.5vw,2.8rem); font-weight:900; letter-spacing:-1.5px; text-transform:uppercase;">Simples como uma conversa</h2>
+<div class="diag-line" data-label="FUNCIONALIDADES"></div>
+
+<!-- FEATURES -->
+<section class="features reveal" id="features">
+  <div class="feat">
+    <div class="feat-num">F — 01</div>
+    <div class="feat-titulo"><span class="q">"</span>PLANO DE AULA<span class="q">"</span></div>
+    <p class="feat-desc">Objetivos, conteúdo, metodologia e avaliação. Gerado completo e alinhado à BNCC em segundos.</p>
+  </div>
+  <div class="feat">
+    <div class="feat-num">F — 02</div>
+    <div class="feat-titulo"><span class="q">"</span>PROVAS<span class="q">"</span></div>
+    <p class="feat-desc">Questões abertas e múltipla escolha com gabarito automático. Defina o tema, série e nível.</p>
+  </div>
+  <div class="feat">
+    <div class="feat-num">F — 03</div>
+    <div class="feat-titulo"><span class="q">"</span>CAÇA-PALAVRAS<span class="q">"</span></div>
+    <p class="feat-desc">Grade formatada com lista de palavras sobre qualquer tema. Pronto para imprimir.</p>
+  </div>
+  <div class="feat">
+    <div class="feat-num">F — 04</div>
+    <div class="feat-titulo"><span class="q">"</span>ATIVIDADES<span class="q">"</span></div>
+    <p class="feat-desc">Exercícios criativos e dinâmicas adaptadas à faixa etária. Do infantil ao médio.</p>
+  </div>
+  <div class="feat">
+    <div class="feat-num">F — 05</div>
+    <div class="feat-titulo"><span class="q">"</span>PLANEJAMENTO ANUAL<span class="q">"</span></div>
+    <p class="feat-desc">Distribuição de conteúdos por bimestre alinhada ao calendário escolar e à BNCC.</p>
+  </div>
+  <div class="feat">
+    <div class="feat-num">F — 06</div>
+    <div class="feat-titulo"><span class="q">"</span>BILHETES<span class="q">"</span></div>
+    <p class="feat-desc">Comunicados para os pais redigidos com clareza e profissionalismo em segundos.</p>
+  </div>
+</section>
+
+<div class="diag-line" data-label="MANIFESTO"></div>
+
+<!-- MANIFESTO -->
+<section class="manifesto reveal">
+  <div class="manifesto-left">
+    <div class="manifesto-tag">002 — POR QUÊ EXISTE</div>
+    <h2>FEITO PARA<br/>QUEM<br/><em>ENSINA</em></h2>
+  </div>
+  <div class="manifesto-right">
+    <div class="manifesto-stat">
+      <div class="manifesto-stat-num">3<span>h</span></div>
+      <div class="manifesto-stat-desc">economizadas por semana em planejamento</div>
     </div>
-    <div class="demo-window">
-      <div class="demo-bar">
-        <span class="demo-dot vermelho"></span>
-        <span class="demo-dot amarelo"></span>
-        <span class="demo-dot verde"></span>
-        <span class="demo-url">professorIA — Chat</span>
-      </div>
-      <div class="demo-chat">
-        <div class="demo-msg usuario">
-          <div class="demo-avatar user">Eu</div>
-          <div class="demo-bubble">Cria uma prova de história sobre a Revolução Francesa para o 8º ano, com 10 questões de múltipla escolha e gabarito.</div>
-        </div>
-        <div class="demo-msg" style="animation-delay:.3s">
-          <div class="demo-avatar ia">IA</div>
-          <div class="demo-bubble">
-            Claro! Aqui está a prova completa:<br/><br/>
-            <strong>AVALIAÇÃO — História | 8º ano</strong><br/>
-            Tema: Revolução Francesa<br/><br/>
-            <strong>1.</strong> A Revolução Francesa teve início em qual ano?<br/>
-            a) 1776 &nbsp; b) 1789 &nbsp; <strong>c) 1789 ✓</strong> &nbsp; d) 1804<br/><br/>
-            <div class="demo-typing"><span></span><span></span><span></span></div>
-          </div>
-        </div>
-      </div>
+    <div class="manifesto-stat">
+      <div class="manifesto-stat-num">+8<span>x</span></div>
+      <div class="manifesto-stat-desc">mais rápido que criar do zero</div>
+    </div>
+    <div class="manifesto-stat">
+      <div class="manifesto-stat-num">100<span>%</span></div>
+      <div class="manifesto-stat-desc">alinhado à BNCC e currículo nacional</div>
     </div>
   </div>
-</div>
+</section>
+
+<div class="diag-line" data-label="PLANOS"></div>
 
 <!-- PLANOS -->
-<section class="planos-section reveal" id="planos">
-  <div class="section-tag">Preços</div>
-  <h2>Planos simples<br/>e transparentes</h2>
-  <p class="section-sub">Comece grátis. Faça upgrade quando precisar. Cancele quando quiser.</p>
-
-  <div class="toggle-wrap">
-    <span class="toggle-label ativo" id="label-mensal">Mensal</span>
-    <label class="toggle">
-      <input type="checkbox" id="toggle-anual" onchange="alternarPeriodo()"/>
-      <span class="toggle-slider"></span>
-    </label>
-    <span class="toggle-label" id="label-anual">Anual</span>
-    <span class="economia-tag" id="tag-economia" style="display:none">2 meses grátis</span>
+<section class="planos reveal" id="planos">
+  <div class="planos-header">
+    <h2>ESCOLHA<br/>SEU PLANO</h2>
+    <div class="toggle-wrap">
+      <span class="t-label on" id="lbl-m">MENSAL</span>
+      <label class="toggle">
+        <input type="checkbox" id="tog-anual" onchange="alternar()"/>
+        <span class="t-slider"></span>
+      </label>
+      <span class="t-label" id="lbl-a">ANUAL</span>
+      <span class="eco-tag" id="eco" style="display:none">2 MESES GRÁTIS</span>
+    </div>
   </div>
 
   <div class="planos-grid">
-    <!-- Free -->
+    <!-- FREE -->
     <div class="plano-card">
-      <div class="plano-nome">Free</div>
-      <div class="plano-preco gratis">R$ 0</div>
-      <div class="plano-periodo">Para sempre</div>
+      <div class="plano-label-top">FREE — PARA COMEÇAR</div>
+      <div class="plano-nome">FREE</div>
+      <div class="plano-preco-val zero">R$ 0</div>
+      <div class="plano-periodo">PARA SEMPRE</div>
       <ul class="plano-features">
-        <li><span class="check">✓</span> 5 gerações por mês</li>
-        <li><span class="check">✓</span> Chat com IA</li>
-        <li><span class="check">✓</span> Planos de aula</li>
-        <li class="off"><span class="check">—</span> Provas e avaliações</li>
-        <li class="off"><span class="check">—</span> Caça-palavras</li>
-        <li class="off"><span class="check">—</span> Atividades e bilhetes</li>
-        <li class="off"><span class="check">—</span> Planejamento anual</li>
-        <li class="off"><span class="check">—</span> Exportar PDF/Word</li>
+        <li class="on">5 GERAÇÕES / MÊS <span class="check-icon">✓</span></li>
+        <li class="on">CHAT COM IA <span class="check-icon">✓</span></li>
+        <li class="on">PLANOS DE AULA <span class="check-icon">✓</span></li>
+        <li>PROVAS E AVALIAÇÕES <span class="x-icon">—</span></li>
+        <li>CAÇA-PALAVRAS <span class="x-icon">—</span></li>
+        <li>ATIVIDADES E BILHETES <span class="x-icon">—</span></li>
+        <li>PLANEJAMENTO ANUAL <span class="x-icon">—</span></li>
+        <li>EXPORTAR PDF / WORD <span class="x-icon">—</span></li>
       </ul>
-      <a href="/cadastro" class="btn-plano">Começar grátis</a>
+      <a href="/cadastro" class="btn-plano ghost">COMEÇAR GRÁTIS</a>
     </div>
 
-    <!-- Basic -->
+    <!-- BASIC -->
     <div class="plano-card destaque">
-      <div class="plano-badge">Mais popular</div>
-      <div class="plano-nome">Basic</div>
-      <div class="plano-preco" id="preco-basic">R$ 39<small>/mês</small></div>
-      <div class="plano-periodo" id="periodo-basic">Acesso individual ilimitado</div>
+      <div class="plano-label-top"><span class="dot"></span>MAIS POPULAR</div>
+      <div class="plano-nome">BASIC</div>
+      <div class="plano-preco-val" id="preco-basic"><sup>R$</sup>39<sub>/MÊS</sub></div>
+      <div class="plano-periodo" id="per-basic">ACESSO INDIVIDUAL ILIMITADO</div>
       <ul class="plano-features">
-        <li><span class="check">✓</span> Gerações ilimitadas</li>
-        <li><span class="check">✓</span> Chat com IA</li>
-        <li><span class="check">✓</span> Planos de aula</li>
-        <li><span class="check">✓</span> Provas e avaliações</li>
-        <li><span class="check">✓</span> Caça-palavras</li>
-        <li><span class="check">✓</span> Atividades e bilhetes</li>
-        <li class="off"><span class="check">—</span> Planejamento anual BNCC</li>
-        <li class="off"><span class="check">—</span> Exportar PDF/Word</li>
+        <li class="on">GERAÇÕES ILIMITADAS <span class="check-icon">✓</span></li>
+        <li class="on">CHAT COM IA <span class="check-icon">✓</span></li>
+        <li class="on">PLANOS DE AULA <span class="check-icon">✓</span></li>
+        <li class="on">PROVAS E AVALIAÇÕES <span class="check-icon">✓</span></li>
+        <li class="on">CAÇA-PALAVRAS <span class="check-icon">✓</span></li>
+        <li class="on">ATIVIDADES E BILHETES <span class="check-icon">✓</span></li>
+        <li>PLANEJAMENTO ANUAL <span class="x-icon">—</span></li>
+        <li>EXPORTAR PDF / WORD <span class="x-icon">—</span></li>
       </ul>
-      <a href="/cadastro" class="btn-plano principal" id="btn-basic">Assinar Basic</a>
+      <a href="/stripe/checkout/basic" class="btn-plano solid" id="btn-basic">ASSINAR BASIC</a>
     </div>
 
-    <!-- Pro -->
+    <!-- PRO -->
     <div class="plano-card">
-      <div class="plano-nome">Pro</div>
-      <div class="plano-preco" id="preco-pro">R$ 59<small>/mês</small></div>
-      <div class="plano-periodo" id="periodo-pro">Tudo do Basic + mais</div>
+      <div class="plano-label-top">PRO — COMPLETO</div>
+      <div class="plano-nome">PRO</div>
+      <div class="plano-preco-val" id="preco-pro"><sup>R$</sup>59<sub>/MÊS</sub></div>
+      <div class="plano-periodo" id="per-pro">TUDO DO BASIC + MAIS</div>
       <ul class="plano-features">
-        <li><span class="check">✓</span> Tudo do plano Basic</li>
-        <li><span class="check">✓</span> Planejamento anual BNCC</li>
-        <li><span class="check">✓</span> Exportar PDF e Word</li>
-        <li><span class="check">✓</span> Histórico completo</li>
-        <li><span class="check">✓</span> Suporte prioritário</li>
+        <li class="on">TUDO DO BASIC <span class="check-icon">✓</span></li>
+        <li class="on">PLANEJAMENTO ANUAL BNCC <span class="check-icon">✓</span></li>
+        <li class="on">EXPORTAR PDF E WORD <span class="check-icon">✓</span></li>
+        <li class="on">HISTÓRICO COMPLETO <span class="check-icon">✓</span></li>
+        <li class="on">SUPORTE PRIORITÁRIO <span class="check-icon">✓</span></li>
       </ul>
-      <a href="/cadastro" class="btn-plano" id="btn-pro">Assinar Pro</a>
+      <a href="/stripe/checkout/pro" class="btn-plano ghost" id="btn-pro">ASSINAR PRO</a>
     </div>
   </div>
 </section>
 
-<!-- CTA FINAL -->
-<section class="cta-section reveal">
-  <h2>Pronto para<br/>economizar tempo?</h2>
-  <p>Junte-se aos professores que já usam IA no planejamento.</p>
-  <a href="/cadastro" class="btn-primary">Criar conta grátis</a>
+<div class="diag-line" data-label="DEPOIMENTO"></div>
+
+<!-- QUOTE -->
+<div class="quote-section reveal">
+  <p class="quote-text">
+    <span class="aq">"</span>O QUE LEVAVA HORAS AGORA LEVA MINUTOS.<br/>
+    ISSO MUDOU MEU DOMINGO.<span class="aq">"</span>
+  </p>
+  <p class="quote-autor">— Professora de História · Rede Pública · São Paulo</p>
+</div>
+
+<!-- CTA -->
+<section class="cta reveal">
+  <h2>COMECE<br/><span class="sub">HOJE, GRÁTIS.</span></h2>
+  <div>
+    <a href="/cadastro" class="btn-p solid" style="font-size:0.68rem; padding:16px 40px">CRIAR CONTA GRÁTIS</a>
+  </div>
 </section>
 
 <!-- FOOTER -->
 <footer>
-  <a class="footer-logo" href="/">Professor<span>IA</span></a>
-  <span class="footer-copy">© 2025 ProfessorIA · Feito para professores brasileiros</span>
+  <a class="footer-logo" href="/">PROFESSOR<span class="tm">IA™</span></a>
+  <div class="footer-links">
+    <a class="footer-link" href="/planos">PLANOS</a>
+    <a class="footer-link" href="/login">LOGIN</a>
+    <a class="footer-link" href="/cadastro">CADASTRO</a>
+  </div>
+  <span style="font-size:0.55rem; letter-spacing:1.5px; text-transform:uppercase; color:rgba(245,244,240,0.15)">© 2025 PROFESSORIA</span>
 </footer>
 
 <script>
-  // Reveal on scroll
-  const observer = new IntersectionObserver((entries) => {
-    entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('visivel'); });
-  }, { threshold: 0.1 });
-  document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+  // Scroll reveal
+  const obs = new IntersectionObserver(
+    entries => entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('on'); }),
+    { threshold: 0.08 }
+  );
+  document.querySelectorAll('.reveal').forEach(el => obs.observe(el));
 
-  // Toggle anual/mensal
-  function alternarPeriodo() {
-    const anual = document.getElementById('toggle-anual').checked;
-    document.getElementById('label-mensal').classList.toggle('ativo', !anual);
-    document.getElementById('label-anual').classList.toggle('ativo', anual);
-    document.getElementById('tag-economia').style.display = anual ? 'inline' : 'none';
+  // Toggle
+  function alternar() {
+    const anual = document.getElementById('tog-anual').checked;
+    document.getElementById('lbl-m').classList.toggle('on', !anual);
+    document.getElementById('lbl-a').classList.toggle('on', anual);
+    document.getElementById('eco').style.display = anual ? 'inline' : 'none';
     if (anual) {
-      document.getElementById('preco-basic').innerHTML = 'R$ 390<small>/ano</small>';
-      document.getElementById('periodo-basic').textContent = 'R$ 32,50/mês · 2 meses grátis';
-      document.getElementById('preco-pro').innerHTML = 'R$ 590<small>/ano</small>';
-      document.getElementById('periodo-pro').textContent = 'R$ 49,16/mês · 2 meses grátis';
+      document.getElementById('preco-basic').innerHTML = '<sup>R$</sup>390<sub>/ANO</sub>';
+      document.getElementById('per-basic').textContent  = 'R$ 32,50/MÊS — 2 MESES GRÁTIS';
+      document.getElementById('preco-pro').innerHTML   = '<sup>R$</sup>590<sub>/ANO</sub>';
+      document.getElementById('per-pro').textContent    = 'R$ 49,16/MÊS — 2 MESES GRÁTIS';
       document.getElementById('btn-basic').href = '/stripe/checkout/basic_anual';
       document.getElementById('btn-pro').href   = '/stripe/checkout/pro_anual';
     } else {
-      document.getElementById('preco-basic').innerHTML = 'R$ 39<small>/mês</small>';
-      document.getElementById('periodo-basic').textContent = 'Acesso individual ilimitado';
-      document.getElementById('preco-pro').innerHTML = 'R$ 59<small>/mês</small>';
-      document.getElementById('periodo-pro').textContent = 'Tudo do Basic + mais';
+      document.getElementById('preco-basic').innerHTML = '<sup>R$</sup>39<sub>/MÊS</sub>';
+      document.getElementById('per-basic').textContent  = 'ACESSO INDIVIDUAL ILIMITADO';
+      document.getElementById('preco-pro').innerHTML   = '<sup>R$</sup>59<sub>/MÊS</sub>';
+      document.getElementById('per-pro').textContent    = 'TUDO DO BASIC + MAIS';
       document.getElementById('btn-basic').href = '/stripe/checkout/basic';
       document.getElementById('btn-pro').href   = '/stripe/checkout/pro';
     }
