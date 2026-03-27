@@ -747,7 +747,7 @@ def criar_docx(dados_form, aulas_ia):
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if current_user.is_authenticated:
-        return redirect(url_for('index'))
+        return redirect(url_for('planos'))
     if request.method == 'POST':
         email = request.form.get('email', '').strip().lower()
         senha = request.form.get('senha', '')
@@ -756,7 +756,7 @@ def login():
         conn.close()
         if row and check_password_hash(row['senha'], senha):
             login_user(Usuario(row))
-            return redirect(url_for('index'))
+            return redirect(url_for('planos'))
         flash('E-mail ou senha incorretos.')
     return render_template('login.html')
 
@@ -769,7 +769,7 @@ def logout():
 @app.route('/cadastro', methods=['GET', 'POST'])
 def cadastro():
     if current_user.is_authenticated:
-        return redirect(url_for('index'))
+        return redirect(url_for('planos'))
     if request.method == 'POST':
         nome  = request.form.get('nome', '').strip()
         email = request.form.get('email', '').strip().lower()
