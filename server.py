@@ -52,9 +52,19 @@ SITE_URL    = os.environ.get('SITE_URL', 'http://localhost:5001')
 ADMIN_EMAIL = os.environ.get('ADMIN_EMAIL', '')
 
 PLANOS = {
-    'pro':       {'nome': 'Pro',     'preco': 29.00,  'dias': 30},
-    'professor': {'nome': 'Premium', 'preco': 49.00,  'dias': 30},
-    'escola':    {'nome': 'Escola',  'preco': 199.00, 'dias': 30},
+    'basic':        {'nome': 'Basic',    'preco': 39.00,  'dias': 30},
+    'basic_anual':  {'nome': 'Basic',    'preco': 390.00, 'dias': 365},
+    'pro':          {'nome': 'Pro',      'preco': 59.00,  'dias': 30},
+    'pro_anual':    {'nome': 'Pro',      'preco': 590.00, 'dias': 365},
+}
+
+STRIPE_SECRET_KEY    = os.environ.get('STRIPE_SECRET_KEY', '')
+STRIPE_WEBHOOK_SECRET = os.environ.get('STRIPE_WEBHOOK_SECRET', '')
+STRIPE_PRICES = {
+    'basic':       os.environ.get('STRIPE_PRICE_BASIC_MENSAL', ''),
+    'basic_anual': os.environ.get('STRIPE_PRICE_BASIC_ANUAL', ''),
+    'pro':         os.environ.get('STRIPE_PRICE_PRO_MENSAL', ''),
+    'pro_anual':   os.environ.get('STRIPE_PRICE_PRO_ANUAL', ''),
 }
 
 LIMITE_GRATIS = 5  # gerações gratuitas por mês no plano grátis
@@ -657,6 +667,101 @@ def planos():
                            assinatura_ativa=current_user.assinatura_ativa,
                            valido_ate=current_user.valido_ate,
                            plano_atual=current_user.plano)
+
+# ─── Stripe ───────────────────────────────────────────────────────────────────
+
+@app.route('/stripe/checkout/<plano_id>')
+@login_required
+def stripe_checkout(plano_id):
+    if plano_id not in PLANOS or not STRIPE_SECRET_KEY:
+        flash('Pagamento não configurado. Entre em contato com o suporte.')
+        return redirect(url_for('planos'))
+    price_id = STRIPE_PRICES.get(plano_id, '')
+    if not price_id:
+        flash('Plano não configurado ainda.')
+        return redirect(url_for('planos'))
+    try:
+        import stripe as stripe_lib
+        stripe_lib.api_key = STRIPE_SECRET_KEY
+        session = stripe_lib.checkout.Session.create(
+            payment_method_types=['card'],
+            line_items=[{'price': price_id, 'quantity': 1}],
+            mode='subscription',
+            customer_email=current_user.email,
+            metadata={'usuario_id': current_user.id, 'plano_id': plano_id},
+            success_url=f"{SITE_URL}/stripe/sucesso?session_id={{CHECKOUT_SESSION_ID}}",
+            cancel_url=f"{SITE_URL}/planos",
+        )
+        return redirect(session.url, code=303)
+    except Exception as e:
+        flash(f'Erro ao iniciar pagamento: {str(e)}')
+        return redirect(url_for('planos'))
+
+
+@app.route('/stripe/sucesso')
+@login_required
+def stripe_sucesso():
+    session_id = request.args.get('session_id', '')
+    if session_id and STRIPE_SECRET_KEY:
+        try:
+            import stripe as stripe_lib
+            stripe_lib.api_key = STRIPE_SECRET_KEY
+            session = stripe_lib.checkout.Session.retrieve(session_id)
+            if session.payment_status == 'paid':
+                plano_id = session.metadata.get('plano_id', 'basic')
+                plano    = PLANOS.get(plano_id, PLANOS['basic'])
+                valido   = (datetime.now() + timedelta(days=plano['dias'])).strftime('%d/%m/%Y')
+                conn = get_db()
+                conn.execute(
+                    "UPDATE usuarios SET plano=?, ativo=1, valido_ate=? WHERE id=?",
+                    (plano_id, valido, current_user.id)
+                )
+                conn.commit()
+                conn.close()
+        except Exception:
+            pass
+    return render_template('pagamento_status.html',
+                           titulo='Pagamento aprovado!',
+                           mensagem='Sua assinatura está ativa. Bom uso!')
+
+
+@app.route('/stripe/webhook', methods=['POST'])
+def stripe_webhook():
+    import stripe as stripe_lib
+    stripe_lib.api_key = STRIPE_SECRET_KEY
+    payload = request.get_data()
+    sig     = request.headers.get('Stripe-Signature', '')
+    try:
+        event = stripe_lib.Webhook.construct_event(payload, sig, STRIPE_WEBHOOK_SECRET)
+    except Exception:
+        return '', 400
+
+    if event['type'] == 'checkout.session.completed':
+        session  = event['data']['object']
+        plano_id = session.get('metadata', {}).get('plano_id', 'basic')
+        uid      = session.get('metadata', {}).get('usuario_id')
+        if uid and plano_id in PLANOS:
+            plano  = PLANOS[plano_id]
+            valido = (datetime.now() + timedelta(days=plano['dias'])).strftime('%d/%m/%Y')
+            conn   = get_db()
+            conn.execute(
+                "UPDATE usuarios SET plano=?, ativo=1, valido_ate=? WHERE id=?",
+                (plano_id, valido, int(uid))
+            )
+            conn.commit()
+            conn.close()
+
+    elif event['type'] in ('customer.subscription.deleted', 'customer.subscription.paused'):
+        sub = event['data']['object']
+        email = sub.get('customer_email') or ''
+        if email:
+            conn = get_db()
+            conn.execute("UPDATE usuarios SET plano='', ativo=0, valido_ate='' WHERE email=?", (email,))
+            conn.commit()
+            conn.close()
+
+    return '', 200
+
 
 @app.route('/pagamento/criar/<plano_id>', methods=['POST'])
 @login_required
