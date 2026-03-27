@@ -970,33 +970,20 @@
         return;
       }
 
-      if (!resp.ok) throw new Error('Erro na resposta');
+      const data = await resp.json();
 
-      const reader  = resp.body.getReader();
-      const decoder = new TextDecoder();
-      let   buffer  = '';
-
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
-        buffer += decoder.decode(value, { stream: true });
-        const lines = buffer.split('\n');
-        buffer = lines.pop();
-        for (const line of lines) {
-          if (!line.startsWith('data:')) continue;
-          const raw = line.slice(5).trim();
-          if (raw === '[DONE]') continue;
-          try {
-            const data = JSON.parse(raw);
-            if (data.text) stream.add(data.text);
-          } catch {}
-        }
+      if (!resp.ok || data.erro) {
+        stream.add('Erro: ' + (data.erro || 'Tente novamente.'));
+        stream.done();
+        return;
       }
 
+      if (data.text) stream.add(data.text);
       const textoFinal = stream.done();
       historico.push({ role: 'assistant', content: textoFinal });
 
     } catch (err) {
+      stream.add('Erro ao conectar. Tente novamente.');
       stream.done();
     } finally {
       enviando = false;

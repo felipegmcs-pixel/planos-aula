@@ -37,7 +37,7 @@ login_manager = LoginManager(app)
 login_manager.login_view = 'login'
 login_manager.login_message = None
 
-client = Anthropic(api_key=os.environ.get('ANTHROPIC_API_KEY'))
+client = Anthropic(api_key=os.environ.get('ANTHROPIC_API_KEY'), timeout=120.0)
 
 MP_ACCESS_TOKEN = os.environ.get('MP_ACCESS_TOKEN', '')
 MP_PUBLIC_KEY   = os.environ.get('MP_PUBLIC_KEY', '')
@@ -1227,36 +1227,27 @@ def api_chat():
     conn.commit()
     conn.close()
 
-    def generate():
-        resposta_completa = []
-        try:
-            with client.messages.stream(
-                model="claude-sonnet-4-6",
-                max_tokens=4000,
-                system=SYSTEM_PROMPT,
-                messages=messages
-            ) as stream:
-                for text in stream.text_stream:
-                    resposta_completa.append(text)
-                    yield f"data: {json.dumps({'text': text})}\n\n"
+    try:
+        response = client.messages.create(
+            model="claude-sonnet-4-6",
+            max_tokens=4000,
+            system=SYSTEM_PROMPT,
+            messages=messages
+        )
+        resposta = response.content[0].text
+    except Exception as e:
+        return jsonify({'erro': str(e)}), 500
 
-            conn2 = get_db()
-            conn2.execute(
-                "INSERT INTO chat_messages (usuario_id, role, content, criado_em) VALUES (?, ?, ?, ?)",
-                (current_user.id, 'assistant', ''.join(resposta_completa),
-                 datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
-            )
-            conn2.commit()
-            conn2.close()
-        except Exception as e:
-            yield f"data: {json.dumps({'text': f'Erro: {str(e)}'})}\n\n"
-            yield "data: [DONE]\n\n"
-        else:
-            yield "data: [DONE]\n\n"
+    conn2 = get_db()
+    conn2.execute(
+        "INSERT INTO chat_messages (usuario_id, role, content, criado_em) VALUES (?, ?, ?, ?)",
+        (current_user.id, 'assistant', resposta,
+         datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
+    )
+    conn2.commit()
+    conn2.close()
 
-    return Response(stream_with_context(generate()),
-                    mimetype='text/event-stream',
-                    headers={'Cache-Control': 'no-cache', 'X-Accel-Buffering': 'no'})
+    return jsonify({'text': resposta})
 
 # ─── Planejamento Anual ────────────────────────────────────────────────────────
 
