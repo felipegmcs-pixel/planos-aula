@@ -3,635 +3,700 @@
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Plano de Aula IA</title>
+  <title>ProfessorIA — O assistente de IA para professores brasileiros</title>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet"/>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     :root {
-      --preto: #0a0a0a;
+      --preto: #08080f;
       --branco: #ffffff;
-      --cinza-100: #f5f5f5;
-      --cinza-200: #e8e8e8;
-      --cinza-400: #a0a0a0;
-      --cinza-600: #555555;
-      --azul: #2b4fc7;
-      --linha: #e2e2e2;
+      --azul: #3b63f7;
+      --azul-claro: #6b8fff;
+      --azul-escuro: #1a2f7a;
+      --cinza: #a0a8c0;
+      --linha: rgba(255,255,255,0.08);
+      --card-bg: rgba(255,255,255,0.04);
     }
 
-    html { font-size: 16px; }
+    html { scroll-behavior: smooth; }
 
     body {
       font-family: 'Inter', sans-serif;
-      background: var(--branco);
-      color: var(--preto);
-      min-height: 100vh;
+      background: var(--preto);
+      color: var(--branco);
+      overflow-x: hidden;
     }
 
-    /* ── Barra de topo ── */
-    .top-bar {
-      height: 3px;
-      background: var(--azul);
-      width: 100%;
-    }
-
-    /* ── Nav ── */
+    /* ── NAV ── */
     nav {
-      padding: 0 40px;
-      height: 60px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
+      position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+      padding: 0 48px; height: 64px;
+      display: flex; align-items: center; justify-content: space-between;
+      background: rgba(8,8,15,0.8);
+      backdrop-filter: blur(20px);
       border-bottom: 1px solid var(--linha);
-      position: sticky;
-      top: 0;
-      background: var(--branco);
-      z-index: 100;
+      transition: all .3s;
     }
-
     .nav-logo {
-      font-weight: 800;
-      font-size: 0.92rem;
-      letter-spacing: .5px;
-      text-transform: uppercase;
-      color: var(--preto);
-      text-decoration: none;
+      font-weight: 900; font-size: 1rem; letter-spacing: .5px;
+      text-transform: uppercase; color: var(--branco); text-decoration: none;
     }
-
-    .nav-logo span {
-      color: var(--azul);
-    }
-
+    .nav-logo span { color: var(--azul-claro); }
+    .nav-links { display: flex; align-items: center; gap: 32px; }
     .nav-link {
-      font-size: 0.82rem;
-      font-weight: 500;
-      color: var(--cinza-600);
-      text-decoration: none;
-      letter-spacing: .3px;
-      transition: color .2s;
+      font-size: 0.82rem; font-weight: 500; color: var(--cinza);
+      text-decoration: none; letter-spacing: .3px; transition: color .2s;
     }
+    .nav-link:hover { color: var(--branco); }
+    .nav-cta {
+      padding: 8px 20px; background: var(--azul); color: var(--branco);
+      font-size: 0.78rem; font-weight: 700; letter-spacing: 1px;
+      text-transform: uppercase; text-decoration: none;
+      transition: background .2s; border: none;
+    }
+    .nav-cta:hover { background: var(--azul-claro); }
 
-    .nav-link:hover { color: var(--preto); }
-
-    /* ── Hero ── */
+    /* ── HERO ── */
     .hero {
-      padding: 72px 40px 64px;
-      border-bottom: 1px solid var(--linha);
-      max-width: 900px;
-      margin: 0 auto;
+      min-height: 100vh;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      text-align: center;
+      padding: 120px 24px 80px;
+      position: relative;
+      overflow: hidden;
     }
 
-    .hero-tag {
-      font-size: 0.72rem;
-      font-weight: 700;
-      letter-spacing: 2px;
-      text-transform: uppercase;
-      color: var(--azul);
-      margin-bottom: 24px;
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    }
-
-    .hero-tag::after {
+    /* grade animada */
+    .hero::before {
       content: '';
-      display: block;
-      height: 1px;
-      width: 40px;
-      background: var(--azul);
+      position: absolute; inset: 0;
+      background-image:
+        linear-gradient(rgba(59,99,247,0.07) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(59,99,247,0.07) 1px, transparent 1px);
+      background-size: 60px 60px;
+      mask-image: radial-gradient(ellipse 80% 70% at 50% 50%, black 30%, transparent 100%);
+      animation: gridMove 20s linear infinite;
+    }
+    @keyframes gridMove {
+      0%   { background-position: 0 0; }
+      100% { background-position: 60px 60px; }
+    }
+
+    /* brilho central */
+    .hero::after {
+      content: '';
+      position: absolute;
+      width: 600px; height: 600px;
+      background: radial-gradient(ellipse, rgba(59,99,247,0.18) 0%, transparent 70%);
+      top: 50%; left: 50%;
+      transform: translate(-50%, -60%);
+      pointer-events: none;
+    }
+
+    .hero-badge {
+      display: inline-flex; align-items: center; gap: 8px;
+      border: 1px solid rgba(107,143,255,0.3);
+      background: rgba(59,99,247,0.1);
+      padding: 6px 16px; margin-bottom: 32px;
+      font-size: 0.72rem; font-weight: 600; letter-spacing: 1.5px;
+      text-transform: uppercase; color: var(--azul-claro);
+      position: relative; z-index: 1;
+      animation: fadeUp .8s ease both;
+    }
+    .hero-badge-dot {
+      width: 6px; height: 6px; background: var(--azul-claro);
+      border-radius: 50%;
+      animation: pulse 2s ease infinite;
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.4; transform: scale(0.7); }
     }
 
     .hero h1 {
-      font-size: clamp(2.8rem, 6vw, 4.5rem);
-      font-weight: 900;
-      line-height: 1.0;
-      letter-spacing: -2px;
-      color: var(--preto);
-      margin-bottom: 24px;
+      font-size: clamp(2.8rem, 7vw, 5.5rem);
+      font-weight: 900; line-height: 1.0; letter-spacing: -3px;
       text-transform: uppercase;
+      position: relative; z-index: 1;
+      animation: fadeUp .8s ease .1s both;
+    }
+    .hero h1 .destaque {
+      background: linear-gradient(135deg, var(--azul-claro), #a78bfa);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      background-clip: text;
     }
 
-    .hero h1 em {
-      font-style: normal;
-      color: var(--azul);
+    .hero-sub {
+      font-size: 1.05rem; color: var(--cinza); max-width: 520px;
+      line-height: 1.7; margin-top: 24px;
+      position: relative; z-index: 1;
+      animation: fadeUp .8s ease .2s both;
     }
 
-    .hero-desc {
-      font-size: 1rem;
-      font-weight: 400;
-      color: var(--cinza-600);
-      max-width: 440px;
-      line-height: 1.7;
+    .hero-btns {
+      display: flex; gap: 16px; margin-top: 40px; flex-wrap: wrap; justify-content: center;
+      position: relative; z-index: 1;
+      animation: fadeUp .8s ease .3s both;
+    }
+    .btn-primary {
+      padding: 16px 36px; background: var(--azul);
+      color: var(--branco); font-size: 0.85rem; font-weight: 700;
+      letter-spacing: 1px; text-transform: uppercase;
+      text-decoration: none; transition: all .2s;
+      border: 1px solid var(--azul);
+    }
+    .btn-primary:hover {
+      background: var(--azul-claro); border-color: var(--azul-claro);
+      transform: translateY(-2px);
+      box-shadow: 0 12px 40px rgba(59,99,247,0.4);
+    }
+    .btn-secondary {
+      padding: 16px 36px; background: transparent;
+      color: var(--branco); font-size: 0.85rem; font-weight: 700;
+      letter-spacing: 1px; text-transform: uppercase;
+      text-decoration: none; border: 1px solid rgba(255,255,255,0.2);
+      transition: all .2s;
+    }
+    .btn-secondary:hover {
+      border-color: rgba(255,255,255,0.5);
+      transform: translateY(-2px);
     }
 
-    /* ── Container form ── */
-    .container {
-      max-width: 900px;
-      margin: 0 auto;
-      padding: 0 40px 100px;
+    .hero-social {
+      display: flex; align-items: center; gap: 24px; margin-top: 56px;
+      position: relative; z-index: 1;
+      animation: fadeUp .8s ease .4s both;
     }
+    .hero-social-text { font-size: 0.75rem; color: var(--cinza); letter-spacing: .5px; }
+    .avatares { display: flex; }
+    .avatar {
+      width: 32px; height: 32px; border-radius: 50%;
+      border: 2px solid var(--preto); margin-left: -8px;
+      background: linear-gradient(135deg, var(--azul-escuro), var(--azul));
+      display: flex; align-items: center; justify-content: center;
+      font-size: 0.65rem; font-weight: 700; color: var(--branco);
+    }
+    .avatares .avatar:first-child { margin-left: 0; }
 
-    /* ── Seção ── */
-    .secao {
+    /* ── LOGOS / CONFIANÇA ── */
+    .confianca {
+      padding: 40px 48px;
+      border-top: 1px solid var(--linha);
       border-bottom: 1px solid var(--linha);
-      padding: 48px 0;
-      display: grid;
-      grid-template-columns: 180px 1fr;
-      gap: 40px;
+      text-align: center;
+    }
+    .confianca-texto {
+      font-size: 0.7rem; font-weight: 600; letter-spacing: 2px;
+      text-transform: uppercase; color: rgba(160,168,192,0.5);
+      margin-bottom: 28px;
+    }
+    .confianca-items {
+      display: flex; align-items: center; justify-content: center;
+      gap: 48px; flex-wrap: wrap;
+    }
+    .confianca-item {
+      font-size: 0.82rem; font-weight: 700; letter-spacing: 1px;
+      text-transform: uppercase; color: rgba(160,168,192,0.4);
+      transition: color .3s;
+    }
+    .confianca-item:hover { color: var(--cinza); }
+
+    /* ── FEATURES ── */
+    .section { padding: 100px 48px; max-width: 1100px; margin: 0 auto; }
+    .section-tag {
+      font-size: 0.68rem; font-weight: 700; letter-spacing: 2px;
+      text-transform: uppercase; color: var(--azul-claro);
+      display: inline-flex; align-items: center; gap: 10px; margin-bottom: 20px;
+    }
+    .section-tag::before { content: ''; display: block; width: 24px; height: 1px; background: var(--azul-claro); }
+    .section h2 {
+      font-size: clamp(2rem, 4vw, 3rem); font-weight: 900;
+      letter-spacing: -2px; text-transform: uppercase;
+      line-height: 1.05; margin-bottom: 16px;
+    }
+    .section-sub {
+      font-size: 0.95rem; color: var(--cinza); max-width: 500px; line-height: 1.7;
+      margin-bottom: 64px;
     }
 
-    .secao-esquerda {
-      padding-top: 4px;
+    .features-grid {
+      display: grid; grid-template-columns: repeat(3, 1fr); gap: 1px;
+      background: var(--linha); border: 1px solid var(--linha);
     }
-
-    .secao-num {
-      font-size: 0.68rem;
-      font-weight: 700;
-      letter-spacing: 2.5px;
-      text-transform: uppercase;
-      color: var(--azul);
-      margin-bottom: 8px;
+    .feature-card {
+      background: var(--preto); padding: 36px 32px;
+      transition: background .3s; cursor: default;
     }
-
-    .secao-titulo {
-      font-size: 0.95rem;
-      font-weight: 700;
-      color: var(--preto);
-      letter-spacing: -.2px;
-      margin-bottom: 4px;
+    .feature-card:hover { background: var(--card-bg); }
+    .feature-icon {
+      width: 44px; height: 44px;
+      background: rgba(59,99,247,0.12);
+      border: 1px solid rgba(59,99,247,0.25);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.2rem; margin-bottom: 20px;
+      transition: all .3s;
     }
-
-    .secao-desc {
-      font-size: 0.76rem;
-      color: var(--cinza-400);
-      line-height: 1.5;
+    .feature-card:hover .feature-icon {
+      background: rgba(59,99,247,0.25);
+      box-shadow: 0 0 24px rgba(59,99,247,0.3);
     }
-
-    /* ── Grid ── */
-    .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
-    .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; }
-    .full { grid-column: 1 / -1; }
-
-    /* ── Campo ── */
-    .field { display: flex; flex-direction: column; gap: 7px; }
-
-    label {
-      font-size: 0.68rem;
-      font-weight: 700;
-      letter-spacing: 1.5px;
-      text-transform: uppercase;
-      color: var(--cinza-600);
+    .feature-titulo {
+      font-size: 0.9rem; font-weight: 700; letter-spacing: -.3px;
+      margin-bottom: 10px; text-transform: uppercase;
     }
+    .feature-desc { font-size: 0.8rem; color: var(--cinza); line-height: 1.6; }
 
-    input[type=text],
-    input[type=number],
-    input[type=url],
-    select {
-      width: 100%;
-      padding: 11px 0;
-      border: none;
-      border-bottom: 1.5px solid var(--cinza-200);
-      border-radius: 0;
-      font-size: 0.92rem;
-      font-family: 'Inter', sans-serif;
-      font-weight: 400;
-      color: var(--preto);
-      background: transparent;
-      transition: border-color .2s;
-      -webkit-appearance: none;
+    /* ── DEMO / CHAT PREVIEW ── */
+    .demo-section {
+      padding: 100px 48px;
+      background: linear-gradient(180deg, transparent, rgba(59,99,247,0.04), transparent);
     }
-
-    input:focus, select:focus {
-      outline: none;
-      border-bottom-color: var(--preto);
+    .demo-inner { max-width: 900px; margin: 0 auto; }
+    .demo-window {
+      border: 1px solid var(--linha);
+      background: rgba(255,255,255,0.02);
+      overflow: hidden;
+      box-shadow: 0 40px 100px rgba(0,0,0,0.5), 0 0 0 1px var(--linha);
+      animation: floatWindow 6s ease-in-out infinite;
     }
-
-    input::placeholder { color: var(--cinza-400); font-weight: 300; }
-
-    select {
-      cursor: pointer;
-      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23555' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
-      background-repeat: no-repeat;
-      background-position: right 4px center;
-      padding-right: 20px;
+    @keyframes floatWindow {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-10px); }
     }
-
-    /* ── Temas ── */
-    #temas-lista { display: flex; flex-direction: column; gap: 0; }
-
-    .tema-item {
-      display: flex;
-      align-items: center;
-      gap: 16px;
-      border-bottom: 1px solid var(--cinza-200);
-      padding: 4px 0;
-      transition: border-color .2s;
+    .demo-bar {
+      padding: 14px 20px;
+      background: rgba(255,255,255,0.03);
+      border-bottom: 1px solid var(--linha);
+      display: flex; align-items: center; gap: 8px;
     }
-
-    .tema-item:focus-within { border-bottom-color: var(--preto); }
-
-    .tema-num {
-      font-size: 0.72rem;
-      font-weight: 700;
-      letter-spacing: 1px;
-      color: var(--azul);
-      width: 24px;
-      flex-shrink: 0;
+    .demo-dot { width: 10px; height: 10px; border-radius: 50%; }
+    .demo-dot.vermelho { background: #ff5f57; }
+    .demo-dot.amarelo { background: #febc2e; }
+    .demo-dot.verde { background: #28c840; }
+    .demo-url {
+      flex: 1; text-align: center; font-size: 0.72rem;
+      color: rgba(160,168,192,0.4); letter-spacing: .5px;
     }
-
-    .tema-item input {
-      flex: 1;
-      border: none;
-      padding: 11px 0;
-      font-size: 0.92rem;
+    .demo-chat { padding: 32px; display: flex; flex-direction: column; gap: 20px; }
+    .demo-msg {
+      display: flex; gap: 12px; align-items: flex-start;
+      animation: fadeUp .5s ease both;
     }
-
-    .tema-item input:focus { border: none; outline: none; }
-
-    .btn-remove {
-      width: 28px;
-      height: 28px;
-      background: none;
-      border: 1px solid var(--cinza-200);
-      border-radius: 50%;
-      color: var(--cinza-400);
-      cursor: pointer;
-      font-size: 0.9rem;
-      flex-shrink: 0;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      transition: all .2s;
-      line-height: 1;
+    .demo-msg.usuario { flex-direction: row-reverse; }
+    .demo-avatar {
+      width: 32px; height: 32px; border-radius: 50%; flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 0.72rem; font-weight: 700;
     }
-
-    .btn-remove:hover {
-      border-color: #dc2626;
-      color: #dc2626;
+    .demo-avatar.ia { background: linear-gradient(135deg, var(--azul-escuro), var(--azul)); }
+    .demo-avatar.user { background: rgba(255,255,255,0.1); color: var(--cinza); }
+    .demo-bubble {
+      max-width: 75%; padding: 14px 18px;
+      font-size: 0.82rem; line-height: 1.6; color: rgba(255,255,255,0.85);
+      background: rgba(255,255,255,0.05);
+      border: 1px solid var(--linha);
     }
-
-    .btn-add {
-      margin-top: 16px;
-      background: none;
-      border: 1px solid var(--cinza-200);
-      color: var(--cinza-600);
-      padding: 10px 18px;
-      border-radius: 0;
-      cursor: pointer;
-      font-size: 0.78rem;
-      font-weight: 600;
-      font-family: 'Inter', sans-serif;
-      letter-spacing: .5px;
-      transition: all .2s;
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-    }
-
-    .btn-add:hover {
-      border-color: var(--preto);
-      color: var(--preto);
-    }
-
-    /* ── PDF lista ── */
-    #pdfs-lista { display: flex; flex-direction: column; gap: 0; }
-
-    .pdf-item {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      border-bottom: 1px solid var(--cinza-200);
-    }
-
-    .pdf-item input {
-      flex: 1;
-      border: none;
-      padding: 11px 0;
-    }
-
-    .pdf-item input:focus { border: none; outline: none; }
-
-    /* ── Formato ── */
-    .formato-group {
-      display: flex;
-      gap: 0;
-      border: 1px solid var(--cinza-200);
-      width: fit-content;
-    }
-
-    .formato-op { cursor: pointer; }
-    .formato-op input { display: none; }
-
-    .formato-btn {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      padding: 10px 22px;
-      font-size: 0.82rem;
-      font-weight: 600;
-      font-family: 'Inter', sans-serif;
-      letter-spacing: .3px;
-      color: var(--cinza-400);
-      transition: all .2s;
-      cursor: pointer;
-      border-right: 1px solid var(--cinza-200);
-      user-select: none;
-    }
-
-    .formato-op:last-child .formato-btn { border-right: none; }
-
-    .formato-op input:checked + .formato-btn {
-      background: var(--preto);
+    .demo-msg.usuario .demo-bubble {
+      background: rgba(59,99,247,0.15);
+      border-color: rgba(59,99,247,0.25);
       color: var(--branco);
     }
-
-    /* ── Ação final ── */
-    .secao-acao {
-      padding: 56px 0 0;
-      display: flex;
-      flex-direction: column;
-      align-items: flex-start;
-      gap: 24px;
+    .demo-typing { display: flex; gap: 4px; padding: 6px 0; }
+    .demo-typing span {
+      width: 6px; height: 6px; border-radius: 50%;
+      background: var(--azul-claro); opacity: 0.4;
+      animation: blink 1.2s ease infinite;
+    }
+    .demo-typing span:nth-child(2) { animation-delay: .2s; }
+    .demo-typing span:nth-child(3) { animation-delay: .4s; }
+    @keyframes blink {
+      0%, 100% { opacity: 0.4; transform: scale(1); }
+      50% { opacity: 1; transform: scale(1.3); }
     }
 
-    .btn-gerar {
-      padding: 18px 48px;
-      background: var(--preto);
-      color: var(--branco);
-      border: none;
-      font-size: 0.9rem;
-      font-weight: 700;
-      font-family: 'Inter', sans-serif;
-      letter-spacing: 1.5px;
-      text-transform: uppercase;
-      cursor: pointer;
-      transition: all .2s;
-      display: inline-flex;
-      align-items: center;
-      gap: 12px;
+    /* ── PLANOS ── */
+    .planos-section { padding: 100px 48px; max-width: 1100px; margin: 0 auto; }
+    .toggle-wrap {
+      display: flex; align-items: center; gap: 12px; margin-bottom: 56px;
+    }
+    .toggle-label { font-size: 0.82rem; font-weight: 600; color: var(--cinza); }
+    .toggle-label.ativo { color: var(--branco); }
+    .toggle { position: relative; width: 48px; height: 26px; cursor: pointer; }
+    .toggle input { opacity: 0; width: 0; height: 0; }
+    .toggle-slider {
+      position: absolute; inset: 0; background: rgba(255,255,255,0.1);
+      transition: .3s; border-radius: 26px;
+    }
+    .toggle-slider::before {
+      content: ''; position: absolute; width: 20px; height: 20px;
+      left: 3px; bottom: 3px; background: var(--branco);
+      transition: .3s; border-radius: 50%;
+    }
+    .toggle input:checked + .toggle-slider { background: var(--azul); }
+    .toggle input:checked + .toggle-slider::before { transform: translateX(22px); }
+    .economia-tag {
+      background: rgba(59,99,247,0.15); border: 1px solid rgba(59,99,247,0.3);
+      color: var(--azul-claro); font-size: 0.68rem; font-weight: 700;
+      letter-spacing: 1px; text-transform: uppercase; padding: 3px 10px;
     }
 
-    .btn-gerar:hover { background: var(--azul); }
-    .btn-gerar:active { transform: scale(.98); }
-    .btn-gerar:disabled { background: var(--cinza-400); cursor: not-allowed; }
-
-    /* ── Loading ── */
-    .loading { display: none; }
-    .loading.active { display: flex; align-items: center; gap: 14px; }
-
-    .spinner {
-      width: 18px;
-      height: 18px;
-      border: 2px solid var(--cinza-200);
-      border-top-color: var(--preto);
-      border-radius: 50%;
-      animation: spin 1s linear infinite;
-      flex-shrink: 0;
+    .planos-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1px; background: var(--linha); border: 1px solid var(--linha); }
+    .plano-card { background: var(--preto); padding: 36px 32px; position: relative; transition: background .3s; }
+    .plano-card:hover { background: var(--card-bg); }
+    .plano-card.destaque { background: rgba(59,99,247,0.07); }
+    .plano-card.destaque:hover { background: rgba(59,99,247,0.12); }
+    .plano-badge {
+      display: inline-block; background: var(--azul); color: var(--branco);
+      font-size: 0.62rem; font-weight: 700; letter-spacing: 1.5px;
+      text-transform: uppercase; padding: 3px 10px; margin-bottom: 20px;
+    }
+    .plano-nome {
+      font-size: 0.68rem; font-weight: 700; letter-spacing: 2px;
+      text-transform: uppercase; color: var(--cinza); margin-bottom: 12px;
+    }
+    .plano-preco {
+      font-size: 3rem; font-weight: 900; letter-spacing: -2px;
+      line-height: 1; margin-bottom: 4px;
+    }
+    .plano-preco small { font-size: 0.95rem; font-weight: 500; color: var(--cinza); }
+    .plano-preco.gratis { font-size: 2.2rem; }
+    .plano-periodo { font-size: 0.75rem; color: var(--cinza); margin-bottom: 28px; min-height: 18px; }
+    .plano-features { list-style: none; margin-bottom: 28px; }
+    .plano-features li {
+      font-size: 0.78rem; color: rgba(160,168,192,0.8);
+      padding: 8px 0; border-bottom: 1px solid var(--linha);
+      display: flex; align-items: center; gap: 10px;
+    }
+    .plano-features li:last-child { border-bottom: none; }
+    .plano-features li .check { color: var(--azul-claro); font-weight: 700; flex-shrink: 0; }
+    .plano-features li.off { color: rgba(160,168,192,0.3); }
+    .plano-features li.off .check { color: rgba(160,168,192,0.2); }
+    .btn-plano {
+      width: 100%; padding: 13px; background: rgba(255,255,255,0.06);
+      color: var(--branco); border: 1px solid rgba(255,255,255,0.12);
+      font-size: 0.75rem; font-weight: 700; font-family: 'Inter', sans-serif;
+      letter-spacing: 1px; text-transform: uppercase; cursor: pointer;
+      transition: all .2s; display: block; text-align: center; text-decoration: none;
+    }
+    .btn-plano:hover { background: rgba(255,255,255,0.1); border-color: rgba(255,255,255,0.25); }
+    .btn-plano.principal {
+      background: var(--azul); border-color: var(--azul);
+    }
+    .btn-plano.principal:hover {
+      background: var(--azul-claro); border-color: var(--azul-claro);
+      box-shadow: 0 8px 30px rgba(59,99,247,0.4);
+    }
+    .btn-plano:disabled {
+      opacity: 0.35; cursor: not-allowed;
+      box-shadow: none !important;
     }
 
-    @keyframes spin { to { transform: rotate(360deg); } }
-
-    .loading-text {
-      font-size: 0.82rem;
-      font-weight: 500;
-      color: var(--cinza-600);
-      letter-spacing: .2px;
+    /* ── CTA FINAL ── */
+    .cta-section {
+      padding: 120px 48px; text-align: center;
+      border-top: 1px solid var(--linha);
+      position: relative; overflow: hidden;
     }
-
-    .nota {
-      font-size: 0.72rem;
-      color: var(--cinza-400);
-      letter-spacing: .3px;
+    .cta-section::before {
+      content: '';
+      position: absolute; width: 500px; height: 500px;
+      background: radial-gradient(ellipse, rgba(59,99,247,0.12) 0%, transparent 70%);
+      top: 50%; left: 50%; transform: translate(-50%,-50%);
+      pointer-events: none;
     }
+    .cta-section h2 {
+      font-size: clamp(2rem, 5vw, 3.5rem); font-weight: 900;
+      letter-spacing: -2px; text-transform: uppercase;
+      margin-bottom: 16px; position: relative; z-index: 1;
+    }
+    .cta-section p {
+      font-size: 0.95rem; color: var(--cinza); margin-bottom: 40px;
+      position: relative; z-index: 1;
+    }
+    .cta-section .btn-primary { position: relative; z-index: 1; }
 
-    /* ── Responsivo ── */
-    @media (max-width: 700px) {
+    /* ── FOOTER ── */
+    footer {
+      padding: 40px 48px;
+      border-top: 1px solid var(--linha);
+      display: flex; align-items: center; justify-content: space-between;
+      flex-wrap: wrap; gap: 16px;
+    }
+    .footer-logo {
+      font-weight: 900; font-size: 0.85rem; letter-spacing: .5px;
+      text-transform: uppercase; color: rgba(255,255,255,0.4); text-decoration: none;
+    }
+    .footer-logo span { color: rgba(107,143,255,0.6); }
+    .footer-copy { font-size: 0.75rem; color: rgba(160,168,192,0.4); }
+
+    /* ── ANIMAÇÕES ── */
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(20px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    .reveal {
+      opacity: 0; transform: translateY(30px);
+      transition: opacity .7s ease, transform .7s ease;
+    }
+    .reveal.visivel { opacity: 1; transform: translateY(0); }
+
+    /* ── MOBILE ── */
+    @media (max-width: 768px) {
       nav { padding: 0 20px; }
-      .hero { padding: 48px 20px 40px; }
-      .container { padding: 0 20px 80px; }
-      .secao { grid-template-columns: 1fr; gap: 24px; }
-      .secao-esquerda { padding-bottom: 0; border-bottom: none; }
-      .grid, .grid-3 { grid-template-columns: 1fr; }
-      .hero h1 { font-size: 2.4rem; }
-      .btn-gerar { width: 100%; justify-content: center; }
-      .formato-group { width: 100%; }
-      .formato-btn { flex: 1; justify-content: center; }
+      .nav-links { display: none; }
+      .hero { padding: 100px 20px 60px; }
+      .hero h1 { letter-spacing: -2px; }
+      .section, .planos-section, .demo-section { padding: 60px 20px; }
+      .features-grid, .planos-grid { grid-template-columns: 1fr; }
+      .confianca { padding: 32px 20px; }
+      .confianca-items { gap: 24px; }
+      footer { padding: 32px 20px; flex-direction: column; text-align: center; }
+      .toggle-wrap { flex-wrap: wrap; }
     }
   </style>
 </head>
 <body>
 
-<div class="top-bar"></div>
-
+<!-- NAV -->
 <nav>
-  <a class="nav-logo" href="/">Profe<span>IA</span></a>
-  <div style="display:flex; align-items:center; gap:20px;">
-    <a class="nav-link" href="/chat">Chat IA</a>
-    <a class="nav-link" href="/historico">Histórico</a>
-    <a class="nav-link" href="/conta" style="color:var(--preto); font-weight:600;">Olá, {{ current_user.nome.split()[0] }} →</a>
+  <a class="nav-logo" href="/">Professor<span>IA</span></a>
+  <div class="nav-links">
+    <a class="nav-link" href="#funcionalidades">Funcionalidades</a>
+    <a class="nav-link" href="#planos">Planos</a>
+    <a class="nav-link" href="/login">Entrar</a>
+    <a class="nav-cta" href="/cadastro">Começar grátis</a>
   </div>
 </nav>
 
-<div class="hero">
-  <div class="hero-tag">Inteligência Artificial</div>
-  <h1>Gere planos<br>de aula em<br><em>segundos.</em></h1>
-  <p class="hero-desc">Preencha os dados abaixo e a IA cria um plano completo e pedagógico, pronto para usar no formato oficial.</p>
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-badge">
+    <span class="hero-badge-dot"></span>
+    Assistente de IA para professores
+  </div>
+  <h1>Crie materiais<br/><span class="destaque">em segundos</span></h1>
+  <p class="hero-sub">
+    Planos de aula, provas, caça-palavras, atividades e muito mais.
+    O ProfessorIA economiza horas do seu planejamento todo dia.
+  </p>
+  <div class="hero-btns">
+    <a href="/cadastro" class="btn-primary">Começar grátis</a>
+    <a href="#funcionalidades" class="btn-secondary">Ver funcionalidades</a>
+  </div>
+  <div class="hero-social">
+    <div class="avatares">
+      <div class="avatar">MA</div>
+      <div class="avatar">JS</div>
+      <div class="avatar">CR</div>
+      <div class="avatar">PT</div>
+    </div>
+    <span class="hero-social-text">Professores já usando o ProfessorIA</span>
+  </div>
+</section>
+
+<!-- CONFIANÇA -->
+<div class="confianca">
+  <p class="confianca-texto">Compatível com</p>
+  <div class="confianca-items">
+    <span class="confianca-item">BNCC</span>
+    <span class="confianca-item">Ensino Fundamental</span>
+    <span class="confianca-item">Ensino Médio</span>
+    <span class="confianca-item">EJA</span>
+    <span class="confianca-item">Ed. Infantil</span>
+    <span class="confianca-item">Todas as disciplinas</span>
+  </div>
 </div>
 
-<div class="container">
-  <form id="form" action="/gerar" method="POST">
+<!-- FUNCIONALIDADES -->
+<section class="section reveal" id="funcionalidades">
+  <div class="section-tag">Funcionalidades</div>
+  <h2>Tudo que você<br/>precisa em um lugar</h2>
+  <p class="section-sub">Descreva o que precisa em linguagem natural e receba o material completo em segundos.</p>
 
-    <!-- 01 Escola -->
-    <div class="secao">
-      <div class="secao-esquerda">
-        <div class="secao-num">01</div>
-        <div class="secao-titulo">Dados da Escola</div>
-        <div class="secao-desc">Aparecerão no cabeçalho do documento</div>
+  <div class="features-grid">
+    <div class="feature-card">
+      <div class="feature-icon">📋</div>
+      <div class="feature-titulo">Planos de aula</div>
+      <p class="feature-desc">Objetivos, conteúdo, metodologia e avaliação seguindo a BNCC. Completo e pronto para usar.</p>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">📝</div>
+      <div class="feature-titulo">Provas e avaliações</div>
+      <p class="feature-desc">Questões abertas e múltipla escolha com gabarito automático. Defina o nível de dificuldade.</p>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">🔤</div>
+      <div class="feature-titulo">Caça-palavras</div>
+      <p class="feature-desc">Grade formatada e lista de palavras sobre qualquer tema. Pronto para imprimir.</p>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">🎯</div>
+      <div class="feature-titulo">Atividades lúdicas</div>
+      <p class="feature-desc">Exercícios criativos e dinâmicas adaptadas à faixa etária e disciplina.</p>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">📅</div>
+      <div class="feature-titulo">Planejamento anual</div>
+      <p class="feature-desc">Distribua os conteúdos por bimestre alinhado com o calendário escolar e a BNCC.</p>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">✉️</div>
+      <div class="feature-titulo">Bilhetes e comunicados</div>
+      <p class="feature-desc">Mensagens para os pais redigidas com clareza e profissionalismo em segundos.</p>
+    </div>
+  </div>
+</section>
+
+<!-- DEMO -->
+<div class="demo-section reveal">
+  <div class="demo-inner">
+    <div style="text-align:center; margin-bottom: 48px;">
+      <div class="section-tag" style="justify-content:center">Interface</div>
+      <h2 style="font-size:clamp(1.8rem,3.5vw,2.8rem); font-weight:900; letter-spacing:-1.5px; text-transform:uppercase;">Simples como uma conversa</h2>
+    </div>
+    <div class="demo-window">
+      <div class="demo-bar">
+        <span class="demo-dot vermelho"></span>
+        <span class="demo-dot amarelo"></span>
+        <span class="demo-dot verde"></span>
+        <span class="demo-url">professorIA — Chat</span>
       </div>
-      <div>
-        <div class="grid" style="gap:0; flex-direction:column; display:flex; gap:20px;">
-          <div class="field">
-            <label>Nome da Escola</label>
-            <input type="text" name="escola" placeholder="E.E. Prof. João da Silva"/>
-          </div>
-          <div class="field">
-            <label>Diretoria de Ensino</label>
-            <input type="text" name="diretoria" placeholder="Diretoria de Ensino – Região de Campinas"/>
-          </div>
-          <div class="field">
-            <label>Endereço</label>
-            <input type="text" name="endereco" placeholder="Rua das Flores, 100 – CEP 00000-000"/>
-          </div>
-          <div class="field" style="max-width: 140px;">
-            <label>Ano Letivo</label>
-            <input type="number" name="ano_letivo" value="2026" min="2020" max="2040"/>
+      <div class="demo-chat">
+        <div class="demo-msg usuario">
+          <div class="demo-avatar user">Eu</div>
+          <div class="demo-bubble">Cria uma prova de história sobre a Revolução Francesa para o 8º ano, com 10 questões de múltipla escolha e gabarito.</div>
+        </div>
+        <div class="demo-msg" style="animation-delay:.3s">
+          <div class="demo-avatar ia">IA</div>
+          <div class="demo-bubble">
+            Claro! Aqui está a prova completa:<br/><br/>
+            <strong>AVALIAÇÃO — História | 8º ano</strong><br/>
+            Tema: Revolução Francesa<br/><br/>
+            <strong>1.</strong> A Revolução Francesa teve início em qual ano?<br/>
+            a) 1776 &nbsp; b) 1789 &nbsp; <strong>c) 1789 ✓</strong> &nbsp; d) 1804<br/><br/>
+            <div class="demo-typing"><span></span><span></span><span></span></div>
           </div>
         </div>
       </div>
     </div>
-
-    <!-- 02 Aula -->
-    <div class="secao">
-      <div class="secao-esquerda">
-        <div class="secao-num">02</div>
-        <div class="secao-titulo">Dados da Aula</div>
-        <div class="secao-desc">Professor, disciplina e período</div>
-      </div>
-      <div>
-        <div class="grid">
-          <div class="field">
-            <label>Professor(a)</label>
-            <input type="text" name="professor" placeholder="Nome completo" required/>
-          </div>
-          <div class="field">
-            <label>Componente Curricular</label>
-            <input type="text" name="disciplina" placeholder="Arte, Matemática..." required/>
-          </div>
-          <div class="field">
-            <label>Turma</label>
-            <input type="text" name="turma" placeholder="6º Ano A e B" required/>
-          </div>
-          <div class="field">
-            <label>Nº de Aulas</label>
-            <input type="number" name="num_aulas" value="2" min="1" max="10" required/>
-          </div>
-          <div class="field">
-            <label>Número da 1ª Aula</label>
-            <input type="number" name="aula_inicio" value="1" min="1" required/>
-          </div>
-          <div class="field">
-            <label>Período</label>
-            <select name="periodo">
-              <option value="quinzenal">Quinzenal</option>
-              <option value="semanal">Semanal</option>
-              <option value="mensal">Mensal</option>
-            </select>
-          </div>
-          <div class="field full">
-            <label>Datas</label>
-            <input type="text" name="datas" placeholder="23/03/2026 a 04/04/2026" required/>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- 03 Material -->
-    <div class="secao">
-      <div class="secao-esquerda">
-        <div class="secao-num">03</div>
-        <div class="secao-titulo">Material de Referência</div>
-        <div class="secao-desc">Opcional — links de PDFs usados como base pela IA</div>
-      </div>
-      <div>
-        <div id="pdfs-lista">
-          <div class="pdf-item">
-            <input type="url" name="urls_pdf[]" placeholder="https://..."/>
-          </div>
-        </div>
-        <button type="button" class="btn-add" onclick="addPdf()" style="margin-top:16px;">+ Adicionar PDF</button>
-      </div>
-    </div>
-
-    <!-- 04 Temas -->
-    <div class="secao">
-      <div class="secao-esquerda">
-        <div class="secao-num">04</div>
-        <div class="secao-titulo">Temas das Aulas</div>
-        <div class="secao-desc">Um tema por aula</div>
-      </div>
-      <div>
-        <div id="temas-lista">
-          <div class="tema-item">
-            <span class="tema-num">01</span>
-            <input type="text" name="temas[]" placeholder="Dança brasileira e expressão corporal" required/>
-          </div>
-          <div class="tema-item">
-            <span class="tema-num">02</span>
-            <input type="text" name="temas[]" placeholder="Aprimorando a coreografia" required/>
-          </div>
-        </div>
-        <button type="button" class="btn-add" onclick="addTema()">+ Adicionar tema</button>
-      </div>
-    </div>
-
-    <!-- Ação -->
-    <div class="secao-acao">
-
-      <div>
-        <div style="font-size:.68rem; font-weight:700; letter-spacing:1.5px; text-transform:uppercase; color:var(--cinza-600); margin-bottom:12px;">Formato do arquivo</div>
-        <div class="formato-group">
-          <label class="formato-op">
-            <input type="radio" name="formato" value="docx" checked/>
-            <span class="formato-btn">📝 Word (.docx)</span>
-          </label>
-          <label class="formato-op">
-            <input type="radio" name="formato" value="pdf"/>
-            <span class="formato-btn">📄 PDF</span>
-          </label>
-        </div>
-      </div>
-
-      <div style="display:flex; flex-direction:column; gap:16px; width:100%;">
-        <button type="submit" class="btn-gerar" id="btn-gerar">
-          Gerar Plano
-        </button>
-
-        <div class="loading" id="loading">
-          <div class="spinner"></div>
-          <div class="loading-text">A IA está criando seu plano — até 30 segundos</div>
-        </div>
-
-        <span class="nota">O arquivo será baixado automaticamente</span>
-      </div>
-
-    </div>
-
-  </form>
+  </div>
 </div>
+
+<!-- PLANOS -->
+<section class="planos-section reveal" id="planos">
+  <div class="section-tag">Preços</div>
+  <h2>Planos simples<br/>e transparentes</h2>
+  <p class="section-sub">Comece grátis. Faça upgrade quando precisar. Cancele quando quiser.</p>
+
+  <div class="toggle-wrap">
+    <span class="toggle-label ativo" id="label-mensal">Mensal</span>
+    <label class="toggle">
+      <input type="checkbox" id="toggle-anual" onchange="alternarPeriodo()"/>
+      <span class="toggle-slider"></span>
+    </label>
+    <span class="toggle-label" id="label-anual">Anual</span>
+    <span class="economia-tag" id="tag-economia" style="display:none">2 meses grátis</span>
+  </div>
+
+  <div class="planos-grid">
+    <!-- Free -->
+    <div class="plano-card">
+      <div class="plano-nome">Free</div>
+      <div class="plano-preco gratis">R$ 0</div>
+      <div class="plano-periodo">Para sempre</div>
+      <ul class="plano-features">
+        <li><span class="check">✓</span> 5 gerações por mês</li>
+        <li><span class="check">✓</span> Chat com IA</li>
+        <li><span class="check">✓</span> Planos de aula</li>
+        <li class="off"><span class="check">—</span> Provas e avaliações</li>
+        <li class="off"><span class="check">—</span> Caça-palavras</li>
+        <li class="off"><span class="check">—</span> Atividades e bilhetes</li>
+        <li class="off"><span class="check">—</span> Planejamento anual</li>
+        <li class="off"><span class="check">—</span> Exportar PDF/Word</li>
+      </ul>
+      <a href="/cadastro" class="btn-plano">Começar grátis</a>
+    </div>
+
+    <!-- Basic -->
+    <div class="plano-card destaque">
+      <div class="plano-badge">Mais popular</div>
+      <div class="plano-nome">Basic</div>
+      <div class="plano-preco" id="preco-basic">R$ 39<small>/mês</small></div>
+      <div class="plano-periodo" id="periodo-basic">Acesso individual ilimitado</div>
+      <ul class="plano-features">
+        <li><span class="check">✓</span> Gerações ilimitadas</li>
+        <li><span class="check">✓</span> Chat com IA</li>
+        <li><span class="check">✓</span> Planos de aula</li>
+        <li><span class="check">✓</span> Provas e avaliações</li>
+        <li><span class="check">✓</span> Caça-palavras</li>
+        <li><span class="check">✓</span> Atividades e bilhetes</li>
+        <li class="off"><span class="check">—</span> Planejamento anual BNCC</li>
+        <li class="off"><span class="check">—</span> Exportar PDF/Word</li>
+      </ul>
+      <a href="/cadastro" class="btn-plano principal" id="btn-basic">Assinar Basic</a>
+    </div>
+
+    <!-- Pro -->
+    <div class="plano-card">
+      <div class="plano-nome">Pro</div>
+      <div class="plano-preco" id="preco-pro">R$ 59<small>/mês</small></div>
+      <div class="plano-periodo" id="periodo-pro">Tudo do Basic + mais</div>
+      <ul class="plano-features">
+        <li><span class="check">✓</span> Tudo do plano Basic</li>
+        <li><span class="check">✓</span> Planejamento anual BNCC</li>
+        <li><span class="check">✓</span> Exportar PDF e Word</li>
+        <li><span class="check">✓</span> Histórico completo</li>
+        <li><span class="check">✓</span> Suporte prioritário</li>
+      </ul>
+      <a href="/cadastro" class="btn-plano" id="btn-pro">Assinar Pro</a>
+    </div>
+  </div>
+</section>
+
+<!-- CTA FINAL -->
+<section class="cta-section reveal">
+  <h2>Pronto para<br/>economizar tempo?</h2>
+  <p>Junte-se aos professores que já usam IA no planejamento.</p>
+  <a href="/cadastro" class="btn-primary">Criar conta grátis</a>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <a class="footer-logo" href="/">Professor<span>IA</span></a>
+  <span class="footer-copy">© 2025 ProfessorIA · Feito para professores brasileiros</span>
+</footer>
 
 <script>
-  function addPdf() {
-    const lista = document.getElementById('pdfs-lista');
-    const div = document.createElement('div');
-    div.className = 'pdf-item';
-    div.innerHTML = `
-      <input type="url" name="urls_pdf[]" placeholder="https://..."/>
-      <button type="button" class="btn-remove" onclick="this.parentElement.remove()">×</button>
-    `;
-    lista.appendChild(div);
-  }
+  // Reveal on scroll
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('visivel'); });
+  }, { threshold: 0.1 });
+  document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
 
-  function addTema() {
-    const lista = document.getElementById('temas-lista');
-    const num = String(lista.children.length + 1).padStart(2, '0');
-    const div = document.createElement('div');
-    div.className = 'tema-item';
-    div.innerHTML = `
-      <span class="tema-num">${num}</span>
-      <input type="text" name="temas[]" placeholder="Tema da aula ${num}" required/>
-      <button type="button" class="btn-remove" onclick="removeTema(this)">×</button>
-    `;
-    lista.appendChild(div);
-  }
-
-  function removeTema(btn) {
-    const lista = document.getElementById('temas-lista');
-    if (lista.children.length > 1) {
-      btn.parentElement.remove();
-      Array.from(lista.children).forEach((item, i) => {
-        item.querySelector('.tema-num').textContent = String(i + 1).padStart(2, '0');
-      });
+  // Toggle anual/mensal
+  function alternarPeriodo() {
+    const anual = document.getElementById('toggle-anual').checked;
+    document.getElementById('label-mensal').classList.toggle('ativo', !anual);
+    document.getElementById('label-anual').classList.toggle('ativo', anual);
+    document.getElementById('tag-economia').style.display = anual ? 'inline' : 'none';
+    if (anual) {
+      document.getElementById('preco-basic').innerHTML = 'R$ 390<small>/ano</small>';
+      document.getElementById('periodo-basic').textContent = 'R$ 32,50/mês · 2 meses grátis';
+      document.getElementById('preco-pro').innerHTML = 'R$ 590<small>/ano</small>';
+      document.getElementById('periodo-pro').textContent = 'R$ 49,16/mês · 2 meses grátis';
+      document.getElementById('btn-basic').href = '/stripe/checkout/basic_anual';
+      document.getElementById('btn-pro').href   = '/stripe/checkout/pro_anual';
+    } else {
+      document.getElementById('preco-basic').innerHTML = 'R$ 39<small>/mês</small>';
+      document.getElementById('periodo-basic').textContent = 'Acesso individual ilimitado';
+      document.getElementById('preco-pro').innerHTML = 'R$ 59<small>/mês</small>';
+      document.getElementById('periodo-pro').textContent = 'Tudo do Basic + mais';
+      document.getElementById('btn-basic').href = '/stripe/checkout/basic';
+      document.getElementById('btn-pro').href   = '/stripe/checkout/pro';
     }
   }
-
-  document.getElementById('form').addEventListener('submit', function() {
-    document.getElementById('btn-gerar').disabled = true;
-    document.getElementById('loading').classList.add('active');
-    setTimeout(() => {
-      document.getElementById('btn-gerar').disabled = false;
-      document.getElementById('loading').classList.remove('active');
-    }, 90000);
-  });
 </script>
 </body>
 </html>

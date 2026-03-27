@@ -1158,9 +1158,10 @@ def conta_senha():
 # ─── Rotas principais ─────────────────────────────────────────────────────────
 
 @app.route('/')
-@login_required
 def index():
-    return redirect(url_for('chat'))
+    if current_user.is_authenticated:
+        return redirect(url_for('chat'))
+    return render_template('index.html')
 
 @app.route('/historico')
 @login_required
