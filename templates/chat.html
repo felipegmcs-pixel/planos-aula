@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>ProfessorIA — Assistente para Professores 🍎</title>
+  <title>ProfessorIA — Assistente para Professores</title>
   <meta name="color-scheme" content="light"/>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet"/>
   <style>
@@ -437,7 +437,45 @@
     }
 
     .msg.user .msg-avatar { background: var(--accent); color: white; }
-    .msg.assistant .msg-avatar { background: var(--border); color: var(--text-muted); }
+    .msg.assistant .msg-avatar { background: transparent; padding: 0; overflow: hidden; }
+    .msg.assistant .msg-avatar img { width: 30px; height: 30px; border-radius: 50%; display: block; }
+
+    /* NEE Modal */
+    .nee-modal-bg {
+      display: none; position: fixed; inset: 0; z-index: 300;
+      background: rgba(0,0,0,0.45); backdrop-filter: blur(4px);
+      align-items: center; justify-content: center;
+    }
+    .nee-modal-bg.open { display: flex; }
+    .nee-modal {
+      background: #fff; border-radius: 16px; padding: 28px 24px;
+      max-width: 400px; width: 90%; box-shadow: 0 24px 64px rgba(0,0,0,0.2);
+    }
+    .nee-modal h3 {
+      font-size: 1rem; font-weight: 800; color: var(--text);
+      margin-bottom: 6px; letter-spacing: -.3px;
+    }
+    .nee-modal p { font-size: 0.78rem; color: var(--text-muted); margin-bottom: 20px; line-height: 1.5; }
+    .nee-opts { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 20px; }
+    .nee-opt {
+      border: 1.5px solid var(--border); border-radius: 10px;
+      padding: 10px 12px; cursor: pointer; text-align: left;
+      background: #fff; transition: all .15s; font-family: 'Inter', sans-serif;
+    }
+    .nee-opt:hover { border-color: var(--accent); background: var(--accent-light); }
+    .nee-opt.sel { border-color: var(--accent); background: var(--accent-light); }
+    .nee-opt-title { font-size: 0.8rem; font-weight: 700; color: var(--text); }
+    .nee-opt-desc { font-size: 0.68rem; color: var(--text-muted); margin-top: 2px; }
+    .nee-footer { display: flex; gap: 8px; justify-content: flex-end; }
+    .nee-btn {
+      padding: 9px 20px; border-radius: 8px; border: none;
+      font-size: 0.78rem; font-weight: 700; cursor: pointer;
+      font-family: 'Inter', sans-serif; transition: all .15s;
+    }
+    .nee-btn.cancel { background: var(--border-light); color: var(--text-muted); }
+    .nee-btn.cancel:hover { background: var(--border); }
+    .nee-btn.confirm { background: var(--accent); color: #fff; }
+    .nee-btn.confirm:hover { background: var(--accent-hover); }
 
     .msg-content { max-width: 80%; display: flex; flex-direction: column; gap: 6px; }
     .msg.user .msg-content { align-items: flex-end; }
@@ -639,6 +677,44 @@
   </style>
 </head>
 <body>
+<!-- Modal NEE -->
+<div class="nee-modal-bg" id="neeModal">
+  <div class="nee-modal">
+    <h3>Adaptar para Necessidades Especiais</h3>
+    <p>Selecione o perfil do aluno para gerar material adaptado com linguagem e estrutura adequadas.</p>
+    <div class="nee-opts">
+      <button class="nee-opt" onclick="selNEE(this,'DI')" data-tipo="DI">
+        <div class="nee-opt-title">Def. Intelectual (DI)</div>
+        <div class="nee-opt-desc">Linguagem simples, etapas curtas</div>
+      </button>
+      <button class="nee-opt" onclick="selNEE(this,'TEA')" data-tipo="TEA">
+        <div class="nee-opt-title">TEA / Autismo</div>
+        <div class="nee-opt-desc">Rotina, clareza e previsibilidade</div>
+      </button>
+      <button class="nee-opt" onclick="selNEE(this,'TDAH')" data-tipo="TDAH">
+        <div class="nee-opt-title">TDAH</div>
+        <div class="nee-opt-desc">Atividades curtas e dinâmicas</div>
+      </button>
+      <button class="nee-opt" onclick="selNEE(this,'Dislexia')" data-tipo="Dislexia">
+        <div class="nee-opt-title">Dislexia</div>
+        <div class="nee-opt-desc">Texto oral, visual e fonético</div>
+      </button>
+      <button class="nee-opt" onclick="selNEE(this,'Baixa Visão')" data-tipo="Baixa Visão">
+        <div class="nee-opt-title">Baixa Visão</div>
+        <div class="nee-opt-desc">Descrições detalhadas e contraste</div>
+      </button>
+      <button class="nee-opt" onclick="selNEE(this,'CAA')" data-tipo="CAA">
+        <div class="nee-opt-title">CAA</div>
+        <div class="nee-opt-desc">Comunicação alternativa e aumentativa</div>
+      </button>
+    </div>
+    <div class="nee-footer">
+      <button class="nee-btn cancel" onclick="fecharNEE()">Cancelar</button>
+      <button class="nee-btn confirm" id="neeConfirm" onclick="confirmarNEE()">Criar material →</button>
+    </div>
+  </div>
+</div>
+
 <div class="overlay" id="overlay" onclick="fecharSidebar()"></div>
 
 <div class="app">
@@ -646,8 +722,8 @@
   <aside class="sidebar" id="sidebar">
     <div class="sidebar-header">
       <a class="logo" href="/chat">
-        <div class="logo-icon">📚</div>
-        <div class="logo-text">Profe<span>IA</span></div>
+        <img src="/static/logo.svg" alt="ProfessorIA" width="32" height="32" style="border-radius:8px; flex-shrink:0;"/>
+        <div class="logo-text">Professor<span>IA</span></div>
       </a>
     </div>
 
@@ -730,6 +806,14 @@
         <div class="action-card-info">
           <div class="action-card-title">Rubrica</div>
           <div class="action-card-desc">Critérios de avaliação</div>
+        </div>
+      </button>
+
+      <button class="action-card" onclick="abrirNEE()" style="border: 1.5px solid #e0e7ff; border-radius: 8px;">
+        <div class="action-card-icon" style="background:#f0fdf4; font-size:18px;">♿</div>
+        <div class="action-card-info">
+          <div class="action-card-title" style="color:#059669;">Adaptar para NEE</div>
+          <div class="action-card-desc">DI, TEA, TDAH, Dislexia…</div>
         </div>
       </button>
     </div>
@@ -816,6 +900,11 @@
               <span class="feature-card-icon">📨</span>
               <div class="feature-card-title">Bilhete</div>
               <div class="feature-card-desc">Comunicado para responsáveis</div>
+            </div>
+            <div class="feature-card" onclick="abrirNEE()" style="border-color:#d1fae5;">
+              <span class="feature-card-icon">♿</span>
+              <div class="feature-card-title" style="color:#059669;">Adaptar para NEE</div>
+              <div class="feature-card-desc">DI, TEA, TDAH, Dislexia e mais</div>
             </div>
           </div>
         </div>
@@ -910,7 +999,7 @@
     content.className = 'msg-content';
     content.appendChild(bubble);
 
-    div.innerHTML = '<div class="msg-avatar">IA</div>';
+    div.innerHTML = '<div class="msg-avatar"><img src="/static/avatar-ia.svg" alt="ProfessorIA"/></div>';
     div.appendChild(content);
     messagesInner.appendChild(div);
     scroll();
@@ -1001,6 +1090,39 @@
   function escapeHtml(t) {
     return t.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
   }
+
+  // ── NEE Modal ──
+  let neeTipoSel = '';
+  function abrirNEE() {
+    fecharSidebar();
+    neeTipoSel = '';
+    document.querySelectorAll('.nee-opt').forEach(b => b.classList.remove('sel'));
+    document.getElementById('neeModal').classList.add('open');
+  }
+  function fecharNEE() {
+    document.getElementById('neeModal').classList.remove('open');
+  }
+  function selNEE(el, tipo) {
+    document.querySelectorAll('.nee-opt').forEach(b => b.classList.remove('sel'));
+    el.classList.add('sel');
+    neeTipoSel = tipo;
+  }
+  function confirmarNEE() {
+    if (!neeTipoSel) { alert('Selecione um perfil primeiro.'); return; }
+    fecharNEE();
+    const prompts = {
+      'DI':          'Preciso criar um material adaptado para um aluno com Deficiência Intelectual (DI). Use linguagem simples e direta, frases curtas, etapas pequenas e muita repetição. Qual material você precisa? (plano de aula, atividade, prova adaptada…)',
+      'TEA':         'Preciso criar um material adaptado para um aluno com TEA (Transtorno do Espectro Autista). Use rotinas claras, instruções objetivas, previsibilidade e evite ambiguidades. Qual material você precisa?',
+      'TDAH':        'Preciso criar um material adaptado para um aluno com TDAH. Use atividades curtas, dinâmicas e variadas, com pausas e estímulos visuais. Qual material você precisa?',
+      'Dislexia':    'Preciso criar um material adaptado para um aluno com Dislexia. Foque em abordagem fonética, instrução oral, recursos visuais e evite textos longos. Qual material você precisa?',
+      'Baixa Visão': 'Preciso criar um material adaptado para um aluno com Baixa Visão. Use descrições detalhadas, contraste alto e evite referências puramente visuais. Qual material você precisa?',
+      'CAA':         'Preciso criar um material adaptado para um aluno que usa Comunicação Alternativa e Aumentativa (CAA). Use símbolos, palavras-chave e estrutura de prancha de comunicação. Qual material você precisa?',
+    };
+    iniciar(prompts[neeTipoSel] || `Criar material adaptado para ${neeTipoSel}.`);
+  }
+  document.getElementById('neeModal').addEventListener('click', function(e) {
+    if (e.target === this) fecharNEE();
+  });
 
   function renderMD(text) {
     return text

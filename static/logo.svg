@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 40 40" fill="none">
+  <rect width="40" height="40" rx="10" fill="#2b4fc7"/>
+  <!-- P letra -->
+  <path d="M11 10h9.5c3.6 0 6 2.2 6 5.8 0 3.6-2.4 5.8-6 5.8H15v8.4H11V10z" fill="white"/>
+  <path d="M15 13.5v4.6h5c1.5 0 2.4-.9 2.4-2.3 0-1.4-.9-2.3-2.4-2.3H15z" fill="#2b4fc7"/>
+  <!-- sparkle IA -->
+  <circle cx="28" cy="27" r="6.5" fill="#1a3499"/>
+  <text x="28" y="30.5" text-anchor="middle" font-family="Inter,sans-serif" font-size="6.5" font-weight="900" fill="white" letter-spacing="-0.3">IA</text>
+</svg>
