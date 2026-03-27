@@ -2,6 +2,8 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8"/>
+  <script>!function(){var t=localStorage.getItem("pia-theme")||"light",a="system"===t?(window.matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light"):t;document.documentElement.setAttribute("data-theme",a),document.documentElement.style.colorScheme=a}();</script>
+  
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Admin — Plano de Aula IA</title>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet"/>
@@ -40,6 +42,7 @@
       table { min-width: 800px; }
     }
   </style>
+  <link rel="stylesheet" href="/static/theme.css"/>
 </head>
 <body>
 <div class="top-bar"></div>
@@ -102,5 +105,6 @@
     </tbody>
   </table>
 </div>
+<script src="/static/theme.js"></script>
 </body>
 </html>

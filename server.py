@@ -1204,8 +1204,6 @@ def conta_senha():
 
 @app.route('/')
 def index():
-    if current_user.is_authenticated:
-        return redirect(url_for('chat'))
     return render_template('index.html')
 
 @app.route('/historico')

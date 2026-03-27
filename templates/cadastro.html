@@ -2,12 +2,14 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8"/>
+  <script>!function(){var t=localStorage.getItem("pia-theme")||"light",a="system"===t?(window.matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light"):t;document.documentElement.setAttribute("data-theme",a),document.documentElement.style.colorScheme=a}();</script>
+  
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Criar Conta — ProfessorIA™</title>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet"/>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-    :root { --preto: #0a0a0a; --branco: #f5f4f0; --amarelo: #f0e000; --cinza: #666660; --linha: rgba(0,0,0,0.09); }
+    :root { --preto: #0a0a0a; --branco: #ffffff; --amarelo: #f0e000; --cinza: #666660; --linha: rgba(0,0,0,0.09); }
     body { font-family: 'Inter', sans-serif; background: var(--branco); color: var(--preto); min-height: 100vh; display: grid; grid-template-rows: 56px 1fr; }
     ::selection { background: var(--amarelo); color: var(--preto); }
 
@@ -16,7 +18,7 @@
       display: flex; align-items: center; justify-content: space-between;
       border-bottom: 1px solid var(--linha);
       position: fixed; top: 0; left: 0; right: 0; z-index: 10;
-      background: rgba(245,244,240,0.97); backdrop-filter: blur(16px);
+      background: rgba(255,255,255,0.97); backdrop-filter: blur(16px);
     }
     .nav-logo { font-size: 0.7rem; font-weight: 900; letter-spacing: 3px; text-transform: uppercase; color: var(--preto); text-decoration: none; }
     .nav-logo .tm { font-size: 0.45rem; vertical-align: super; opacity: 0.4; font-weight: 400; }
@@ -32,11 +34,11 @@
       display: flex; flex-direction: column; justify-content: space-between;
       background: var(--preto); color: var(--branco);
     }
-    .left-tag { font-size: 0.52rem; font-weight: 700; letter-spacing: 3px; text-transform: uppercase; color: rgba(245,244,240,0.4); margin-bottom: 40px; }
+    .left-tag { font-size: 0.52rem; font-weight: 700; letter-spacing: 3px; text-transform: uppercase; color: rgba(255,255,255,0.4); margin-bottom: 40px; }
     .left-headline { font-size: clamp(2rem, 4vw, 3rem); font-weight: 900; letter-spacing: -2px; text-transform: uppercase; line-height: 1; margin-bottom: 20px; }
     .left-headline span { color: var(--amarelo); }
-    .left-desc { font-size: 0.75rem; color: rgba(245,244,240,0.45); line-height: 1.8; }
-    .left-bottom { font-size: 0.52rem; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; color: rgba(245,244,240,0.2); }
+    .left-desc { font-size: 0.75rem; color: rgba(255,255,255,0.45); line-height: 1.8; }
+    .left-bottom { font-size: 0.52rem; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; color: rgba(255,255,255,0.2); }
 
     .right { flex: 1; display: flex; align-items: center; justify-content: center; padding: 60px 40px; }
     .box { width: 100%; max-width: 380px; }
@@ -82,6 +84,7 @@
       .right { padding: 40px 24px; }
     }
   </style>
+  <link rel="stylesheet" href="/static/theme.css"/>
 </head>
 <body>
 <nav>
@@ -131,5 +134,6 @@
     </div>
   </div>
 </div>
+<script src="/static/theme.js"></script>
 </body>
 </html>
