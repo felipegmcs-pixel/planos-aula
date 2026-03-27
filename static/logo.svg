@@ -1,9 +1,34 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 40 40" fill="none">
-  <rect width="40" height="40" rx="10" fill="#2b4fc7"/>
-  <!-- P letra -->
-  <path d="M11 10h9.5c3.6 0 6 2.2 6 5.8 0 3.6-2.4 5.8-6 5.8H15v8.4H11V10z" fill="white"/>
-  <path d="M15 13.5v4.6h5c1.5 0 2.4-.9 2.4-2.3 0-1.4-.9-2.3-2.4-2.3H15z" fill="#2b4fc7"/>
-  <!-- sparkle IA -->
-  <circle cx="28" cy="27" r="6.5" fill="#1a3499"/>
-  <text x="28" y="30.5" text-anchor="middle" font-family="Inter,sans-serif" font-size="6.5" font-weight="900" fill="white" letter-spacing="-0.3">IA</text>
+  <!-- Background -->
+  <rect width="40" height="40" rx="8" fill="#0a0a0a"/>
+
+  <!-- Diagonal Abloh signature line, barely visible -->
+  <line x1="0" y1="40" x2="40" y2="0" stroke="#f5f4f0" stroke-width="0.4" opacity="0.12"/>
+
+  <!-- P mark: stem (solid, tradition) -->
+  <rect x="9" y="8" width="5.5" height="24" fill="#f5f4f0"/>
+
+  <!-- P mark: bowl (open path, not filled — the future, AI, open) -->
+  <path d="M14.5 8 Q27 8 27 15 Q27 22 14.5 22"
+        fill="none"
+        stroke="#f5f4f0"
+        stroke-width="5.5"
+        stroke-linecap="square"/>
+
+  <!-- "IA" tag — Off-White corner detail -->
+  <text x="31" y="36"
+        font-family="Arial,Helvetica,sans-serif"
+        font-size="6"
+        font-weight="900"
+        fill="#f5f4f0"
+        opacity="0.9"
+        text-anchor="middle"
+        letter-spacing="-0.3">IA</text>
+
+  <!-- TM mark — Virgil detail -->
+  <text x="37" y="31"
+        font-family="Arial,Helvetica,sans-serif"
+        font-size="4"
+        fill="#f5f4f0"
+        opacity="0.3">™</text>
 </svg>
