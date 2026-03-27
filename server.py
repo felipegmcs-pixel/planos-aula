@@ -1232,14 +1232,26 @@ def api_chat():
         return jsonify({'erro': 'ANTHROPIC_API_KEY não configurada no servidor'}), 500
 
     try:
-        c = Anthropic(api_key=api_key, timeout=120.0)
-        response = c.messages.create(
-            model="claude-sonnet-4-6",
-            max_tokens=4000,
-            system=SYSTEM_PROMPT,
-            messages=messages
+        import requests as req_lib
+        import traceback
+        r = req_lib.post(
+            'https://api.anthropic.com/v1/messages',
+            json={
+                'model': 'claude-sonnet-4-6',
+                'max_tokens': 4000,
+                'system': SYSTEM_PROMPT,
+                'messages': messages
+            },
+            headers={
+                'x-api-key': api_key,
+                'anthropic-version': '2023-06-01',
+                'content-type': 'application/json'
+            },
+            timeout=120
         )
-        resposta = response.content[0].text
+        if r.status_code != 200:
+            return jsonify({'erro': f'API {r.status_code}: {r.text[:300]}'}), 500
+        resposta = r.json()['content'][0]['text']
     except Exception as e:
         erro_detalhado = f"{type(e).__name__}: {str(e)}"
         print("ERRO API:", traceback.format_exc())
