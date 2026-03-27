@@ -1,6 +1,9 @@
 import os
 import io
 import json
+import secrets
+import smtplib
+from email.mime.text import MIMEText
 import psycopg2
 import psycopg2.extras
 from datetime import datetime, timedelta
@@ -50,6 +53,12 @@ NUPAY_API_URL        = 'https://api.spinpay.com.br'   # produção
 
 SITE_URL    = os.environ.get('SITE_URL', 'http://localhost:5001')
 ADMIN_EMAIL = os.environ.get('ADMIN_EMAIL', '')
+
+SMTP_HOST  = os.environ.get('SMTP_HOST', '')
+SMTP_PORT  = int(os.environ.get('SMTP_PORT', 587))
+SMTP_USER  = os.environ.get('SMTP_USER', '')
+SMTP_PASS  = os.environ.get('SMTP_PASS', '')
+FROM_EMAIL = os.environ.get('FROM_EMAIL', SMTP_USER)
 
 PLANOS = {
     'basic':        {'nome': 'Basic',    'preco': 39.00,  'dias': 30},
@@ -197,6 +206,17 @@ def init_db():
             criado_em  TEXT
         )
     ''')
+    conn.execute('''
+        CREATE TABLE IF NOT EXISTS reset_tokens (
+            id         SERIAL PRIMARY KEY,
+            usuario_id INTEGER,
+            token      TEXT,
+            expira_em  TEXT,
+            usado      INTEGER DEFAULT 0
+        )
+    ''')
+    conn.execute("ALTER TABLE usuarios ADD COLUMN IF NOT EXISTS escola_template TEXT DEFAULT ''")
+    conn.execute("ALTER TABLE usuarios ADD COLUMN IF NOT EXISTS onboarding_done INTEGER DEFAULT 0")
     conn.commit()
     conn.close()
 
@@ -206,12 +226,14 @@ init_db()
 
 class Usuario(UserMixin):
     def __init__(self, row):
-        self.id        = row['id']
-        self.nome      = row['nome']
-        self.email     = row['email']
-        self.plano     = row['plano']
-        self.ativo     = row['ativo']
-        self.valido_ate= row['valido_ate']
+        self.id              = row['id']
+        self.nome            = row['nome']
+        self.email           = row['email']
+        self.plano           = row['plano']
+        self.ativo           = row['ativo']
+        self.valido_ate      = row['valido_ate']
+        self.escola_template = row.get('escola_template', '') or ''
+        self.onboarding_done = row.get('onboarding_done', 0) or 0
 
     @property
     def assinatura_ativa(self):
@@ -246,6 +268,24 @@ def assinatura_required(f):
             return redirect(url_for('planos'))
         return f(*args, **kwargs)
     return decorated
+
+# ─── Email helper ─────────────────────────────────────────────────────────────
+
+def enviar_email(to, subject, body_html):
+    if not SMTP_HOST or not SMTP_USER or not SMTP_PASS:
+        return False
+    try:
+        msg = MIMEText(body_html, 'html', 'utf-8')
+        msg['Subject'] = subject
+        msg['From'] = FROM_EMAIL
+        msg['To'] = to
+        with smtplib.SMTP(SMTP_HOST, SMTP_PORT) as s:
+            s.ehlo(); s.starttls(); s.login(SMTP_USER, SMTP_PASS)
+            s.sendmail(FROM_EMAIL, [to], msg.as_string())
+        return True
+    except Exception as e:
+        print(f'Email error: {e}')
+        return False
 
 # ─── PDF (reportlab) ──────────────────────────────────────────────────────────
 
@@ -683,6 +723,67 @@ def cadastro():
         login_user(Usuario(row))
         return redirect(url_for('planos'))
     return render_template('cadastro.html')
+
+# ─── Recuperação de senha ─────────────────────────────────────────────────────
+
+@app.route('/esqueci-senha', methods=['GET', 'POST'])
+def esqueci_senha():
+    if request.method == 'POST':
+        email = request.form.get('email', '').strip().lower()
+        conn = get_db()
+        row = conn.execute("SELECT id FROM usuarios WHERE email = ?", (email,)).fetchone()
+        if row:
+            token = secrets.token_urlsafe(32)
+            expira = (datetime.now() + timedelta(hours=2)).strftime('%Y-%m-%d %H:%M:%S')
+            conn.execute("INSERT INTO reset_tokens (usuario_id, token, expira_em, usado) VALUES (?, ?, ?, 0)",
+                        (row['id'], token, expira))
+            conn.commit()
+            link = f"{SITE_URL}/redefinir-senha/{token}"
+            enviado = enviar_email(email, 'ProfessorIA — Redefinição de senha',
+                f'<p>Clique para redefinir sua senha (válido por 2h):</p><p><a href="{link}">{link}</a></p>')
+            if enviado:
+                flash('Email enviado! Verifique sua caixa de entrada.', 'ok')
+            else:
+                flash(f'Link de redefinição: {link}', 'ok')
+        else:
+            flash('Se esse email estiver cadastrado, você receberá as instruções.', 'ok')
+        conn.close()
+        return redirect(url_for('esqueci_senha'))
+    return render_template('esqueci_senha.html')
+
+@app.route('/redefinir-senha/<token>', methods=['GET', 'POST'])
+def redefinir_senha(token):
+    conn = get_db()
+    row = conn.execute(
+        "SELECT * FROM reset_tokens WHERE token = ? AND usado = 0", (token,)).fetchone()
+    if not row:
+        conn.close()
+        flash('Link inválido ou já utilizado.', 'erro')
+        return redirect(url_for('login'))
+    if datetime.strptime(row['expira_em'], '%Y-%m-%d %H:%M:%S') < datetime.now():
+        conn.close()
+        flash('Link expirado. Solicite um novo.', 'erro')
+        return redirect(url_for('esqueci_senha'))
+    if request.method == 'POST':
+        senha = request.form.get('senha', '')
+        confirma = request.form.get('confirma', '')
+        if len(senha) < 6:
+            flash('Senha deve ter pelo menos 6 caracteres.', 'erro')
+            conn.close()
+            return render_template('redefinir_senha.html', token=token)
+        if senha != confirma:
+            flash('As senhas não coincidem.', 'erro')
+            conn.close()
+            return render_template('redefinir_senha.html', token=token)
+        conn.execute("UPDATE usuarios SET senha = ? WHERE id = ?",
+                    (generate_password_hash(senha), row['usuario_id']))
+        conn.execute("UPDATE reset_tokens SET usado = 1 WHERE id = ?", (row['id'],))
+        conn.commit()
+        conn.close()
+        flash('Senha atualizada com sucesso!', 'ok')
+        return redirect(url_for('login'))
+    conn.close()
+    return render_template('redefinir_senha.html', token=token)
 
 # ─── Planos e Pagamento ───────────────────────────────────────────────────────
 
@@ -1338,6 +1439,18 @@ def get_geracoes_mes(usuario_id):
 
 # ─── Chat ──────────────────────────────────────────────────────────────────────
 
+@app.route('/api/salvar-template', methods=['POST'])
+@login_required
+def salvar_template():
+    data = request.json or {}
+    template = data.get('template', '').strip()
+    conn = get_db()
+    conn.execute("UPDATE usuarios SET escola_template = ?, onboarding_done = 1 WHERE id = ?",
+                (template, current_user.id))
+    conn.commit()
+    conn.close()
+    return jsonify({'ok': True})
+
 @app.route('/chat')
 @login_required
 def chat():
@@ -1349,7 +1462,8 @@ def chat():
                            limite=LIMITE_GRATIS,
                            limite_atingido=limite_atingido,
                            tem_plano=tem_plano,
-                           plano=current_user.plano)
+                           plano=current_user.plano,
+                           onboarding_done=current_user.onboarding_done)
 
 
 @app.route('/api/chat', methods=['POST'])
@@ -1383,12 +1497,15 @@ def api_chat():
     try:
         import requests as req_lib
         import traceback
+        sistema = SYSTEM_PROMPT
+        if current_user.escola_template:
+            sistema += f"\n\nO professor usa o seguinte esqueleto/modelo padrão de plano de aula da sua escola. SEMPRE que gerar planos de aula, use EXATAMENTE essa estrutura como base:\n\n{current_user.escola_template}"
         r = req_lib.post(
             'https://api.anthropic.com/v1/messages',
             json={
                 'model': 'claude-sonnet-4-6',
                 'max_tokens': 4000,
-                'system': SYSTEM_PROMPT,
+                'system': sistema,
                 'messages': messages
             },
             headers={
@@ -1650,6 +1767,26 @@ Formato: texto estruturado e claro, pronto para entregar à coordenação."""
 
     return jsonify({'conteudo': conteudo})
 
+
+# ─── Termos e Privacidade ─────────────────────────────────────────────────────
+
+@app.route('/termos')
+def termos():
+    return render_template('termos.html')
+
+@app.route('/privacidade')
+def privacidade():
+    return render_template('privacidade.html')
+
+# ─── Error handlers ────────────────────────────────────────────────────────────
+
+@app.errorhandler(404)
+def nao_encontrado(e):
+    return render_template('404.html'), 404
+
+@app.errorhandler(500)
+def erro_interno(e):
+    return render_template('500.html'), 500
 
 if __name__ == '__main__':
     port = int(os.environ.get("PORT", 5001))

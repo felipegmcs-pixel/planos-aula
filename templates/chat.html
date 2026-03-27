@@ -1028,6 +1028,81 @@
       .replace(/\n/g,'<br>');
   }
 </script>
+
+{% if not onboarding_done %}
+<!-- ONBOARDING MODAL -->
+<div id="onboarding-overlay" style="
+  position: fixed; inset: 0; z-index: 9999;
+  background: rgba(10,10,10,0.82); backdrop-filter: blur(6px);
+  display: flex; align-items: center; justify-content: center;
+  padding: 20px;
+">
+  <div style="
+    background: #0a0a0a; border: 1px solid rgba(255,255,255,0.12);
+    width: 100%; max-width: 560px; padding: 48px;
+    font-family: 'Inter', sans-serif;
+  ">
+    <div style="font-size:0.5rem; font-weight:700; letter-spacing:3px; text-transform:uppercase; color:#f0e000; margin-bottom:20px;">
+      CONFIGURAÇÃO INICIAL
+    </div>
+    <h2 style="font-size:1.6rem; font-weight:900; letter-spacing:-1.5px; text-transform:uppercase; color:#ffffff; line-height:1; margin-bottom:12px;">
+      MODELO DE PLANO<br/>DA SUA ESCOLA
+    </h2>
+    <p style="font-size:0.72rem; color:rgba(255,255,255,0.45); line-height:1.7; margin-bottom:28px;">
+      Cole abaixo o esqueleto ou modelo padrão de plano de aula da sua escola. O ProfessorIA usará essa estrutura sempre que gerar planos de aula para você.
+    </p>
+    <label style="font-size:0.5rem; font-weight:700; letter-spacing:3px; text-transform:uppercase; color:rgba(255,255,255,0.4); display:block; margin-bottom:10px;">
+      ESQUELETO DO PLANO DE AULA
+    </label>
+    <textarea id="onboarding-template" placeholder="Ex: Escola: ___ / Professor: ___ / Disciplina: ___ / Objetivo: ___ / Desenvolvimento: ___ / Avaliação: ___" style="
+      width:100%; min-height:140px; padding:14px;
+      background:rgba(255,255,255,0.04); border:1.5px solid rgba(255,255,255,0.12);
+      color:#ffffff; font-family:'Inter',sans-serif; font-size:0.8rem;
+      line-height:1.6; resize:vertical; outline:none;
+      transition:border-color .2s;
+    " onfocus="this.style.borderColor='rgba(255,255,255,0.35)'" onblur="this.style.borderColor='rgba(255,255,255,0.12)'"></textarea>
+    <div style="display:flex; gap:10px; margin-top:20px;">
+      <button onclick="salvarOnboarding()" style="
+        flex:1; padding:14px; background:#ffffff; color:#0a0a0a;
+        border:none; font-size:0.62rem; font-weight:900;
+        font-family:'Inter',sans-serif; letter-spacing:2.5px;
+        text-transform:uppercase; cursor:pointer; transition:background .2s;
+      " onmouseover="this.style.background='#f0e000'" onmouseout="this.style.background='#ffffff'">
+        SALVAR E CONTINUAR →
+      </button>
+      <button onclick="pularOnboarding()" style="
+        flex:1; padding:14px; background:transparent; color:rgba(255,255,255,0.45);
+        border:1px solid rgba(255,255,255,0.14); font-size:0.62rem; font-weight:700;
+        font-family:'Inter',sans-serif; letter-spacing:2px;
+        text-transform:uppercase; cursor:pointer; transition:all .2s;
+      " onmouseover="this.style.borderColor='rgba(255,255,255,0.4)';this.style.color='#ffffff'"
+         onmouseout="this.style.borderColor='rgba(255,255,255,0.14)';this.style.color='rgba(255,255,255,0.45)'">
+        PULAR POR AGORA
+      </button>
+    </div>
+  </div>
+</div>
+<script>
+  async function salvarOnboarding() {
+    const template = document.getElementById('onboarding-template').value;
+    await fetch('/api/salvar-template', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ template })
+    });
+    document.getElementById('onboarding-overlay').style.display = 'none';
+  }
+  async function pularOnboarding() {
+    await fetch('/api/salvar-template', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ template: '' })
+    });
+    document.getElementById('onboarding-overlay').style.display = 'none';
+  }
+</script>
+{% endif %}
+
 <script src="/static/theme.js"></script>
 </body>
 </html>

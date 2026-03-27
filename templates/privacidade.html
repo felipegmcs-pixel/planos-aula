@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="pt-BR" data-theme="light">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="color-scheme" content="only light"/>
+  <script>document.documentElement.setAttribute('data-theme','light');document.documentElement.style.colorScheme='only light';</script>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Política de Privacidade — ProfessorIA™</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet"/>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root { --preto: #0a0a0a; --branco: #ffffff; --amarelo: #f0e000; --cinza: #666660; --linha: rgba(0,0,0,0.09); }
+    body { font-family: 'Inter', sans-serif; background: var(--branco); color: var(--preto); }
+    ::selection { background: var(--amarelo); color: var(--preto); }
+
+    nav {
+      padding: 0 40px; height: 56px;
+      display: flex; align-items: center; justify-content: space-between;
+      border-bottom: 1px solid var(--linha);
+      position: fixed; top: 0; left: 0; right: 0; z-index: 10;
+      background: rgba(255,255,255,0.97); backdrop-filter: blur(16px);
+    }
+    .nav-logo { font-size: 0.7rem; font-weight: 900; letter-spacing: 3px; text-transform: uppercase; color: var(--preto); text-decoration: none; }
+    .nav-logo .tm { font-size: 0.45rem; vertical-align: super; opacity: 0.4; font-weight: 400; }
+    .nav-link { font-size: 0.6rem; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; color: var(--cinza); text-decoration: none; transition: color .2s; }
+    .nav-link:hover { color: var(--preto); }
+
+    .header {
+      margin-top: 56px;
+      padding: 80px 40px 60px;
+      border-bottom: 1px solid var(--linha);
+    }
+    .header-tag { font-size: 0.52rem; font-weight: 700; letter-spacing: 3px; text-transform: uppercase; color: var(--cinza); margin-bottom: 20px; }
+    .header h1 { font-size: clamp(2.4rem, 6vw, 5rem); font-weight: 900; letter-spacing: -3px; text-transform: uppercase; line-height: 1; }
+    .header .updated { font-size: 0.6rem; font-weight: 600; letter-spacing: 2px; text-transform: uppercase; color: var(--cinza); margin-top: 20px; }
+
+    .content { max-width: 760px; margin: 0 auto; padding: 60px 40px 100px; }
+    .section { margin-bottom: 48px; }
+    .section-num { font-size: 0.5rem; font-weight: 700; letter-spacing: 3px; text-transform: uppercase; color: var(--amarelo); margin-bottom: 10px; }
+    .section h2 { font-size: 1rem; font-weight: 900; letter-spacing: -0.5px; text-transform: uppercase; margin-bottom: 14px; }
+    .section p, .section li { font-size: 0.82rem; color: var(--cinza); line-height: 1.85; }
+    .section ul { padding-left: 20px; margin-top: 10px; }
+    .section li { margin-bottom: 6px; }
+    .divider { height: 1px; background: var(--linha); margin: 0 0 48px; }
+
+    .lgpd-badge {
+      display: inline-block; padding: 6px 14px;
+      background: rgba(240,224,0,0.1); border: 1px solid rgba(240,224,0,0.3);
+      font-size: 0.52rem; font-weight: 800; letter-spacing: 2px; text-transform: uppercase;
+      color: var(--preto); margin-bottom: 32px;
+    }
+
+    footer { padding: 28px 40px; border-top: 1px solid var(--linha); display: flex; align-items: center; justify-content: space-between; }
+    .footer-logo { font-size: 0.62rem; font-weight: 900; letter-spacing: 3px; text-transform: uppercase; color: rgba(10,10,10,0.28); text-decoration: none; }
+    .footer-logo .tm { font-size: 0.42rem; vertical-align: super; font-weight: 400; }
+    .footer-copy { font-size: 0.5rem; letter-spacing: 1.5px; text-transform: uppercase; color: rgba(10,10,10,0.22); }
+
+    @media (max-width: 700px) {
+      .header { padding: 60px 20px 40px; }
+      .content { padding: 40px 20px 60px; }
+      footer { padding: 24px 20px; flex-direction: column; gap: 8px; }
+    }
+  </style>
+</head>
+<body>
+<nav>
+  <a class="nav-logo" href="/">PROFESSOR<span class="tm">IA™</span></a>
+  <a class="nav-link" href="/">INÍCIO →</a>
+</nav>
+
+<div class="header">
+  <div class="header-tag">LEGAL — PRIVACIDADE</div>
+  <h1>POLÍTICA DE<br/>PRIVACIDADE</h1>
+  <div class="updated">Última atualização: março de 2025</div>
+</div>
+
+<div class="content">
+
+  <div class="lgpd-badge">CONFORME A LGPD — LEI 13.709/2018</div>
+
+  <div class="section">
+    <div class="section-num">01 — CONTROLADOR</div>
+    <h2>QUEM SOMOS</h2>
+    <p>O ProfessorIA é o controlador dos dados pessoais coletados nesta plataforma. Esta Política descreve como coletamos, usamos, armazenamos e protegemos suas informações, em conformidade com a Lei Geral de Proteção de Dados (LGPD — Lei 13.709/2018).</p>
+  </div>
+  <div class="divider"></div>
+
+  <div class="section">
+    <div class="section-num">02 — DADOS COLETADOS</div>
+    <h2>DADOS QUE COLETAMOS</h2>
+    <ul>
+      <li><strong>Dados de cadastro:</strong> nome e endereço de e-mail.</li>
+      <li><strong>Dados de uso:</strong> materiais gerados na plataforma, histórico de interações com a IA.</li>
+      <li><strong>Dados de pagamento:</strong> processados diretamente pelo Stripe ou Mercado Pago — não armazenamos dados de cartão.</li>
+      <li><strong>Dados técnicos:</strong> informações de acesso para fins de segurança e desempenho.</li>
+    </ul>
+  </div>
+  <div class="divider"></div>
+
+  <div class="section">
+    <div class="section-num">03 — FINALIDADE</div>
+    <h2>COMO USAMOS OS DADOS</h2>
+    <ul>
+      <li>Fornecer e melhorar os serviços da plataforma.</li>
+      <li>Processar pagamentos e gerenciar assinaturas.</li>
+      <li>Enviar comunicações essenciais (confirmação de cadastro, redefinição de senha).</li>
+      <li>Garantir a segurança e prevenir fraudes.</li>
+      <li>Cumprir obrigações legais.</li>
+    </ul>
+  </div>
+  <div class="divider"></div>
+
+  <div class="section">
+    <div class="section-num">04 — BASE LEGAL</div>
+    <h2>BASES LEGAIS (LGPD)</h2>
+    <ul>
+      <li><strong>Execução de contrato:</strong> para fornecer os serviços contratados.</li>
+      <li><strong>Legítimo interesse:</strong> para segurança e melhoria da plataforma.</li>
+      <li><strong>Cumprimento de obrigação legal:</strong> quando exigido por lei.</li>
+      <li><strong>Consentimento:</strong> para comunicações de marketing, quando aplicável.</li>
+    </ul>
+  </div>
+  <div class="divider"></div>
+
+  <div class="section">
+    <div class="section-num">05 — COMPARTILHAMENTO</div>
+    <h2>COMPARTILHAMENTO DE DADOS</h2>
+    <p>Não vendemos seus dados pessoais. Podemos compartilhá-los apenas com:</p>
+    <ul>
+      <li>Processadores de pagamento (Stripe, Mercado Pago) para fins de cobrança.</li>
+      <li>Provedores de infraestrutura (hospedagem em nuvem) para operação do serviço.</li>
+      <li>Autoridades públicas, quando exigido por lei.</li>
+    </ul>
+  </div>
+  <div class="divider"></div>
+
+  <div class="section">
+    <div class="section-num">06 — RETENÇÃO</div>
+    <h2>ARMAZENAMENTO E RETENÇÃO</h2>
+    <p>Seus dados são mantidos enquanto sua conta estiver ativa. Após encerramento, podem ser retidos por até 5 anos para cumprimento de obrigações legais. Os dados de histórico de uso são armazenados em servidores seguros com criptografia em repouso e em trânsito.</p>
+  </div>
+  <div class="divider"></div>
+
+  <div class="section">
+    <div class="section-num">07 — SEUS DIREITOS</div>
+    <h2>SEUS DIREITOS (LGPD)</h2>
+    <p>Nos termos da LGPD, você tem direito a:</p>
+    <ul>
+      <li>Confirmar a existência de tratamento de seus dados.</li>
+      <li>Acessar seus dados pessoais.</li>
+      <li>Corrigir dados incompletos, inexatos ou desatualizados.</li>
+      <li>Solicitar a anonimização, bloqueio ou eliminação de dados desnecessários.</li>
+      <li>Revogar o consentimento a qualquer momento.</li>
+      <li>Solicitar a portabilidade dos dados.</li>
+    </ul>
+    <p style="margin-top:12px;">Para exercer seus direitos, entre em contato conosco pelo e-mail de suporte disponível na plataforma.</p>
+  </div>
+  <div class="divider"></div>
+
+  <div class="section">
+    <div class="section-num">08 — COOKIES</div>
+    <h2>COOKIES E SESSÃO</h2>
+    <p>Utilizamos cookies de sessão essenciais para o funcionamento da plataforma (autenticação e preferências). Não utilizamos cookies de rastreamento ou publicidade de terceiros.</p>
+  </div>
+  <div class="divider"></div>
+
+  <div class="section">
+    <div class="section-num">09 — CONTATO</div>
+    <h2>ENCARREGADO DE DADOS (DPO)</h2>
+    <p>Para dúvidas, solicitações ou reclamações relacionadas à privacidade e proteção de dados, entre em contato através do e-mail de suporte disponível na plataforma. Comprometemo-nos a responder em até 15 dias úteis.</p>
+  </div>
+
+</div>
+
+<footer>
+  <a class="footer-logo" href="/">PROFESSOR<span class="tm">IA™</span></a>
+  <span class="footer-copy">© 2025 PROFESSORIA</span>
+</footer>
+</body>
+</html>
