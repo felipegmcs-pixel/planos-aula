@@ -331,6 +331,74 @@
     .footer-copy { font-size: 0.5rem; letter-spacing: 1.5px; text-transform: uppercase; color: rgba(10,10,10,0.22); }
     [data-theme="dark"] .footer-copy { color: rgba(240,240,236,0.22); }
 
+    /* ── SCROLL-DRIVEN 3D DECORATIONS ── */
+    .features-header { position: relative; }
+    .cta { position: relative; overflow: hidden; }
+
+    /* Generic geo3d wireframe cube system */
+    .geo3d-wrap {
+      position: absolute; pointer-events: none; z-index: 0;
+      perspective: 800px; display: flex; align-items: center; justify-content: center;
+    }
+    .geo3d { transform-style: preserve-3d; will-change: transform; }
+    .geo-face {
+      position: absolute; background: transparent;
+      border: 1.5px solid rgba(10,10,10,0.18);
+    }
+
+    /* Sizes */
+    .geo3d.geo3d-xl { width: 200px; height: 200px; }
+    .geo3d.geo3d-xl .geo-face { width: 200px; height: 200px; }
+    .geo3d.geo3d-xl .gf-front  { transform: translateZ(100px); }
+    .geo3d.geo3d-xl .gf-back   { transform: rotateY(180deg) translateZ(100px); }
+    .geo3d.geo3d-xl .gf-left   { transform: rotateY(-90deg) translateZ(100px); }
+    .geo3d.geo3d-xl .gf-right  { transform: rotateY(90deg) translateZ(100px); }
+    .geo3d.geo3d-xl .gf-top    { transform: rotateX(90deg) translateZ(100px); }
+    .geo3d.geo3d-xl .gf-bottom { transform: rotateX(-90deg) translateZ(100px); }
+
+    .geo3d.geo3d-lg { width: 140px; height: 140px; }
+    .geo3d.geo3d-lg .geo-face { width: 140px; height: 140px; }
+    .geo3d.geo3d-lg .gf-front  { transform: translateZ(70px); }
+    .geo3d.geo3d-lg .gf-back   { transform: rotateY(180deg) translateZ(70px); }
+    .geo3d.geo3d-lg .gf-left   { transform: rotateY(-90deg) translateZ(70px); }
+    .geo3d.geo3d-lg .gf-right  { transform: rotateY(90deg) translateZ(70px); }
+    .geo3d.geo3d-lg .gf-top    { transform: rotateX(90deg) translateZ(70px); }
+    .geo3d.geo3d-lg .gf-bottom { transform: rotateX(-90deg) translateZ(70px); }
+
+    .geo3d.geo3d-sm { width: 70px; height: 70px; }
+    .geo3d.geo3d-sm .geo-face { width: 70px; height: 70px; }
+    .geo3d.geo3d-sm .gf-front  { transform: translateZ(35px); }
+    .geo3d.geo3d-sm .gf-back   { transform: rotateY(180deg) translateZ(35px); }
+    .geo3d.geo3d-sm .gf-left   { transform: rotateY(-90deg) translateZ(35px); }
+    .geo3d.geo3d-sm .gf-right  { transform: rotateY(90deg) translateZ(35px); }
+    .geo3d.geo3d-sm .gf-top    { transform: rotateX(90deg) translateZ(35px); }
+    .geo3d.geo3d-sm .gf-bottom { transform: rotateX(-90deg) translateZ(35px); }
+
+    /* Gold variant */
+    .geo3d.gold .geo-face { border-color: rgba(240,224,0,0.6); }
+
+    /* Positions — features header */
+    .feat-geo-wrap {
+      position: absolute; right: 3%; top: 50%; transform: translateY(-50%);
+      pointer-events: none; z-index: 0; perspective: 800px; opacity: 0.07;
+    }
+
+    /* Manifesto geo (inside .manifesto which has overflow:hidden) */
+    .mani-geo-a {
+      position: absolute; right: 5%;  top: 40%;
+      pointer-events: none; z-index: 1; perspective: 800px; opacity: 0.09;
+    }
+    .mani-geo-b {
+      position: absolute; right: 17%; top: 20%;
+      pointer-events: none; z-index: 1; perspective: 800px; opacity: 0.06;
+    }
+
+    /* CTA geo (inside .cta which has overflow:hidden) */
+    .cta-geo {
+      position: absolute; right: 12%; top: 50%; transform: translateY(-50%);
+      pointer-events: none; z-index: 0; perspective: 1000px; opacity: 0.06;
+    }
+
     /* ── anchors / reveal ── */
     #planos { scroll-margin-top: 90px; }
     .reveal { opacity: 0; transform: translateY(24px); transition: opacity .8s ease, transform .8s ease; }
@@ -365,6 +433,7 @@
       .divider::after { right: 20px; }
       .features-header { padding: 40px 20px 32px; flex-direction: column; align-items: flex-start; gap: 16px; }
       .q3d { display: none; }
+      .feat-geo-wrap, .mani-geo-a, .mani-geo-b, .cta-geo { display: none; }
     }
     @media (max-width: 600px) {
       .features-grid { grid-template-columns: 1fr; }
@@ -423,7 +492,15 @@
     <div class="hero-right">
       <p class="hero-desc">Gere planos de aula completos, provas, caça-palavras e planejamentos em segundos. Feito para professores brasileiros. Alinhado à BNCC.</p>
       <div class="hero-btns">
-        <a href="/cadastro" class="btn-solid">"ACESSAR_SISTEMA" →</a>
+        {% if current_user.is_authenticated %}
+          {% if current_user.assinatura_ativa or current_user.is_admin %}
+            <a href="/chat" class="btn-solid">"ACESSAR_SISTEMA" →</a>
+          {% else %}
+            <a href="/planos" class="btn-solid">"VER PLANOS" →</a>
+          {% endif %}
+        {% else %}
+          <a href="/cadastro" class="btn-solid">"ACESSAR_SISTEMA" →</a>
+        {% endif %}
       </div>
     </div>
   </div>
@@ -454,6 +531,13 @@
 <div class="features-header" id="features">
   <div class="section-tag">002 — O QUE VOCÊ PODE CRIAR</div>
   <div class="section-title">TUDO EM<br/>SEGUNDOS</div>
+  <div class="feat-geo-wrap">
+    <div class="geo3d geo3d-lg" id="featCube">
+      <div class="geo-face gf-front"></div><div class="geo-face gf-back"></div>
+      <div class="geo-face gf-left"></div><div class="geo-face gf-right"></div>
+      <div class="geo-face gf-top"></div><div class="geo-face gf-bottom"></div>
+    </div>
+  </div>
 </div>
 <section class="features-grid reveal">
   <div class="feat">
@@ -491,6 +575,21 @@
 <!-- MANIFESTO + STATS -->
 <div class="divider" data-label="POR QUÊ EXISTE"></div>
 <section class="manifesto reveal">
+  <!-- Scroll-driven 3D decorations on the right side -->
+  <div class="mani-geo-a">
+    <div class="geo3d geo3d-xl" id="maniCubeA">
+      <div class="geo-face gf-front"></div><div class="geo-face gf-back"></div>
+      <div class="geo-face gf-left"></div><div class="geo-face gf-right"></div>
+      <div class="geo-face gf-top"></div><div class="geo-face gf-bottom"></div>
+    </div>
+  </div>
+  <div class="mani-geo-b">
+    <div class="geo3d geo3d-sm gold" id="maniCubeB">
+      <div class="geo-face gf-front"></div><div class="geo-face gf-back"></div>
+      <div class="geo-face gf-left"></div><div class="geo-face gf-right"></div>
+      <div class="geo-face gf-top"></div><div class="geo-face gf-bottom"></div>
+    </div>
+  </div>
   <div>
     <div class="manifesto-tag">003 — MISSÃO</div>
     <h2>FEITO PARA<br/>QUEM<br/><em>ENSINA.</em></h2>
@@ -625,8 +724,23 @@
 </div>
 
 <section class="cta reveal">
+  <div class="cta-geo" id="ctaGeo">
+    <div class="geo3d geo3d-xl" id="ctaCube">
+      <div class="geo-face gf-front"></div><div class="geo-face gf-back"></div>
+      <div class="geo-face gf-left"></div><div class="geo-face gf-right"></div>
+      <div class="geo-face gf-top"></div><div class="geo-face gf-bottom"></div>
+    </div>
+  </div>
   <h2>COMECE<br/><span class="sub">HOJE, GRÁTIS.</span></h2>
-  <a href="/cadastro" class="btn-solid" style="font-size:.65rem;padding:16px 40px">CRIAR CONTA GRÁTIS →</a>
+  {% if current_user.is_authenticated %}
+    {% if current_user.assinatura_ativa or current_user.is_admin %}
+      <a href="/chat" class="btn-solid" style="font-size:.65rem;padding:16px 40px">ACESSAR SISTEMA →</a>
+    {% else %}
+      <a href="/planos" class="btn-solid" style="font-size:.65rem;padding:16px 40px">VER PLANOS →</a>
+    {% endif %}
+  {% else %}
+    <a href="/cadastro" class="btn-solid" style="font-size:.65rem;padding:16px 40px">CRIAR CONTA GRÁTIS →</a>
+  {% endif %}
 </section>
 
 <footer>
@@ -770,9 +884,17 @@
       m.position.y = m.userData.oy + Math.sin(t * 0.5 + m.userData.phase) * 0.08;
       m.position.x = m.userData.ox + Math.cos(t * 0.4 + m.userData.phase) * 0.05;
     });
+    /* scroll parallax — hero drifts up and tilts as user scrolls */
+    var sY = window.scrollY || 0;
+    var heroH = hero.clientHeight || window.innerHeight;
+    var scrollP = Math.min(sY / heroH, 1);
+    camera.position.y = scrollP * -1.4;
+    camera.position.z = 6 + scrollP * 1.2;
     /* mouse parallax */
-    group.rotation.y += (mx - group.rotation.y) * 0.04;
-    group.rotation.x += (my - group.rotation.x) * 0.04;
+    var targetY = mx + scrollP * 0.12;
+    var targetX = my - scrollP * 0.08;
+    group.rotation.y += (targetY - group.rotation.y) * 0.04;
+    group.rotation.x += (targetX - group.rotation.x) * 0.04;
     renderer.render(scene, camera);
   })();
 })();
@@ -820,6 +942,33 @@ new IntersectionObserver(function(es) {
     });
   });
 }, { threshold: 0.4 }).observe(document.querySelector('.prova') || document.body);
+
+/* ── SCROLL-DRIVEN CSS 3D ROTATION ── */
+(function() {
+  var geos = [
+    { id: 'featCube',  rx0: 18,  rxS:  0.025, ry0:  0,   ryS:  0.06,  rz0: 0 },
+    { id: 'maniCubeA', rx0: 25,  rxS: -0.018, ry0: 12,   ryS:  0.05,  rz0: 5 },
+    { id: 'maniCubeB', rx0: -15, rxS:  0.030, ry0: -8,   ryS: -0.07,  rz0: 0 },
+    { id: 'ctaCube',   rx0: 20,  rxS:  0.012, ry0: 30,   ryS:  0.04,  rz0: 8 },
+  ];
+  var els = geos.map(function(g) {
+    return { el: document.getElementById(g.id), cfg: g };
+  }).filter(function(o) { return !!o.el; });
+
+  var smoothS = 0;
+  function loop() {
+    smoothS += (window.scrollY - smoothS) * 0.07;
+    els.forEach(function(o) {
+      var c = o.cfg;
+      var rx = c.rx0 + smoothS * c.rxS;
+      var ry = c.ry0 + smoothS * c.ryS;
+      o.el.style.transform =
+        'rotateX(' + rx + 'deg) rotateY(' + ry + 'deg) rotateZ(' + c.rz0 + 'deg)';
+    });
+    requestAnimationFrame(loop);
+  }
+  loop();
+})();
 
 /* ── PLAN TOGGLE ── */
 function alternar() {
