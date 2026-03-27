@@ -47,11 +47,11 @@
 
     .lista { display: flex; flex-direction: column; }
     .item-card { display: grid; grid-template-columns: 1fr auto; gap: 20px; align-items: center; padding: 24px 0; border-bottom: 1px solid var(--linha); transition: background .15s; }
-    .item-card:hover { background: rgba(0,0,0,0.03); padding-left: 12px; padding-right: 12px; margin: 0 -12px; }
+    .item-card:hover { background: var(--hover-bg); padding-left: 12px; padding-right: 12px; margin: 0 -12px; }
     .item-titulo { font-size: 0.9rem; font-weight: 700; letter-spacing: -.3px; margin-bottom: 6px; text-transform: uppercase; }
     .item-meta { font-size: 0.68rem; color: var(--cinza); display: flex; flex-wrap: wrap; gap: 14px; margin-bottom: 10px; letter-spacing: .5px; text-transform: uppercase; }
     .item-temas { display: flex; flex-wrap: wrap; gap: 6px; }
-    .tag { font-size: 0.58rem; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; background: rgba(0,0,0,0.04); color: var(--cinza); padding: 3px 10px; border: 1px solid var(--linha); }
+    .tag { font-size: 0.58rem; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; background: var(--tag-bg); color: var(--cinza); padding: 3px 10px; border: 1px solid var(--linha); }
 
     .item-acoes { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
     .btn-baixar { display: inline-flex; align-items: center; gap: 7px; background: var(--preto); color: var(--branco); border: none; padding: 9px 18px; font-size: 0.62rem; font-weight: 900; font-family: 'Inter', sans-serif; letter-spacing: 2px; text-transform: uppercase; text-decoration: none; cursor: pointer; transition: background .2s; white-space: nowrap; }

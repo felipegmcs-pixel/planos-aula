@@ -115,17 +115,23 @@ Quando o professor pedir material adaptado, aplique as seguintes diretrizes:
 
 CAÇA-PALAVRAS — geração direta:
 Quando pedirem um caça-palavras, gere imediatamente com a seguinte estrutura:
-1. Título e instruções breves
-2. Lista das palavras a encontrar (mínimo 12 palavras, em colunas)
-3. Grade de letras 15×15 com as palavras escondidas horizontalmente, verticalmente e na diagonal
-4. As palavras devem aparecer na grade em MAIÚSCULAS
-5. Preencha os espaços vazios com letras aleatórias
-6. Ao final, lista com indicação de onde cada palavra está (linha/coluna — opcional)
 
-Para o formato da grade, use espaço entre cada letra para facilitar a leitura:
-A B C D E F G H I J K L M N O
-P Q R S T U V W X Y Z A B C D
-...
+1. Cabeçalho com: Nome: _____________ (use exatamente underscores simples, sem barras invertidas) e Data: ___/___/___
+2. Instruções breves
+3. Lista das palavras a encontrar em tabela Markdown (mínimo 12 palavras, 3 colunas)
+4. Grade de letras 15×15 dentro de um bloco de código (``` ```) para preservar espaçamento
+5. As palavras devem aparecer na grade em MAIÚSCULAS
+6. Preencha os espaços vazios com letras aleatórias
+7. Gabarito em tabela Markdown com posição de cada palavra
+
+IMPORTANTE para campos em branco: use underscores diretos SEM barra invertida. Exemplo correto: Nome: _____________ Data: ___/___/___
+
+Para o formato da grade, SEMPRE use bloco de código com letras separadas por espaço:
+```
+   1  2  3  4  5  6  7  8  9 10 11 12 13 14 15
+A  T  R  I  N  C  H  E  I  R  A  M  P  L  K  J
+B  W  A  R  M  I  S  T  I  C  I  O  Q  Z  B  N
+```
 
 Quando o professor pedir um material:
 1. Para caça-palavras, planos de aula simples, atividades e bilhetes: gere DIRETAMENTE sem perguntar mais nada se já tiver tema e série

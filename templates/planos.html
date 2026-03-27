@@ -163,9 +163,35 @@
       {% endif %}
     </div>
 
-    <!-- BASIC -->
+    <!-- PRO — destaque no meio para maximizar conversão -->
     <div class="plano-card destaque">
       <div class="plano-label-top"><span class="dot"></span>MAIS POPULAR</div>
+      <div class="plano-nome">PRO</div>
+      <div class="plano-preco-val" id="preco-pro"><sup>R$</sup>59<sub>/MÊS</sub></div>
+      <div class="plano-periodo" id="per-pro">ACESSO COMPLETO ILIMITADO</div>
+      <ul class="plano-features">
+        <li class="on">GERAÇÕES ILIMITADAS <span class="check-icon">✓</span></li>
+        <li class="on">CHAT COM IA <span class="check-icon">✓</span></li>
+        <li class="on">PLANOS DE AULA <span class="check-icon">✓</span></li>
+        <li class="on">PROVAS E AVALIAÇÕES <span class="check-icon">✓</span></li>
+        <li class="on">CAÇA-PALAVRAS <span class="check-icon">✓</span></li>
+        <li class="on">ATIVIDADES E BILHETES <span class="check-icon">✓</span></li>
+        <li class="on">ADAPTAÇÕES NEE <span class="check-icon">✓</span></li>
+        <li class="on">EXPORTAR PDF E WORD <span class="check-icon">✓</span></li>
+        <li class="on">PLANEJAMENTO ANUAL BNCC <span class="check-icon">✓</span></li>
+        <li class="on">HISTÓRICO COMPLETO <span class="check-icon">✓</span></li>
+        <li class="on">SUPORTE PRIORITÁRIO <span class="check-icon">✓</span></li>
+      </ul>
+      {% if assinatura_ativa and plano_atual in ('pro','pro_anual') %}
+        <button class="btn-plano solid" disabled>PLANO ATUAL</button>
+      {% else %}
+        <a href="/stripe/checkout/pro" class="btn-plano solid" id="btn-pro">ASSINAR PRO</a>
+      {% endif %}
+    </div>
+
+    <!-- BASIC -->
+    <div class="plano-card">
+      <div class="plano-label-top">BASIC — ESSENCIAL</div>
       <div class="plano-nome">BASIC</div>
       <div class="plano-preco-val" id="preco-basic"><sup>R$</sup>39<sub>/MÊS</sub></div>
       <div class="plano-periodo" id="per-basic">ACESSO INDIVIDUAL ILIMITADO</div>
@@ -178,31 +204,14 @@
         <li class="on">ATIVIDADES E BILHETES <span class="check-icon">✓</span></li>
         <li class="on">ADAPTAÇÕES NEE <span class="check-icon">✓</span></li>
         <li>EXPORTAR PDF / WORD <span class="x-icon">—</span></li>
+        <li>PLANEJAMENTO ANUAL BNCC <span class="x-icon">—</span></li>
+        <li>HISTÓRICO COMPLETO <span class="x-icon">—</span></li>
+        <li>SUPORTE PRIORITÁRIO <span class="x-icon">—</span></li>
       </ul>
       {% if assinatura_ativa and plano_atual in ('basic','basic_anual') %}
-        <button class="btn-plano solid" disabled>PLANO ATUAL</button>
-      {% else %}
-        <a href="/stripe/checkout/basic" class="btn-plano solid" id="btn-basic">ASSINAR BASIC</a>
-      {% endif %}
-    </div>
-
-    <!-- PRO -->
-    <div class="plano-card">
-      <div class="plano-label-top">PRO — COMPLETO</div>
-      <div class="plano-nome">PRO</div>
-      <div class="plano-preco-val" id="preco-pro"><sup>R$</sup>59<sub>/MÊS</sub></div>
-      <div class="plano-periodo" id="per-pro">TUDO DO BASIC + MAIS</div>
-      <ul class="plano-features">
-        <li class="on">TUDO DO BASIC <span class="check-icon">✓</span></li>
-        <li class="on">PLANEJAMENTO ANUAL BNCC <span class="check-icon">✓</span></li>
-        <li class="on">EXPORTAR PDF E WORD <span class="check-icon">✓</span></li>
-        <li class="on">HISTÓRICO COMPLETO <span class="check-icon">✓</span></li>
-        <li class="on">SUPORTE PRIORITÁRIO <span class="check-icon">✓</span></li>
-      </ul>
-      {% if assinatura_ativa and plano_atual in ('pro','pro_anual') %}
         <button class="btn-plano ghost" disabled>PLANO ATUAL</button>
       {% else %}
-        <a href="/stripe/checkout/pro" class="btn-plano ghost" id="btn-pro">ASSINAR PRO</a>
+        <a href="/stripe/checkout/basic" class="btn-plano ghost" id="btn-basic">ASSINAR BASIC</a>
       {% endif %}
     </div>
 

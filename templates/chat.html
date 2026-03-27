@@ -13,14 +13,31 @@
       --preto: #0a0a0a;
       --branco: #ffffff;
       --amarelo: #f0e000;
-      --cinza: #888880;
+      --cinza: #666660;
+      --cinza-escuro: #f5f5f0;
+      --cinza-med: rgba(0,0,0,0.05);
+      --linha: rgba(0,0,0,0.08);
+      --linha-f: rgba(0,0,0,0.14);
+      --linha-forte: rgba(0,0,0,0.14);
+      --hover-bg: rgba(0,0,0,0.03);
+      --pre-bg: #f5f5f5;
+      --tag-bg: rgba(0,0,0,0.04);
+      --sidebar-w: 272px;
+    }
+    [data-theme="dark"] {
+      --preto: #f0f0ec;
+      --branco: #111110;
+      --cinza: #888882;
       --cinza-escuro: #1a1a18;
       --cinza-med: #2a2a28;
       --linha: rgba(255,255,255,0.08);
+      --linha-f: rgba(255,255,255,0.14);
       --linha-forte: rgba(255,255,255,0.14);
-      --sidebar-w: 272px;
+      --hover-bg: rgba(255,255,255,0.03);
+      --pre-bg: rgba(255,255,255,0.06);
+      --tag-bg: rgba(255,255,255,0.05);
     }
-    html, body { height: 100%; font-family: 'Inter', sans-serif; background: var(--preto); color: var(--branco); overflow: hidden; }
+    html, body { height: 100%; font-family: 'Inter', sans-serif; background: var(--branco); color: var(--preto); overflow: hidden; }
     ::selection { background: var(--amarelo); color: var(--preto); }
 
     /* ── LAYOUT ── */
@@ -50,7 +67,7 @@
     }
     .logo-text {
       font-size: 0.7rem; font-weight: 900; letter-spacing: 2.5px;
-      text-transform: uppercase; color: var(--branco);
+      text-transform: uppercase; color: var(--preto);
     }
     .logo-text .ia { color: var(--amarelo); }
     .logo-text .tm { font-size: 0.45rem; vertical-align: super; opacity: 0.4; font-weight: 400; }
@@ -66,8 +83,8 @@
       transition: color .2s; border: none; background: none;
       width: 100%; text-align: left;
     }
-    .nav-item:hover { color: var(--branco); }
-    .nav-item.active { color: var(--branco); }
+    .nav-item:hover { color: var(--preto); }
+    .nav-item.active { color: var(--preto); }
     .nav-item-mark { font-size: 0.6rem; opacity: .4; }
     .nav-item.active .nav-item-mark { opacity: 1; color: var(--amarelo); }
 
@@ -97,7 +114,7 @@
       color: var(--cinza); flex-shrink: 0; width: 24px;
       text-align: right;
     }
-    .action-title { font-size: 0.76rem; font-weight: 700; letter-spacing: .5px; text-transform: uppercase; color: var(--branco); }
+    .action-title { font-size: 0.76rem; font-weight: 700; letter-spacing: .5px; text-transform: uppercase; color: var(--preto); }
     .action-desc { font-size: 0.62rem; color: var(--cinza); margin-top: 2px; }
 
     .action-card.nee-card { border: 1px solid rgba(240,224,0,0.15); margin-top: 8px; }
@@ -123,9 +140,9 @@
       border: 1px solid var(--linha-forte);
       display: flex; align-items: center; justify-content: center;
       font-size: 0.68rem; font-weight: 900;
-      color: var(--branco); flex-shrink: 0;
+      color: var(--preto); flex-shrink: 0;
     }
-    .user-name { font-size: 0.72rem; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; color: var(--branco); }
+    .user-name { font-size: 0.72rem; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; color: var(--preto); }
 
     /* ── MAIN — fundo branco, letras pretas ── */
     .main { flex: 1; display: flex; flex-direction: column; overflow: hidden; min-width: 0; background: var(--branco); }
@@ -346,22 +363,22 @@
     }
     .nee-modal-bg.open { display: flex; }
     .nee-modal {
-      background: var(--cinza-escuro); border: 1px solid var(--linha-forte);
+      background: #1a1a18; border: 1px solid rgba(255,255,255,0.12);
       padding: 32px 28px; max-width: 420px; width: 90%;
     }
     .nee-modal-tag { font-size: 0.5rem; font-weight: 700; letter-spacing: 3px; text-transform: uppercase; color: var(--amarelo); margin-bottom: 16px; display: flex; align-items: center; gap: 8px; }
     .nee-modal-tag::before { content: ''; width: 16px; height: 1px; background: var(--amarelo); }
-    .nee-modal h3 { font-size: 1.2rem; font-weight: 900; letter-spacing: -0.5px; text-transform: uppercase; color: var(--branco); margin-bottom: 8px; }
+    .nee-modal h3 { font-size: 1.2rem; font-weight: 900; letter-spacing: -0.5px; text-transform: uppercase; color: #f0f0ec; margin-bottom: 8px; }
     .nee-modal p { font-size: 0.72rem; color: var(--cinza); margin-bottom: 24px; line-height: 1.7; }
     .nee-opts { display: grid; grid-template-columns: 1fr 1fr; gap: 1px; background: var(--linha); border: 1px solid var(--linha); margin-bottom: 24px; }
     .nee-opt {
-      background: var(--preto); border: none; padding: 14px 12px;
+      background: #111110; border: none; padding: 14px 12px;
       cursor: pointer; text-align: left; transition: background .15s;
       font-family: 'Inter', sans-serif;
     }
-    .nee-opt:hover { background: var(--cinza-med); }
+    .nee-opt:hover { background: #2a2a28; }
     .nee-opt.sel { background: rgba(240,224,0,0.06); }
-    .nee-opt-title { font-size: 0.65rem; font-weight: 800; letter-spacing: .5px; text-transform: uppercase; color: var(--branco); }
+    .nee-opt-title { font-size: 0.65rem; font-weight: 800; letter-spacing: .5px; text-transform: uppercase; color: #f0f0ec; }
     .nee-opt.sel .nee-opt-title { color: var(--amarelo); }
     .nee-opt-desc { font-size: 0.58rem; color: var(--cinza); margin-top: 3px; }
     .nee-footer { display: flex; gap: 8px; justify-content: flex-end; }
@@ -371,9 +388,9 @@
       cursor: pointer; font-family: 'Inter', sans-serif; transition: all .15s;
     }
     .nee-btn.cancel { background: transparent; color: var(--cinza); }
-    .nee-btn.cancel:hover { color: var(--branco); border-color: var(--linha-forte); }
-    .nee-btn.confirm { background: var(--amarelo); color: var(--preto); border-color: var(--amarelo); }
-    .nee-btn.confirm:hover { background: var(--branco); border-color: var(--branco); }
+    .nee-btn.cancel:hover { color: #f0f0ec; border-color: rgba(255,255,255,0.2); }
+    .nee-btn.confirm { background: var(--amarelo); color: #0a0a0a; border-color: var(--amarelo); }
+    .nee-btn.confirm:hover { background: #f0f0ec; border-color: #f0f0ec; }
 
     /* ── RESPONSIVE ── */
     @media (max-width: 768px) {
