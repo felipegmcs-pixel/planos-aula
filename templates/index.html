@@ -19,19 +19,9 @@
       --linha:   rgba(0,0,0,0.08);
       --linha-f: rgba(0,0,0,0.14);
     }
-    /* ── NUCLEAR dark-mode block ── */
-    /* Step 1: color-scheme opt-out (works Brave 1.50+) */
-    html { scroll-behavior: smooth; color-scheme: only light !important; background: #ffffff !important; }
-    body { font-family: 'Inter', sans-serif; background: #ffffff !important; color: #0a0a0a !important; overflow-x: hidden; }
-    #scene3d { background: transparent !important; }
-    /* Step 2: counter-inversion — cancels Brave's filter:invert on older versions.
-       When Brave inverts the page (dark mode), prefers-color-scheme becomes dark.
-       We invert html back, restoring white. Canvas/ticker are inverted twice = original. */
-    @media (prefers-color-scheme: dark) {
-      html { filter: invert(1) hue-rotate(180deg) !important; background: #000 !important; }
-      canvas, img, video, .ticker, svg { filter: invert(1) hue-rotate(180deg) !important; }
-    }
-    ::selection { background: var(--amarelo); color: var(--preto); }
+    html { scroll-behavior: smooth; }
+    body { font-family: 'Inter', sans-serif; background: #ffffff; color: #0a0a0a; overflow-x: hidden; }
+    ::selection { background: #f0e000; color: #0a0a0a; }
 
     /* ── NAV ── */
     nav {
@@ -56,51 +46,42 @@
     .ticker-dot { color: var(--amarelo); font-size: 0.38rem; }
     @keyframes tick { from { transform: translateX(0); } to { transform: translateX(-50%); } }
 
-    /* ── 3D CANVAS — fixed behind entire page ── */
+    /* ── 3D CANVAS — inside hero only ── */
     #scene3d {
-      position: fixed; inset: 0;
-      width: 100vw; height: 100vh;
+      position: absolute; inset: 0;
+      width: 100%; height: 100%;
       display: block; z-index: 0;
       pointer-events: none;
-      background: transparent !important;
     }
 
-    /* ── SECTIONS — white over 3D canvas ── */
-    nav, .ticker, .prova, .features-header, .features-grid,
-    .manifesto, .testemunho, .planos, .quote, footer {
-      position: relative; z-index: 1;
-      background: #ffffff;
-    }
-
-    /* ── DIVIDERS — transparent "windows" to 3D world ── */
+    /* ── DIVIDERS ── */
     .divider {
-      height: 80px !important;
-      background: transparent !important;
-      position: relative; z-index: 0;
-      display: flex; align-items: center;
+      height: 1px;
+      background: var(--linha);
+      position: relative;
     }
     .divider::after {
       content: attr(data-label);
-      position: absolute; right: 40px;
+      position: absolute; right: 40px; top: -9px;
       font-size: 0.48rem; font-weight: 700; letter-spacing: 2px;
       text-transform: uppercase; color: var(--cinza);
-      background: transparent; padding: 0 10px;
-      top: 50%; transform: translateY(-50%);
+      background: #ffffff; padding: 0 10px;
     }
 
-    /* ── HERO — transparent so 3D canvas shows through ── */
+    /* ── HERO ── */
     .hero {
-      position: relative; z-index: 1;
+      position: relative;
       min-height: calc(100vh - 56px - 34px);
       margin-top: 90px;
       display: flex; align-items: flex-end;
+      overflow: hidden;
       border-bottom: 1px solid var(--linha);
-      background: transparent !important;
+      background: #ffffff;
     }
-    /* gradient on left so hero text stays readable */
+    /* gradient overlay so text stays readable over the 3D */
     .hero-veil {
       position: absolute; inset: 0; z-index: 1; pointer-events: none;
-      background: linear-gradient(105deg, rgba(255,255,255,0.82) 38%, transparent 65%);
+      background: linear-gradient(105deg, rgba(255,255,255,0.88) 38%, rgba(255,255,255,0.15) 65%);
     }
     /* text content */
     .hero-inner {
@@ -332,9 +313,6 @@
 </head>
 <body>
 
-<!-- 3D canvas fixed behind entire page -->
-<canvas id="scene3d"></canvas>
-
 <nav>
   <a class="nav-logo" href="/">PROFESSOR<span class="tm">IA™</span></a>
   <div class="nav-links">
@@ -365,8 +343,9 @@
   </div>
 </div>
 
-<!-- HERO — 3D canvas fixed behind page (declared above nav) -->
+<!-- HERO -->
 <section class="hero">
+  <canvas id="scene3d"></canvas>
   <div class="hero-veil"></div>
   <div class="hero-inner">
     <div class="hero-left">
@@ -603,6 +582,7 @@
    ═══════════════════════════════════════════════ */
 (function () {
   var canvas = document.getElementById('scene3d');
+  var hero   = canvas.parentElement;
 
   var renderer = new THREE.WebGLRenderer({ canvas: canvas, antialias: true, alpha: true });
   renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
@@ -742,20 +722,15 @@
 
   /* ── RESIZE ── */
   function resize() {
-    var w = window.innerWidth, h = window.innerHeight;
+    var w = hero.clientWidth, h = hero.clientHeight;
+    if (!w || !h) return;
     renderer.setSize(w, h);
     camera.aspect = w / h;
     camera.updateProjectionMatrix();
   }
   resize();
-  window.addEventListener('resize', resize);
-
-  /* ── SCROLL PARALLAX ── */
-  var camTargetY = 0;
-  window.addEventListener('scroll', function() {
-    /* camera moves down as user scrolls → reveals deeper scene elements */
-    camTargetY = -window.pageYOffset * 0.003;
-  }, { passive: true });
+  if (window.ResizeObserver) new ResizeObserver(resize).observe(hero);
+  else window.addEventListener('resize', resize);
 
   /* ── MOUSE PARALLAX ── */
   var mx = 0, my = 0;
@@ -798,9 +773,6 @@
     /* mouse parallax */
     group.rotation.y += (mx - group.rotation.y) * 0.035;
     group.rotation.x += (my - group.rotation.x) * 0.035;
-
-    /* scroll parallax — smooth camera Y */
-    camera.position.y += (camTargetY - camera.position.y) * 0.04;
 
     renderer.render(scene, camera);
   })();
