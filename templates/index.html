@@ -291,6 +291,9 @@
     .footer-link:hover { color: var(--preto); }
     .footer-copy { font-size: 0.52rem; letter-spacing: 1.5px; text-transform: uppercase; color: rgba(10,10,10,0.25); }
 
+    /* ─── SCROLL ANCHORS (compensate fixed 56px nav) ─── */
+    #features, #planos { scroll-margin-top: 56px; }
+
     /* ─── REVEAL ─── */
     .reveal { opacity: 0; transform: translateY(20px); transition: opacity .7s ease, transform .7s ease; }
     .reveal.on { opacity: 1; transform: translateY(0); }
@@ -375,7 +378,7 @@
     </p>
     <div class="hero-btns">
       <a href="/cadastro" class="btn-solid">COMEÇAR GRÁTIS →</a>
-      <a href="#features" class="btn-ghost">VER MAIS</a>
+      <a href="#planos" class="btn-ghost">VER PLANOS</a>
     </div>
   </div>
 </section>
