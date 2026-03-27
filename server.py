@@ -1227,7 +1227,7 @@ def api_chat():
     conn.commit()
     conn.close()
 
-    api_key = os.environ.get('ANTHROPIC_API_KEY', '')
+    api_key = os.environ.get('ANTHROPIC_API_KEY', '').strip()
     if not api_key:
         return jsonify({'erro': 'ANTHROPIC_API_KEY não configurada no servidor'}), 500
 
