@@ -1404,6 +1404,71 @@ def api_chat():
     return jsonify({'text': resposta})
 
 
+@app.route('/api/transcribe', methods=['POST'])
+@login_required
+def api_transcribe():
+    """Transcreve áudio do usuário usando OpenAI Whisper."""
+    if 'audio' not in request.files:
+        return jsonify({'erro': 'Nenhum arquivo de áudio enviado'}), 400
+
+    audio_file = request.files['audio']
+    api_key = os.environ.get('OPENAI_API_KEY', '').strip()
+    if not api_key:
+        return jsonify({'erro': 'OPENAI_API_KEY não configurada no servidor'}), 500
+
+    try:
+        import requests as req_lib
+        fname = audio_file.filename or 'audio.webm'
+        ctype = audio_file.content_type or 'audio/webm'
+        files = {'file': (fname, audio_file.read(), ctype)}
+        data  = {'model': 'whisper-1', 'language': 'pt'}
+        r = req_lib.post(
+            'https://api.openai.com/v1/audio/transcriptions',
+            headers={'Authorization': f'Bearer {api_key}'},
+            files=files, data=data, timeout=30
+        )
+        if r.status_code != 200:
+            return jsonify({'erro': f'Whisper {r.status_code}: {r.text[:200]}'}), 500
+        texto = r.json().get('text', '').strip()
+        return jsonify({'texto': texto})
+    except Exception as e:
+        return jsonify({'erro': str(e)}), 500
+
+
+@app.route('/api/tts', methods=['POST'])
+@login_required
+def api_tts():
+    """Converte texto em áudio usando OpenAI TTS."""
+    data = request.json or {}
+    texto = data.get('texto', '').strip()[:4000]
+    voz   = data.get('voz', 'nova')
+    VOZES_VALIDAS = {'alloy', 'echo', 'fable', 'onyx', 'nova', 'shimmer'}
+    if voz not in VOZES_VALIDAS:
+        voz = 'nova'
+    if not texto:
+        return jsonify({'erro': 'Texto vazio'}), 400
+
+    api_key = os.environ.get('OPENAI_API_KEY', '').strip()
+    if not api_key:
+        return jsonify({'erro': 'OPENAI_API_KEY não configurada no servidor'}), 500
+
+    try:
+        import requests as req_lib
+        r = req_lib.post(
+            'https://api.openai.com/v1/audio/speech',
+            headers={'Authorization': f'Bearer {api_key}', 'Content-Type': 'application/json'},
+            json={'model': 'tts-1', 'input': texto, 'voice': voz},
+            timeout=60
+        )
+        if r.status_code != 200:
+            return jsonify({'erro': f'TTS {r.status_code}: {r.text[:200]}'}), 500
+        from flask import Response
+        return Response(r.content, mimetype='audio/mpeg',
+                        headers={'Content-Disposition': 'inline; filename=resposta.mp3'})
+    except Exception as e:
+        return jsonify({'erro': str(e)}), 500
+
+
 @app.route('/api/chat-download', methods=['POST'])
 @login_required
 def api_chat_download():
