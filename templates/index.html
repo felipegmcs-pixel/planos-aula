@@ -7,7 +7,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>ProfessorIA™ — Assistente Pedagógico de IA</title>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet"/>
-  <link rel="stylesheet" href="/static/theme.css"/>
+  <!-- theme.css removed from landing page — always forced light -->
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     :root {
@@ -48,25 +48,51 @@
     .ticker-dot { color: var(--amarelo); font-size: 0.38rem; }
     @keyframes tick { from { transform: translateX(0); } to { transform: translateX(-50%); } }
 
-    /* ── HERO — full-screen canvas ── */
-    .hero {
-      position: relative;
-      min-height: calc(100vh - 56px - 34px);
-      margin-top: 90px; /* nav + ticker */
-      display: flex; align-items: flex-end;
-      overflow: hidden;
-      border-bottom: 1px solid var(--linha);
-    }
-    /* canvas fills entire hero */
+    /* ── 3D CANVAS — fixed behind entire page ── */
     #scene3d {
-      position: absolute; inset: 0;
-      width: 100%; height: 100%;
-      display: block; z-index: 0;
+      position: fixed; inset: 0;
+      width: 100vw; height: 100vh;
+      display: block; z-index: -1;
+      pointer-events: none;
+      background: transparent !important;
     }
-    /* subtle gradient on left so text is always readable */
+
+    /* ── SECTIONS — white over 3D canvas ── */
+    nav, .ticker, .prova, .features-header, .features-grid,
+    .manifesto, .testemunho, .planos, .quote, footer {
+      position: relative; z-index: 1;
+      background: #ffffff;
+    }
+
+    /* ── DIVIDERS — transparent "windows" to 3D world ── */
+    .divider {
+      height: 80px !important;
+      background: transparent !important;
+      position: relative; z-index: 0;
+      display: flex; align-items: center;
+    }
+    .divider::after {
+      content: attr(data-label);
+      position: absolute; right: 40px;
+      font-size: 0.48rem; font-weight: 700; letter-spacing: 2px;
+      text-transform: uppercase; color: var(--cinza);
+      background: transparent; padding: 0 10px;
+      top: 50%; transform: translateY(-50%);
+    }
+
+    /* ── HERO — transparent so 3D canvas shows through ── */
+    .hero {
+      position: relative; z-index: 1;
+      min-height: calc(100vh - 56px - 34px);
+      margin-top: 90px;
+      display: flex; align-items: flex-end;
+      border-bottom: 1px solid var(--linha);
+      background: transparent !important;
+    }
+    /* gradient on left so hero text stays readable */
     .hero-veil {
       position: absolute; inset: 0; z-index: 1; pointer-events: none;
-      background: linear-gradient(105deg, var(--grad-hero) 38%, transparent 65%);
+      background: linear-gradient(105deg, rgba(255,255,255,0.82) 38%, transparent 65%);
     }
     /* text content */
     .hero-inner {
@@ -298,6 +324,9 @@
 </head>
 <body>
 
+<!-- 3D canvas fixed behind entire page -->
+<canvas id="scene3d"></canvas>
+
 <nav>
   <a class="nav-logo" href="/">PROFESSOR<span class="tm">IA™</span></a>
   <div class="nav-links">
@@ -328,9 +357,8 @@
   </div>
 </div>
 
-<!-- HERO — full-width 3D canvas -->
+<!-- HERO — 3D canvas fixed behind page (declared above nav) -->
 <section class="hero">
-  <canvas id="scene3d"></canvas>
   <div class="hero-veil"></div>
   <div class="hero-inner">
     <div class="hero-left">
@@ -565,7 +593,6 @@
    ═══════════════════════════════════════════════ */
 (function () {
   var canvas = document.getElementById('scene3d');
-  var hero   = canvas.parentElement;
 
   var renderer = new THREE.WebGLRenderer({ canvas: canvas, antialias: true, alpha: true });
   renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
@@ -595,12 +622,23 @@
 
   /* ── 1. LARGE FLOATING FRAMES (planos de aula / Off-White windows) ── */
   var FRAMES = [
+    /* hero zone (y: 0 to +3) */
     { w:1.8, h:2.3, x: 3.0, y: 0.3, z:-1.2, rx: 0.05, ry:-0.32, rz: 0.06, op:0.65 },
     { w:1.3, h:1.7, x:-2.8, y:-0.2, z:-0.6, rx: 0.08, ry: 0.38, rz:-0.04, op:0.55 },
     { w:2.2, h:2.8, x: 0.3, y: 0.4, z:-3.5, rx:-0.04, ry: 0.12, rz: 0.02, op:0.40 },
     { w:0.9, h:1.2, x:-1.1, y: 2.0, z: 0.4, rx: 0.18, ry:-0.22, rz: 0.10, op:0.70 },
     { w:1.5, h:1.9, x: 3.8, y:-1.0, z:-1.8, rx:-0.06, ry:-0.42, rz: 0.05, op:0.50 },
     { w:1.1, h:1.4, x:-3.5, y: 1.4, z:-1.0, rx: 0.10, ry: 0.28, rz:-0.08, op:0.45 },
+    /* scroll zone 1 — features (y: -3 to -5) */
+    { w:1.6, h:2.0, x:-2.2, y:-3.5, z:-1.5, rx: 0.06, ry: 0.28, rz:-0.05, op:0.50 },
+    { w:2.0, h:2.5, x: 2.8, y:-4.2, z:-2.0, rx:-0.04, ry:-0.20, rz: 0.04, op:0.45 },
+    { w:1.4, h:1.8, x:-0.4, y:-5.0, z:-0.8, rx: 0.09, ry: 0.14, rz:-0.07, op:0.55 },
+    /* scroll zone 2 — manifesto/depoimentos (y: -7 to -9) */
+    { w:1.8, h:2.3, x: 3.2, y:-7.5, z:-1.8, rx:-0.05, ry:-0.35, rz: 0.03, op:0.45 },
+    { w:2.4, h:3.0, x:-2.5, y:-8.5, z:-3.0, rx: 0.03, ry: 0.18, rz: 0.02, op:0.38 },
+    /* scroll zone 3 — preços/footer (y: -11 to -13) */
+    { w:1.5, h:1.9, x: 1.0, y:-11.0, z:-1.2, rx: 0.07, ry:-0.25, rz: 0.05, op:0.50 },
+    { w:1.2, h:1.5, x:-3.0, y:-12.5, z:-0.8, rx:-0.06, ry: 0.32, rz:-0.04, op:0.55 },
   ];
 
   var frameMeshes = FRAMES.map(function(f) {
@@ -619,6 +657,12 @@
     { s:0.38, x:-1.7, y:-1.4, z: 0.8, op:0.70 },
     { s:0.68, x:-3.2, y: 0.4, z:-1.3, op:0.55 },
     { s:0.30, x: 1.2, y:-2.2, z: 0.5, op:0.65 },
+    /* deeper scroll cubes */
+    { s:0.48, x:-2.6, y:-4.8, z: 0.6, op:0.60 },
+    { s:0.58, x: 1.8, y:-6.5, z:-1.2, op:0.55 },
+    { s:0.35, x: 3.5, y:-9.0, z: 0.4, op:0.65 },
+    { s:0.50, x:-1.2, y:-11.5, z:-0.8, op:0.60 },
+    { s:0.40, x: 2.5, y:-13.0, z: 0.8, op:0.55 },
   ];
 
   var cubeMeshes = CUBES.map(function(c) {
@@ -641,6 +685,13 @@
     { s:0.20, x: 0.5, y: 1.8, z:-0.4 },
     { s:0.12, x: 4.2, y: 0.9, z:-0.6 },
     { s:0.19, x:-0.8, y:-0.5, z: 2.0 },
+    /* scroll crosses */
+    { s:0.22, x: 2.8, y:-3.2, z: 1.0 },
+    { s:0.18, x:-1.6, y:-5.0, z: 0.6 },
+    { s:0.26, x: 0.2, y:-6.8, z: 1.3 },
+    { s:0.20, x:-3.4, y:-8.0, z: 0.4 },
+    { s:0.16, x: 3.8, y:-10.0, z:-0.5 },
+    { s:0.24, x:-0.6, y:-12.0, z: 0.9 },
   ];
 
   var crossMeshes = CROSSES.map(function(c) {
@@ -681,15 +732,20 @@
 
   /* ── RESIZE ── */
   function resize() {
-    var w = hero.clientWidth, h = hero.clientHeight;
-    if (!w || !h) return;
+    var w = window.innerWidth, h = window.innerHeight;
     renderer.setSize(w, h);
     camera.aspect = w / h;
     camera.updateProjectionMatrix();
   }
   resize();
-  if (window.ResizeObserver) new ResizeObserver(resize).observe(hero);
-  else window.addEventListener('resize', resize);
+  window.addEventListener('resize', resize);
+
+  /* ── SCROLL PARALLAX ── */
+  var camTargetY = 0;
+  window.addEventListener('scroll', function() {
+    /* camera moves down as user scrolls → reveals deeper scene elements */
+    camTargetY = -window.pageYOffset * 0.003;
+  }, { passive: true });
 
   /* ── MOUSE PARALLAX ── */
   var mx = 0, my = 0;
@@ -729,9 +785,12 @@
       m.position.y += Math.sin(t * 0.6 + i * 1.8) * 0.001;
     });
 
-    /* parallax */
+    /* mouse parallax */
     group.rotation.y += (mx - group.rotation.y) * 0.035;
     group.rotation.x += (my - group.rotation.x) * 0.035;
+
+    /* scroll parallax — smooth camera Y */
+    camera.position.y += (camTargetY - camera.position.y) * 0.04;
 
     renderer.render(scene, camera);
   })();
@@ -805,6 +864,6 @@ function alternar() {
   }
 }
 </script>
-<script src="/static/theme.js"></script>
+<!-- theme.js removed — landing page always light -->
 </body>
 </html>
