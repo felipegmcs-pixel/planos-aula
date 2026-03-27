@@ -699,12 +699,15 @@ def planos():
 @app.route('/stripe/checkout/<plano_id>')
 @login_required
 def stripe_checkout(plano_id):
-    if plano_id not in PLANOS or not STRIPE_SECRET_KEY:
-        flash('Pagamento não configurado. Entre em contato com o suporte.')
+    if plano_id not in PLANOS:
+        flash(f'Plano inválido: {plano_id}', 'erro')
+        return redirect(url_for('planos'))
+    if not STRIPE_SECRET_KEY:
+        flash('Chave Stripe não configurada no servidor (STRIPE_SECRET_KEY).', 'erro')
         return redirect(url_for('planos'))
     price_id = STRIPE_PRICES.get(plano_id, '')
     if not price_id:
-        flash('Plano não configurado ainda.')
+        flash(f'Price ID não configurado para o plano "{plano_id}" (STRIPE_PRICE_{plano_id.upper()}).', 'erro')
         return redirect(url_for('planos'))
     try:
         import stripe as stripe_lib
@@ -714,13 +717,13 @@ def stripe_checkout(plano_id):
             line_items=[{'price': price_id, 'quantity': 1}],
             mode='subscription',
             customer_email=current_user.email,
-            metadata={'usuario_id': current_user.id, 'plano_id': plano_id},
+            metadata={'usuario_id': str(current_user.id), 'plano_id': plano_id},
             success_url=f"{SITE_URL}/stripe/sucesso?session_id={{CHECKOUT_SESSION_ID}}",
             cancel_url=f"{SITE_URL}/planos",
         )
         return redirect(session.url, code=303)
     except Exception as e:
-        flash(f'Erro ao iniciar pagamento: {str(e)}')
+        flash(f'Erro Stripe: {str(e)}', 'erro')
         return redirect(url_for('planos'))
 
 
@@ -736,7 +739,7 @@ def stripe_sucesso():
             if session.payment_status == 'paid':
                 plano_id = session.metadata.get('plano_id', 'basic')
                 plano    = PLANOS.get(plano_id, PLANOS['basic'])
-                valido   = (datetime.now() + timedelta(days=plano['dias'])).strftime('%d/%m/%Y')
+                valido   = (datetime.now() + timedelta(days=plano['dias'])).strftime('%Y-%m-%d')
                 conn = get_db()
                 conn.execute(
                     "UPDATE usuarios SET plano=?, ativo=1, valido_ate=? WHERE id=?",
@@ -768,7 +771,7 @@ def stripe_webhook():
         uid      = session.get('metadata', {}).get('usuario_id')
         if uid and plano_id in PLANOS:
             plano  = PLANOS[plano_id]
-            valido = (datetime.now() + timedelta(days=plano['dias'])).strftime('%d/%m/%Y')
+            valido = (datetime.now() + timedelta(days=plano['dias'])).strftime('%Y-%m-%d')
             conn   = get_db()
             conn.execute(
                 "UPDATE usuarios SET plano=?, ativo=1, valido_ate=? WHERE id=?",

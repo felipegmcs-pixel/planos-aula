@@ -12,17 +12,17 @@
       --preto: #0a0a0a;
       --branco: #f5f4f0;
       --amarelo: #f0e000;
-      --cinza: #888880;
-      --cinza-escuro: #2a2a28;
-      --linha: rgba(245,244,240,0.1);
+      --cinza: #666660;
+      --cinza-escuro: #e8e7e2;
+      --linha: rgba(0,0,0,0.09);
     }
 
     html { scroll-behavior: smooth; }
 
     body {
       font-family: 'Inter', sans-serif;
-      background: var(--preto);
-      color: var(--branco);
+      background: var(--branco);
+      color: var(--preto);
       overflow-x: hidden;
       cursor: default;
     }
@@ -36,12 +36,12 @@
       padding: 0 40px; height: 56px;
       display: flex; align-items: center; justify-content: space-between;
       border-bottom: 1px solid var(--linha);
-      background: rgba(10,10,10,0.95);
+      background: rgba(245,244,240,0.97);
       backdrop-filter: blur(12px);
     }
     .nav-logo {
       font-size: 0.72rem; font-weight: 900; letter-spacing: 3px;
-      text-transform: uppercase; color: var(--branco); text-decoration: none;
+      text-transform: uppercase; color: var(--preto); text-decoration: none;
     }
     .nav-logo .tm { font-size: 0.5rem; vertical-align: super; opacity: 0.5; font-weight: 400; }
     .nav-links { display: flex; align-items: center; gap: 40px; }
@@ -50,19 +50,19 @@
       text-transform: uppercase; color: var(--cinza); text-decoration: none;
       transition: color .2s;
     }
-    .nav-link:hover { color: var(--branco); }
+    .nav-link:hover { color: var(--preto); }
     .nav-cta {
       font-size: 0.62rem; font-weight: 700; letter-spacing: 2px;
-      text-transform: uppercase; color: var(--preto); background: var(--branco);
+      text-transform: uppercase; color: var(--branco); background: var(--preto);
       padding: 8px 18px; text-decoration: none; transition: background .2s;
     }
-    .nav-cta:hover { background: var(--amarelo); }
+    .nav-cta:hover { background: var(--amarelo); color: var(--preto); }
 
     /* ─ TICKER ─ */
     .ticker {
       overflow: hidden; border-bottom: 1px solid var(--linha);
       height: 36px; display: flex; align-items: center;
-      background: var(--preto);
+      background: var(--branco);
       margin-top: 56px;
     }
     .ticker-track {
@@ -123,13 +123,13 @@
       text-decoration: none; transition: all .2s; border: 1px solid;
     }
     .btn-p.solid {
-      background: var(--branco); color: var(--preto); border-color: var(--branco);
+      background: var(--preto); color: var(--branco); border-color: var(--preto);
     }
-    .btn-p.solid:hover { background: var(--amarelo); border-color: var(--amarelo); }
+    .btn-p.solid:hover { background: var(--amarelo); border-color: var(--amarelo); color: var(--preto); }
     .btn-p.outline {
-      background: transparent; color: var(--branco); border-color: var(--linha);
+      background: transparent; color: var(--preto); border-color: var(--linha);
     }
-    .btn-p.outline:hover { border-color: var(--branco); }
+    .btn-p.outline:hover { border-color: var(--preto); }
 
     /* ─ DIAGONAL LINE ─ */
     .diag-line {
@@ -141,7 +141,7 @@
       position: absolute; right: 40px; top: -10px;
       font-size: 0.55rem; font-weight: 700; letter-spacing: 2px;
       text-transform: uppercase; color: var(--cinza);
-      background: var(--preto); padding: 0 12px;
+      background: var(--branco); padding: 0 12px;
     }
 
     /* ─ FEATURES ─ */
@@ -156,7 +156,7 @@
     }
     .feat:nth-child(3n) { border-right: none; }
     .feat:nth-child(4), .feat:nth-child(5), .feat:nth-child(6) { border-bottom: none; }
-    .feat:hover { background: rgba(245,244,240,0.025); }
+    .feat:hover { background: rgba(0,0,0,0.025); }
     .feat-num {
       font-size: 0.55rem; font-weight: 700; letter-spacing: 3px;
       color: var(--amarelo); text-transform: uppercase; margin-bottom: 28px;
@@ -225,7 +225,7 @@
       font-size: 0.6rem; font-weight: 700; letter-spacing: 2px;
       text-transform: uppercase; color: var(--cinza);
     }
-    .t-label.on { color: var(--branco); }
+    .t-label.on { color: var(--preto); }
     .toggle { position: relative; width: 40px; height: 22px; cursor: pointer; }
     .toggle input { opacity: 0; width: 0; height: 0; }
     .t-slider {
@@ -252,7 +252,7 @@
       transition: background .3s; position: relative;
     }
     .plano-card:last-child { border-right: none; }
-    .plano-card:hover { background: rgba(245,244,240,0.02); }
+    .plano-card:hover { background: rgba(0,0,0,0.02); }
     .plano-card.destaque { background: rgba(240,224,0,0.03); }
     .plano-card.destaque:hover { background: rgba(240,224,0,0.06); }
     .plano-label-top {
@@ -282,14 +282,14 @@
     .plano-features { list-style: none; margin-bottom: 40px; }
     .plano-features li {
       font-size: 0.7rem; font-weight: 500; letter-spacing: .5px;
-      color: rgba(245,244,240,0.6);
+      color: rgba(10,10,10,0.35);
       padding: 10px 0; border-bottom: 1px solid var(--linha);
       display: flex; align-items: center; justify-content: space-between;
     }
     .plano-features li:last-child { border-bottom: none; }
-    .plano-features li.on { color: var(--branco); }
+    .plano-features li.on { color: var(--preto); }
     .plano-features .check-icon { font-size: 0.6rem; color: var(--amarelo); font-weight: 700; }
-    .plano-features .x-icon { font-size: 0.6rem; color: rgba(245,244,240,0.2); }
+    .plano-features .x-icon { font-size: 0.6rem; color: rgba(10,10,10,0.2); }
     .btn-plano {
       width: 100%; padding: 14px; border: 1px solid;
       font-size: 0.62rem; font-weight: 700; font-family: 'Inter', sans-serif;
@@ -297,13 +297,13 @@
       transition: all .2s; display: block; text-align: center; text-decoration: none;
     }
     .btn-plano.solid {
-      background: var(--branco); color: var(--preto); border-color: var(--branco);
+      background: var(--preto); color: var(--branco); border-color: var(--preto);
     }
-    .btn-plano.solid:hover { background: var(--amarelo); border-color: var(--amarelo); }
+    .btn-plano.solid:hover { background: var(--amarelo); border-color: var(--amarelo); color: var(--preto); }
     .btn-plano.ghost {
-      background: transparent; color: var(--branco); border-color: var(--linha);
+      background: transparent; color: var(--preto); border-color: var(--linha);
     }
-    .btn-plano.ghost:hover { border-color: rgba(245,244,240,0.4); }
+    .btn-plano.ghost:hover { border-color: rgba(0,0,0,0.4); }
     .btn-plano:disabled { opacity: 0.3; cursor: not-allowed; }
 
     /* ─ QUOTE ─ */
@@ -343,16 +343,16 @@
     }
     .footer-logo {
       font-size: 0.65rem; font-weight: 900; letter-spacing: 3px;
-      text-transform: uppercase; color: rgba(245,244,240,0.3); text-decoration: none;
+      text-transform: uppercase; color: rgba(10,10,10,0.35); text-decoration: none;
     }
     .footer-logo .tm { font-size: 0.45rem; vertical-align: super; font-weight: 400; }
     .footer-links { display: flex; gap: 32px; }
     .footer-link {
       font-size: 0.58rem; font-weight: 600; letter-spacing: 2px;
-      text-transform: uppercase; color: rgba(245,244,240,0.2);
+      text-transform: uppercase; color: rgba(10,10,10,0.35);
       text-decoration: none; transition: color .2s;
     }
-    .footer-link:hover { color: rgba(245,244,240,0.5); }
+    .footer-link:hover { color: rgba(10,10,10,0.7); }
 
     /* ─ REVEAL ─ */
     .reveal { opacity: 0; transform: translateY(24px); transition: opacity .8s ease, transform .8s ease; }
@@ -600,7 +600,7 @@
     <a class="footer-link" href="/login">LOGIN</a>
     <a class="footer-link" href="/cadastro">CADASTRO</a>
   </div>
-  <span style="font-size:0.55rem; letter-spacing:1.5px; text-transform:uppercase; color:rgba(245,244,240,0.15)">© 2025 PROFESSORIA</span>
+  <span style="font-size:0.55rem; letter-spacing:1.5px; text-transform:uppercase; color:rgba(10,10,10,0.3)">© 2025 PROFESSORIA</span>
 </footer>
 
 <script>
