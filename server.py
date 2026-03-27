@@ -91,13 +91,28 @@ Quando o professor pedir material adaptado, aplique as seguintes diretrizes:
 - Baixa Visão: descrições detalhadas de tudo que seria visual, alto contraste nas instruções, evitar referências como "veja a figura", descrever imagens por extenso.
 - CAA (Comunicação Alternativa): usar palavras-chave simples, estrutura de prancha de comunicação, símbolos descritos por texto, frases no formato sujeito+verbo+objeto.
 
-Quando o professor pedir um material:
-1. Se faltar informação essencial (disciplina, série, tema), pergunte de forma direta e simples
-2. Gere o material completo, bem estruturado e formatado
-3. Use linguagem clara e pedagógica, seguindo a BNCC
-4. Para materiais NEE, sempre indique no cabeçalho o perfil para o qual foi adaptado
+CAÇA-PALAVRAS — geração direta:
+Quando pedirem um caça-palavras, gere imediatamente com a seguinte estrutura:
+1. Título e instruções breves
+2. Lista das palavras a encontrar (mínimo 12 palavras, em colunas)
+3. Grade de letras 15×15 com as palavras escondidas horizontalmente, verticalmente e na diagonal
+4. As palavras devem aparecer na grade em MAIÚSCULAS
+5. Preencha os espaços vazios com letras aleatórias
+6. Ao final, lista com indicação de onde cada palavra está (linha/coluna — opcional)
 
-Responda sempre em português brasileiro. Seja prático, objetivo e útil."""
+Para o formato da grade, use espaço entre cada letra para facilitar a leitura:
+A B C D E F G H I J K L M N O
+P Q R S T U V W X Y Z A B C D
+...
+
+Quando o professor pedir um material:
+1. Para caça-palavras, planos de aula simples, atividades e bilhetes: gere DIRETAMENTE sem perguntar mais nada se já tiver tema e série
+2. Se faltar informação essencial, pergunte apenas o que falta (1 pergunta objetiva)
+3. Gere o material completo, bem estruturado e formatado
+4. Use linguagem clara e pedagógica, seguindo a BNCC
+5. Para materiais NEE, sempre indique no cabeçalho o perfil para o qual foi adaptado
+
+Responda sempre em português brasileiro. Seja prático, objetivo e direto."""
 
 # ─── Banco de dados ───────────────────────────────────────────────────────────
 
@@ -1384,6 +1399,115 @@ def api_chat():
     conn2.close()
 
     return jsonify({'text': resposta})
+
+
+@app.route('/api/chat-download', methods=['POST'])
+@login_required
+def api_chat_download():
+    """Converte o texto de uma mensagem do chat em DOCX para download."""
+    data = request.json or {}
+    texto = data.get('texto', '').strip()
+    if not texto:
+        return jsonify({'erro': 'Texto vazio'}), 400
+
+    doc = Document()
+    for section in doc.sections:
+        section.top_margin    = Cm(2.0)
+        section.bottom_margin = Cm(2.0)
+        section.left_margin   = Cm(2.5)
+        section.right_margin  = Cm(2.5)
+
+    style = doc.styles['Normal']
+    style.font.name = 'Calibri'
+    style.font.size = Pt(11)
+
+    # Cabeçalho
+    header_p = doc.add_paragraph()
+    header_p.alignment = WD_ALIGN_PARAGRAPH.RIGHT
+    run = header_p.add_run('ProfessorIA — material gerado por IA')
+    run.font.size = Pt(8)
+    run.font.color.rgb = RGBColor(0x88, 0x88, 0x80)
+    run.font.italic = True
+    doc.add_paragraph()
+
+    lines = texto.split('\n')
+    i = 0
+    while i < len(lines):
+        line = lines[i]
+
+        # Títulos markdown
+        if line.startswith('### '):
+            p = doc.add_paragraph()
+            run = p.add_run(line[4:].strip())
+            run.bold = True
+            run.font.size = Pt(11)
+            run.font.color.rgb = RGBColor(0x88, 0x88, 0x80)
+        elif line.startswith('## '):
+            p = doc.add_paragraph()
+            run = p.add_run(line[3:].strip())
+            run.bold = True
+            run.font.size = Pt(13)
+            run.font.color.rgb = RGBColor(0x1a, 0x1a, 0x1a)
+        elif line.startswith('# '):
+            p = doc.add_paragraph()
+            run = p.add_run(line[2:].strip())
+            run.bold = True
+            run.font.size = Pt(16)
+            run.font.color.rgb = RGBColor(0x0a, 0x0a, 0x0a)
+        elif line.startswith('---'):
+            doc.add_paragraph()
+        elif line.startswith('- ') or line.startswith('* '):
+            p = doc.add_paragraph(style='List Bullet')
+            txt = line[2:].strip()
+            _add_formatted_run(p, txt)
+        elif len(line) > 2 and line[0].isdigit() and line[1] in '.):':
+            p = doc.add_paragraph(style='List Number')
+            txt = line[2:].strip()
+            _add_formatted_run(p, txt)
+        elif line.strip() == '':
+            doc.add_paragraph()
+        else:
+            p = doc.add_paragraph()
+            _add_formatted_run(p, line)
+
+        i += 1
+
+    # Rodapé
+    doc.add_paragraph()
+    footer_p = doc.add_paragraph()
+    footer_p.alignment = WD_ALIGN_PARAGRAPH.CENTER
+    run = footer_p.add_run(
+        f"Gerado em {datetime.now().strftime('%d/%m/%Y às %H:%M')} — ProfessorIA"
+    )
+    run.font.size = Pt(8)
+    run.font.color.rgb = RGBColor(0x88, 0x88, 0x80)
+    run.font.italic = True
+
+    buf = io.BytesIO()
+    doc.save(buf)
+    buf.seek(0)
+    return send_file(
+        buf,
+        as_attachment=True,
+        download_name='material-professorIA.docx',
+        mimetype='application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+    )
+
+
+def _add_formatted_run(paragraph, text):
+    """Adiciona texto com bold/italic markdown simples."""
+    import re
+    parts = re.split(r'(\*\*.*?\*\*|\*.*?\*)', text)
+    for part in parts:
+        if part.startswith('**') and part.endswith('**'):
+            run = paragraph.add_run(part[2:-2])
+            run.bold = True
+        elif part.startswith('*') and part.endswith('*'):
+            run = paragraph.add_run(part[1:-1])
+            run.italic = True
+        else:
+            paragraph.add_run(part)
+
 
 # ─── Planejamento Anual ────────────────────────────────────────────────────────
 
