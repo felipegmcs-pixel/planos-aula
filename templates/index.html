@@ -1,8 +1,9 @@
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html lang="pt-BR" data-theme="light">
 <head>
   <meta charset="UTF-8"/>
-  <script>!function(){var t=localStorage.getItem("pia-theme")||"light",a="system"===t?(window.matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light"):t;document.documentElement.setAttribute("data-theme",a),document.documentElement.style.colorScheme="dark"===a?"dark":"only light"}();</script>
+  <meta name="color-scheme" content="only light"/>
+  <script>/* Landing page — always light */document.documentElement.setAttribute('data-theme','light');document.documentElement.style.colorScheme='only light';</script>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>ProfessorIA™ — Assistente Pedagógico de IA</title>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet"/>
@@ -10,6 +11,7 @@
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     :root {
+      color-scheme: only light;
       --preto:   #0a0a0a;
       --branco:  #ffffff;
       --amarelo: #f0e000;
@@ -17,8 +19,10 @@
       --linha:   rgba(0,0,0,0.08);
       --linha-f: rgba(0,0,0,0.14);
     }
-    html { scroll-behavior: smooth; }
-    body { font-family: 'Inter', sans-serif; background: var(--branco); color: var(--preto); overflow-x: hidden; }
+    /* ── Force white — blocks Brave/Chrome forced dark mode ── */
+    html { scroll-behavior: smooth; color-scheme: only light !important; background: #ffffff !important; }
+    body { font-family: 'Inter', sans-serif; background: #ffffff !important; color: #0a0a0a !important; overflow-x: hidden; }
+    #scene3d { background: transparent !important; }
     ::selection { background: var(--amarelo); color: var(--preto); }
 
     /* ── NAV ── */
