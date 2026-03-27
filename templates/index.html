@@ -19,10 +19,18 @@
       --linha:   rgba(0,0,0,0.08);
       --linha-f: rgba(0,0,0,0.14);
     }
-    /* ── Force white — blocks Brave/Chrome forced dark mode ── */
+    /* ── NUCLEAR dark-mode block ── */
+    /* Step 1: color-scheme opt-out (works Brave 1.50+) */
     html { scroll-behavior: smooth; color-scheme: only light !important; background: #ffffff !important; }
     body { font-family: 'Inter', sans-serif; background: #ffffff !important; color: #0a0a0a !important; overflow-x: hidden; }
     #scene3d { background: transparent !important; }
+    /* Step 2: counter-inversion — cancels Brave's filter:invert on older versions.
+       When Brave inverts the page (dark mode), prefers-color-scheme becomes dark.
+       We invert html back, restoring white. Canvas/ticker are inverted twice = original. */
+    @media (prefers-color-scheme: dark) {
+      html { filter: invert(1) hue-rotate(180deg) !important; background: #000 !important; }
+      canvas, img, video, .ticker, svg { filter: invert(1) hue-rotate(180deg) !important; }
+    }
     ::selection { background: var(--amarelo); color: var(--preto); }
 
     /* ── NAV ── */
