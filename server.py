@@ -1206,7 +1206,7 @@ def chat():
 @app.route('/api/chat', methods=['POST'])
 @login_required
 def api_chat():
-    from flask import Response, stream_with_context
+    import traceback
 
     if not current_user.assinatura_ativa and not current_user.is_admin:
         geracoes = get_geracoes_mes(current_user.id)
@@ -1227,8 +1227,13 @@ def api_chat():
     conn.commit()
     conn.close()
 
+    api_key = os.environ.get('ANTHROPIC_API_KEY', '')
+    if not api_key:
+        return jsonify({'erro': 'ANTHROPIC_API_KEY não configurada no servidor'}), 500
+
     try:
-        response = client.messages.create(
+        c = Anthropic(api_key=api_key, timeout=120.0)
+        response = c.messages.create(
             model="claude-sonnet-4-6",
             max_tokens=4000,
             system=SYSTEM_PROMPT,
@@ -1236,7 +1241,9 @@ def api_chat():
         )
         resposta = response.content[0].text
     except Exception as e:
-        return jsonify({'erro': str(e)}), 500
+        erro_detalhado = f"{type(e).__name__}: {str(e)}"
+        print("ERRO API:", traceback.format_exc())
+        return jsonify({'erro': erro_detalhado}), 500
 
     conn2 = get_db()
     conn2.execute(
