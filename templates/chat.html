@@ -471,7 +471,7 @@
           <div class="welcome-intro">ASSISTENTE PEDAGÓGICO</div>
           <div class="welcome-brand">SOU O PROFESSOR<span>IA™</span></div>
           <h1>OLÁ,<br/>{{ current_user.nome.split()[0].upper() }}.</h1>
-          <p class="welcome-sub">Crio planos de aula, provas, caça-palavras, planejamento anual e materiais para NEE — tudo em segundos. O que você precisa hoje?</p>
+          <p class="welcome-sub">Crio planos de aula, provas, caça-palavras, cruzadinhas, mapas mentais e muito mais — tudo em segundos. O que você precisa hoje?</p>
 
           <div class="feature-grid">
             <div class="feature-card" onclick="iniciar('Preciso de um plano de aula.')">
@@ -487,30 +487,40 @@
             <div class="feature-card" onclick="iniciar('Crie um caça-palavras.')">
               <div class="feature-card-mark">03</div>
               <div class="feature-card-title">Caça-palavras</div>
-              <div class="feature-card-desc">Grade + lista</div>
+              <div class="feature-card-desc">Grade + lista de palavras</div>
+            </div>
+            <div class="feature-card" onclick="iniciar('Crie uma cruzadinha.')">
+              <div class="feature-card-mark">04</div>
+              <div class="feature-card-title">Cruzadinha</div>
+              <div class="feature-card-desc">Grade + pistas + gabarito</div>
+            </div>
+            <div class="feature-card" onclick="iniciar('Crie um mapa mental.')">
+              <div class="feature-card-mark">05</div>
+              <div class="feature-card-title">Mapa Mental</div>
+              <div class="feature-card-desc">Ramos e sub-ramos visuais</div>
             </div>
             <div class="feature-card" onclick="iniciar('Preciso de um planejamento anual.')">
-              <div class="feature-card-mark">04</div>
+              <div class="feature-card-mark">06</div>
               <div class="feature-card-title">Planejamento Anual</div>
               <div class="feature-card-desc">Bimestral, BNCC</div>
             </div>
             <div class="feature-card" onclick="iniciar('Crie uma atividade para minha turma.')">
-              <div class="feature-card-mark">05</div>
+              <div class="feature-card-mark">07</div>
               <div class="feature-card-title">Atividade</div>
               <div class="feature-card-desc">Exercícios e dinâmicas</div>
             </div>
             <div class="feature-card" onclick="iniciar('Preciso escrever um bilhete para os pais dos alunos. Sobre o que é?')">
-              <div class="feature-card-mark">06</div>
+              <div class="feature-card-mark">08</div>
               <div class="feature-card-title">Bilhete</div>
               <div class="feature-card-desc">Comunicado para os pais</div>
             </div>
             <div class="feature-card" onclick="iniciar('Faça um resumo de conteúdo para os alunos. Qual o tema e a série?')">
-              <div class="feature-card-mark">07</div>
+              <div class="feature-card-mark">09</div>
               <div class="feature-card-title">Resumo</div>
               <div class="feature-card-desc">Material de estudo</div>
             </div>
             <div class="feature-card" onclick="iniciar('Crie uma rubrica de avaliação. Qual atividade ou disciplina?')">
-              <div class="feature-card-mark">08</div>
+              <div class="feature-card-mark">10</div>
               <div class="feature-card-title">Rubrica</div>
               <div class="feature-card-desc">Critérios de avaliação</div>
             </div>
