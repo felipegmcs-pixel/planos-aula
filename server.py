@@ -42,6 +42,19 @@ login_manager.login_message = None
 
 client = Anthropic(api_key=os.environ.get('ANTHROPIC_API_KEY'), timeout=120.0)
 
+# ── Gemini (Google) — usado se GEMINI_API_KEY estiver configurada ──────────────
+GEMINI_API_KEY = os.environ.get('GEMINI_API_KEY', '')
+_gemini_model  = None
+if GEMINI_API_KEY:
+    try:
+        import google.generativeai as genai
+        genai.configure(api_key=GEMINI_API_KEY)
+        _gemini_model = genai  # referência ao módulo configurado
+        print('✓ Gemini configurado com sucesso')
+    except Exception as _ge:
+        print(f'⚠ Gemini não carregou: {_ge}')
+        _gemini_model = None
+
 MP_ACCESS_TOKEN = os.environ.get('MP_ACCESS_TOKEN', '')
 MP_PUBLIC_KEY   = os.environ.get('MP_PUBLIC_KEY', '')
 mp_sdk = _mp_SDK(MP_ACCESS_TOKEN) if (MP_ACCESS_TOKEN and _mp_SDK) else None
@@ -122,6 +135,68 @@ Quando o professor pedir um material:
 5. Para materiais NEE, sempre indique no cabeçalho o perfil para o qual foi adaptado
 
 Responda sempre em português brasileiro. Seja prático, objetivo e direto."""
+
+# ─── Helpers de IA (Gemini first, Claude fallback) ────────────────────────────
+
+def _gemini_disponivel():
+    return bool(_gemini_model and GEMINI_API_KEY)
+
+def chamar_ia_chat(sistema, messages):
+    """Chama Gemini se disponível, senão usa Claude. Retorna texto da resposta."""
+    if _gemini_disponivel():
+        try:
+            import google.generativeai as genai
+            # Gemini usa 'model' em vez de 'assistant'
+            historico = []
+            for m in messages[:-1]:
+                role = 'user' if m['role'] == 'user' else 'model'
+                historico.append({'role': role, 'parts': [m['content']]})
+            gm = genai.GenerativeModel(
+                model_name='gemini-1.5-pro',
+                system_instruction=sistema
+            )
+            chat = gm.start_chat(history=historico)
+            resp = chat.send_message(messages[-1]['content'])
+            return resp.text
+        except Exception as e:
+            print(f'Gemini falhou, usando Claude: {e}')
+
+    # Fallback: Claude via HTTP direto
+    import requests as req_lib
+    api_key = os.environ.get('ANTHROPIC_API_KEY', '').strip()
+    if not api_key:
+        raise RuntimeError('Nenhuma API de IA configurada (GEMINI_API_KEY ou ANTHROPIC_API_KEY)')
+    r = req_lib.post(
+        'https://api.anthropic.com/v1/messages',
+        json={'model': 'claude-sonnet-4-6', 'max_tokens': 4000,
+              'system': sistema, 'messages': messages},
+        headers={'x-api-key': api_key, 'anthropic-version': '2023-06-01',
+                 'content-type': 'application/json'},
+        timeout=120
+    )
+    if r.status_code != 200:
+        raise RuntimeError(f'Claude API {r.status_code}: {r.text[:300]}')
+    return r.json()['content'][0]['text']
+
+
+def chamar_ia_simples(prompt):
+    """Chama Gemini se disponível, senão usa Claude. Para prompts únicos (sem histórico)."""
+    if _gemini_disponivel():
+        try:
+            import google.generativeai as genai
+            gm = genai.GenerativeModel('gemini-1.5-pro')
+            resp = gm.generate_content(prompt)
+            return resp.text
+        except Exception as e:
+            print(f'Gemini falhou, usando Claude: {e}')
+
+    # Fallback: Claude SDK
+    resposta = client.messages.create(
+        model='claude-sonnet-4-6',
+        max_tokens=4000,
+        messages=[{'role': 'user', 'content': prompt}]
+    )
+    return resposta.content[0].text
 
 # ─── Banco de dados ───────────────────────────────────────────────────────────
 
@@ -478,12 +553,7 @@ Retorne SOMENTE um JSON válido neste formato (sem markdown, sem explicações):
 
 Gere {len(temas)} aulas, uma para cada tema. A primeira aula é número {aula_inicio}. Seja específico e pedagógico."""
 
-    resposta = client.messages.create(
-        model="claude-sonnet-4-6",
-        max_tokens=4000,
-        messages=[{"role": "user", "content": prompt}]
-    )
-    texto = resposta.content[0].text.strip()
+    texto = chamar_ia_simples(prompt).strip()
     if texto.startswith("```"):
         texto = texto.split("```")[1]
         if texto.startswith("json"):
@@ -1490,34 +1560,12 @@ def api_chat():
     conn.commit()
     conn.close()
 
-    api_key = os.environ.get('ANTHROPIC_API_KEY', '').strip()
-    if not api_key:
-        return jsonify({'erro': 'ANTHROPIC_API_KEY não configurada no servidor'}), 500
-
     try:
-        import requests as req_lib
         import traceback
         sistema = SYSTEM_PROMPT
         if current_user.escola_template:
             sistema += f"\n\nO professor usa o seguinte esqueleto/modelo padrão de plano de aula da sua escola. SEMPRE que gerar planos de aula, use EXATAMENTE essa estrutura como base:\n\n{current_user.escola_template}"
-        r = req_lib.post(
-            'https://api.anthropic.com/v1/messages',
-            json={
-                'model': 'claude-sonnet-4-6',
-                'max_tokens': 4000,
-                'system': sistema,
-                'messages': messages
-            },
-            headers={
-                'x-api-key': api_key,
-                'anthropic-version': '2023-06-01',
-                'content-type': 'application/json'
-            },
-            timeout=120
-        )
-        if r.status_code != 200:
-            return jsonify({'erro': f'API {r.status_code}: {r.text[:300]}'}), 500
-        resposta = r.json()['content'][0]['text']
+        resposta = chamar_ia_chat(sistema, messages)
     except Exception as e:
         erro_detalhado = f"{type(e).__name__}: {str(e)}"
         print("ERRO API:", traceback.format_exc())
