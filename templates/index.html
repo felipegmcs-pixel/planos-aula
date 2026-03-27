@@ -129,9 +129,9 @@
     }
     .feat:nth-child(3n) { border-right: none; }
     .feat:nth-child(4), .feat:nth-child(5), .feat:nth-child(6) { border-bottom: none; }
-    .feat-num { font-size: 0.5rem; font-weight: 700; letter-spacing: 3px; color: var(--amarelo); text-transform: uppercase; margin-bottom: 18px; }
-    .feat-titulo { font-size: 0.98rem; font-weight: 900; letter-spacing: -.3px; text-transform: uppercase; margin-bottom: 10px; line-height: 1.1; }
-    .feat-desc { font-size: 0.72rem; color: var(--cinza); line-height: 1.85; }
+    .feat-num { font-size: 0.62rem; font-weight: 700; letter-spacing: 3px; color: var(--amarelo); text-transform: uppercase; margin-bottom: 18px; }
+    .feat-titulo { font-size: 1.05rem; font-weight: 900; letter-spacing: -.3px; text-transform: uppercase; margin-bottom: 12px; line-height: 1.1; }
+    .feat-desc { font-size: 0.82rem; color: rgba(10,10,10,0.55); line-height: 1.85; }
 
     /* ── SOCIAL PROOF BAND (neuromarketing) ── */
     .prova {
@@ -145,7 +145,7 @@
     .prova-item:last-child { border-right: none; }
     .prova-num { font-size: 2.8rem; font-weight: 900; letter-spacing: -2px; line-height: 1; }
     .prova-num .ac { color: var(--amarelo); }
-    .prova-label { font-size: 0.58rem; font-weight: 600; letter-spacing: 2px; text-transform: uppercase; color: var(--cinza); }
+    .prova-label { font-size: 0.68rem; font-weight: 600; letter-spacing: 2px; text-transform: uppercase; color: rgba(10,10,10,0.5); }
 
     /* ── MANIFESTO ── */
     .manifesto {
@@ -175,55 +175,84 @@
     }
     .test-card:last-child { border-right: none; }
     .test-stars { color: var(--amarelo); font-size: 0.7rem; letter-spacing: 2px; margin-bottom: 14px; }
-    .test-text { font-size: 0.78rem; line-height: 1.75; color: var(--preto); margin-bottom: 16px; font-weight: 500; }
-    .test-autor { font-size: 0.52rem; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; color: var(--cinza); }
+    .test-text { font-size: 0.88rem; line-height: 1.8; color: #0a0a0a; margin-bottom: 16px; font-weight: 500; }
+    .test-autor { font-size: 0.65rem; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; color: rgba(10,10,10,0.5); }
 
     /* ── PLANOS ── */
     .planos { border-bottom: 1px solid var(--linha); }
     .planos-header { padding: 60px 40px 40px; border-bottom: 1px solid var(--linha); display: flex; align-items: flex-end; justify-content: space-between; flex-wrap: wrap; gap: 24px; }
     .planos-header h2 { font-size: clamp(2rem, 4vw, 3.2rem); font-weight: 900; letter-spacing: -2px; text-transform: uppercase; line-height: 1; }
-    .planos-header-sub { font-size: 0.68rem; color: var(--cinza); margin-top: 8px; }
+    .planos-header-sub { font-size: 0.85rem; color: rgba(10,10,10,0.55); margin-top: 10px; font-weight: 500; }
     .toggle-wrap { display: flex; align-items: center; gap: 10px; }
-    .t-label { font-size: 0.58rem; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; color: var(--cinza); }
+    .t-label { font-size: 0.72rem; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; color: var(--cinza); }
     .t-label.on { color: var(--preto); }
     .toggle { position: relative; width: 38px; height: 20px; cursor: pointer; }
     .toggle input { opacity: 0; width: 0; height: 0; }
     .t-slider { position: absolute; inset: 0; background: #ddd; border: 1px solid var(--linha); transition: .3s; }
     .t-slider::before { content: ''; position: absolute; width: 12px; height: 12px; left: 3px; top: 3px; background: var(--cinza); transition: .3s; }
     .toggle input:checked + .t-slider { background: var(--preto); border-color: var(--preto); }
-    .toggle input:checked + .t-slider::before { transform: translateX(18px); background: var(--branco); }
-    .eco-tag { font-size: 0.5rem; font-weight: 800; letter-spacing: 2px; text-transform: uppercase; color: var(--preto); background: var(--amarelo); padding: 3px 8px; }
+    .toggle input:checked + .t-slider::before { transform: translateX(18px); background: #fff; }
+    .eco-tag { font-size: 0.62rem; font-weight: 800; letter-spacing: 2px; text-transform: uppercase; color: var(--preto); background: var(--amarelo); padding: 4px 10px; }
     .planos-grid { display: grid; grid-template-columns: repeat(3, 1fr); }
-    .plano-card { padding: 44px 36px; border-right: 1px solid var(--linha); position: relative; transition: background .2s; }
+    .plano-card { padding: 48px 36px; border-right: 1px solid var(--linha); position: relative; transition: background .2s; }
     .plano-card:last-child { border-right: none; }
-    .plano-card:hover { background: rgba(0,0,0,0.015); }
-    .plano-card.destaque { background: rgba(240,224,0,0.06); }
-    .plano-card.destaque:hover { background: rgba(240,224,0,0.1); }
-    /* urgency badge */
-    .plano-badge { position: absolute; top: 20px; right: 20px; font-size: 0.46rem; font-weight: 800; letter-spacing: 1.5px; text-transform: uppercase; background: var(--amarelo); color: var(--preto); padding: 3px 8px; }
-    .plano-tag { font-size: 0.5rem; font-weight: 700; letter-spacing: 3px; text-transform: uppercase; color: var(--cinza); margin-bottom: 20px; display: flex; align-items: center; gap: 8px; }
-    .plano-tag .dot { width: 5px; height: 5px; background: var(--amarelo); border-radius: 50%; flex-shrink: 0; }
-    .plano-nome { font-size: 1.8rem; font-weight: 900; letter-spacing: -1px; text-transform: uppercase; margin-bottom: 20px; }
-    .plano-preco { font-size: 3.4rem; font-weight: 900; letter-spacing: -3px; line-height: 1; }
-    .plano-preco sup { font-size: 1rem; font-weight: 600; letter-spacing: 0; vertical-align: super; }
-    .plano-preco sub { font-size: 0.7rem; font-weight: 500; color: var(--cinza); letter-spacing: 0; }
-    .plano-preco.zero { color: var(--cinza); }
-    .plano-periodo { font-size: 0.56rem; font-weight: 600; letter-spacing: 2px; text-transform: uppercase; color: var(--cinza); margin-top: 8px; margin-bottom: 32px; min-height: 18px; }
-    .plano-features { list-style: none; margin-bottom: 32px; }
-    .plano-features li { font-size: 0.66rem; font-weight: 500; letter-spacing: .5px; text-transform: uppercase; color: rgba(10,10,10,0.3); padding: 9px 0; border-bottom: 1px solid var(--linha); display: flex; align-items: center; justify-content: space-between; }
-    [data-theme="dark"] .plano-features li { color: rgba(240,240,236,0.3); }
+    .plano-card:hover { background: rgba(0,0,0,0.02); }
+    /* card destaque: borda superior preta grossa — sinaliza claramente o recomendado */
+    .plano-card.destaque { background: #fafafa; border-top: 3px solid var(--preto); }
+    .plano-card.destaque:hover { background: #f5f5f5; }
+    /* badge MAIS POPULAR */
+    .plano-badge {
+      position: absolute; top: -3px; right: 24px;
+      font-size: 0.62rem; font-weight: 800; letter-spacing: 1.5px;
+      text-transform: uppercase; background: var(--preto); color: #fff;
+      padding: 5px 14px;
+    }
+    /* tag categoria */
+    .plano-tag { font-size: 0.68rem; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; color: rgba(10,10,10,0.5); margin-bottom: 20px; display: flex; align-items: center; gap: 8px; }
+    .plano-tag .dot { width: 6px; height: 6px; background: var(--amarelo); border-radius: 50%; flex-shrink: 0; }
+    .plano-nome { font-size: 2rem; font-weight: 900; letter-spacing: -1px; text-transform: uppercase; margin-bottom: 20px; }
+    .plano-preco { font-size: 3.8rem; font-weight: 900; letter-spacing: -3px; line-height: 1; }
+    .plano-preco sup { font-size: 1.1rem; font-weight: 700; letter-spacing: 0; vertical-align: super; }
+    .plano-preco sub { font-size: 0.82rem; font-weight: 600; color: rgba(10,10,10,0.45); letter-spacing: 0; }
+    .plano-preco.zero { color: rgba(10,10,10,0.35); }
+    .plano-periodo { font-size: 0.72rem; font-weight: 600; letter-spacing: 1.5px; text-transform: uppercase; color: rgba(10,10,10,0.5); margin-top: 8px; margin-bottom: 32px; min-height: 20px; }
+    .plano-features { list-style: none; margin-bottom: 36px; }
+    .plano-features li { font-size: 0.76rem; font-weight: 500; letter-spacing: .3px; text-transform: uppercase; color: rgba(10,10,10,0.28); padding: 11px 0; border-bottom: 1px solid var(--linha); display: flex; align-items: center; justify-content: space-between; }
     .plano-features li:last-child { border-bottom: none; }
-    .plano-features li.on { color: var(--preto); }
-    .chk { font-size: 0.58rem; color: var(--preto); font-weight: 900; }
-    .xck { font-size: 0.58rem; color: rgba(0,0,0,0.2); }
-    [data-theme="dark"] .xck { color: rgba(255,255,255,0.2); }
-    .btn-plano { width: 100%; padding: 14px; font-size: 0.62rem; font-weight: 800; font-family: 'Inter', sans-serif; letter-spacing: 2.5px; text-transform: uppercase; cursor: pointer; transition: all .2s; display: block; text-align: center; text-decoration: none; border: 1px solid; }
-    .btn-plano.solid { background: var(--preto); color: #fff; border-color: var(--preto); }
-    .btn-plano.solid:hover { background: var(--amarelo); color: var(--preto); border-color: var(--amarelo); }
-    .btn-plano.ghost { background: transparent; color: var(--preto); border-color: var(--linha-f); }
-    .btn-plano.ghost:hover { border-color: var(--preto); }
+    .plano-features li.on { color: #0a0a0a; font-weight: 600; }
+    .chk { font-size: 0.7rem; color: var(--preto); font-weight: 900; }
+    .xck { font-size: 0.7rem; color: rgba(0,0,0,0.18); }
+    /* ── BOTÕES DE PLANO ── */
+    .btn-plano {
+      width: 100%; padding: 18px 14px;
+      font-size: 0.74rem; font-weight: 800; font-family: 'Inter', sans-serif;
+      letter-spacing: 3px; text-transform: uppercase;
+      cursor: pointer; transition: all .18s ease;
+      display: block; text-align: center; text-decoration: none; border: 2px solid;
+    }
+    /* Botão principal (BASIC) — amarelo chamativo */
+    .btn-plano.solid {
+      background: var(--amarelo); color: var(--preto);
+      border-color: var(--amarelo);
+      box-shadow: 0 6px 28px rgba(240,224,0,0.55);
+    }
+    .btn-plano.solid:hover {
+      background: var(--preto); color: #fff;
+      border-color: var(--preto); box-shadow: none;
+      transform: translateY(-2px);
+    }
+    /* Botão secundário (FREE, PRO) — contorno escuro */
+    .btn-plano.ghost {
+      background: transparent; color: var(--preto);
+      border-color: rgba(10,10,10,0.35);
+    }
+    .btn-plano.ghost:hover {
+      background: var(--preto); color: #fff;
+      border-color: var(--preto);
+      transform: translateY(-2px);
+    }
     /* scarcity line */
-    .plano-scarcity { font-size: 0.5rem; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; color: #dc2626; margin-top: 10px; text-align: center; min-height: 16px; }
+    .plano-scarcity { font-size: 0.64rem; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; color: #dc2626; margin-top: 12px; text-align: center; min-height: 18px; }
 
     /* ── QUOTE ── */
     .quote { padding: 100px 40px; border-bottom: 1px solid var(--linha); text-align: center; position: relative; overflow: hidden; }
@@ -262,7 +291,7 @@
     [data-theme="dark"] .footer-logo { color: rgba(240,240,236,0.28); }
     .footer-logo .tm { font-size: 0.42rem; vertical-align: super; font-weight: 400; }
     .footer-links { display: flex; gap: 28px; }
-    .footer-link { font-size: 0.55rem; font-weight: 600; letter-spacing: 2px; text-transform: uppercase; color: rgba(10,10,10,0.28); text-decoration: none; transition: color .2s; }
+    .footer-link { font-size: 0.65rem; font-weight: 600; letter-spacing: 2px; text-transform: uppercase; color: rgba(10,10,10,0.4); text-decoration: none; transition: color .2s; }
     [data-theme="dark"] .footer-link { color: rgba(240,240,236,0.28); }
     .footer-link:hover { color: var(--preto); }
     .footer-copy { font-size: 0.5rem; letter-spacing: 1.5px; text-transform: uppercase; color: rgba(10,10,10,0.22); }
