@@ -3,380 +3,323 @@
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>ProfessorIA</title>
+  <title>ProfessorIA™ — Assistente Pedagógico de IA</title>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet"/>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
     :root {
       --preto: #0a0a0a;
       --branco: #f5f4f0;
       --amarelo: #f0e000;
       --cinza: #666660;
-      --cinza-escuro: #e8e7e2;
-      --linha: rgba(0,0,0,0.09);
+      --linha: rgba(0,0,0,0.08);
+      --linha-f: rgba(0,0,0,0.14);
     }
-
     html { scroll-behavior: smooth; }
-
-    body {
-      font-family: 'Inter', sans-serif;
-      background: var(--branco);
-      color: var(--preto);
-      overflow-x: hidden;
-      cursor: default;
-    }
-
-    /* ─ SELEÇÃO ─ */
+    body { font-family: 'Inter', sans-serif; background: var(--branco); color: var(--preto); overflow-x: hidden; }
     ::selection { background: var(--amarelo); color: var(--preto); }
 
-    /* ─ NAV ─ */
+    /* ─── NAV ─── */
     nav {
       position: fixed; top: 0; left: 0; right: 0; z-index: 100;
-      padding: 0 40px; height: 56px;
+      height: 56px; padding: 0 40px;
       display: flex; align-items: center; justify-content: space-between;
       border-bottom: 1px solid var(--linha);
-      background: rgba(245,244,240,0.97);
-      backdrop-filter: blur(12px);
+      background: rgba(245,244,240,0.96); backdrop-filter: blur(16px);
     }
     .nav-logo {
-      font-size: 0.72rem; font-weight: 900; letter-spacing: 3px;
+      font-size: 0.7rem; font-weight: 900; letter-spacing: 3px;
       text-transform: uppercase; color: var(--preto); text-decoration: none;
     }
-    .nav-logo .tm { font-size: 0.5rem; vertical-align: super; opacity: 0.5; font-weight: 400; }
-    .nav-links { display: flex; align-items: center; gap: 40px; }
+    .nav-logo .tm { font-size: 0.45rem; vertical-align: super; opacity: 0.4; font-weight: 400; }
+    .nav-links { display: flex; align-items: center; gap: 36px; }
     .nav-link {
-      font-size: 0.62rem; font-weight: 600; letter-spacing: 2px;
-      text-transform: uppercase; color: var(--cinza); text-decoration: none;
-      transition: color .2s;
+      font-size: 0.6rem; font-weight: 600; letter-spacing: 2px;
+      text-transform: uppercase; color: var(--cinza); text-decoration: none; transition: color .2s;
     }
     .nav-link:hover { color: var(--preto); }
     .nav-cta {
-      font-size: 0.62rem; font-weight: 700; letter-spacing: 2px;
-      text-transform: uppercase; color: var(--branco); background: var(--preto);
-      padding: 8px 18px; text-decoration: none; transition: background .2s;
+      font-size: 0.6rem; font-weight: 800; letter-spacing: 2px;
+      text-transform: uppercase; color: #fff; background: var(--preto);
+      padding: 9px 20px; text-decoration: none; transition: background .2s;
     }
     .nav-cta:hover { background: var(--amarelo); color: var(--preto); }
 
-    /* ─ TICKER ─ */
+    /* ─── TICKER ─── */
     .ticker {
-      overflow: hidden; border-bottom: 1px solid var(--linha);
-      height: 36px; display: flex; align-items: center;
-      background: var(--branco);
-      margin-top: 56px;
+      margin-top: 56px; height: 34px;
+      border-bottom: 1px solid var(--linha);
+      overflow: hidden; display: flex; align-items: center;
+      background: var(--preto);
     }
-    .ticker-track {
-      display: flex; white-space: nowrap;
-      animation: ticker 25s linear infinite;
-    }
-    .ticker-item {
-      font-size: 0.6rem; font-weight: 700; letter-spacing: 3px;
-      text-transform: uppercase; color: var(--cinza);
-      padding: 0 32px;
-    }
-    .ticker-sep { color: var(--amarelo); padding: 0 8px; }
-    @keyframes ticker {
-      0%   { transform: translateX(0); }
-      100% { transform: translateX(-50%); }
-    }
+    .ticker-track { display: flex; white-space: nowrap; animation: tick 30s linear infinite; }
+    .ticker-item { font-size: 0.55rem; font-weight: 700; letter-spacing: 3px; text-transform: uppercase; color: rgba(245,244,240,0.5); padding: 0 28px; }
+    .ticker-dot { color: var(--amarelo); font-size: 0.4rem; padding: 0 4px; }
+    @keyframes tick { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }
 
-    /* ─ HERO ─ */
+    /* ─── HERO ─── */
     .hero {
       padding: 80px 40px 100px;
       border-bottom: 1px solid var(--linha);
-      position: relative; overflow: hidden;
+      display: grid; grid-template-columns: 1fr 340px; gap: 60px; align-items: end;
+      min-height: calc(100vh - 90px);
     }
-    .hero-numero {
-      font-size: 0.58rem; font-weight: 700; letter-spacing: 3px;
-      color: var(--cinza); text-transform: uppercase; margin-bottom: 48px;
-      display: flex; align-items: center; gap: 16px;
+    .hero-left {}
+    .hero-eyebrow {
+      font-size: 0.55rem; font-weight: 700; letter-spacing: 3px; text-transform: uppercase;
+      color: var(--cinza); margin-bottom: 40px;
+      display: flex; align-items: center; gap: 14px;
     }
-    .hero-numero::after {
-      content: ''; flex: 1; max-width: 60px; height: 1px; background: var(--cinza);
-    }
+    .hero-eyebrow::before { content: '001'; color: var(--amarelo); }
+    .hero-eyebrow::after { content: ''; flex: 1; max-width: 40px; height: 1px; background: var(--cinza); opacity: .4; }
     .hero h1 {
-      font-size: clamp(3.5rem, 9vw, 9rem);
-      font-weight: 900; line-height: 0.9;
+      font-size: clamp(4rem, 10vw, 10rem);
+      font-weight: 900; line-height: .88;
       letter-spacing: -4px; text-transform: uppercase;
-      max-width: 1000px;
-    }
-    .hero h1 .aspas {
-      font-size: 0.35em; font-weight: 400; letter-spacing: 0;
-      vertical-align: super; color: var(--amarelo); font-style: normal;
     }
     .hero h1 .linha2 { color: var(--cinza); }
-
-    .hero-rodape {
-      margin-top: 60px;
-      display: flex; align-items: flex-end; justify-content: space-between;
-      flex-wrap: wrap; gap: 32px;
+    .hero h1 .marca {
+      font-size: .32em; letter-spacing: 0; font-weight: 400;
+      vertical-align: super; color: var(--amarelo);
     }
+    .hero-right { padding-bottom: 8px; }
     .hero-desc {
-      font-size: 0.78rem; color: var(--cinza); line-height: 1.8;
-      max-width: 360px; font-weight: 400;
-      border-left: 1px solid var(--cinza-escuro); padding-left: 20px;
+      font-size: 0.8rem; color: var(--cinza); line-height: 1.85;
+      border-left: 2px solid var(--amarelo); padding-left: 18px;
+      margin-bottom: 32px;
     }
-    .hero-btns { display: flex; gap: 12px; flex-wrap: wrap; }
-    .btn-p {
-      font-size: 0.62rem; font-weight: 700; letter-spacing: 2.5px;
-      text-transform: uppercase; padding: 14px 28px;
-      text-decoration: none; transition: all .2s; border: 1px solid;
+    .hero-btns { display: flex; gap: 10px; flex-wrap: wrap; }
+    .btn-solid {
+      display: inline-flex; align-items: center; gap: 8px;
+      padding: 14px 28px; background: var(--preto); color: #fff;
+      font-size: 0.62rem; font-weight: 800; letter-spacing: 2px;
+      text-transform: uppercase; text-decoration: none; transition: background .2s;
+      border: 1px solid var(--preto);
     }
-    .btn-p.solid {
-      background: var(--preto); color: var(--branco); border-color: var(--preto);
+    .btn-solid:hover { background: var(--amarelo); color: var(--preto); border-color: var(--amarelo); }
+    .btn-ghost {
+      display: inline-flex; align-items: center; gap: 8px;
+      padding: 14px 28px; background: transparent; color: var(--preto);
+      font-size: 0.62rem; font-weight: 700; letter-spacing: 2px;
+      text-transform: uppercase; text-decoration: none; transition: all .2s;
+      border: 1px solid var(--linha-f);
     }
-    .btn-p.solid:hover { background: var(--amarelo); border-color: var(--amarelo); color: var(--preto); }
-    .btn-p.outline {
-      background: transparent; color: var(--preto); border-color: var(--linha);
-    }
-    .btn-p.outline:hover { border-color: var(--preto); }
+    .btn-ghost:hover { border-color: var(--preto); }
 
-    /* ─ DIAGONAL LINE ─ */
-    .diag-line {
-      height: 1px; background: var(--linha);
-      position: relative; overflow: visible;
+    /* ─── SECTION DIVIDER ─── */
+    .divider {
+      height: 1px; background: var(--linha); position: relative;
     }
-    .diag-line::before {
+    .divider::after {
       content: attr(data-label);
-      position: absolute; right: 40px; top: -10px;
-      font-size: 0.55rem; font-weight: 700; letter-spacing: 2px;
+      position: absolute; right: 40px; top: -9px;
+      font-size: 0.5rem; font-weight: 700; letter-spacing: 2px;
       text-transform: uppercase; color: var(--cinza);
-      background: var(--branco); padding: 0 12px;
+      background: var(--branco); padding: 0 10px;
     }
 
-    /* ─ FEATURES ─ */
-    .features {
+    /* ─── FEATURES ─── */
+    .features-header {
+      padding: 60px 40px 40px;
+      border-bottom: 1px solid var(--linha);
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .section-tag {
+      font-size: 0.55rem; font-weight: 700; letter-spacing: 3px;
+      text-transform: uppercase; color: var(--cinza);
+      display: flex; align-items: center; gap: 12px;
+    }
+    .section-tag::before { content: ''; width: 24px; height: 1px; background: var(--cinza); opacity: .5; }
+    .section-title {
+      font-size: clamp(1.6rem, 3vw, 2.4rem); font-weight: 900;
+      letter-spacing: -1.5px; text-transform: uppercase;
+    }
+    .features-grid {
       display: grid; grid-template-columns: repeat(3, 1fr);
     }
     .feat {
-      padding: 48px 40px;
+      padding: 44px 40px;
       border-right: 1px solid var(--linha);
       border-bottom: 1px solid var(--linha);
-      transition: background .3s;
+      transition: background .2s;
     }
     .feat:nth-child(3n) { border-right: none; }
     .feat:nth-child(4), .feat:nth-child(5), .feat:nth-child(6) { border-bottom: none; }
-    .feat:hover { background: rgba(0,0,0,0.025); }
+    .feat:hover { background: rgba(0,0,0,0.02); }
     .feat-num {
-      font-size: 0.55rem; font-weight: 700; letter-spacing: 3px;
-      color: var(--amarelo); text-transform: uppercase; margin-bottom: 28px;
-      font-variant-numeric: tabular-nums;
+      font-size: 0.52rem; font-weight: 700; letter-spacing: 3px;
+      color: var(--amarelo); text-transform: uppercase; margin-bottom: 20px;
     }
     .feat-titulo {
-      font-size: 1.05rem; font-weight: 800; letter-spacing: -0.5px;
-      text-transform: uppercase; margin-bottom: 16px; line-height: 1.1;
+      font-size: 1rem; font-weight: 900; letter-spacing: -.3px;
+      text-transform: uppercase; margin-bottom: 12px; line-height: 1.1;
     }
-    .feat-titulo .q { color: var(--amarelo); font-size: 0.7em; font-weight: 400; }
-    .feat-desc {
-      font-size: 0.75rem; color: var(--cinza); line-height: 1.8; font-weight: 400;
-    }
+    .feat-desc { font-size: 0.73rem; color: var(--cinza); line-height: 1.8; }
 
-    /* ─ MANIFESTO ─ */
+    /* ─── MANIFESTO ─── */
     .manifesto {
       padding: 100px 40px;
       border-bottom: 1px solid var(--linha);
-      display: grid; grid-template-columns: 1fr 1fr; gap: 80px;
-      align-items: center;
+      display: grid; grid-template-columns: 1fr 1fr; gap: 80px; align-items: center;
     }
-    .manifesto-left {}
     .manifesto-tag {
-      font-size: 0.55rem; font-weight: 700; letter-spacing: 3px;
-      text-transform: uppercase; color: var(--amarelo); margin-bottom: 32px;
+      font-size: 0.52rem; font-weight: 700; letter-spacing: 3px;
+      text-transform: uppercase; color: var(--amarelo); margin-bottom: 28px;
     }
     .manifesto h2 {
-      font-size: clamp(2rem, 4vw, 3.5rem); font-weight: 900;
-      letter-spacing: -2px; text-transform: uppercase;
-      line-height: 1.0;
+      font-size: clamp(2.4rem, 5vw, 4rem); font-weight: 900;
+      letter-spacing: -2px; text-transform: uppercase; line-height: 1;
     }
-    .manifesto h2 em {
-      font-style: normal; color: var(--cinza);
-    }
-    .manifesto-right {}
+    .manifesto h2 em { font-style: normal; color: var(--cinza); }
     .manifesto-stat {
-      padding: 28px 0;
-      border-bottom: 1px solid var(--linha);
+      padding: 28px 0; border-bottom: 1px solid var(--linha);
     }
     .manifesto-stat:first-child { border-top: 1px solid var(--linha); }
-    .manifesto-stat-num {
-      font-size: 2.8rem; font-weight: 900; letter-spacing: -2px;
-      line-height: 1;
+    .stat-num {
+      font-size: 3rem; font-weight: 900; letter-spacing: -2px; line-height: 1; margin-bottom: 4px;
     }
-    .manifesto-stat-num span { color: var(--amarelo); }
-    .manifesto-stat-desc {
-      font-size: 0.68rem; font-weight: 600; letter-spacing: 2px;
-      text-transform: uppercase; color: var(--cinza); margin-top: 6px;
+    .stat-num span { color: var(--amarelo); }
+    .stat-desc {
+      font-size: 0.65rem; font-weight: 600; letter-spacing: 2px;
+      text-transform: uppercase; color: var(--cinza);
     }
 
-    /* ─ PLANOS ─ */
+    /* ─── PLANOS ─── */
     .planos { border-bottom: 1px solid var(--linha); }
     .planos-header {
       padding: 60px 40px 40px;
-      display: flex; align-items: flex-end; justify-content: space-between;
-      border-bottom: 1px solid var(--linha); flex-wrap: wrap; gap: 24px;
+      border-bottom: 1px solid var(--linha);
+      display: flex; align-items: flex-end; justify-content: space-between; flex-wrap: wrap; gap: 24px;
     }
     .planos-header h2 {
       font-size: clamp(2rem, 4vw, 3.2rem); font-weight: 900;
       letter-spacing: -2px; text-transform: uppercase; line-height: 1;
     }
-    .toggle-wrap {
-      display: flex; align-items: center; gap: 12px;
-    }
-    .t-label {
-      font-size: 0.6rem; font-weight: 700; letter-spacing: 2px;
-      text-transform: uppercase; color: var(--cinza);
-    }
+    .toggle-wrap { display: flex; align-items: center; gap: 10px; }
+    .t-label { font-size: 0.58rem; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; color: var(--cinza); }
     .t-label.on { color: var(--preto); }
-    .toggle { position: relative; width: 40px; height: 22px; cursor: pointer; }
+    .toggle { position: relative; width: 38px; height: 20px; cursor: pointer; }
     .toggle input { opacity: 0; width: 0; height: 0; }
-    .t-slider {
-      position: absolute; inset: 0; background: var(--cinza-escuro);
-      border: 1px solid var(--linha); transition: .3s;
-    }
-    .t-slider::before {
-      content: ''; position: absolute;
-      width: 14px; height: 14px; left: 3px; top: 3px;
-      background: var(--cinza); transition: .3s;
-    }
-    .toggle input:checked + .t-slider { background: var(--amarelo); border-color: var(--amarelo); }
-    .toggle input:checked + .t-slider::before { transform: translateX(18px); background: var(--preto); }
-    .eco-tag {
-      font-size: 0.55rem; font-weight: 700; letter-spacing: 2px;
-      text-transform: uppercase; color: var(--preto); background: var(--amarelo);
-      padding: 3px 8px;
-    }
+    .t-slider { position: absolute; inset: 0; background: #ddd; border: 1px solid var(--linha); transition: .3s; }
+    .t-slider::before { content: ''; position: absolute; width: 12px; height: 12px; left: 3px; top: 3px; background: var(--cinza); transition: .3s; }
+    .toggle input:checked + .t-slider { background: var(--preto); border-color: var(--preto); }
+    .toggle input:checked + .t-slider::before { transform: translateX(18px); background: var(--branco); }
+    .eco-tag { font-size: 0.52rem; font-weight: 800; letter-spacing: 2px; text-transform: uppercase; color: var(--preto); background: var(--amarelo); padding: 3px 8px; }
 
-    .planos-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; }
+    .planos-grid { display: grid; grid-template-columns: repeat(3, 1fr); }
     .plano-card {
-      padding: 48px 40px;
-      border-right: 1px solid var(--linha);
-      transition: background .3s; position: relative;
+      padding: 44px 36px; border-right: 1px solid var(--linha);
+      position: relative; transition: background .2s;
     }
     .plano-card:last-child { border-right: none; }
-    .plano-card:hover { background: rgba(0,0,0,0.02); }
-    .plano-card.destaque { background: rgba(240,224,0,0.03); }
-    .plano-card.destaque:hover { background: rgba(240,224,0,0.06); }
-    .plano-label-top {
-      font-size: 0.55rem; font-weight: 700; letter-spacing: 3px;
-      text-transform: uppercase; color: var(--amarelo); margin-bottom: 32px;
-      display: flex; align-items: center; gap: 10px;
+    .plano-card:hover { background: rgba(0,0,0,0.015); }
+    .plano-card.destaque { background: rgba(240,224,0,0.06); }
+    .plano-card.destaque:hover { background: rgba(240,224,0,0.1); }
+    .plano-tag {
+      font-size: 0.52rem; font-weight: 700; letter-spacing: 3px;
+      text-transform: uppercase; color: var(--cinza); margin-bottom: 20px;
+      display: flex; align-items: center; gap: 8px;
     }
-    .plano-label-top .dot {
-      width: 5px; height: 5px; background: var(--amarelo); border-radius: 50%;
-    }
-    .plano-nome {
-      font-size: 1.8rem; font-weight: 900; letter-spacing: -1px;
-      text-transform: uppercase; line-height: 1; margin-bottom: 24px;
-    }
-    .plano-preco-val {
-      font-size: 3.5rem; font-weight: 900; letter-spacing: -3px;
-      line-height: 1;
-    }
-    .plano-preco-val sup { font-size: 1rem; font-weight: 600; letter-spacing: 0; vertical-align: super; }
-    .plano-preco-val sub { font-size: 0.75rem; font-weight: 500; letter-spacing: 0; color: var(--cinza); }
-    .plano-preco-val.zero { color: var(--cinza); }
-    .plano-periodo {
-      font-size: 0.6rem; font-weight: 600; letter-spacing: 2px;
-      text-transform: uppercase; color: var(--cinza); margin-top: 6px;
-      margin-bottom: 40px; min-height: 16px;
-    }
-    .plano-features { list-style: none; margin-bottom: 40px; }
+    .plano-tag .dot { width: 5px; height: 5px; background: var(--amarelo); border-radius: 50%; flex-shrink: 0; }
+    .plano-nome { font-size: 1.8rem; font-weight: 900; letter-spacing: -1px; text-transform: uppercase; margin-bottom: 20px; }
+    .plano-preco { font-size: 3.5rem; font-weight: 900; letter-spacing: -3px; line-height: 1; }
+    .plano-preco sup { font-size: 1rem; font-weight: 600; letter-spacing: 0; vertical-align: super; }
+    .plano-preco sub { font-size: 0.72rem; font-weight: 500; color: var(--cinza); letter-spacing: 0; }
+    .plano-preco.zero { color: var(--cinza); }
+    .plano-periodo { font-size: 0.58rem; font-weight: 600; letter-spacing: 2px; text-transform: uppercase; color: var(--cinza); margin-top: 8px; margin-bottom: 36px; min-height: 18px; }
+    .plano-features { list-style: none; margin-bottom: 36px; }
     .plano-features li {
-      font-size: 0.7rem; font-weight: 500; letter-spacing: .5px;
-      color: rgba(10,10,10,0.35);
-      padding: 10px 0; border-bottom: 1px solid var(--linha);
+      font-size: 0.68rem; font-weight: 500; letter-spacing: .5px; text-transform: uppercase;
+      color: rgba(10,10,10,0.3); padding: 9px 0;
+      border-bottom: 1px solid var(--linha);
       display: flex; align-items: center; justify-content: space-between;
     }
     .plano-features li:last-child { border-bottom: none; }
     .plano-features li.on { color: var(--preto); }
-    .plano-features .check-icon { font-size: 0.6rem; color: var(--amarelo); font-weight: 700; }
-    .plano-features .x-icon { font-size: 0.6rem; color: rgba(10,10,10,0.2); }
+    .chk { font-size: 0.58rem; color: var(--preto); font-weight: 900; }
+    .xck { font-size: 0.58rem; color: rgba(0,0,0,0.2); }
     .btn-plano {
-      width: 100%; padding: 14px; border: 1px solid;
-      font-size: 0.62rem; font-weight: 700; font-family: 'Inter', sans-serif;
-      letter-spacing: 2.5px; text-transform: uppercase; cursor: pointer;
-      transition: all .2s; display: block; text-align: center; text-decoration: none;
+      width: 100%; padding: 14px; font-size: 0.62rem; font-weight: 800;
+      font-family: 'Inter', sans-serif; letter-spacing: 2.5px; text-transform: uppercase;
+      cursor: pointer; transition: all .2s; display: block; text-align: center;
+      text-decoration: none; border: 1px solid;
     }
-    .btn-plano.solid {
-      background: var(--preto); color: var(--branco); border-color: var(--preto);
-    }
-    .btn-plano.solid:hover { background: var(--amarelo); border-color: var(--amarelo); color: var(--preto); }
-    .btn-plano.ghost {
-      background: transparent; color: var(--preto); border-color: var(--linha);
-    }
-    .btn-plano.ghost:hover { border-color: rgba(0,0,0,0.4); }
-    .btn-plano:disabled { opacity: 0.3; cursor: not-allowed; }
+    .btn-plano.solid { background: var(--preto); color: #fff; border-color: var(--preto); }
+    .btn-plano.solid:hover { background: var(--amarelo); color: var(--preto); border-color: var(--amarelo); }
+    .btn-plano.ghost { background: transparent; color: var(--preto); border-color: var(--linha-f); }
+    .btn-plano.ghost:hover { border-color: var(--preto); }
 
-    /* ─ QUOTE ─ */
-    .quote-section {
-      padding: 100px 40px;
-      border-bottom: 1px solid var(--linha);
-      text-align: center;
+    /* ─── QUOTE ─── */
+    .quote {
+      padding: 100px 40px; border-bottom: 1px solid var(--linha); text-align: center;
     }
     .quote-text {
-      font-size: clamp(1.4rem, 3vw, 2.4rem); font-weight: 800;
-      letter-spacing: -1px; text-transform: uppercase; line-height: 1.3;
-      max-width: 800px; margin: 0 auto;
+      font-size: clamp(1.4rem, 3.5vw, 2.6rem); font-weight: 900;
+      letter-spacing: -1px; text-transform: uppercase; line-height: 1.25;
+      max-width: 800px; margin: 0 auto 24px;
     }
-    .quote-text .aq { color: var(--amarelo); }
-    .quote-autor {
-      margin-top: 32px; font-size: 0.6rem; font-weight: 600;
-      letter-spacing: 3px; text-transform: uppercase; color: var(--cinza);
-    }
+    .quote-text .q { color: var(--amarelo); }
+    .quote-autor { font-size: 0.58rem; font-weight: 600; letter-spacing: 3px; text-transform: uppercase; color: var(--cinza); }
 
-    /* ─ CTA ─ */
+    /* ─── CTA ─── */
     .cta {
       padding: 100px 40px;
       display: flex; align-items: center; justify-content: space-between;
       border-bottom: 1px solid var(--linha); flex-wrap: wrap; gap: 40px;
     }
     .cta h2 {
-      font-size: clamp(2rem, 4.5vw, 3.8rem); font-weight: 900;
+      font-size: clamp(2.4rem, 5vw, 4.2rem); font-weight: 900;
       letter-spacing: -2.5px; text-transform: uppercase; line-height: 1;
     }
     .cta h2 .sub { color: var(--cinza); display: block; }
 
-    /* ─ FOOTER ─ */
+    /* ─── FOOTER ─── */
     footer {
-      padding: 32px 40px;
-      display: flex; align-items: center; justify-content: space-between;
-      flex-wrap: wrap; gap: 16px;
+      padding: 28px 40px;
+      display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 16px;
     }
     .footer-logo {
-      font-size: 0.65rem; font-weight: 900; letter-spacing: 3px;
-      text-transform: uppercase; color: rgba(10,10,10,0.35); text-decoration: none;
+      font-size: 0.62rem; font-weight: 900; letter-spacing: 3px;
+      text-transform: uppercase; color: rgba(10,10,10,0.3); text-decoration: none;
     }
-    .footer-logo .tm { font-size: 0.45rem; vertical-align: super; font-weight: 400; }
-    .footer-links { display: flex; gap: 32px; }
+    .footer-logo .tm { font-size: 0.42rem; vertical-align: super; font-weight: 400; }
+    .footer-links { display: flex; gap: 28px; }
     .footer-link {
-      font-size: 0.58rem; font-weight: 600; letter-spacing: 2px;
-      text-transform: uppercase; color: rgba(10,10,10,0.35);
-      text-decoration: none; transition: color .2s;
+      font-size: 0.55rem; font-weight: 600; letter-spacing: 2px;
+      text-transform: uppercase; color: rgba(10,10,10,0.3); text-decoration: none; transition: color .2s;
     }
-    .footer-link:hover { color: rgba(10,10,10,0.7); }
+    .footer-link:hover { color: var(--preto); }
+    .footer-copy { font-size: 0.52rem; letter-spacing: 1.5px; text-transform: uppercase; color: rgba(10,10,10,0.25); }
 
-    /* ─ REVEAL ─ */
-    .reveal { opacity: 0; transform: translateY(24px); transition: opacity .8s ease, transform .8s ease; }
+    /* ─── REVEAL ─── */
+    .reveal { opacity: 0; transform: translateY(20px); transition: opacity .7s ease, transform .7s ease; }
     .reveal.on { opacity: 1; transform: translateY(0); }
 
-    /* ─ MOBILE ─ */
-    @media (max-width: 800px) {
+    /* ─── MOBILE ─── */
+    @media (max-width: 900px) {
       nav { padding: 0 20px; }
-      .nav-links { display: none; }
-      .hero { padding: 56px 20px 64px; }
-      .hero h1 { letter-spacing: -2px; }
-      .hero-rodape { flex-direction: column; align-items: flex-start; }
-      .features { grid-template-columns: 1fr; }
-      .feat { border-right: none; }
-      .feat:nth-child(n) { border-bottom: 1px solid var(--linha); }
-      .feat:last-child { border-bottom: none; }
+      .nav-links { gap: 20px; }
+      .hero { grid-template-columns: 1fr; padding: 60px 20px 80px; min-height: auto; gap: 40px; }
+      .features-grid { grid-template-columns: 1fr 1fr; }
+      .feat:nth-child(2n) { border-right: none; }
+      .feat:nth-child(3n) { border-right: 1px solid var(--linha); }
+      .feat:nth-child(2n) { border-right: none; }
       .manifesto { grid-template-columns: 1fr; gap: 48px; padding: 60px 20px; }
-      .planos-header { padding: 40px 20px 32px; }
+      .planos-header { padding: 40px 20px 32px; flex-direction: column; align-items: flex-start; }
       .planos-grid { grid-template-columns: 1fr; }
       .plano-card { border-right: none; border-bottom: 1px solid var(--linha); }
       .plano-card:last-child { border-bottom: none; }
-      .quote-section, .cta { padding: 64px 20px; }
+      .quote, .cta { padding: 64px 20px; }
       .cta { flex-direction: column; }
-      footer { padding: 28px 20px; flex-direction: column; }
+      footer { padding: 24px 20px; flex-direction: column; gap: 12px; }
+      .divider::after { right: 20px; }
+      .features-header { padding: 40px 20px 32px; flex-direction: column; align-items: flex-start; gap: 16px; }
+    }
+    @media (max-width: 600px) {
+      .features-grid { grid-template-columns: 1fr; }
+      .feat { border-right: none; border-bottom: 1px solid var(--linha); }
+      .feat:last-child { border-bottom: none; }
+      .nav-links .nav-link { display: none; }
     }
   </style>
 </head>
@@ -384,122 +327,123 @@
 
 <!-- NAV -->
 <nav>
-  <a class="nav-logo" href="/">
-    PROFESSOR<span class="tm">IA™</span>
-  </a>
+  <a class="nav-logo" href="/">PROFESSOR<span class="tm">IA™</span></a>
   <div class="nav-links">
-    <a class="nav-link" href="#features">FEATURES</a>
+    <a class="nav-link" href="#features">FUNCIONALIDADES</a>
     <a class="nav-link" href="#planos">PLANOS</a>
     <a class="nav-link" href="/login">ENTRAR</a>
-    <a class="nav-cta" href="/cadastro">COMEÇAR</a>
+    <a class="nav-cta" href="/cadastro">COMEÇAR →</a>
   </div>
 </nav>
 
 <!-- TICKER -->
 <div class="ticker">
   <div class="ticker-track">
-    <span class="ticker-item">PLANOS DE AULA</span><span class="ticker-sep">—</span>
-    <span class="ticker-item">PROVAS E AVALIAÇÕES</span><span class="ticker-sep">—</span>
-    <span class="ticker-item">CAÇA-PALAVRAS</span><span class="ticker-sep">—</span>
-    <span class="ticker-item">PLANEJAMENTO ANUAL</span><span class="ticker-sep">—</span>
-    <span class="ticker-item">BILHETES AOS PAIS</span><span class="ticker-sep">—</span>
-    <span class="ticker-item">ATIVIDADES LÚDICAS</span><span class="ticker-sep">—</span>
-    <span class="ticker-item">RUBRICAS</span><span class="ticker-sep">—</span>
-    <span class="ticker-item">RESUMOS DE CONTEÚDO</span><span class="ticker-sep">—</span>
-    <span class="ticker-item">PLANOS DE AULA</span><span class="ticker-sep">—</span>
-    <span class="ticker-item">PROVAS E AVALIAÇÕES</span><span class="ticker-sep">—</span>
-    <span class="ticker-item">CAÇA-PALAVRAS</span><span class="ticker-sep">—</span>
-    <span class="ticker-item">PLANEJAMENTO ANUAL</span><span class="ticker-sep">—</span>
-    <span class="ticker-item">BILHETES AOS PAIS</span><span class="ticker-sep">—</span>
-    <span class="ticker-item">ATIVIDADES LÚDICAS</span><span class="ticker-sep">—</span>
-    <span class="ticker-item">RUBRICAS</span><span class="ticker-sep">—</span>
-    <span class="ticker-item">RESUMOS DE CONTEÚDO</span><span class="ticker-sep">—</span>
+    <span class="ticker-item">PLANOS DE AULA</span><span class="ticker-dot">●</span>
+    <span class="ticker-item">PROVAS E AVALIAÇÕES</span><span class="ticker-dot">●</span>
+    <span class="ticker-item">CAÇA-PALAVRAS</span><span class="ticker-dot">●</span>
+    <span class="ticker-item">PLANEJAMENTO ANUAL</span><span class="ticker-dot">●</span>
+    <span class="ticker-item">BILHETES AOS PAIS</span><span class="ticker-dot">●</span>
+    <span class="ticker-item">ADAPTAÇÕES NEE</span><span class="ticker-dot">●</span>
+    <span class="ticker-item">RUBRICAS</span><span class="ticker-dot">●</span>
+    <span class="ticker-item">RESUMOS DE CONTEÚDO</span><span class="ticker-dot">●</span>
+    <span class="ticker-item">PLANOS DE AULA</span><span class="ticker-dot">●</span>
+    <span class="ticker-item">PROVAS E AVALIAÇÕES</span><span class="ticker-dot">●</span>
+    <span class="ticker-item">CAÇA-PALAVRAS</span><span class="ticker-dot">●</span>
+    <span class="ticker-item">PLANEJAMENTO ANUAL</span><span class="ticker-dot">●</span>
+    <span class="ticker-item">BILHETES AOS PAIS</span><span class="ticker-dot">●</span>
+    <span class="ticker-item">ADAPTAÇÕES NEE</span><span class="ticker-dot">●</span>
+    <span class="ticker-item">RUBRICAS</span><span class="ticker-dot">●</span>
+    <span class="ticker-item">RESUMOS DE CONTEÚDO</span><span class="ticker-dot">●</span>
   </div>
 </div>
 
 <!-- HERO -->
 <section class="hero">
-  <div class="hero-numero">001 &nbsp;/&nbsp; ASSISTENTE DE IA</div>
-  <h1>
-    O FIM DO<br/>
-    PLANEJAMENTO<br/>
-    <span class="linha2"><em class="aspas">"</em>MANUAL<em class="aspas">"</em></span>
-  </h1>
-  <div class="hero-rodape">
+  <div class="hero-left">
+    <div class="hero-eyebrow">ASSISTENTE PEDAGÓGICO DE IA</div>
+    <h1>
+      O FIM DO<br/>
+      PLANO<br/>
+      <span class="linha2">"MANUAL"<span class="marca">®</span></span>
+    </h1>
+  </div>
+  <div class="hero-right">
     <p class="hero-desc">
-      Gere planos de aula, provas, caça-palavras e atividades em segundos.
+      Gere planos de aula completos, provas, caça-palavras e planejamentos em segundos.
       Feito para professores brasileiros. Alinhado à BNCC.
     </p>
     <div class="hero-btns">
-      <a href="/cadastro" class="btn-p solid">COMEÇAR GRÁTIS</a>
-      <a href="#features" class="btn-p outline">VER MAIS</a>
+      <a href="/cadastro" class="btn-solid">COMEÇAR GRÁTIS →</a>
+      <a href="#features" class="btn-ghost">VER MAIS</a>
     </div>
   </div>
 </section>
 
-<div class="diag-line" data-label="FUNCIONALIDADES"></div>
-
 <!-- FEATURES -->
-<section class="features reveal" id="features">
+<div class="divider" data-label="FUNCIONALIDADES"></div>
+<div class="features-header" id="features">
+  <div class="section-tag">002 — O QUE VOCÊ PODE CRIAR</div>
+  <div class="section-title">TUDO EM<br/>SEGUNDOS</div>
+</div>
+<section class="features-grid reveal">
   <div class="feat">
     <div class="feat-num">F — 01</div>
-    <div class="feat-titulo"><span class="q">"</span>PLANO DE AULA<span class="q">"</span></div>
+    <div class="feat-titulo">"PLANO DE AULA"</div>
     <p class="feat-desc">Objetivos, conteúdo, metodologia e avaliação. Gerado completo e alinhado à BNCC em segundos.</p>
   </div>
   <div class="feat">
     <div class="feat-num">F — 02</div>
-    <div class="feat-titulo"><span class="q">"</span>PROVAS<span class="q">"</span></div>
-    <p class="feat-desc">Questões abertas e múltipla escolha com gabarito automático. Defina o tema, série e nível.</p>
+    <div class="feat-titulo">"PROVA"</div>
+    <p class="feat-desc">Questões abertas e múltipla escolha com gabarito automático. Defina tema, série e nível.</p>
   </div>
   <div class="feat">
     <div class="feat-num">F — 03</div>
-    <div class="feat-titulo"><span class="q">"</span>CAÇA-PALAVRAS<span class="q">"</span></div>
-    <p class="feat-desc">Grade formatada com lista de palavras sobre qualquer tema. Pronto para imprimir.</p>
+    <div class="feat-titulo">"CAÇA-PALAVRAS"</div>
+    <p class="feat-desc">Grade 15×15 formatada com lista de palavras sobre qualquer tema. Pronto para imprimir.</p>
   </div>
   <div class="feat">
     <div class="feat-num">F — 04</div>
-    <div class="feat-titulo"><span class="q">"</span>ATIVIDADES<span class="q">"</span></div>
+    <div class="feat-titulo">"ATIVIDADE"</div>
     <p class="feat-desc">Exercícios criativos e dinâmicas adaptadas à faixa etária. Do infantil ao médio.</p>
   </div>
   <div class="feat">
     <div class="feat-num">F — 05</div>
-    <div class="feat-titulo"><span class="q">"</span>PLANEJAMENTO ANUAL<span class="q">"</span></div>
-    <p class="feat-desc">Distribuição de conteúdos por bimestre alinhada ao calendário escolar e à BNCC.</p>
+    <div class="feat-titulo">"PLANEJAMENTO ANUAL"</div>
+    <p class="feat-desc">Distribuição de conteúdos por bimestre alinhada ao calendário e à BNCC.</p>
   </div>
   <div class="feat">
     <div class="feat-num">F — 06</div>
-    <div class="feat-titulo"><span class="q">"</span>BILHETES<span class="q">"</span></div>
-    <p class="feat-desc">Comunicados para os pais redigidos com clareza e profissionalismo em segundos.</p>
+    <div class="feat-titulo">"NEE"</div>
+    <p class="feat-desc">Material adaptado para DI, TEA, TDAH, Dislexia, Baixa Visão e CAA automaticamente.</p>
   </div>
 </section>
-
-<div class="diag-line" data-label="MANIFESTO"></div>
 
 <!-- MANIFESTO -->
+<div class="divider" data-label="MANIFESTO"></div>
 <section class="manifesto reveal">
-  <div class="manifesto-left">
-    <div class="manifesto-tag">002 — POR QUÊ EXISTE</div>
-    <h2>FEITO PARA<br/>QUEM<br/><em>ENSINA</em></h2>
+  <div>
+    <div class="manifesto-tag">003 — POR QUÊ EXISTE</div>
+    <h2>FEITO PARA<br/>QUEM<br/><em>ENSINA.</em></h2>
   </div>
-  <div class="manifesto-right">
+  <div>
     <div class="manifesto-stat">
-      <div class="manifesto-stat-num">5<span>h</span></div>
-      <div class="manifesto-stat-desc">economizadas por semana em planejamento</div>
+      <div class="stat-num">5<span>h</span></div>
+      <div class="stat-desc">economizadas por semana em planejamento</div>
     </div>
     <div class="manifesto-stat">
-      <div class="manifesto-stat-num">+8<span>x</span></div>
-      <div class="manifesto-stat-desc">mais rápido que criar do zero</div>
+      <div class="stat-num">+8<span>×</span></div>
+      <div class="stat-desc">mais rápido que criar do zero</div>
     </div>
     <div class="manifesto-stat">
-      <div class="manifesto-stat-num">100<span>%</span></div>
-      <div class="manifesto-stat-desc">alinhado à BNCC e currículo nacional</div>
+      <div class="stat-num">100<span>%</span></div>
+      <div class="stat-desc">alinhado à BNCC e currículo nacional</div>
     </div>
   </div>
 </section>
 
-<div class="diag-line" data-label="PLANOS"></div>
-
 <!-- PLANOS -->
+<div class="divider" data-label="PREÇOS"></div>
 <section class="planos reveal" id="planos">
   <div class="planos-header">
     <h2>ESCOLHA<br/>SEU PLANO</h2>
@@ -513,71 +457,64 @@
       <span class="eco-tag" id="eco" style="display:none">2 MESES GRÁTIS</span>
     </div>
   </div>
-
   <div class="planos-grid">
     <!-- FREE -->
     <div class="plano-card">
-      <div class="plano-label-top">FREE — PARA COMEÇAR</div>
+      <div class="plano-tag">FREE — PARA COMEÇAR</div>
       <div class="plano-nome">FREE</div>
-      <div class="plano-preco-val zero">R$ 0</div>
+      <div class="plano-preco zero">R$ 0</div>
       <div class="plano-periodo">PARA SEMPRE</div>
       <ul class="plano-features">
-        <li class="on">5 GERAÇÕES / MÊS <span class="check-icon">✓</span></li>
-        <li class="on">CHAT COM IA <span class="check-icon">✓</span></li>
-        <li class="on">PLANOS DE AULA <span class="check-icon">✓</span></li>
-        <li>PROVAS E AVALIAÇÕES <span class="x-icon">—</span></li>
-        <li>CAÇA-PALAVRAS <span class="x-icon">—</span></li>
-        <li>ATIVIDADES E BILHETES <span class="x-icon">—</span></li>
-        <li>PLANEJAMENTO ANUAL <span class="x-icon">—</span></li>
-        <li>EXPORTAR PDF / WORD <span class="x-icon">—</span></li>
+        <li class="on">5 GERAÇÕES / MÊS <span class="chk">✓</span></li>
+        <li class="on">CHAT COM IA <span class="chk">✓</span></li>
+        <li class="on">PLANOS DE AULA <span class="chk">✓</span></li>
+        <li>PROVAS E AVALIAÇÕES <span class="xck">—</span></li>
+        <li>CAÇA-PALAVRAS <span class="xck">—</span></li>
+        <li>ADAPTAÇÕES NEE <span class="xck">—</span></li>
+        <li>EXPORTAR DOCX <span class="xck">—</span></li>
       </ul>
       <a href="/cadastro" class="btn-plano ghost">COMEÇAR GRÁTIS</a>
     </div>
-
     <!-- BASIC -->
     <div class="plano-card destaque">
-      <div class="plano-label-top"><span class="dot"></span>MAIS POPULAR</div>
+      <div class="plano-tag"><span class="dot"></span>MAIS POPULAR</div>
       <div class="plano-nome">BASIC</div>
-      <div class="plano-preco-val" id="preco-basic"><sup>R$</sup>39<sub>/MÊS</sub></div>
+      <div class="plano-preco" id="preco-basic"><sup>R$</sup>39<sub>/MÊS</sub></div>
       <div class="plano-periodo" id="per-basic">ACESSO INDIVIDUAL ILIMITADO</div>
       <ul class="plano-features">
-        <li class="on">GERAÇÕES ILIMITADAS <span class="check-icon">✓</span></li>
-        <li class="on">CHAT COM IA <span class="check-icon">✓</span></li>
-        <li class="on">PLANOS DE AULA <span class="check-icon">✓</span></li>
-        <li class="on">PROVAS E AVALIAÇÕES <span class="check-icon">✓</span></li>
-        <li class="on">CAÇA-PALAVRAS <span class="check-icon">✓</span></li>
-        <li class="on">ATIVIDADES E BILHETES <span class="check-icon">✓</span></li>
-        <li>PLANEJAMENTO ANUAL <span class="x-icon">—</span></li>
-        <li>EXPORTAR PDF / WORD <span class="x-icon">—</span></li>
+        <li class="on">GERAÇÕES ILIMITADAS <span class="chk">✓</span></li>
+        <li class="on">CHAT COM IA <span class="chk">✓</span></li>
+        <li class="on">PLANOS DE AULA <span class="chk">✓</span></li>
+        <li class="on">PROVAS E AVALIAÇÕES <span class="chk">✓</span></li>
+        <li class="on">CAÇA-PALAVRAS <span class="chk">✓</span></li>
+        <li class="on">ADAPTAÇÕES NEE <span class="chk">✓</span></li>
+        <li class="on">EXPORTAR DOCX <span class="chk">✓</span></li>
       </ul>
-      <a href="/stripe/checkout/basic" class="btn-plano solid" id="btn-basic">ASSINAR BASIC</a>
+      <a href="/stripe/checkout/basic" class="btn-plano solid" id="btn-basic">ASSINAR BASIC →</a>
     </div>
-
     <!-- PRO -->
     <div class="plano-card">
-      <div class="plano-label-top">PRO — COMPLETO</div>
+      <div class="plano-tag">PRO — COMPLETO</div>
       <div class="plano-nome">PRO</div>
-      <div class="plano-preco-val" id="preco-pro"><sup>R$</sup>59<sub>/MÊS</sub></div>
+      <div class="plano-preco" id="preco-pro"><sup>R$</sup>59<sub>/MÊS</sub></div>
       <div class="plano-periodo" id="per-pro">TUDO DO BASIC + MAIS</div>
       <ul class="plano-features">
-        <li class="on">TUDO DO BASIC <span class="check-icon">✓</span></li>
-        <li class="on">PLANEJAMENTO ANUAL BNCC <span class="check-icon">✓</span></li>
-        <li class="on">EXPORTAR PDF E WORD <span class="check-icon">✓</span></li>
-        <li class="on">HISTÓRICO COMPLETO <span class="check-icon">✓</span></li>
-        <li class="on">SUPORTE PRIORITÁRIO <span class="check-icon">✓</span></li>
+        <li class="on">TUDO DO BASIC <span class="chk">✓</span></li>
+        <li class="on">PLANEJAMENTO ANUAL BNCC <span class="chk">✓</span></li>
+        <li class="on">HISTÓRICO COMPLETO <span class="chk">✓</span></li>
+        <li class="on">ENTRADA E SAÍDA DE ÁUDIO <span class="chk">✓</span></li>
+        <li class="on">SUPORTE PRIORITÁRIO <span class="chk">✓</span></li>
       </ul>
-      <a href="/stripe/checkout/pro" class="btn-plano ghost" id="btn-pro">ASSINAR PRO</a>
+      <a href="/stripe/checkout/pro" class="btn-plano ghost" id="btn-pro">ASSINAR PRO →</a>
     </div>
   </div>
 </section>
 
-<div class="diag-line" data-label="DEPOIMENTO"></div>
-
 <!-- QUOTE -->
-<div class="quote-section reveal">
+<div class="divider" data-label="DEPOIMENTO"></div>
+<div class="quote reveal">
   <p class="quote-text">
-    <span class="aq">"</span>O QUE LEVAVA HORAS AGORA LEVA MINUTOS.<br/>
-    ISSO MUDOU MEU DOMINGO.<span class="aq">"</span>
+    <span class="q">"</span>O QUE LEVAVA HORAS AGORA<br/>LEVA MINUTOS. ISSO MUDOU<br/>MEU DOMINGO.<span class="q">"</span>
   </p>
   <p class="quote-autor">— Professora de História · Rede Pública · São Paulo</p>
 </div>
@@ -585,52 +522,50 @@
 <!-- CTA -->
 <section class="cta reveal">
   <h2>COMECE<br/><span class="sub">HOJE, GRÁTIS.</span></h2>
-  <div>
-    <a href="/cadastro" class="btn-p solid" style="font-size:0.68rem; padding:16px 40px">CRIAR CONTA GRÁTIS</a>
-  </div>
+  <a href="/cadastro" class="btn-solid" style="font-size:.65rem; padding:16px 40px">CRIAR CONTA GRÁTIS →</a>
 </section>
 
 <!-- FOOTER -->
 <footer>
-  <a class="footer-logo" href="/">
-    PROFESSOR<span class="tm">IA™</span>
-  </a>
+  <a class="footer-logo" href="/">PROFESSOR<span class="tm">IA™</span></a>
   <div class="footer-links">
-    <a class="footer-link" href="/planos">PLANOS</a>
+    <a class="footer-link" href="#planos">PLANOS</a>
     <a class="footer-link" href="/login">LOGIN</a>
     <a class="footer-link" href="/cadastro">CADASTRO</a>
   </div>
-  <span style="font-size:0.55rem; letter-spacing:1.5px; text-transform:uppercase; color:rgba(10,10,10,0.3)">© 2025 PROFESSORIA</span>
+  <span class="footer-copy">© 2025 PROFESSORIA</span>
 </footer>
 
 <script>
   // Scroll reveal
   const obs = new IntersectionObserver(
-    entries => entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('on'); }),
-    { threshold: 0.08 }
+    es => es.forEach(e => { if (e.isIntersecting) e.target.classList.add('on'); }),
+    { threshold: 0.06 }
   );
   document.querySelectorAll('.reveal').forEach(el => obs.observe(el));
 
-  // Toggle
+  // Toggle anual/mensal
   function alternar() {
     const anual = document.getElementById('tog-anual').checked;
     document.getElementById('lbl-m').classList.toggle('on', !anual);
     document.getElementById('lbl-a').classList.toggle('on', anual);
     document.getElementById('eco').style.display = anual ? 'inline' : 'none';
+    const bb = document.getElementById('btn-basic');
+    const bp = document.getElementById('btn-pro');
     if (anual) {
       document.getElementById('preco-basic').innerHTML = '<sup>R$</sup>390<sub>/ANO</sub>';
-      document.getElementById('per-basic').textContent  = 'R$ 32,50/MÊS — 2 MESES GRÁTIS';
+      document.getElementById('per-basic').textContent = 'R$ 32,50/MÊS · 2 MESES GRÁTIS';
       document.getElementById('preco-pro').innerHTML   = '<sup>R$</sup>590<sub>/ANO</sub>';
-      document.getElementById('per-pro').textContent    = 'R$ 49,16/MÊS — 2 MESES GRÁTIS';
-      document.getElementById('btn-basic').href = '/stripe/checkout/basic_anual';
-      document.getElementById('btn-pro').href   = '/stripe/checkout/pro_anual';
+      document.getElementById('per-pro').textContent   = 'R$ 49,16/MÊS · 2 MESES GRÁTIS';
+      if (bb) bb.href = '/stripe/checkout/basic_anual';
+      if (bp) bp.href = '/stripe/checkout/pro_anual';
     } else {
       document.getElementById('preco-basic').innerHTML = '<sup>R$</sup>39<sub>/MÊS</sub>';
-      document.getElementById('per-basic').textContent  = 'ACESSO INDIVIDUAL ILIMITADO';
+      document.getElementById('per-basic').textContent = 'ACESSO INDIVIDUAL ILIMITADO';
       document.getElementById('preco-pro').innerHTML   = '<sup>R$</sup>59<sub>/MÊS</sub>';
-      document.getElementById('per-pro').textContent    = 'TUDO DO BASIC + MAIS';
-      document.getElementById('btn-basic').href = '/stripe/checkout/basic';
-      document.getElementById('btn-pro').href   = '/stripe/checkout/pro';
+      document.getElementById('per-pro').textContent   = 'TUDO DO BASIC + MAIS';
+      if (bb) bb.href = '/stripe/checkout/basic';
+      if (bp) bp.href = '/stripe/checkout/pro';
     }
   }
 </script>

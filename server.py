@@ -736,7 +736,7 @@ def stripe_sucesso():
             import stripe as stripe_lib
             stripe_lib.api_key = STRIPE_SECRET_KEY
             session = stripe_lib.checkout.Session.retrieve(session_id)
-            if session.payment_status == 'paid':
+            if session.payment_status in ('paid', 'no_payment_required'):
                 plano_id = session.metadata.get('plano_id', 'basic')
                 plano    = PLANOS.get(plano_id, PLANOS['basic'])
                 valido   = (datetime.now() + timedelta(days=plano['dias'])).strftime('%Y-%m-%d')
@@ -746,12 +746,20 @@ def stripe_sucesso():
                     (plano_id, valido, current_user.id)
                 )
                 conn.commit()
+                # Refresh session user so chat/banner updates immediately
+                row = conn.execute('SELECT * FROM usuarios WHERE id=?', (current_user.id,)).fetchone()
+                conn.close()
+                if row:
+                    login_user(Usuario(row))
+            else:
+                conn = get_db()
                 conn.close()
         except Exception:
             pass
     return render_template('pagamento_status.html',
-                           titulo='Pagamento aprovado!',
-                           mensagem='Sua assinatura está ativa. Bom uso!')
+                           status='sucesso',
+                           titulo='PAGAMENTO APROVADO',
+                           mensagem='Sua assinatura está ativa. Bom trabalho!')
 
 
 @app.route('/stripe/webhook', methods=['POST'])
@@ -782,7 +790,15 @@ def stripe_webhook():
 
     elif event['type'] in ('customer.subscription.deleted', 'customer.subscription.paused'):
         sub = event['data']['object']
-        email = sub.get('customer_email') or ''
+        # customer_email is not on the subscription object — retrieve customer
+        customer_id = sub.get('customer', '')
+        email = ''
+        if customer_id:
+            try:
+                customer = stripe_lib.Customer.retrieve(customer_id)
+                email = customer.get('email', '') or ''
+            except Exception:
+                pass
         if email:
             conn = get_db()
             conn.execute("UPDATE usuarios SET plano='', ativo=0, valido_ate='' WHERE email=?", (email,))
