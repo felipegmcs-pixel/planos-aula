@@ -195,27 +195,42 @@ Responda sempre em português brasileiro. Seja prático, objetivo e direto."""
 def _gemini_disponivel():
     return bool(_gemini_model and GEMINI_API_KEY)
 
+def _to_gemini_parts(content):
+    """Converte conteúdo de mensagem (str ou lista multimodal) para partes do Gemini."""
+    if isinstance(content, str):
+        return [content]
+    parts = []
+    for item in content:
+        if item.get('type') == 'text':
+            parts.append(item['text'])
+        elif item.get('type') == 'image':
+            import base64 as _b64
+            parts.append({
+                'mime_type': item['source']['media_type'],
+                'data': _b64.b64decode(item['source']['data'])
+            })
+    return parts
+
 def chamar_ia_chat(sistema, messages):
-    """Chama Gemini se disponível, senão usa Claude. Retorna texto da resposta."""
+    """Chama Gemini se disponível, senão usa Claude. Suporta mensagens multimodais."""
     if _gemini_disponivel():
         try:
             import google.generativeai as genai
-            # Gemini usa 'model' em vez de 'assistant'
             historico = []
             for m in messages[:-1]:
                 role = 'user' if m['role'] == 'user' else 'model'
-                historico.append({'role': role, 'parts': [m['content']]})
+                historico.append({'role': role, 'parts': _to_gemini_parts(m['content'])})
             gm = genai.GenerativeModel(
                 model_name='gemini-1.5-pro',
                 system_instruction=sistema
             )
             chat = gm.start_chat(history=historico)
-            resp = chat.send_message(messages[-1]['content'])
+            resp = chat.send_message(_to_gemini_parts(messages[-1]['content']))
             return resp.text
         except Exception as e:
             print(f'Gemini falhou, usando Claude: {e}')
 
-    # Fallback: Claude via HTTP direto
+    # Fallback: Claude via HTTP direto (suporta conteúdo multimodal nativamente)
     import requests as req_lib
     api_key = os.environ.get('ANTHROPIC_API_KEY', '').strip()
     if not api_key:
@@ -1590,6 +1605,63 @@ def chat():
                            onboarding_done=current_user.onboarding_done)
 
 
+@app.route('/api/processar-arquivo', methods=['POST'])
+@login_required
+def processar_arquivo():
+    """Extrai texto de PDFs, DOCX e TXT enviados pelo professor."""
+    if 'arquivo' not in request.files:
+        return jsonify({'erro': 'Nenhum arquivo enviado'}), 400
+
+    f    = request.files['arquivo']
+    nome = f.filename or 'arquivo'
+    mime = f.content_type or ''
+    dados = f.read()
+
+    MAX_SIZE = 10 * 1024 * 1024  # 10 MB
+    if len(dados) > MAX_SIZE:
+        return jsonify({'erro': 'Arquivo muito grande (máximo 10 MB)'}), 400
+
+    nome_lower = nome.lower()
+
+    # PDF
+    if mime == 'application/pdf' or nome_lower.endswith('.pdf'):
+        try:
+            import pdfplumber, io as _io
+            texto = ''
+            with pdfplumber.open(_io.BytesIO(dados)) as pdf:
+                for pg in pdf.pages[:30]:
+                    t = pg.extract_text()
+                    if t:
+                        texto += t + '\n'
+            if not texto.strip():
+                return jsonify({'erro': 'Não foi possível extrair texto deste PDF.'}), 400
+            return jsonify({'tipo': 'documento', 'texto': texto[:20000], 'nome': nome})
+        except Exception as e:
+            return jsonify({'erro': f'Erro ao ler PDF: {str(e)}'}), 500
+
+    # DOCX
+    if (mime == 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+            or nome_lower.endswith('.docx')):
+        try:
+            from docx import Document as _Doc
+            import io as _io
+            doc = _Doc(_io.BytesIO(dados))
+            texto = '\n'.join(p.text for p in doc.paragraphs if p.text.strip())
+            return jsonify({'tipo': 'documento', 'texto': texto[:20000], 'nome': nome})
+        except Exception as e:
+            return jsonify({'erro': f'Erro ao ler DOCX: {str(e)}'}), 500
+
+    # TXT / CSV
+    if mime.startswith('text/') or nome_lower.endswith(('.txt', '.csv', '.md')):
+        try:
+            texto = dados.decode('utf-8', errors='ignore')
+            return jsonify({'tipo': 'documento', 'texto': texto[:20000], 'nome': nome})
+        except Exception as e:
+            return jsonify({'erro': f'Erro ao ler arquivo: {str(e)}'}), 500
+
+    return jsonify({'erro': 'Tipo não suportado via upload. Imagens são enviadas diretamente — use JPG, PNG ou WEBP.'}), 400
+
+
 @app.route('/api/chat', methods=['POST'])
 @login_required
 def api_chat():
@@ -1602,23 +1674,59 @@ def api_chat():
 
     data = request.json
     messages = data.get('messages', [])
+    anexo   = data.get('anexo')   # { tipo, base64, mime, nome } ou { tipo, texto, nome }
     if not messages:
         return jsonify({'erro': 'Mensagem vazia'}), 400
+
+    # Extrai conteúdo de texto da última mensagem para salvar no DB
+    last_content = messages[-1].get('content', '')
+    if isinstance(last_content, list):
+        text_parts = [p['text'] for p in last_content if p.get('type') == 'text']
+        db_content = ' '.join(text_parts)
+        if anexo:
+            db_content += f' [arquivo: {anexo.get("nome", "")}]'
+    else:
+        db_content = last_content
 
     conn = get_db()
     conn.execute(
         "INSERT INTO chat_messages (usuario_id, role, content, criado_em) VALUES (?, ?, ?, ?)",
-        (current_user.id, 'user', messages[-1]['content'],
+        (current_user.id, 'user', db_content,
          datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
     )
     conn.commit()
     conn.close()
 
     try:
-        import traceback
         sistema = SYSTEM_PROMPT
         if current_user.escola_template:
             sistema += f"\n\nO professor usa o seguinte esqueleto/modelo padrão de plano de aula da sua escola. SEMPRE que gerar planos de aula, use EXATAMENTE essa estrutura como base:\n\n{current_user.escola_template}"
+
+        # Processar anexo
+        if anexo:
+            tipo_anexo = anexo.get('tipo')
+
+            if tipo_anexo == 'documento':
+                # Texto extraído: adiciona ao system prompt como contexto
+                nome_doc = anexo.get('nome', 'documento')
+                texto_doc = anexo.get('texto', '')
+                sistema += f"\n\n=== DOCUMENTO ENVIADO PELO PROFESSOR: {nome_doc} ===\n{texto_doc}\n=== FIM DO DOCUMENTO ===\n\nUse este documento como referência e base estrutural para criar o material solicitado."
+
+            elif tipo_anexo == 'image':
+                # Imagem: injeta na última mensagem como conteúdo multimodal
+                b64    = anexo.get('base64', '')
+                mime_t = anexo.get('mime', 'image/jpeg')
+                texto_msg = messages[-1].get('content', '')
+                if not isinstance(texto_msg, list):
+                    texto_msg = texto_msg or 'Use esta imagem como base para criar o material.'
+                messages = messages[:-1] + [{
+                    'role': 'user',
+                    'content': [
+                        {'type': 'image', 'source': {'type': 'base64', 'media_type': mime_t, 'data': b64}},
+                        {'type': 'text',  'text': texto_msg if isinstance(texto_msg, str) else ' '.join(p.get('text','') for p in texto_msg if p.get('type')=='text')}
+                    ]
+                }]
+
         resposta = chamar_ia_chat(sistema, messages)
     except Exception as e:
         erro_detalhado = f"{type(e).__name__}: {str(e)}"

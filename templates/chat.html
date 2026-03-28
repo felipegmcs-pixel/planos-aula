@@ -286,6 +286,47 @@
     .btn-send:disabled svg { fill: #888; }
     .input-hint { font-size: 0.52rem; font-weight: 600; letter-spacing: 1.5px; text-transform: uppercase; color: #aaa; margin-top: 8px; text-align: center; }
 
+    /* ── ANEXO ── */
+    .btn-attach {
+      width: 34px; height: 34px; background: transparent;
+      border: 1.5px solid rgba(0,0,0,0.18);
+      cursor: pointer; display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0; transition: all .2s;
+    }
+    .btn-attach:hover { border-color: var(--preto); }
+    .btn-attach.ativo { border-color: var(--amarelo); background: rgba(240,224,0,0.12); }
+    .btn-attach svg { width: 14px; height: 14px; fill: var(--preto); }
+
+    .anexo-preview {
+      display: none; align-items: center; gap: 10px;
+      padding: 8px 12px; margin-bottom: 8px;
+      border: 1px solid var(--linha-f); background: var(--cinza-escuro);
+      font-size: 0.65rem; font-weight: 700; letter-spacing: 1px;
+      text-transform: uppercase; color: var(--preto);
+    }
+    .anexo-preview.visivel { display: flex; }
+    .anexo-thumb {
+      width: 40px; height: 40px; object-fit: cover;
+      border: 1px solid var(--linha); flex-shrink: 0;
+    }
+    .anexo-thumb-doc {
+      width: 40px; height: 40px; flex-shrink: 0;
+      background: var(--preto); color: var(--branco);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 0.5rem; font-weight: 900; letter-spacing: 1px;
+    }
+    .anexo-info { flex: 1; min-width: 0; }
+    .anexo-nome { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .anexo-tipo { font-size: 0.52rem; color: var(--cinza); margin-top: 2px; font-weight: 500; }
+    .btn-anexo-remover {
+      background: transparent; border: none; cursor: pointer;
+      font-size: 0.7rem; color: var(--cinza); padding: 4px;
+      transition: color .15s; flex-shrink: 0;
+    }
+    .btn-anexo-remover:hover { color: #dc2626; }
+    .anexo-loading { color: var(--cinza); font-style: normal; animation: pulse 1s ease-in-out infinite; }
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
+
     /* ── MIC / ÁUDIO ── */
     .btn-mic {
       width: 34px; height: 34px; background: transparent;
@@ -538,11 +579,26 @@
     <!-- Input -->
     <div class="input-area">
       <div class="input-wrap">
+        <!-- Prévia do arquivo anexado -->
+        <div class="anexo-preview" id="anexoPreview">
+          <div id="anexoThumbWrap"></div>
+          <div class="anexo-info">
+            <div class="anexo-nome" id="anexoNome"></div>
+            <div class="anexo-tipo" id="anexoTipo"></div>
+          </div>
+          <button class="btn-anexo-remover" onclick="removerAnexo()" title="Remover">✕</button>
+        </div>
+
         <div class="input-box">
+          <!-- Input escondido para seleção de arquivo -->
+          <input type="file" id="fileInput" accept="image/*,.pdf,.docx,.txt,.csv,.md" style="display:none" onchange="selecionarArquivo(this)"/>
+          <button class="btn-attach" id="btnAttach" title="Anexar imagem ou documento" onclick="document.getElementById('fileInput').click()" {% if limite_atingido %}disabled{% endif %}>
+            <svg viewBox="0 0 24 24"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>
+          </button>
           <textarea
             id="input"
             rows="1"
-            placeholder="Peça um plano de aula, prova, caça-palavras..."
+            placeholder="Peça um plano de aula, prova, caça-palavras... ou anexe um arquivo"
             {% if limite_atingido %}disabled{% endif %}
           ></textarea>
           <button class="btn-mic" id="btnMic" title="Gravar voz" {% if limite_atingido %}disabled{% endif %}>
@@ -553,7 +609,7 @@
           </button>
         </div>
         {% if not limite_atingido %}
-        <div class="input-hint">ENTER PARA ENVIAR · SHIFT+ENTER PARA NOVA LINHA</div>
+        <div class="input-hint">ENTER PARA ENVIAR · SHIFT+ENTER PARA NOVA LINHA · 📎 ANEXAR ARQUIVO</div>
         {% endif %}
       </div>
     </div>
@@ -596,15 +652,25 @@
     inputEl.focus();
   }
 
-  function addMsgUser(texto) {
+  function addMsgUser(texto, anexo) {
     if (welcomeEl) welcomeEl.style.display = 'none';
     const div = document.createElement('div');
     div.className = 'msg user';
+
+    let anexoHtml = '';
+    if (anexo) {
+      if (anexo.tipo === 'image') {
+        anexoHtml = `<img src="data:${anexo.mime};base64,${anexo.base64}" style="max-width:220px;max-height:160px;display:block;margin-bottom:8px;border:1px solid rgba(255,255,255,0.2)" alt="${escapeHtml(anexo.nome)}"/>`;
+      } else if (anexo.tipo === 'documento') {
+        anexoHtml = `<div style="font-size:0.6rem;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;padding:6px 10px;background:rgba(255,255,255,0.12);margin-bottom:8px;display:inline-block">📄 ${escapeHtml(anexo.nome)}</div>`;
+      }
+    }
+
     div.innerHTML = `
       <div class="msg-avatar">EU</div>
       <div class="msg-content">
         <div class="msg-role">VOCÊ</div>
-        <div class="msg-bubble">${escapeHtml(texto).replace(/\n/g, '<br>')}</div>
+        <div class="msg-bubble">${anexoHtml}${escapeHtml(texto).replace(/\n/g, '<br>')}</div>
       </div>`;
     messagesInner.appendChild(div);
     scroll();
@@ -693,9 +759,82 @@
     }
   }
 
+  // ── ANEXO DE ARQUIVOS ──
+  let anexoAtual = null; // { tipo, base64?, mime?, texto?, nome }
+
+  function removerAnexo() {
+    anexoAtual = null;
+    document.getElementById('fileInput').value = '';
+    document.getElementById('anexoPreview').classList.remove('visivel');
+    document.getElementById('btnAttach').classList.remove('ativo');
+  }
+
+  function mostrarPreviewAnexo(nome, tipo, thumbSrc) {
+    const preview  = document.getElementById('anexoPreview');
+    const thumbWrap = document.getElementById('anexoThumbWrap');
+    document.getElementById('anexoNome').textContent = nome;
+    document.getElementById('anexoTipo').textContent = tipo;
+
+    thumbWrap.innerHTML = '';
+    if (thumbSrc) {
+      const img = document.createElement('img');
+      img.className = 'anexo-thumb';
+      img.src = thumbSrc;
+      thumbWrap.appendChild(img);
+    } else {
+      const ext = nome.split('.').pop().toUpperCase().slice(0,4);
+      thumbWrap.innerHTML = `<div class="anexo-thumb-doc">${ext}</div>`;
+    }
+    preview.classList.add('visivel');
+    document.getElementById('btnAttach').classList.add('ativo');
+  }
+
+  async function selecionarArquivo(input) {
+    const file = input.files[0];
+    if (!file) return;
+
+    const nome = file.name;
+    const mime = file.type || '';
+    const isImage = mime.startsWith('image/') || /\.(jpg|jpeg|png|webp|gif)$/i.test(nome);
+
+    if (isImage) {
+      // Imagens: ler no browser como base64
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const dataUrl = e.target.result;
+        const b64 = dataUrl.split(',')[1];
+        const mimeFinal = mime || 'image/jpeg';
+        anexoAtual = { tipo: 'image', base64: b64, mime: mimeFinal, nome };
+        mostrarPreviewAnexo(nome, 'IMAGEM', dataUrl);
+      };
+      reader.readAsDataURL(file);
+
+    } else {
+      // Documentos: enviar ao servidor para extração de texto
+      mostrarPreviewAnexo(nome, '<span class="anexo-loading">PROCESSANDO...</span>', null);
+
+      const fd = new FormData();
+      fd.append('arquivo', file);
+      try {
+        const resp = await fetch('/api/processar-arquivo', { method: 'POST', body: fd });
+        const data = await resp.json();
+        if (!resp.ok || data.erro) {
+          alert('Erro: ' + (data.erro || 'Não foi possível processar o arquivo.'));
+          removerAnexo();
+          return;
+        }
+        anexoAtual = data; // { tipo: 'documento', texto, nome }
+        mostrarPreviewAnexo(data.nome, 'DOCUMENTO · TEXTO EXTRAÍDO', null);
+      } catch(e) {
+        alert('Erro ao enviar arquivo. Tente novamente.');
+        removerAnexo();
+      }
+    }
+  }
+
   async function enviar() {
     const texto = inputEl.value.trim();
-    if (!texto || enviando) return;
+    if ((!texto && !anexoAtual) || enviando) return;
 
     enviando = true;
     btnEnviar.disabled = true;
@@ -703,8 +842,12 @@
     inputEl.value = '';
     inputEl.style.height = 'auto';
 
-    addMsgUser(texto);
-    historico.push({ role: 'user', content: texto });
+    const textoEnviado = texto || (anexoAtual ? `Analise este arquivo (${anexoAtual.nome}) e use como base para criar o material.` : '');
+    addMsgUser(textoEnviado, anexoAtual);
+    historico.push({ role: 'user', content: textoEnviado });
+
+    const anexoEnvio = anexoAtual;
+    removerAnexo();
 
     const stream = addMsgIA();
 
@@ -712,7 +855,7 @@
       const resp = await fetch('/api/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ messages: historico })
+        body: JSON.stringify({ messages: historico, anexo: anexoEnvio })
       });
 
       if (resp.status === 403) {
