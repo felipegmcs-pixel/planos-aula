@@ -14,7 +14,7 @@ from flask_login import (LoginManager, UserMixin, login_user,
 from werkzeug.security import generate_password_hash, check_password_hash
 from anthropic import Anthropic
 from docx import Document
-from docx.shared import Pt, RGBColor, Cm
+from docx.shared import Pt, RGBColor, Cm, Inches
 from docx.enum.text import WD_ALIGN_PARAGRAPH
 from docx.enum.table import WD_ALIGN_VERTICAL
 from docx.oxml.ns import qn
@@ -128,12 +128,13 @@ Quando pedirem um caça-palavras, gere imediatamente com a seguinte estrutura:
 
 IMPORTANTE para campos em branco: use underscores diretos SEM barra invertida. Exemplo correto: Nome: _____________ Data: ___/___/___
 
-Para o formato da grade, SEMPRE use bloco de código com letras separadas por espaço:
+Para o formato da grade, SEMPRE use bloco de código com letras separadas por espaço simples, uma letra por célula, prefixando cada linha com a letra da linha:
 ```
-   1  2  3  4  5  6  7  8  9 10 11 12 13 14 15
-A  T  R  I  N  C  H  E  I  R  A  M  P  L  K  J
-B  W  A  R  M  I  S  T  I  C  I  O  Q  Z  B  N
+A T R I N C H E I R A M P L K
+B W A R M I S T I C I O Q Z B
+C K L I B E R D A D E X Y Z A
 ```
+Não inclua linha de números de coluna. Use exatamente este formato: letra da linha + espaço + letras separadas por espaço.
 
 CRUZADINHA — geração direta:
 Quando pedirem uma cruzadinha, gere imediatamente com a seguinte estrutura:
@@ -361,6 +362,9 @@ def init_db():
     ''')
     conn.execute("ALTER TABLE usuarios ADD COLUMN IF NOT EXISTS escola_template TEXT DEFAULT ''")
     conn.execute("ALTER TABLE usuarios ADD COLUMN IF NOT EXISTS onboarding_done INTEGER DEFAULT 0")
+    conn.execute("ALTER TABLE usuarios ADD COLUMN IF NOT EXISTS escola_nome TEXT DEFAULT ''")
+    conn.execute("ALTER TABLE usuarios ADD COLUMN IF NOT EXISTS professor_nome TEXT DEFAULT ''")
+    conn.execute("ALTER TABLE usuarios ADD COLUMN IF NOT EXISTS logo_path TEXT DEFAULT ''")
     conn.commit()
     conn.close()
 
@@ -378,6 +382,9 @@ class Usuario(UserMixin):
         self.valido_ate      = row['valido_ate']
         self.escola_template = row.get('escola_template', '') or ''
         self.onboarding_done = row.get('onboarding_done', 0) or 0
+        self.escola_nome     = row.get('escola_nome', '') or ''
+        self.professor_nome  = row.get('professor_nome', '') or ''
+        self.logo_path       = row.get('logo_path', '') or ''
 
     @property
     def assinatura_ativa(self):
@@ -1897,6 +1904,85 @@ def _pia_section_box(doc, title):
     ep = doc.add_paragraph()
     ep.paragraph_format.space_after = Pt(3)
 
+def _is_letter_grid(code):
+    """Returns True if code block is a caça-palavras letter grid."""
+    import re
+    lines = [l for l in code.strip().split('\n') if l.strip()]
+    if len(lines) < 5:
+        return False
+    letter_lines = 0
+    for line in lines:
+        tokens = line.split()
+        if not tokens:
+            continue
+        if all(re.match(r'^\d+$', t) for t in tokens):
+            continue  # skip number header rows
+        body = tokens[1:] if (len(tokens) > 1 and len(tokens[0]) == 1 and tokens[0].isalpha()) else tokens
+        single = sum(1 for t in body if len(t) == 1 and t.isalpha())
+        if single >= 8:
+            letter_lines += 1
+    return letter_lines >= 5
+
+
+def _pia_caca_palavras_table(doc, code):
+    """Renders a caça-palavras letter grid as a proper bordered Word table."""
+    import re
+    lines = [l for l in code.strip().split('\n') if l.strip()]
+
+    grid = []
+    for line in lines:
+        tokens = line.split()
+        if not tokens:
+            continue
+        if all(re.match(r'^\d+$', t) for t in tokens):
+            continue  # skip column-number header
+        if len(tokens[0]) == 1 and tokens[0].isalpha() and len(tokens) > 8:
+            row = [t.upper() for t in tokens[1:] if len(t) == 1 and t.isalpha()]
+        else:
+            row = [t.upper() for t in tokens if len(t) == 1 and t.isalpha()]
+        if len(row) >= 8:
+            grid.append(row)
+
+    if not grid:
+        _pia_code_block(doc, code)
+        return
+
+    n_rows = len(grid)
+    n_cols = max(len(r) for r in grid)
+
+    lbl = doc.add_paragraph()
+    lbl.paragraph_format.space_before = Pt(6)
+    lbl.paragraph_format.space_after  = Pt(3)
+    _pr(lbl, 'GRADE DE LETRAS', bold=True, size=8, color='333333')
+
+    tbl = doc.add_table(rows=n_rows, cols=n_cols)
+    cell_w = Cm(15.5 / n_cols)
+
+    for ri, row_letters in enumerate(grid):
+        for ci in range(n_cols):
+            cell = tbl.cell(ri, ci)
+            p = cell.paragraphs[0]
+            p.alignment = WD_ALIGN_PARAGRAPH.CENTER
+            p.paragraph_format.space_before = Pt(2)
+            p.paragraph_format.space_after  = Pt(2)
+            letter = row_letters[ci] if ci < len(row_letters) else ' '
+            _pr(p, letter, bold=True, size=10, color='0a0a0a')
+            cell.width = cell_w
+            tc    = cell._tc
+            tcPr  = tc.get_or_add_tcPr()
+            tcBorders = OxmlElement('w:tcBorders')
+            for side in ('top', 'left', 'bottom', 'right'):
+                el = OxmlElement(f'w:{side}')
+                el.set(qn('w:val'), 'single')
+                el.set(qn('w:sz'), '4')
+                el.set(qn('w:color'), 'bbbbbb')
+                tcBorders.append(el)
+            tcPr.append(tcBorders)
+
+    ep = doc.add_paragraph()
+    ep.paragraph_format.space_after = Pt(8)
+
+
 def _pia_code_block(doc, code):
     """Bloco monospace para grades de caça-palavras, cruzadinhas, mapas mentais."""
     t = doc.add_table(rows=1, cols=1)
@@ -1957,12 +2043,21 @@ def _pia_md_table(doc, lines):
     ep = doc.add_paragraph()
     ep.paragraph_format.space_after = Pt(4)
 
-def gerar_docx_pia(texto):
+def gerar_docx_pia(texto, meta=None, logo_path=None):
     """
     Gera DOCX com design ProfessorIA™ inspirado nas fichas pedagógicas dos exemplos.
     Black & white — imprime bem em qualquer impressora.
+    meta dict: escola, professor, disciplina, bimestre, serie
     """
     import re
+    if meta is None:
+        meta = {}
+
+    escola    = meta.get('escola', '').strip()
+    professor = meta.get('professor', '').strip()
+    disciplina = meta.get('disciplina', '').strip()
+    bimestre   = meta.get('bimestre', '').strip()
+    serie      = meta.get('serie', '').strip()
 
     doc = Document()
 
@@ -1978,29 +2073,99 @@ def gerar_docx_pia(texto):
     doc.styles['Normal'].font.name = 'Arial'
     doc.styles['Normal'].font.size = Pt(10)
 
-    # ── CABEÇALHO DE MARCA ─────────────────────────────────────────────────
-    hdr = doc.add_table(rows=1, cols=2)
+    # ── CABEÇALHO ESCOLAR ──────────────────────────────────────────────────
+    # Tabela: [LOGO | DADOS DA ESCOLA | ProfessorIA™ watermark]
+    hdr = doc.add_table(rows=1, cols=3)
     _pia_no_borders(hdr)
-    # Célula esquerda: "MATERIAL PEDAGÓGICO"
-    lc = hdr.cell(0, 0)
-    pl = lc.paragraphs[0]
-    pl.paragraph_format.space_before = Pt(0)
-    pl.paragraph_format.space_after  = Pt(0)
-    _pr(pl, 'MATERIAL PEDAGÓGICO', size=6, color='888880')
-    # Célula direita: marca ProfessorIA™
-    rc = hdr.cell(0, 1)
+    hdr.columns[0].width = Cm(3.2)
+    hdr.columns[1].width = Cm(12.0)
+    hdr.columns[2].width = Cm(2.6)
+
+    # Coluna esquerda: logo ou placeholder
+    logo_cell = hdr.cell(0, 0)
+    logo_cell._tc.get_or_add_tcPr()
+    lp = logo_cell.paragraphs[0]
+    lp.alignment = WD_ALIGN_PARAGRAPH.CENTER
+    lp.paragraph_format.space_before = Pt(0)
+    lp.paragraph_format.space_after  = Pt(0)
+    if logo_path:
+        try:
+            run = lp.add_run()
+            run.add_picture(logo_path, width=Cm(2.8))
+        except Exception:
+            _pr(lp, '[LOGO]', size=7, color='aaaaaa', italic=True)
+    else:
+        # Placeholder box para logo
+        t2 = logo_cell.add_table(rows=1, cols=1)
+        t2_c = t2.cell(0, 0)
+        t2_c._tc.get_or_add_tcPr()
+        t2_p = t2_c.paragraphs[0]
+        t2_p.alignment = WD_ALIGN_PARAGRAPH.CENTER
+        t2_p.paragraph_format.space_before = Pt(14)
+        t2_p.paragraph_format.space_after  = Pt(14)
+        _pr(t2_p, 'LOGO', size=7, color='aaaaaa', italic=True)
+        tc = t2_c._tc
+        tcPr = tc.get_or_add_tcPr()
+        tcBorders = OxmlElement('w:tcBorders')
+        for side in ('top', 'left', 'bottom', 'right'):
+            el = OxmlElement(f'w:{side}')
+            el.set(qn('w:val'), 'single')
+            el.set(qn('w:sz'), '4')
+            el.set(qn('w:color'), 'cccccc')
+            tcBorders.append(el)
+        tcPr.append(tcBorders)
+
+    # Coluna central: nome da escola, disciplina/bimestre, professor
+    mid_cell = hdr.cell(0, 1)
+    mp = mid_cell.paragraphs[0]
+    mp.alignment = WD_ALIGN_PARAGRAPH.CENTER
+    mp.paragraph_format.space_before = Pt(0)
+    mp.paragraph_format.space_after  = Pt(2)
+    if escola:
+        _pr(mp, escola.upper(), bold=True, size=13, color='0a0a0a')
+    else:
+        _pr(mp, 'ESCOLA / INSTITUIÇÃO DE ENSINO', bold=True, size=11, color='555555')
+
+    # Linha 2: "Avaliação de DISCIPLINA — Xº Bimestre"
+    mp2 = mid_cell.add_paragraph()
+    mp2.alignment = WD_ALIGN_PARAGRAPH.CENTER
+    mp2.paragraph_format.space_before = Pt(1)
+    mp2.paragraph_format.space_after  = Pt(1)
+    partes = []
+    if disciplina:
+        partes.append(f'Avaliação de {disciplina}')
+    if bimestre:
+        partes.append(f'{bimestre}º Bimestre')
+    if serie:
+        partes.append(serie)
+    if partes:
+        _pr(mp2, '  ·  '.join(partes), bold=False, size=10, color='222222')
+    else:
+        _pr(mp2, 'Avaliação', bold=False, size=10, color='555555')
+
+    # Linha 3: professor
+    mp3 = mid_cell.add_paragraph()
+    mp3.alignment = WD_ALIGN_PARAGRAPH.CENTER
+    mp3.paragraph_format.space_before = Pt(1)
+    mp3.paragraph_format.space_after  = Pt(0)
+    if professor:
+        _pr(mp3, f'Prof(a). {professor}', italic=True, size=9, color='444444')
+    else:
+        _pr(mp3, 'Prof(a). ______________________________', italic=False, size=9, color='888880')
+
+    # Coluna direita: marca ProfessorIA™ (pequena, discreta)
+    rc = hdr.cell(0, 2)
     pr_cell = rc.paragraphs[0]
     pr_cell.alignment = WD_ALIGN_PARAGRAPH.RIGHT
     pr_cell.paragraph_format.space_before = Pt(0)
     pr_cell.paragraph_format.space_after  = Pt(0)
-    _pr(pr_cell, 'PROFESSOR', bold=True, size=12, color='0a0a0a')
-    _pr(pr_cell, 'IA',        bold=True, size=12, color='0a0a0a')
-    _pr(pr_cell, '™',         bold=False, size=7,  color='888880')
-    ps = rc.add_paragraph()
-    ps.alignment = WD_ALIGN_PARAGRAPH.RIGHT
-    ps.paragraph_format.space_before = Pt(0)
-    ps.paragraph_format.space_after  = Pt(0)
-    _pr(ps, 'ASSISTENTE PEDAGÓGICO', size=6, color='888880')
+    _pr(pr_cell, 'Professor', bold=True, size=7, color='bbbbbb')
+    _pr(pr_cell, 'IA', bold=True, size=7, color='bbbbbb')
+    ps2 = rc.add_paragraph()
+    ps2.alignment = WD_ALIGN_PARAGRAPH.RIGHT
+    ps2.paragraph_format.space_before = Pt(0)
+    ps2.paragraph_format.space_after  = Pt(0)
+    _pr(ps2, '™', size=6, color='cccccc')
 
     # Linha separadora grossa
     _pia_hrule(doc, thick=True)
@@ -2008,23 +2173,49 @@ def gerar_docx_pia(texto):
     # ── CAMPOS DO ALUNO ────────────────────────────────────────────────────
     sf = doc.add_table(rows=2, cols=3)
     _pia_no_borders(sf)
-    fields = [
-        ('NOME',        '_' * 42),
-        ('PROFESSOR(A)', '_' * 30),
-        ('TURMA',       '_' * 14),
-        ('DISCIPLINA',  '_' * 30),
-        ('DATA',        '___/___/______'),
-        ('NOTA',        '_' * 14),
-    ]
-    for idx, (label, blank) in enumerate(fields):
-        row_i = idx // 3
-        col_i = idx % 3
-        cell  = sf.cell(row_i, col_i)
-        p     = cell.paragraphs[0]
-        p.paragraph_format.space_before = Pt(3)
-        p.paragraph_format.space_after  = Pt(3)
-        _pr(p, label + ': ', bold=True, size=8, color='0a0a0a')
-        _pr(p, blank, size=8, color='555550')
+
+    # Linha 1: Nome (largo), Série/Turma, Data
+    c_nome = sf.cell(0, 0)
+    p_nome = c_nome.paragraphs[0]
+    p_nome.paragraph_format.space_before = Pt(3)
+    p_nome.paragraph_format.space_after  = Pt(3)
+    _pr(p_nome, 'Nome: ', bold=True, size=9, color='0a0a0a')
+    _pr(p_nome, '_' * 44, size=9, color='555550')
+
+    c_serie = sf.cell(0, 1)
+    p_serie = c_serie.paragraphs[0]
+    p_serie.paragraph_format.space_before = Pt(3)
+    p_serie.paragraph_format.space_after  = Pt(3)
+    label_serie = f'Série/Turma: {serie}' if serie else 'Série/Turma: ___________'
+    _pr(p_serie, label_serie, size=9, color='0a0a0a')
+
+    c_data = sf.cell(0, 2)
+    p_data = c_data.paragraphs[0]
+    p_data.paragraph_format.space_before = Pt(3)
+    p_data.paragraph_format.space_after  = Pt(3)
+    _pr(p_data, 'Data: ', bold=True, size=9, color='0a0a0a')
+    _pr(p_data, '___/___/______', size=9, color='555550')
+
+    # Linha 2: Número, espaço, Nota
+    c_num = sf.cell(1, 0)
+    p_num = c_num.paragraphs[0]
+    p_num.paragraph_format.space_before = Pt(2)
+    p_num.paragraph_format.space_after  = Pt(3)
+    _pr(p_num, 'Nº: ', bold=True, size=9, color='0a0a0a')
+    _pr(p_num, '______', size=9, color='555550')
+
+    c_blank = sf.cell(1, 1)
+    p_blank = c_blank.paragraphs[0]
+    p_blank.paragraph_format.space_after = Pt(3)
+    if bimestre:
+        _pr(p_blank, f'{bimestre}º Bimestre', size=9, color='444444', italic=True)
+
+    c_nota = sf.cell(1, 2)
+    p_nota = c_nota.paragraphs[0]
+    p_nota.paragraph_format.space_before = Pt(2)
+    p_nota.paragraph_format.space_after  = Pt(3)
+    _pr(p_nota, 'Nota: ', bold=True, size=9, color='0a0a0a')
+    _pr(p_nota, '_________', size=9, color='555550')
 
     _pia_hrule(doc, thick=False, color='555555')
 
@@ -2041,7 +2232,11 @@ def gerar_docx_pia(texto):
             while i < len(lines) and not lines[i].strip().startswith('```'):
                 code_lines.append(lines[i])
                 i += 1
-            _pia_code_block(doc, '\n'.join(code_lines))
+            code_text = '\n'.join(code_lines)
+            if _is_letter_grid(code_text):
+                _pia_caca_palavras_table(doc, code_text)
+            else:
+                _pia_code_block(doc, code_text)
             i += 1
             continue
 
@@ -2114,8 +2309,10 @@ def gerar_docx_pia(texto):
     pf = doc.add_paragraph()
     pf.alignment = WD_ALIGN_PARAGRAPH.CENTER
     pf.paragraph_format.space_before = Pt(0)
-    _pr(pf, f'Gerado por PROFESSORIA™  ·  {datetime.now().strftime("%d/%m/%Y")}  ·  professorIA.com.br',
-        size=7, color='888880')
+    rodape_parts = ['Gerado por ProfessorIA™', datetime.now().strftime('%d/%m/%Y')]
+    if escola:
+        rodape_parts.append(escola)
+    _pr(pf, '  ·  '.join(rodape_parts), size=7, color='888880')
 
     return doc
 
@@ -2124,11 +2321,27 @@ def gerar_docx_pia(texto):
 @login_required
 def api_chat_download():
     """Converte o texto de uma mensagem do chat em DOCX com design ProfessorIA."""
+    import os
     data = request.json or {}
     texto = data.get('texto', '').strip()
     if not texto:
         return jsonify({'erro': 'Texto vazio'}), 400
-    doc = gerar_docx_pia(texto)
+
+    meta = {
+        'escola':    data.get('escola', current_user.escola_nome).strip(),
+        'professor': data.get('professor', current_user.professor_nome).strip(),
+        'disciplina': data.get('disciplina', '').strip(),
+        'bimestre':   data.get('bimestre', '').strip(),
+        'serie':      data.get('serie', '').strip(),
+    }
+
+    logo_abs = None
+    if current_user.logo_path:
+        candidate = os.path.join(os.path.dirname(__file__), current_user.logo_path)
+        if os.path.isfile(candidate):
+            logo_abs = candidate
+
+    doc = gerar_docx_pia(texto, meta=meta, logo_path=logo_abs)
     buf = io.BytesIO()
     doc.save(buf)
     buf.seek(0)
@@ -2137,6 +2350,51 @@ def api_chat_download():
         download_name='material-professorIA.docx',
         mimetype='application/vnd.openxmlformats-officedocument.wordprocessingml.document'
     )
+
+
+@app.route('/api/config-escola', methods=['GET', 'POST'])
+@login_required
+def api_config_escola():
+    """Salva ou retorna configurações da escola do professor."""
+    if request.method == 'GET':
+        return jsonify({
+            'escola_nome':    current_user.escola_nome,
+            'professor_nome': current_user.professor_nome,
+            'logo_path':      current_user.logo_path,
+        })
+    data = request.json or {}
+    escola   = data.get('escola_nome', '').strip()
+    prof     = data.get('professor_nome', '').strip()
+    conn = get_db()
+    conn.execute(
+        "UPDATE usuarios SET escola_nome=?, professor_nome=? WHERE id=?",
+        (escola, prof, current_user.id)
+    )
+    conn.commit(); conn.close()
+    return jsonify({'ok': True})
+
+
+@app.route('/api/upload-logo', methods=['POST'])
+@login_required
+def api_upload_logo():
+    """Recebe a logo da escola como upload e salva em static/logos/."""
+    import os, uuid
+    f = request.files.get('logo')
+    if not f:
+        return jsonify({'erro': 'Nenhum arquivo enviado'}), 400
+    ext = os.path.splitext(f.filename)[1].lower()
+    if ext not in ('.png', '.jpg', '.jpeg', '.gif', '.webp', '.svg'):
+        return jsonify({'erro': 'Formato não suportado. Use PNG, JPG ou SVG.'}), 400
+    fname = f'logo_{current_user.id}_{uuid.uuid4().hex[:8]}{ext}'
+    save_dir = os.path.join(os.path.dirname(__file__), 'static', 'logos')
+    os.makedirs(save_dir, exist_ok=True)
+    fpath = os.path.join(save_dir, fname)
+    f.save(fpath)
+    rel = f'static/logos/{fname}'
+    conn = get_db()
+    conn.execute("UPDATE usuarios SET logo_path=? WHERE id=?", (rel, current_user.id))
+    conn.commit(); conn.close()
+    return jsonify({'ok': True, 'logo_path': rel})
 
 
 def _add_formatted_run(paragraph, text):
