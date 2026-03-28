@@ -632,7 +632,7 @@
         <input id="dl-professor" type="text" placeholder="Profa. Ana Silva" style="width:100%;padding:9px 12px;background:rgba(255,255,255,.05);border:1.5px solid rgba(255,255,255,.1);color:#fff;font-family:'Inter',sans-serif;font-size:.82rem;border-radius:8px;outline:none;transition:border-color .2s;" onfocus="this.style.borderColor='rgba(99,102,241,.5)'" onblur="this.style.borderColor='rgba(255,255,255,.1)'"/>
       </div>
     </div>
-    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:16px;">
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:10px;">
       <div>
         <label style="font-size:.55rem;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:rgba(255,255,255,.35);display:block;margin-bottom:6px;">Disciplina</label>
         <input id="dl-disciplina" type="text" placeholder="História" style="width:100%;padding:9px 12px;background:rgba(255,255,255,.05);border:1.5px solid rgba(255,255,255,.1);color:#fff;font-family:'Inter',sans-serif;font-size:.82rem;border-radius:8px;outline:none;transition:border-color .2s;" onfocus="this.style.borderColor='rgba(99,102,241,.5)'" onblur="this.style.borderColor='rgba(255,255,255,.1)'"/>
@@ -652,13 +652,26 @@
         <input id="dl-serie" type="text" placeholder="8º Ano" style="width:100%;padding:9px 12px;background:rgba(255,255,255,.05);border:1.5px solid rgba(255,255,255,.1);color:#fff;font-family:'Inter',sans-serif;font-size:.82rem;border-radius:8px;outline:none;transition:border-color .2s;" onfocus="this.style.borderColor='rgba(99,102,241,.5)'" onblur="this.style.borderColor='rgba(255,255,255,.1)'"/>
       </div>
     </div>
-    <div style="margin-bottom:20px;">
+    <div style="margin-bottom:16px;">
+      <label style="font-size:.55rem;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:rgba(255,255,255,.35);display:block;margin-bottom:6px;">Estado (para plano de aula oficial)</label>
+      <input id="dl-estado" type="text" placeholder="São Paulo" style="width:100%;padding:9px 12px;background:rgba(255,255,255,.05);border:1.5px solid rgba(255,255,255,.1);color:#fff;font-family:'Inter',sans-serif;font-size:.82rem;border-radius:8px;outline:none;transition:border-color .2s;" onfocus="this.style.borderColor='rgba(99,102,241,.5)'" onblur="this.style.borderColor='rgba(255,255,255,.1)'"/>
+    </div>
+    <div style="margin-bottom:12px;">
       <label style="font-size:.55rem;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:rgba(255,255,255,.35);display:block;margin-bottom:6px;">Logo da escola (PNG/JPG)</label>
       <div style="display:flex;align-items:center;gap:10px;">
         <label for="dl-logo" style="padding:8px 14px;background:rgba(255,255,255,.06);border:1.5px solid rgba(255,255,255,.1);border-radius:8px;font-size:.72rem;font-weight:600;color:rgba(255,255,255,.5);cursor:pointer;transition:all .2s;" onmouseover="this.style.borderColor='rgba(99,102,241,.4)';this.style.color='#fff'" onmouseout="this.style.borderColor='rgba(255,255,255,.1)';this.style.color='rgba(255,255,255,.5)'">Escolher arquivo</label>
         <input type="file" id="dl-logo" accept=".png,.jpg,.jpeg,.svg,.webp" style="display:none" onchange="previewLogo(this)"/>
         <span id="dl-logo-nome" style="font-size:.72rem;color:rgba(255,255,255,.35);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">Nenhuma logo carregada</span>
         <img id="dl-logo-preview" src="" alt="" style="display:none;width:36px;height:36px;object-fit:contain;border-radius:4px;background:rgba(255,255,255,.08);padding:2px;"/>
+      </div>
+    </div>
+    <div style="margin-bottom:20px;">
+      <label style="font-size:.55rem;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:rgba(255,255,255,.35);display:block;margin-bottom:6px;">Brasão do Governo / Secretaria (PNG/JPG)</label>
+      <div style="display:flex;align-items:center;gap:10px;">
+        <label for="dl-logo-estado" style="padding:8px 14px;background:rgba(255,255,255,.06);border:1.5px solid rgba(255,255,255,.1);border-radius:8px;font-size:.72rem;font-weight:600;color:rgba(255,255,255,.5);cursor:pointer;transition:all .2s;" onmouseover="this.style.borderColor='rgba(99,102,241,.4)';this.style.color='#fff'" onmouseout="this.style.borderColor='rgba(255,255,255,.1)';this.style.color='rgba(255,255,255,.5)'">Escolher arquivo</label>
+        <input type="file" id="dl-logo-estado" accept=".png,.jpg,.jpeg,.svg,.webp" style="display:none" onchange="previewLogoEstado(this)"/>
+        <span id="dl-logo-estado-nome" style="font-size:.72rem;color:rgba(255,255,255,.35);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">Nenhum brasão carregado</span>
+        <img id="dl-logo-estado-preview" src="" alt="" style="display:none;width:36px;height:36px;object-fit:contain;border-radius:4px;background:rgba(255,255,255,.08);padding:2px;"/>
       </div>
     </div>
     <div style="display:flex;align-items:center;gap:8px;margin-bottom:16px;">
@@ -1007,14 +1020,19 @@
     document.getElementById('dl-disciplina').value = saved.disciplina || '';
     document.getElementById('dl-bimestre').value   = saved.bimestre   || '';
     document.getElementById('dl-serie').value      = saved.serie      || '';
+    document.getElementById('dl-estado').value     = saved.estado     || '';
     document.getElementById('dl-logo-nome').textContent = 'Nenhuma logo carregada';
     document.getElementById('dl-logo-preview').style.display = 'none';
     document.getElementById('dl-logo').value = '';
+    document.getElementById('dl-logo-estado-nome').textContent = 'Nenhum brasão carregado';
+    document.getElementById('dl-logo-estado-preview').style.display = 'none';
+    document.getElementById('dl-logo-estado').value = '';
 
     fetch('/api/config-escola').then(r => r.json()).then(d => {
       if (d.escola_nome    && !document.getElementById('dl-escola').value)    document.getElementById('dl-escola').value    = d.escola_nome;
       if (d.professor_nome && !document.getElementById('dl-professor').value) document.getElementById('dl-professor').value = d.professor_nome;
       if (d.logo_path) document.getElementById('dl-logo-nome').textContent = 'Logo salva no perfil ✓';
+      if (d.logo_estado_path) document.getElementById('dl-logo-estado-nome').textContent = 'Brasão salvo no perfil ✓';
     }).catch(() => {});
 
     document.getElementById('downloadModal').style.display = 'flex';
@@ -1030,26 +1048,37 @@
     reader.readAsDataURL(f);
   }
 
+  function previewLogoEstado(input) {
+    const f = input.files[0]; if (!f) return;
+    document.getElementById('dl-logo-estado-nome').textContent = f.name;
+    const reader = new FileReader();
+    reader.onload = e => { const img = document.getElementById('dl-logo-estado-preview'); img.src = e.target.result; img.style.display = 'block'; };
+    reader.readAsDataURL(f);
+  }
+
   async function confirmarDownload() {
     const btn        = document.getElementById('dl-btn-baixar');
     const escola     = document.getElementById('dl-escola').value.trim();
     const professor  = document.getElementById('dl-professor').value.trim();
     const disciplina = document.getElementById('dl-disciplina').value.trim();
     const bimestre   = document.getElementById('dl-bimestre').value.trim();
-    const serie      = document.getElementById('dl-serie').value.trim();
-    const salvar     = document.getElementById('dl-salvar').checked;
-    const logoFile   = document.getElementById('dl-logo').files[0];
+    const serie           = document.getElementById('dl-serie').value.trim();
+    const estado          = document.getElementById('dl-estado').value.trim();
+    const salvar          = document.getElementById('dl-salvar').checked;
+    const logoFile        = document.getElementById('dl-logo').files[0];
+    const logoEstadoFile  = document.getElementById('dl-logo-estado').files[0];
 
-    if (salvar) localStorage.setItem('pia-escola-cfg', JSON.stringify({ escola, professor, disciplina, bimestre, serie }));
+    if (salvar) localStorage.setItem('pia-escola-cfg', JSON.stringify({ escola, professor, disciplina, bimestre, serie, estado }));
     btn.textContent = '⏳ Gerando...'; btn.disabled = true;
 
     try {
       if (logoFile) { const fd = new FormData(); fd.append('logo', logoFile); await fetch('/api/upload-logo', { method:'POST', body:fd }); }
+      if (logoEstadoFile) { const fd2 = new FormData(); fd2.append('logo', logoEstadoFile); await fetch('/api/upload-logo-estado', { method:'POST', body:fd2 }); }
       if (salvar && (escola || professor)) await fetch('/api/config-escola', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ escola_nome:escola, professor_nome:professor }) });
 
       const resp = await fetch('/api/chat-download', {
         method:'POST', headers:{'Content-Type':'application/json'},
-        body: JSON.stringify({ texto: _dlTexto, escola, professor, disciplina, bimestre, serie })
+        body: JSON.stringify({ texto: _dlTexto, escola, professor, disciplina, bimestre, serie, estado })
       });
       if (!resp.ok) { alert('Erro ao gerar arquivo.'); return; }
       const blob = await resp.blob();

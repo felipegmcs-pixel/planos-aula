@@ -182,8 +182,43 @@ Exemplo de formato:
     └── subtópico 3.2
 ```
 
+PLANO DE AULA — formato oficial para exportação DOCX:
+Quando o professor pedir um plano de aula, use EXATAMENTE esta estrutura para que o sistema possa exportar no formato oficial da Secretaria de Educação:
+
+# PLANEJAMENTO DA AULA — [DISCIPLINA] | [SÉRIE]
+
+**Componente Curricular:** [disciplina] | **Nº de aulas:** [n] semanais
+**Ano/Série/Turma:** [série] | **Período:** [período] | **Data:** de [início] a [fim]
+
+---
+
+### AULA 1 — [Título/Tema]
+
+**Conteúdo e Objetivos de Aprendizagem:**
+[texto detalhado]
+
+**Estratégias Didáticas:**
+[texto detalhado]
+
+**Recursos Pedagógicos:**
+[texto detalhado]
+
+**Avaliação:**
+[texto detalhado]
+
+---
+
+### AULA 2 — [Título/Tema]
+(mesmo formato...)
+
+Regras obrigatórias para plano de aula:
+- Use exatamente os cabeçalhos ### AULA N —
+- Use exatamente os campos **Conteúdo e Objetivos de Aprendizagem:**, **Estratégias Didáticas:**, **Recursos Pedagógicos:**, **Avaliação:**
+- Seja detalhado em cada campo — mínimo 3 frases por campo
+- Siga a BNCC e use linguagem pedagógica profissional
+
 Quando o professor pedir um material:
-1. Para caça-palavras, cruzadinhas, mapas mentais, planos de aula simples, atividades e bilhetes: gere DIRETAMENTE sem perguntar mais nada se já tiver tema e série
+1. Para caça-palavras, cruzadinhas, mapas mentais, planos de aula, atividades e bilhetes: gere DIRETAMENTE sem perguntar mais nada se já tiver tema e série
 2. Se faltar informação essencial, pergunte apenas o que falta (1 pergunta objetiva)
 3. Gere o material completo, bem estruturado e formatado
 4. Use linguagem clara e pedagógica, seguindo a BNCC
@@ -365,6 +400,7 @@ def init_db():
     conn.execute("ALTER TABLE usuarios ADD COLUMN IF NOT EXISTS escola_nome TEXT DEFAULT ''")
     conn.execute("ALTER TABLE usuarios ADD COLUMN IF NOT EXISTS professor_nome TEXT DEFAULT ''")
     conn.execute("ALTER TABLE usuarios ADD COLUMN IF NOT EXISTS logo_path TEXT DEFAULT ''")
+    conn.execute("ALTER TABLE usuarios ADD COLUMN IF NOT EXISTS logo_estado_path TEXT DEFAULT ''")
     conn.commit()
     conn.close()
 
@@ -385,6 +421,7 @@ class Usuario(UserMixin):
         self.escola_nome     = row.get('escola_nome', '') or ''
         self.professor_nome  = row.get('professor_nome', '') or ''
         self.logo_path       = row.get('logo_path', '') or ''
+        self.logo_estado_path = row.get('logo_estado_path', '') or ''
 
     @property
     def assinatura_ativa(self):
@@ -2090,6 +2127,296 @@ def _pia_md_table(doc, lines):
     ep = doc.add_paragraph()
     ep.paragraph_format.space_after = Pt(4)
 
+def _detect_doc_type(texto):
+    """Returns 'plano_aula' or 'outro' based on content."""
+    t = texto.lower()
+    signals = ['### aula', '**conteúdo e objetivos', '**estratégias didáticas',
+               '**recursos pedagógicos', 'planejamento da aula', '**avaliação:']
+    return 'plano_aula' if sum(1 for s in signals if s in t) >= 3 else 'outro'
+
+
+def _parse_plano_aula(texto):
+    """
+    Extrai metadados e seções de aula do texto estruturado gerado pela IA.
+    Retorna (meta_extra, aulas) onde aulas é lista de dicts.
+    """
+    import re
+    meta_extra = {}
+
+    for pattern, key in [
+        (r'(?:nº\s+de\s+aulas|número\s+de\s+aulas)[^*\n]*?\*\*\s*[:\s]+([^\n|]+)', 'num_aulas'),
+        (r'período[^*\n]*?\*\*\s*[:\s]+([^\n|]+)', 'periodo'),
+        (r'data[^*\n]*?\*\*\s*[:\s]+([^\n|]+)', 'data_range'),
+        (r'(?:ano|série)[^*\n]*?turma[^*\n]*?\*\*\s*[:\s]+([^\n|]+)', 'serie_turma'),
+    ]:
+        m = re.search(pattern, texto, re.IGNORECASE)
+        if m:
+            meta_extra[key] = re.sub(r'\*+', '', m.group(1)).strip(' |,')
+
+    # Split by ### AULA N sections
+    section_re = re.compile(r'(?:^|\n)#{2,3}\s+(AULA\s+\d+[^\n]*)', re.IGNORECASE)
+    matches = list(section_re.finditer(texto))
+    aulas = []
+
+    def extract_field(corpo, keys):
+        for k in keys:
+            m = re.search(
+                r'\*\*' + re.escape(k) + r'[^*]*?\*\*\s*[:\n]+([\s\S]*?)(?=\n\s*\*\*[A-ZÀ-Ú]|\n#{2,3}|\n---|\Z)',
+                corpo, re.IGNORECASE
+            )
+            if m:
+                return m.group(1).strip()
+        return ''
+
+    for idx, match in enumerate(matches):
+        titulo = re.sub(r'[#*]+', '', match.group(1)).strip()
+        start  = match.end()
+        end    = matches[idx + 1].start() if idx + 1 < len(matches) else len(texto)
+        corpo  = texto[start:end]
+        aulas.append({
+            'titulo':      titulo,
+            'conteudo':    extract_field(corpo, ['conteúdo e objetivos de aprendizagem', 'conteúdo e objetivos', 'objetivos de aprendizagem', 'conteúdo']),
+            'estrategias': extract_field(corpo, ['estratégias didáticas', 'estratégias', 'metodologia']),
+            'recursos':    extract_field(corpo, ['recursos pedagógicos', 'recursos']),
+            'avaliacao':   extract_field(corpo, ['avaliação', 'verificar se']),
+        })
+
+    return meta_extra, aulas
+
+
+def _set_cell_borders_plano(cell, color='cccccc'):
+    """Adiciona bordas simples a uma célula da tabela de plano de aula."""
+    tc = cell._tc
+    tcPr = tc.get_or_add_tcPr()
+    tcBorders = OxmlElement('w:tcBorders')
+    for side in ('top', 'left', 'bottom', 'right'):
+        el = OxmlElement(f'w:{side}')
+        el.set(qn('w:val'), 'single')
+        el.set(qn('w:sz'), '4')
+        el.set(qn('w:space'), '0')
+        el.set(qn('w:color'), color)
+        tcBorders.append(el)
+    tcPr.append(tcBorders)
+
+
+def _set_cell_bg_plano(cell, hex_color):
+    tc = cell._tc
+    tcPr = tc.get_or_add_tcPr()
+    shd = OxmlElement('w:shd')
+    shd.set(qn('w:val'), 'clear')
+    shd.set(qn('w:color'), 'auto')
+    shd.set(qn('w:fill'), hex_color)
+    tcPr.append(shd)
+
+
+def gerar_plano_aula_docx(texto, meta=None, logo_estado_path=None):
+    """
+    Gera DOCX no formato oficial da Secretaria de Educação Estadual.
+    Estrutura: cabeçalho gov + tabela 5 colunas (Aula | Conteúdo | Estratégias | Recursos | Avaliação)
+    """
+    import re
+    if meta is None:
+        meta = {}
+
+    escola     = meta.get('escola', '').strip()
+    professor  = meta.get('professor', '').strip()
+    disciplina = meta.get('disciplina', '').strip()
+    estado     = meta.get('estado', '').strip()
+
+    meta_extra, aulas = _parse_plano_aula(texto)
+    num_aulas  = meta_extra.get('num_aulas', '3 semanais')
+    periodo    = meta_extra.get('periodo', 'quinzenal')
+    data_range = meta_extra.get('data_range', '')
+    serie_turma = meta_extra.get('serie_turma', meta.get('serie', '').strip())
+
+    doc = Document()
+    for section in doc.sections:
+        section.page_height   = Cm(29.7)
+        section.page_width    = Cm(21.0)
+        section.top_margin    = Cm(1.5)
+        section.bottom_margin = Cm(1.5)
+        section.left_margin   = Cm(1.5)
+        section.right_margin  = Cm(1.5)
+
+    doc.styles['Normal'].font.name = 'Arial'
+    doc.styles['Normal'].font.size = Pt(9)
+
+    # ── CABEÇALHO OFICIAL ──────────────────────────────────────────────
+    hdr = doc.add_table(rows=1, cols=3)
+    _pia_no_borders(hdr)
+    hdr.columns[0].width = Cm(3.0)
+    hdr.columns[1].width = Cm(13.5)
+    hdr.columns[2].width = Cm(1.5)
+
+    # Coluna esquerda: brasão / logo do governo estadual
+    logo_cell = hdr.cell(0, 0)
+    lp = logo_cell.paragraphs[0]
+    lp.alignment = WD_ALIGN_PARAGRAPH.CENTER
+    lp.paragraph_format.space_before = Pt(0)
+    lp.paragraph_format.space_after  = Pt(0)
+    if logo_estado_path:
+        try:
+            run = lp.add_run()
+            run.add_picture(logo_estado_path, height=Cm(2.6))
+        except Exception:
+            _pr(lp, '[BRASÃO]', size=7, color='aaaaaa', italic=True)
+    else:
+        _pr(lp, '🏛', size=20, color='4338ca')
+
+    # Coluna central: info governo + escola
+    mid = hdr.cell(0, 1)
+    mp = mid.paragraphs[0]
+    mp.alignment = WD_ALIGN_PARAGRAPH.CENTER
+    mp.paragraph_format.space_before = Pt(0)
+    mp.paragraph_format.space_after  = Pt(1)
+
+    estado_txt = f'GOVERNO DO ESTADO DE {estado.upper()}' if estado else 'GOVERNO DO ESTADO'
+    _pr(mp, estado_txt, bold=True, size=9, color='0a0a0a')
+
+    mp2 = mid.add_paragraph()
+    mp2.alignment = WD_ALIGN_PARAGRAPH.CENTER
+    mp2.paragraph_format.space_before = Pt(0)
+    mp2.paragraph_format.space_after  = Pt(0)
+    _pr(mp2, 'SECRETARIA DE ESTADO DA EDUCAÇÃO', bold=True, size=8, color='222222')
+
+    if escola:
+        mp3 = mid.add_paragraph()
+        mp3.alignment = WD_ALIGN_PARAGRAPH.CENTER
+        mp3.paragraph_format.space_before = Pt(2)
+        mp3.paragraph_format.space_after  = Pt(0)
+        _pr(mp3, escola.upper(), bold=True, size=10, color='0a0a0a')
+
+    # Coluna direita: watermark ProfessorIA
+    rp = hdr.cell(0, 2).paragraphs[0]
+    rp.alignment = WD_ALIGN_PARAGRAPH.RIGHT
+    rp.paragraph_format.space_before = Pt(0)
+    _pr(rp, 'ProfessorIA™', size=6, color='aaaaaa', italic=True)
+
+    doc.add_paragraph().paragraph_format.space_after = Pt(2)
+
+    # ── TÍTULO E METADADOS ──────────────────────────────────────────────
+    titulo_p = doc.add_paragraph()
+    titulo_p.alignment = WD_ALIGN_PARAGRAPH.CENTER
+    titulo_p.paragraph_format.space_before = Pt(2)
+    titulo_p.paragraph_format.space_after  = Pt(4)
+    _pr(titulo_p, f'PLANEJAMENTO DA AULA  {datetime.now().year}', bold=True, size=11, color='0a0a0a')
+
+    # Linha de metadados 1: Professor | Componente | Nº aulas
+    meta1 = doc.add_table(rows=1, cols=3)
+    _pia_no_borders(meta1)
+    meta1.columns[0].width = Cm(5.5)
+    meta1.columns[1].width = Cm(7.0)
+    meta1.columns[2].width = Cm(5.5)
+
+    def _meta_field(cell, label, value):
+        p = cell.paragraphs[0]
+        p.paragraph_format.space_before = Pt(0)
+        p.paragraph_format.space_after  = Pt(0)
+        _pr(p, f'{label}', bold=True, size=8, color='333333')
+        run = p.add_run(value or '________________________________')
+        run.font.size = Pt(8)
+        run.font.bold = False
+
+    _meta_field(meta1.cell(0, 0), 'Professor(a): ', professor)
+    _meta_field(meta1.cell(0, 1), 'Componente Curricular: ', disciplina)
+    _meta_field(meta1.cell(0, 2), 'Nº de aulas: ', num_aulas)
+
+    # Linha de metadados 2: Série/Turma | Período | Data
+    _pia_hrule(doc, thick=False, color='cccccc')
+    meta2 = doc.add_table(rows=1, cols=3)
+    _pia_no_borders(meta2)
+    meta2.columns[0].width = Cm(5.5)
+    meta2.columns[1].width = Cm(7.0)
+    meta2.columns[2].width = Cm(5.5)
+
+    _meta_field(meta2.cell(0, 0), 'Ano/Série/Turma: ', serie_turma)
+    _meta_field(meta2.cell(0, 1), 'Período do plano: ', periodo)
+    _meta_field(meta2.cell(0, 2), 'Data: ', data_range)
+
+    ep = doc.add_paragraph()
+    ep.paragraph_format.space_after = Pt(4)
+
+    # ── TABELA PRINCIPAL 5 COLUNAS ──────────────────────────────────────
+    COL_HEADERS = [
+        'AULA/DATA',
+        'CONTEÚDO E OBJETIVOS DE APRENDIZAGEM',
+        'ESTRATÉGIAS DIDÁTICAS',
+        'RECURSOS PEDAGÓGICOS',
+        'AVALIAÇÃO\nVerificar se o objetivo foi cumprido',
+    ]
+    COL_WIDTHS = [Cm(2.5), Cm(4.5), Cm(4.0), Cm(3.0), Cm(4.0)]
+
+    tbl = doc.add_table(rows=1, cols=5)
+    tbl.style = 'Table Grid'
+
+    # Larguras
+    for ci, w in enumerate(COL_WIDTHS):
+        for row in tbl.rows:
+            row.cells[ci].width = w
+
+    # Linha de cabeçalho
+    hrow = tbl.rows[0]
+    for ci, hdr_txt in enumerate(COL_HEADERS):
+        cell = hrow.cells[ci]
+        _set_cell_bg_plano(cell, 'e8eaf6')  # azul lavanda claro
+        _set_cell_borders_plano(cell, '9fa8da')
+        p = cell.paragraphs[0]
+        p.alignment = WD_ALIGN_PARAGRAPH.CENTER
+        p.paragraph_format.space_before = Pt(2)
+        p.paragraph_format.space_after  = Pt(2)
+        for line in hdr_txt.split('\n'):
+            run = p.add_run(line + ('\n' if '\n' in hdr_txt and line == hdr_txt.split('\n')[0] else ''))
+            run.font.bold = True
+            run.font.size = Pt(7)
+            run.font.name = 'Arial'
+            run.font.color.rgb = RGBColor(0x1a, 0x23, 0x7e)
+
+    # Linhas de conteúdo
+    if not aulas:
+        # Fallback: sem parser, coloca texto bruto na coluna conteúdo
+        aulas = [{'titulo': 'Aula', 'conteudo': texto, 'estrategias': '', 'recursos': '', 'avaliacao': ''}]
+
+    for aula in aulas:
+        row = tbl.add_row()
+        for ci, w in enumerate(COL_WIDTHS):
+            row.cells[ci].width = w
+
+        fields = [
+            aula.get('titulo', ''),
+            aula.get('conteudo', ''),
+            aula.get('estrategias', ''),
+            aula.get('recursos', ''),
+            aula.get('avaliacao', ''),
+        ]
+        for ci, txt in enumerate(fields):
+            cell = row.cells[ci]
+            _set_cell_borders_plano(cell, 'bbbbbb')
+            p = cell.paragraphs[0]
+            p.paragraph_format.space_before = Pt(2)
+            p.paragraph_format.space_after  = Pt(2)
+            # Clean markdown bold from field text
+            txt_clean = re.sub(r'\*\*([^*]+)\*\*', r'\1', txt or '').strip()
+            run = p.add_run(txt_clean)
+            run.font.size = Pt(8)
+            run.font.name = 'Arial'
+            if ci == 0:
+                run.font.bold = True
+
+    # ── RODAPÉ ──────────────────────────────────────────────────────────
+    ep2 = doc.add_paragraph()
+    ep2.paragraph_format.space_after = Pt(2)
+    _pia_hrule(doc, thick=False, color='aaaaaa')
+    pf = doc.add_paragraph()
+    pf.alignment = WD_ALIGN_PARAGRAPH.CENTER
+    pf.paragraph_format.space_before = Pt(0)
+    rodape_parts = ['Gerado por ProfessorIA™', datetime.now().strftime('%d/%m/%Y')]
+    if escola:
+        rodape_parts.append(escola)
+    _pr(pf, '  ·  '.join(rodape_parts), size=7, color='888880')
+
+    return doc
+
+
 def gerar_docx_pia(texto, meta=None, logo_path=None):
     """
     Gera DOCX com design ProfessorIA™ inspirado nas fichas pedagógicas dos exemplos.
@@ -2099,6 +2426,11 @@ def gerar_docx_pia(texto, meta=None, logo_path=None):
     import re
     if meta is None:
         meta = {}
+
+    # Roteamento: plano de aula usa formato oficial Secretaria de Educação
+    if _detect_doc_type(texto) == 'plano_aula':
+        logo_estado_abs = meta.get('logo_estado_path')
+        return gerar_plano_aula_docx(texto, meta=meta, logo_estado_path=logo_estado_abs)
 
     escola    = meta.get('escola', '').strip()
     professor = meta.get('professor', '').strip()
@@ -2380,6 +2712,7 @@ def api_chat_download():
         'disciplina': data.get('disciplina', '').strip(),
         'bimestre':   data.get('bimestre', '').strip(),
         'serie':      data.get('serie', '').strip(),
+        'estado':     data.get('estado', '').strip(),
     }
 
     logo_abs = None
@@ -2387,6 +2720,14 @@ def api_chat_download():
         candidate = os.path.join(os.path.dirname(__file__), current_user.logo_path)
         if os.path.isfile(candidate):
             logo_abs = candidate
+
+    # Logo do governo estadual (brasão)
+    logo_estado_abs = None
+    if current_user.logo_estado_path:
+        candidate_e = os.path.join(os.path.dirname(__file__), current_user.logo_estado_path)
+        if os.path.isfile(candidate_e):
+            logo_estado_abs = candidate_e
+    meta['logo_estado_path'] = logo_estado_abs
 
     doc = gerar_docx_pia(texto, meta=meta, logo_path=logo_abs)
     buf = io.BytesIO()
@@ -2405,9 +2746,10 @@ def api_config_escola():
     """Salva ou retorna configurações da escola do professor."""
     if request.method == 'GET':
         return jsonify({
-            'escola_nome':    current_user.escola_nome,
-            'professor_nome': current_user.professor_nome,
-            'logo_path':      current_user.logo_path,
+            'escola_nome':      current_user.escola_nome,
+            'professor_nome':   current_user.professor_nome,
+            'logo_path':        current_user.logo_path,
+            'logo_estado_path': current_user.logo_estado_path,
         })
     data = request.json or {}
     escola   = data.get('escola_nome', '').strip()
@@ -2442,6 +2784,29 @@ def api_upload_logo():
     conn.execute("UPDATE usuarios SET logo_path=? WHERE id=?", (rel, current_user.id))
     conn.commit(); conn.close()
     return jsonify({'ok': True, 'logo_path': rel})
+
+
+@app.route('/api/upload-logo-estado', methods=['POST'])
+@login_required
+def api_upload_logo_estado():
+    """Recebe o brasão/logo do governo estadual e salva em static/logos/."""
+    import os, uuid
+    f = request.files.get('logo')
+    if not f:
+        return jsonify({'erro': 'Nenhum arquivo enviado'}), 400
+    ext = os.path.splitext(f.filename)[1].lower()
+    if ext not in ('.png', '.jpg', '.jpeg', '.gif', '.webp', '.svg'):
+        return jsonify({'erro': 'Formato não suportado. Use PNG, JPG ou SVG.'}), 400
+    fname = f'brasao_{current_user.id}_{uuid.uuid4().hex[:8]}{ext}'
+    save_dir = os.path.join(os.path.dirname(__file__), 'static', 'logos')
+    os.makedirs(save_dir, exist_ok=True)
+    fpath = os.path.join(save_dir, fname)
+    f.save(fpath)
+    rel = f'static/logos/{fname}'
+    conn = get_db()
+    conn.execute("UPDATE usuarios SET logo_estado_path=? WHERE id=?", (rel, current_user.id))
+    conn.commit(); conn.close()
+    return jsonify({'ok': True, 'logo_estado_path': rel})
 
 
 def _add_formatted_run(paragraph, text):
