@@ -5,6 +5,7 @@
   <script>!function(){var t=localStorage.getItem("pia-theme")||"light",a="system"===t?(window.matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light"):t;document.documentElement.setAttribute("data-theme",a),document.documentElement.style.colorScheme=a}();</script>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>ProfessorIA — Chat</title>
+  <link rel="icon" type="image/svg+xml" href="/static/logo.svg"/>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet"/>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -699,6 +700,7 @@
   <aside class="sidebar" id="sidebar">
     <div class="sidebar-header">
       <a class="logo" href="/chat">
+        <img src="/static/logo.svg" width="30" height="30" style="border-radius:8px;margin-right:9px;flex-shrink:0;" alt="ProfessorIA"/>
         <span class="logo-p">Professor</span><span class="logo-ia">IA</span><span class="logo-dot"></span>
       </a>
     </div>
