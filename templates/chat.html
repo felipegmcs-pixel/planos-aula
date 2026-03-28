@@ -21,10 +21,11 @@
       --linha-f: rgba(17,24,39,.14);
       --hover-bg: rgba(17,24,39,.04);
       --pre-bg: #f1f2f8;
-      --sb-bg: #0a0c18;
-      --sb-text: rgba(255,255,255,.5);
-      --sb-active: rgba(99,102,241,.2);
-      --sb-line: rgba(255,255,255,.07);
+      --sb-bg: #f7f8ff;
+      --sb-fg: #111827;
+      --sb-text: rgba(17,24,39,.45);
+      --sb-active: rgba(67,56,202,.09);
+      --sb-line: rgba(17,24,39,.07);
       --sidebar-w: 240px;
     }
     [data-theme="dark"] {
@@ -36,6 +37,11 @@
       --linha-f: rgba(255,255,255,.12);
       --hover-bg: rgba(255,255,255,.04);
       --pre-bg: rgba(255,255,255,.06);
+      --sb-bg: #0a0c18;
+      --sb-fg: #ffffff;
+      --sb-text: rgba(255,255,255,.5);
+      --sb-active: rgba(99,102,241,.2);
+      --sb-line: rgba(255,255,255,.07);
     }
     html, body { height: 100%; font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); overflow: hidden; }
     ::selection { background: #ede9fe; color: var(--indigo); }
@@ -87,9 +93,13 @@
       0%,100% { box-shadow: 0 0 0 3px rgba(67,56,202,.1), 0 0 28px rgba(67,56,202,.06); }
       50%     { box-shadow: 0 0 0 3px rgba(67,56,202,.2), 0 0 40px rgba(67,56,202,.12); }
     }
-    @keyframes logoFloat {
-      0%,100% { transform: translateY(0); }
-      50%     { transform: translateY(-3px); }
+    @keyframes iconTyping {
+      0%,100% { filter: brightness(1) drop-shadow(0 0 0px transparent); transform: scale(1); }
+      50%     { filter: brightness(1.35) drop-shadow(0 0 10px rgba(124,58,237,.9)); transform: scale(1.08); }
+    }
+    @keyframes nodeFlow {
+      0%   { stroke-dashoffset: 20; }
+      100% { stroke-dashoffset: 0; }
     }
     @keyframes pulseDot {
       0%,100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(67,56,202,.5); }
@@ -111,17 +121,22 @@
     .app { display: flex; height: 100vh; }
 
     /* ════════════════════════════════════════
-       SIDEBAR — always dark
+       SIDEBAR — themed
     ════════════════════════════════════════ */
     .sidebar {
       width: var(--sidebar-w); background: var(--sb-bg);
       display: flex; flex-direction: column;
       flex-shrink: 0; overflow: hidden;
-      transition: transform .3s cubic-bezier(.16,1,.3,1);
+      transition: transform .3s cubic-bezier(.16,1,.3,1), background .3s;
       z-index: 200; position: relative;
+      border-right: 1px solid var(--sb-line);
     }
     .sidebar::before {
       content: ''; position: absolute; inset: 0; pointer-events: none; z-index: 0;
+      background: none;
+      transition: background .3s;
+    }
+    [data-theme="dark"] .sidebar::before {
       background:
         radial-gradient(ellipse 160% 50% at 50% 0%,  rgba(99,102,241,.22) 0%, transparent 60%),
         radial-gradient(ellipse 100% 40% at 100% 100%, rgba(124,58,237,.14) 0%, transparent 55%);
@@ -133,17 +148,31 @@
       display: flex; align-items: center;
       border-bottom: 1px solid var(--sb-line); flex-shrink: 0;
     }
-    .logo { display: flex; align-items: center; text-decoration: none; }
-    .logo-p  { font-size: .88rem; font-weight: 800; letter-spacing: -.3px; color: #fff; }
+    .logo { display: flex; align-items: center; text-decoration: none; gap: 9px; }
+    .logo-p  { font-size: .88rem; font-weight: 800; letter-spacing: -.3px; color: var(--sb-fg); }
     .logo-ia {
       font-size: .88rem; font-weight: 800; letter-spacing: -.3px;
       background: linear-gradient(135deg, #818cf8, #a78bfa, #60a5fa);
       -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
     }
-    .logo-dot {
-      width: 6px; height: 6px; border-radius: 50%; background: var(--amber);
-      margin-left: 3px; flex-shrink: 0;
-      animation: logoFloat 3s ease-in-out infinite;
+
+    /* ─── ProfessorIA animated icon mark ─── */
+    .pia-mark {
+      width: 30px; height: 30px; border-radius: 8px; flex-shrink: 0;
+      background: linear-gradient(135deg, #4338ca, #7c3aed);
+      box-shadow: 0 2px 12px rgba(67,56,202,.35);
+      transition: filter .3s, transform .3s, box-shadow .3s;
+      display: block;
+    }
+    .pia-mark.typing {
+      animation: iconTyping 0.9s ease-in-out infinite;
+    }
+    .pia-mark svg line {
+      stroke-dasharray: 20;
+      stroke-dashoffset: 20;
+    }
+    .pia-mark.typing svg line {
+      animation: nodeFlow 0.7s linear infinite;
     }
 
     .sidebar-nav { padding: 16px 12px 10px; flex-shrink: 0; display: flex; flex-direction: column; gap: 3px; }
@@ -155,8 +184,10 @@
       transition: background .15s, color .15s, box-shadow .15s;
       border: none; background: none; width: 100%; text-align: left;
     }
-    .nav-item:hover { background: rgba(255,255,255,.07); color: #fff; }
-    .nav-item.active { background: var(--sb-active); color: #fff; box-shadow: inset 3px 0 0 #818cf8; }
+    .nav-item:hover { background: var(--hover-bg); color: var(--sb-fg); }
+    .nav-item.active { background: var(--sb-active); color: var(--indigo); box-shadow: inset 3px 0 0 #818cf8; }
+    [data-theme="dark"] .nav-item:hover { background: rgba(255,255,255,.07); color: #fff; }
+    [data-theme="dark"] .nav-item.active { color: #fff; }
     .nav-icon { width: 15px; height: 15px; flex-shrink: 0; stroke: currentColor; fill: none; }
     .nav-item-dot { width: 5px; height: 5px; border-radius: 50%; background: #818cf8; flex-shrink: 0; margin-left: auto; }
 
@@ -167,7 +198,8 @@
       padding: 8px 10px; border-radius: 8px;
       text-decoration: none; transition: background .15s;
     }
-    .user-card:hover { background: rgba(255,255,255,.07); }
+    .user-card:hover { background: var(--hover-bg); }
+    [data-theme="dark"] .user-card:hover { background: rgba(255,255,255,.07); }
     .user-avatar {
       width: 30px; height: 30px; border-radius: 50%;
       background: linear-gradient(135deg, #4338ca, #7c3aed);
@@ -175,7 +207,7 @@
       font-size: .65rem; font-weight: 800; color: #fff; flex-shrink: 0;
       box-shadow: 0 0 0 2px rgba(99,102,241,.3);
     }
-    .user-name { font-size: .78rem; font-weight: 600; color: #fff; }
+    .user-name { font-size: .78rem; font-weight: 600; color: var(--sb-fg); }
     .user-plan { font-size: .65rem; color: var(--sb-text); margin-top: 1px; }
 
     /* ════════════════════════════════════════
@@ -712,9 +744,20 @@
   <!-- ═══════ SIDEBAR ═══════ -->
   <aside class="sidebar" id="sidebar">
     <div class="sidebar-header">
-      <a class="logo" href="/chat">
-        <img src="/static/logo.svg" width="30" height="30" style="border-radius:8px;margin-right:9px;flex-shrink:0;" alt="ProfessorIA"/>
-        <span class="logo-p">Professor</span><span class="logo-ia">IA</span><span class="logo-dot"></span>
+      <a class="logo" href="/">
+        <span class="pia-mark" id="piaMark">
+          <svg viewBox="0 0 30 30" fill="none" xmlns="http://www.w3.org/2000/svg" width="30" height="30">
+            <circle cx="7"  cy="15" r="3" fill="white" opacity=".9"/>
+            <circle cx="15" cy="7"  r="3" fill="white" opacity=".9"/>
+            <circle cx="15" cy="23" r="3" fill="white" opacity=".9"/>
+            <circle cx="23" cy="15" r="3" fill="#f59e0b"/>
+            <line x1="7" y1="15" x2="15" y2="7"  stroke="white" stroke-width="1" opacity=".5" stroke-dasharray="12" stroke-linecap="round"/>
+            <line x1="7" y1="15" x2="15" y2="23" stroke="white" stroke-width="1" opacity=".5" stroke-dasharray="12" stroke-linecap="round"/>
+            <line x1="15" y1="7"  x2="23" y2="15" stroke="white" stroke-width="1" opacity=".5" stroke-dasharray="12" stroke-linecap="round"/>
+            <line x1="15" y1="23" x2="23" y2="15" stroke="white" stroke-width="1" opacity=".5" stroke-dasharray="12" stroke-linecap="round"/>
+          </svg>
+        </span>
+        <span class="logo-p">Professor</span><span class="logo-ia">IA</span>
       </a>
     </div>
     <nav class="sidebar-nav">
@@ -1147,6 +1190,8 @@
     historico.push({ role:'user', content:textoEnviado });
     const anexoEnvio = anexoAtual; removerAnexo();
     const stream = addMsgIA();
+    const piaMark = document.getElementById('piaMark');
+    if (piaMark) piaMark.classList.add('typing');
     try {
       const resp = await fetch('/api/chat',{ method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({messages:historico,anexo:anexoEnvio}) });
       if (resp.status===403) { stream.done(); location.reload(); return; }
@@ -1179,7 +1224,11 @@
       const textoFinal = stream.done();
       historico.push({role:'assistant', content: textoFinal || fullText});
     } catch(err) { stream.add('Erro ao conectar. Tente novamente.'); stream.done(); }
-    finally { enviando=false; btnEnviar.disabled=false; inputEl.disabled=false; inputEl.focus(); }
+    finally {
+      const pm = document.getElementById('piaMark');
+      if (pm) pm.classList.remove('typing');
+      enviando=false; btnEnviar.disabled=false; inputEl.disabled=false; inputEl.focus();
+    }
   }
 
   function scroll() { const el=document.getElementById('messages'); el.scrollTop=el.scrollHeight; }

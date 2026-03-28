@@ -128,13 +128,13 @@ Quando pedirem um caça-palavras, gere imediatamente com a seguinte estrutura:
 
 IMPORTANTE para campos em branco: use underscores diretos SEM barra invertida. Exemplo correto: Nome: _____________ Data: ___/___/___
 
-Para o formato da grade, SEMPRE use bloco de código com letras separadas por espaço simples, uma letra por célula, prefixando cada linha com a letra da linha:
+Para o formato da grade, SEMPRE use bloco de código com exatamente 15 letras por linha, separadas por espaço simples, SEM qualquer prefixo, número ou rótulo de linha ou coluna:
 ```
-A T R I N C H E I R A M P L K
-B W A R M I S T I C I O Q Z B
-C K L I B E R D A D E X Y Z A
+T R I N C H E I R A M P L K Q
+W A R M I S T I C I O Q Z B X
+K L I B E R D A D E X Y Z A B
 ```
-Não inclua linha de números de coluna. Use exatamente este formato: letra da linha + espaço + letras separadas por espaço.
+NUNCA inclua letras de linha (A, B, C...), números de coluna ou qualquer outro prefixo. Apenas as letras da grade, 15 por linha, 15 linhas.
 
 CRUZADINHA — geração direta:
 Quando pedirem uma cruzadinha, gere imediatamente com a seguinte estrutura:
@@ -2000,9 +2000,8 @@ def _is_letter_grid(code):
         if not tokens:
             continue
         if all(re.match(r'^\d+$', t) for t in tokens):
-            continue  # skip number header rows
-        body = tokens[1:] if (len(tokens) > 1 and len(tokens[0]) == 1 and tokens[0].isalpha()) else tokens
-        single = sum(1 for t in body if len(t) == 1 and t.isalpha())
+            continue  # skip pure number rows
+        single = sum(1 for t in tokens if len(t) == 1 and t.isalpha())
         if single >= 8:
             letter_lines += 1
     return letter_lines >= 5
@@ -2019,11 +2018,9 @@ def _pia_caca_palavras_table(doc, code):
         if not tokens:
             continue
         if all(re.match(r'^\d+$', t) for t in tokens):
-            continue  # skip column-number header
-        if len(tokens[0]) == 1 and tokens[0].isalpha() and len(tokens) > 8:
-            row = [t.upper() for t in tokens[1:] if len(t) == 1 and t.isalpha()]
-        else:
-            row = [t.upper() for t in tokens if len(t) == 1 and t.isalpha()]
+            continue  # skip pure number rows
+        # Collect all single alpha tokens — works for both formats (with or without row prefix)
+        row = [t.upper() for t in tokens if len(t) == 1 and t.isalpha()]
         if len(row) >= 8:
             grid.append(row)
 
