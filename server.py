@@ -416,7 +416,7 @@ def assinatura_required(f):
         if not current_user.is_authenticated:
             return redirect(url_for('login'))
         if not current_user.assinatura_ativa and not current_user.is_admin:
-            return redirect(url_for('planos'))
+            return redirect(url_for('chat'))
         return f(*args, **kwargs)
     return decorated
 
@@ -823,7 +823,7 @@ def criar_docx(dados_form, aulas_ia):
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if current_user.is_authenticated:
-        return redirect(url_for('planos'))
+        return redirect(url_for('chat'))
     if request.method == 'POST':
         email = request.form.get('email', '').strip().lower()
         senha = request.form.get('senha', '')
@@ -832,7 +832,7 @@ def login():
         conn.close()
         if row and check_password_hash(row['senha'], senha):
             login_user(Usuario(row))
-            return redirect(url_for('planos'))
+            return redirect(url_for('chat'))
         flash('E-mail ou senha incorretos.')
     return render_template('login.html')
 
@@ -845,7 +845,7 @@ def logout():
 @app.route('/cadastro', methods=['GET', 'POST'])
 def cadastro():
     if current_user.is_authenticated:
-        return redirect(url_for('planos'))
+        return redirect(url_for('chat'))
     if request.method == 'POST':
         nome  = request.form.get('nome', '').strip()
         email = request.form.get('email', '').strip().lower()
@@ -867,7 +867,7 @@ def cadastro():
         row = conn.execute('SELECT * FROM usuarios WHERE email = ?', (email,)).fetchone()
         conn.close()
         login_user(Usuario(row))
-        return redirect(url_for('planos'))
+        return redirect(url_for('chat'))
     return render_template('cadastro.html')
 
 # ─── Recuperação de senha ─────────────────────────────────────────────────────
@@ -948,14 +948,14 @@ def planos():
 def stripe_checkout(plano_id):
     if plano_id not in PLANOS:
         flash(f'Plano inválido: {plano_id}', 'erro')
-        return redirect(url_for('planos'))
+        return redirect(url_for('chat'))
     if not STRIPE_SECRET_KEY:
         flash('Chave Stripe não configurada no servidor (STRIPE_SECRET_KEY).', 'erro')
-        return redirect(url_for('planos'))
+        return redirect(url_for('chat'))
     price_id = STRIPE_PRICES.get(plano_id, '')
     if not price_id:
         flash(f'Price ID não configurado para o plano "{plano_id}" (STRIPE_PRICE_{plano_id.upper()}).', 'erro')
-        return redirect(url_for('planos'))
+        return redirect(url_for('chat'))
     try:
         import stripe as stripe_lib
         stripe_lib.api_key = STRIPE_SECRET_KEY
@@ -971,7 +971,7 @@ def stripe_checkout(plano_id):
         return redirect(session.url, code=303)
     except Exception as e:
         flash(f'Erro Stripe: {str(e)}', 'erro')
-        return redirect(url_for('planos'))
+        return redirect(url_for('chat'))
 
 
 @app.route('/stripe/sucesso')
@@ -1059,11 +1059,11 @@ def stripe_webhook():
 @login_required
 def pagamento_criar(plano_id):
     if plano_id not in PLANOS:
-        return redirect(url_for('planos'))
+        return redirect(url_for('chat'))
 
     if not mp_sdk:
         flash('Pagamento não configurado ainda. Entre em contato com o suporte.')
-        return redirect(url_for('planos'))
+        return redirect(url_for('chat'))
 
     plano = PLANOS[plano_id]
 
@@ -1090,7 +1090,7 @@ def pagamento_criar(plano_id):
 
     if "init_point" not in pref:
         flash('Erro ao criar pagamento. Tente novamente.')
-        return redirect(url_for('planos'))
+        return redirect(url_for('chat'))
 
     return redirect(pref["init_point"])
 
@@ -1098,7 +1098,7 @@ def pagamento_criar(plano_id):
 @login_required
 def pagamento_checkout(plano_id):
     if plano_id not in PLANOS:
-        return redirect(url_for('planos'))
+        return redirect(url_for('chat'))
     plano = PLANOS[plano_id]
     return render_template('pagamento_checkout.html',
                            plano_id=plano_id,
@@ -1246,11 +1246,11 @@ def pagamento_falha():
 @login_required
 def nupay_criar(plano_id):
     if plano_id not in PLANOS:
-        return redirect(url_for('planos'))
+        return redirect(url_for('chat'))
 
     if not NUPAY_MERCHANT_KEY or not NUPAY_MERCHANT_TOKEN:
         flash('NuPay não configurado ainda. Escolha outro método de pagamento.')
-        return redirect(url_for('planos'))
+        return redirect(url_for('chat'))
 
     import requests, uuid
     plano = PLANOS[plano_id]
@@ -1295,7 +1295,7 @@ def nupay_criar(plano_id):
         return redirect(payment_url)
     except Exception as e:
         flash('Erro ao criar pagamento NuPay. Tente Mercado Pago ou tente novamente.')
-        return redirect(url_for('planos'))
+        return redirect(url_for('chat'))
 
 @app.route('/pagamento/nupay/webhook', methods=['POST'])
 def nupay_webhook():
@@ -2418,7 +2418,7 @@ def _add_formatted_run(paragraph, text):
 @login_required
 def planejamento():
     if not current_user.assinatura_ativa and not current_user.is_admin:
-        return redirect(url_for('planos'))
+        return redirect(url_for('chat'))
     return render_template('planejamento.html')
 
 
