@@ -1119,11 +1119,34 @@
     try {
       const resp = await fetch('/api/chat',{ method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({messages:historico,anexo:anexoEnvio}) });
       if (resp.status===403) { stream.done(); location.reload(); return; }
-      const data = await resp.json();
-      if (!resp.ok||data.erro) { stream.add('Erro: '+(data.erro||'Tente novamente.')); stream.done(); return; }
-      if (data.text) stream.add(data.text);
+      if (!resp.ok) { stream.add('Erro ao conectar. Tente novamente.'); stream.done(); return; }
+
+      // Lê SSE streaming
+      const reader = resp.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = '';
+      let fullText = '';
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split('\n');
+        buffer = lines.pop(); // guarda linha incompleta
+        for (const line of lines) {
+          if (!line.startsWith('data: ')) continue;
+          const payload = line.slice(6).trim();
+          if (payload === '[DONE]') break;
+          try {
+            const obj = JSON.parse(payload);
+            if (obj.erro) { stream.add('\n\nErro: ' + obj.erro); break; }
+            if (obj.chunk) { stream.add(obj.chunk); fullText += obj.chunk; }
+          } catch(_) {}
+        }
+      }
+
       const textoFinal = stream.done();
-      historico.push({role:'assistant',content:textoFinal});
+      historico.push({role:'assistant', content: textoFinal || fullText});
     } catch(err) { stream.add('Erro ao conectar. Tente novamente.'); stream.done(); }
     finally { enviando=false; btnEnviar.disabled=false; inputEl.disabled=false; inputEl.focus(); }
   }

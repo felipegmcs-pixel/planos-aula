@@ -8,7 +8,7 @@ import psycopg2
 import psycopg2.extras
 from datetime import datetime, timedelta
 from flask import (Flask, render_template, request, send_file,
-                   jsonify, redirect, url_for, flash)
+                   jsonify, redirect, url_for, flash, Response, stream_with_context)
 from flask_login import (LoginManager, UserMixin, login_user,
                          logout_user, login_required, current_user)
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -1704,52 +1704,99 @@ def api_chat():
     conn.commit()
     conn.close()
 
-    try:
-        sistema = SYSTEM_PROMPT
-        if current_user.escola_template:
-            sistema += f"\n\nO professor usa o seguinte esqueleto/modelo padrão de plano de aula da sua escola. SEMPRE que gerar planos de aula, use EXATAMENTE essa estrutura como base:\n\n{current_user.escola_template}"
+    # Prepara sistema e mensagens antes de entrar no generator
+    sistema = SYSTEM_PROMPT
+    if current_user.escola_template:
+        sistema += f"\n\nO professor usa o seguinte esqueleto/modelo padrão de plano de aula da sua escola. SEMPRE que gerar planos de aula, use EXATAMENTE essa estrutura como base:\n\n{current_user.escola_template}"
 
-        # Processar anexo
-        if anexo:
-            tipo_anexo = anexo.get('tipo')
+    if anexo:
+        tipo_anexo = anexo.get('tipo')
+        if tipo_anexo == 'documento':
+            nome_doc = anexo.get('nome', 'documento')
+            texto_doc = anexo.get('texto', '')
+            sistema += f"\n\n=== DOCUMENTO ENVIADO PELO PROFESSOR: {nome_doc} ===\n{texto_doc}\n=== FIM DO DOCUMENTO ===\n\nUse este documento como referência e base estrutural para criar o material solicitado."
+        elif tipo_anexo == 'image':
+            b64    = anexo.get('base64', '')
+            mime_t = anexo.get('mime', 'image/jpeg')
+            texto_msg = messages[-1].get('content', '')
+            if not isinstance(texto_msg, list):
+                texto_msg = texto_msg or 'Use esta imagem como base para criar o material.'
+            messages = messages[:-1] + [{
+                'role': 'user',
+                'content': [
+                    {'type': 'image', 'source': {'type': 'base64', 'media_type': mime_t, 'data': b64}},
+                    {'type': 'text',  'text': texto_msg if isinstance(texto_msg, str) else ' '.join(p.get('text','') for p in texto_msg if p.get('type')=='text')}
+                ]
+            }]
 
-            if tipo_anexo == 'documento':
-                # Texto extraído: adiciona ao system prompt como contexto
-                nome_doc = anexo.get('nome', 'documento')
-                texto_doc = anexo.get('texto', '')
-                sistema += f"\n\n=== DOCUMENTO ENVIADO PELO PROFESSOR: {nome_doc} ===\n{texto_doc}\n=== FIM DO DOCUMENTO ===\n\nUse este documento como referência e base estrutural para criar o material solicitado."
+    usuario_id = current_user.id
 
-            elif tipo_anexo == 'image':
-                # Imagem: injeta na última mensagem como conteúdo multimodal
-                b64    = anexo.get('base64', '')
-                mime_t = anexo.get('mime', 'image/jpeg')
-                texto_msg = messages[-1].get('content', '')
-                if not isinstance(texto_msg, list):
-                    texto_msg = texto_msg or 'Use esta imagem como base para criar o material.'
-                messages = messages[:-1] + [{
-                    'role': 'user',
-                    'content': [
-                        {'type': 'image', 'source': {'type': 'base64', 'media_type': mime_t, 'data': b64}},
-                        {'type': 'text',  'text': texto_msg if isinstance(texto_msg, str) else ' '.join(p.get('text','') for p in texto_msg if p.get('type')=='text')}
-                    ]
-                }]
+    @stream_with_context
+    def generate():
+        chunks = []
+        try:
+            # Tenta Gemini streaming primeiro
+            if _gemini_disponivel():
+                try:
+                    import google.generativeai as genai
+                    historico_g = []
+                    for m in messages[:-1]:
+                        role = 'user' if m['role'] == 'user' else 'model'
+                        historico_g.append({'role': role, 'parts': _to_gemini_parts(m['content'])})
+                    gm = genai.GenerativeModel(model_name='gemini-1.5-pro', system_instruction=sistema)
+                    chat_g = gm.start_chat(history=historico_g)
+                    resp_g = chat_g.send_message(_to_gemini_parts(messages[-1]['content']), stream=True)
+                    for chunk in resp_g:
+                        text = getattr(chunk, 'text', '') or ''
+                        if text:
+                            chunks.append(text)
+                            yield f"data: {json.dumps({'chunk': text})}\n\n"
+                    yield "data: [DONE]\n\n"
+                    resposta = ''.join(chunks)
+                    conn2 = get_db()
+                    conn2.execute(
+                        "INSERT INTO chat_messages (usuario_id, role, content, criado_em) VALUES (?, ?, ?, ?)",
+                        (usuario_id, 'assistant', resposta, datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
+                    )
+                    conn2.commit(); conn2.close()
+                    return
+                except Exception as e:
+                    print(f'Gemini streaming falhou, usando Claude: {e}')
+                    chunks = []  # reset
 
-        resposta = chamar_ia_chat(sistema, messages)
-    except Exception as e:
-        erro_detalhado = f"{type(e).__name__}: {str(e)}"
-        print("ERRO API:", traceback.format_exc())
-        return jsonify({'erro': erro_detalhado}), 500
+            # Claude streaming
+            with client.messages.stream(
+                model='claude-sonnet-4-6',
+                max_tokens=8000,
+                system=sistema,
+                messages=messages
+            ) as stream:
+                for text in stream.text_stream:
+                    chunks.append(text)
+                    yield f"data: {json.dumps({'chunk': text})}\n\n"
 
-    conn2 = get_db()
-    conn2.execute(
-        "INSERT INTO chat_messages (usuario_id, role, content, criado_em) VALUES (?, ?, ?, ?)",
-        (current_user.id, 'assistant', resposta,
-         datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
+            yield "data: [DONE]\n\n"
+            resposta = ''.join(chunks)
+            conn2 = get_db()
+            conn2.execute(
+                "INSERT INTO chat_messages (usuario_id, role, content, criado_em) VALUES (?, ?, ?, ?)",
+                (usuario_id, 'assistant', resposta, datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
+            )
+            conn2.commit(); conn2.close()
+
+        except Exception as e:
+            print("ERRO STREAM:", traceback.format_exc())
+            yield f"data: {json.dumps({'erro': str(e)})}\n\n"
+
+    return Response(
+        generate(),
+        mimetype='text/event-stream',
+        headers={
+            'Cache-Control': 'no-cache',
+            'X-Accel-Buffering': 'no',
+            'Connection': 'keep-alive',
+        }
     )
-    conn2.commit()
-    conn2.close()
-
-    return jsonify({'text': resposta})
 
 
 @app.route('/api/transcribe', methods=['POST'])
