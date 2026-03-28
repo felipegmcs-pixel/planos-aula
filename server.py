@@ -1810,101 +1810,337 @@ def api_tts():
         return jsonify({'erro': str(e)}), 500
 
 
-@app.route('/api/chat-download', methods=['POST'])
-@login_required
-def api_chat_download():
-    """Converte o texto de uma mensagem do chat em DOCX para download."""
-    data = request.json or {}
-    texto = data.get('texto', '').strip()
-    if not texto:
-        return jsonify({'erro': 'Texto vazio'}), 400
+# ─── Gerador de DOCX com design ProfessorIA ────────────────────────────────────
+# Inspirado nas fichas pedagógicas dos exemplos: cabeçalho de marca, campos do
+# aluno, seções com caixas, grid monospace, rodapé — tudo black & white p/ impressão.
+
+def _pr(paragraph, text, bold=False, size=10, color='0a0a0a',
+        italic=False, font='Arial', underline=False):
+    """Adiciona um run estilizado a um parágrafo."""
+    run = paragraph.add_run(text)
+    run.bold = bold
+    run.italic = italic
+    run.underline = underline
+    run.font.name = font
+    run.font.size = Pt(size)
+    r, g, b = int(color[0:2], 16), int(color[2:4], 16), int(color[4:6], 16)
+    run.font.color.rgb = RGBColor(r, g, b)
+    return run
+
+def _pr_fmt(paragraph, text, size=10, font='Arial'):
+    """Adiciona texto com suporte a **bold**, *italic* e `code` inline."""
+    import re
+    parts = re.split(r'(\*\*.*?\*\*|\*[^*]+?\*|`[^`]+`)', text)
+    for part in parts:
+        if part.startswith('**') and part.endswith('**') and len(part) > 4:
+            _pr(paragraph, part[2:-2], bold=True, size=size, font=font)
+        elif part.startswith('*') and part.endswith('*') and len(part) > 2:
+            _pr(paragraph, part[1:-1], italic=True, size=size, font=font)
+        elif part.startswith('`') and part.endswith('`') and len(part) > 2:
+            _pr(paragraph, part[1:-1], font='Courier New', size=size - 1, color='333333')
+        elif part:
+            _pr(paragraph, part, size=size, font=font)
+
+def _pia_no_borders(table):
+    """Remove todas as bordas de uma tabela."""
+    for row in table.rows:
+        for cell in row.cells:
+            tc = cell._tc
+            tcPr = tc.get_or_add_tcPr()
+            tcBorders = OxmlElement('w:tcBorders')
+            for side in ('top', 'left', 'bottom', 'right', 'insideH', 'insideV'):
+                el = OxmlElement(f'w:{side}')
+                el.set(qn('w:val'), 'none')
+                el.set(qn('w:sz'), '0')
+                el.set(qn('w:color'), 'auto')
+                tcBorders.append(el)
+            tcPr.append(tcBorders)
+
+def _pia_hrule(doc, thick=True, color='0a0a0a'):
+    """Linha horizontal fina usando borda inferior de parágrafo."""
+    p = doc.add_paragraph()
+    pPr = p._p.get_or_add_pPr()
+    pBdr = OxmlElement('w:pBdr')
+    bot = OxmlElement('w:bottom')
+    bot.set(qn('w:val'), 'single')
+    bot.set(qn('w:sz'), '16' if thick else '6')
+    bot.set(qn('w:space'), '1')
+    bot.set(qn('w:color'), color)
+    pBdr.append(bot)
+    pPr.append(pBdr)
+    p.paragraph_format.space_before = Pt(0)
+    p.paragraph_format.space_after = Pt(6)
+
+def _pia_section_box(doc, title):
+    """Caixa de seção: fundo preto, texto branco — como nos exemplos."""
+    sp = doc.add_paragraph()
+    sp.paragraph_format.space_after = Pt(2)
+    t = doc.add_table(rows=1, cols=1)
+    cell = t.cell(0, 0)
+    p = cell.paragraphs[0]
+    p.paragraph_format.space_before = Pt(5)
+    p.paragraph_format.space_after = Pt(5)
+    p.paragraph_format.left_indent = Cm(0.25)
+    _pr(p, '  ' + title.upper(), bold=True, size=10, color='FFFFFF')
+    set_cell_bg(cell, '0a0a0a')
+    # bordas pretas
+    tc = cell._tc
+    tcPr = tc.get_or_add_tcPr()
+    tcBorders = OxmlElement('w:tcBorders')
+    for side in ('top', 'left', 'bottom', 'right'):
+        el = OxmlElement(f'w:{side}')
+        el.set(qn('w:val'), 'single')
+        el.set(qn('w:sz'), '6')
+        el.set(qn('w:color'), '0a0a0a')
+        tcBorders.append(el)
+    tcPr.append(tcBorders)
+    ep = doc.add_paragraph()
+    ep.paragraph_format.space_after = Pt(3)
+
+def _pia_code_block(doc, code):
+    """Bloco monospace para grades de caça-palavras, cruzadinhas, mapas mentais."""
+    t = doc.add_table(rows=1, cols=1)
+    cell = t.cell(0, 0)
+    p = cell.paragraphs[0]
+    p.paragraph_format.space_before = Pt(4)
+    lines = code.split('\n')
+    for idx, ln in enumerate(lines):
+        if idx > 0:
+            p.add_run().add_break()
+        _pr(p, ln, font='Courier New', size=8, color='0a0a0a')
+    p.paragraph_format.space_after = Pt(4)
+    set_cell_bg(cell, 'f5f5f2')
+    tc = cell._tc
+    tcPr = tc.get_or_add_tcPr()
+    tcBorders = OxmlElement('w:tcBorders')
+    for side in ('top', 'left', 'bottom', 'right'):
+        el = OxmlElement(f'w:{side}')
+        el.set(qn('w:val'), 'single')
+        el.set(qn('w:sz'), '4')
+        el.set(qn('w:color'), 'aaaaaa')
+        tcBorders.append(el)
+    tcPr.append(tcBorders)
+    ep = doc.add_paragraph()
+    ep.paragraph_format.space_after = Pt(4)
+
+def _pia_md_table(doc, lines):
+    """Renderiza tabela Markdown como tabela Word estilizada."""
+    import re
+    rows = []
+    for line in lines:
+        stripped = line.strip()
+        if re.match(r'^\|[-\s|:]+\|$', stripped):
+            continue  # linha separadora do markdown
+        cells = [c.strip() for c in stripped.strip('|').split('|')]
+        if any(cells):
+            rows.append(cells)
+    if not rows:
+        return
+    max_cols = max(len(r) for r in rows)
+    t = doc.add_table(rows=len(rows), cols=max_cols)
+    t.style = 'Table Grid'
+    for ri, row in enumerate(rows):
+        for ci in range(max_cols):
+            cell = t.cell(ri, ci)
+            cell.paragraphs[0].clear()
+            p = cell.paragraphs[0]
+            p.paragraph_format.space_before = Pt(3)
+            p.paragraph_format.space_after = Pt(3)
+            text = row[ci] if ci < len(row) else ''
+            if ri == 0:
+                set_cell_bg(cell, 'e8e8e5')
+                _pr(p, text, bold=True, size=8, color='0a0a0a')
+            else:
+                if ri % 2 == 0:
+                    set_cell_bg(cell, 'f8f8f5')
+                _pr_fmt(p, text, size=9)
+    ep = doc.add_paragraph()
+    ep.paragraph_format.space_after = Pt(4)
+
+def gerar_docx_pia(texto):
+    """
+    Gera DOCX com design ProfessorIA™ inspirado nas fichas pedagógicas dos exemplos.
+    Black & white — imprime bem em qualquer impressora.
+    """
+    import re
 
     doc = Document()
+
+    # Margens A4
     for section in doc.sections:
-        section.top_margin    = Cm(2.0)
-        section.bottom_margin = Cm(2.0)
-        section.left_margin   = Cm(2.5)
-        section.right_margin  = Cm(2.5)
+        section.page_height = Cm(29.7)
+        section.page_width  = Cm(21.0)
+        section.top_margin    = Cm(1.5)
+        section.bottom_margin = Cm(1.5)
+        section.left_margin   = Cm(2.0)
+        section.right_margin  = Cm(2.0)
 
-    style = doc.styles['Normal']
-    style.font.name = 'Calibri'
-    style.font.size = Pt(11)
+    doc.styles['Normal'].font.name = 'Arial'
+    doc.styles['Normal'].font.size = Pt(10)
 
-    # Cabeçalho
-    header_p = doc.add_paragraph()
-    header_p.alignment = WD_ALIGN_PARAGRAPH.RIGHT
-    run = header_p.add_run('ProfessorIA — material gerado por IA')
-    run.font.size = Pt(8)
-    run.font.color.rgb = RGBColor(0x88, 0x88, 0x80)
-    run.font.italic = True
-    doc.add_paragraph()
+    # ── CABEÇALHO DE MARCA ─────────────────────────────────────────────────
+    hdr = doc.add_table(rows=1, cols=2)
+    _pia_no_borders(hdr)
+    # Célula esquerda: "MATERIAL PEDAGÓGICO"
+    lc = hdr.cell(0, 0)
+    pl = lc.paragraphs[0]
+    pl.paragraph_format.space_before = Pt(0)
+    pl.paragraph_format.space_after  = Pt(0)
+    _pr(pl, 'MATERIAL PEDAGÓGICO', size=6, color='888880')
+    # Célula direita: marca ProfessorIA™
+    rc = hdr.cell(0, 1)
+    pr_cell = rc.paragraphs[0]
+    pr_cell.alignment = WD_ALIGN_PARAGRAPH.RIGHT
+    pr_cell.paragraph_format.space_before = Pt(0)
+    pr_cell.paragraph_format.space_after  = Pt(0)
+    _pr(pr_cell, 'PROFESSOR', bold=True, size=12, color='0a0a0a')
+    _pr(pr_cell, 'IA',        bold=True, size=12, color='0a0a0a')
+    _pr(pr_cell, '™',         bold=False, size=7,  color='888880')
+    ps = rc.add_paragraph()
+    ps.alignment = WD_ALIGN_PARAGRAPH.RIGHT
+    ps.paragraph_format.space_before = Pt(0)
+    ps.paragraph_format.space_after  = Pt(0)
+    _pr(ps, 'ASSISTENTE PEDAGÓGICO', size=6, color='888880')
 
+    # Linha separadora grossa
+    _pia_hrule(doc, thick=True)
+
+    # ── CAMPOS DO ALUNO ────────────────────────────────────────────────────
+    sf = doc.add_table(rows=2, cols=3)
+    _pia_no_borders(sf)
+    fields = [
+        ('NOME',        '_' * 42),
+        ('PROFESSOR(A)', '_' * 30),
+        ('TURMA',       '_' * 14),
+        ('DISCIPLINA',  '_' * 30),
+        ('DATA',        '___/___/______'),
+        ('NOTA',        '_' * 14),
+    ]
+    for idx, (label, blank) in enumerate(fields):
+        row_i = idx // 3
+        col_i = idx % 3
+        cell  = sf.cell(row_i, col_i)
+        p     = cell.paragraphs[0]
+        p.paragraph_format.space_before = Pt(3)
+        p.paragraph_format.space_after  = Pt(3)
+        _pr(p, label + ': ', bold=True, size=8, color='0a0a0a')
+        _pr(p, blank, size=8, color='555550')
+
+    _pia_hrule(doc, thick=False, color='555555')
+
+    # ── CONTEÚDO MARKDOWN ─────────────────────────────────────────────────
     lines = texto.split('\n')
     i = 0
     while i < len(lines):
         line = lines[i]
 
-        # Títulos markdown
-        if line.startswith('### '):
+        # Bloco de código (``` ... ```)
+        if line.strip().startswith('```'):
+            code_lines = []
+            i += 1
+            while i < len(lines) and not lines[i].strip().startswith('```'):
+                code_lines.append(lines[i])
+                i += 1
+            _pia_code_block(doc, '\n'.join(code_lines))
+            i += 1
+            continue
+
+        # Tabela markdown
+        if line.strip().startswith('|'):
+            tbl_lines = []
+            while i < len(lines) and lines[i].strip().startswith('|'):
+                tbl_lines.append(lines[i])
+                i += 1
+            _pia_md_table(doc, tbl_lines)
+            continue
+
+        # H1 → título grande centrado
+        if line.startswith('# '):
             p = doc.add_paragraph()
-            run = p.add_run(line[4:].strip())
-            run.bold = True
-            run.font.size = Pt(11)
-            run.font.color.rgb = RGBColor(0x88, 0x88, 0x80)
+            p.alignment = WD_ALIGN_PARAGRAPH.CENTER
+            p.paragraph_format.space_before = Pt(6)
+            p.paragraph_format.space_after  = Pt(10)
+            _pr(p, line[2:].strip().upper(), bold=True, size=20, color='0a0a0a')
+
+        # H2 → caixa preta de seção
         elif line.startswith('## '):
+            _pia_section_box(doc, line[3:].strip())
+
+        # H3 → sub-seção negrito com linha fina
+        elif line.startswith('### '):
             p = doc.add_paragraph()
-            run = p.add_run(line[3:].strip())
-            run.bold = True
-            run.font.size = Pt(13)
-            run.font.color.rgb = RGBColor(0x1a, 0x1a, 0x1a)
-        elif line.startswith('# '):
-            p = doc.add_paragraph()
-            run = p.add_run(line[2:].strip())
-            run.bold = True
-            run.font.size = Pt(16)
-            run.font.color.rgb = RGBColor(0x0a, 0x0a, 0x0a)
-        elif line.startswith('---'):
-            doc.add_paragraph()
+            p.paragraph_format.space_before = Pt(6)
+            p.paragraph_format.space_after  = Pt(2)
+            _pr(p, line[4:].strip().upper(), bold=True, size=10, color='0a0a0a')
+            pPr = p._p.get_or_add_pPr()
+            pBdr = OxmlElement('w:pBdr')
+            bot = OxmlElement('w:bottom')
+            bot.set(qn('w:val'), 'single'); bot.set(qn('w:sz'), '4')
+            bot.set(qn('w:space'), '1');   bot.set(qn('w:color'), 'aaaaaa')
+            pBdr.append(bot); pPr.append(pBdr)
+
+        # Lista com marcador
         elif line.startswith('- ') or line.startswith('* '):
             p = doc.add_paragraph(style='List Bullet')
-            txt = line[2:].strip()
-            _add_formatted_run(p, txt)
-        elif len(line) > 2 and line[0].isdigit() and line[1] in '.):':
+            p.paragraph_format.space_before = Pt(0)
+            p.paragraph_format.space_after  = Pt(1)
+            _pr_fmt(p, line[2:].strip())
+
+        # Lista numerada
+        elif re.match(r'^\d+[\.\)\:]\s', line):
+            m = re.match(r'^\d+[\.\)\:]\s+(.*)', line)
             p = doc.add_paragraph(style='List Number')
-            txt = line[2:].strip()
-            _add_formatted_run(p, txt)
-        elif line.strip() == '':
-            doc.add_paragraph()
+            p.paragraph_format.space_before = Pt(1)
+            p.paragraph_format.space_after  = Pt(1)
+            _pr_fmt(p, m.group(1) if m else line)
+
+        # Separador ou linha vazia
+        elif line.strip() == '' or re.match(r'^-{3,}$', line.strip()):
+            ep = doc.add_paragraph()
+            ep.paragraph_format.space_after = Pt(3)
+
+        # Texto normal
         else:
             p = doc.add_paragraph()
-            _add_formatted_run(p, line)
+            p.paragraph_format.space_before = Pt(0)
+            p.paragraph_format.space_after  = Pt(3)
+            _pr_fmt(p, line)
 
         i += 1
 
-    # Rodapé
+    # ── RODAPÉ ────────────────────────────────────────────────────────────
     doc.add_paragraph()
-    footer_p = doc.add_paragraph()
-    footer_p.alignment = WD_ALIGN_PARAGRAPH.CENTER
-    run = footer_p.add_run(
-        f"Gerado em {datetime.now().strftime('%d/%m/%Y às %H:%M')} — ProfessorIA"
-    )
-    run.font.size = Pt(8)
-    run.font.color.rgb = RGBColor(0x88, 0x88, 0x80)
-    run.font.italic = True
+    _pia_hrule(doc, thick=False, color='aaaaaa')
+    pf = doc.add_paragraph()
+    pf.alignment = WD_ALIGN_PARAGRAPH.CENTER
+    pf.paragraph_format.space_before = Pt(0)
+    _pr(pf, f'Gerado por PROFESSORIA™  ·  {datetime.now().strftime("%d/%m/%Y")}  ·  professorIA.com.br',
+        size=7, color='888880')
 
+    return doc
+
+
+@app.route('/api/chat-download', methods=['POST'])
+@login_required
+def api_chat_download():
+    """Converte o texto de uma mensagem do chat em DOCX com design ProfessorIA."""
+    data = request.json or {}
+    texto = data.get('texto', '').strip()
+    if not texto:
+        return jsonify({'erro': 'Texto vazio'}), 400
+    doc = gerar_docx_pia(texto)
     buf = io.BytesIO()
     doc.save(buf)
     buf.seek(0)
     return send_file(
-        buf,
-        as_attachment=True,
+        buf, as_attachment=True,
         download_name='material-professorIA.docx',
         mimetype='application/vnd.openxmlformats-officedocument.wordprocessingml.document'
     )
 
 
 def _add_formatted_run(paragraph, text):
-    """Adiciona texto com bold/italic markdown simples."""
+    """Legado — mantido para compatibilidade com criar_docx."""
     import re
     parts = re.split(r'(\*\*.*?\*\*|\*.*?\*)', text)
     for part in parts:
