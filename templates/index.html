@@ -1,1003 +1,1064 @@
 <!DOCTYPE html>
-<html lang="pt-BR" data-theme="light">
+<html lang="pt-BR">
 <head>
   <meta charset="UTF-8"/>
-  <meta name="color-scheme" content="light"/>
-  <meta name="supported-color-schemes" content="light"/>
-  <script>
-    document.documentElement.setAttribute('data-theme','light');
-    document.documentElement.style.colorScheme='light';
-    document.documentElement.style.backgroundColor='#ffffff';
-  </script>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>ProfessorIA™ — Assistente Pedagógico de IA</title>
+  <title>ProfessorIA — Assistente Pedagógico com IA</title>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet"/>
-  <!-- theme.css removed from landing page — always forced light -->
   <style>
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-    :root {
-      color-scheme: only light;
-      --preto:   #0a0a0a;
-      --branco:  #ffffff;
-      --amarelo: #f0e000;
-      --cinza:   #666660;
-      --linha:   rgba(0,0,0,0.08);
-      --linha-f: rgba(0,0,0,0.14);
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    :root{
+      --bg:#ffffff;--bg2:#f7f8fc;--bg3:#f1f2f8;
+      --hero:#050811;--dark:#0d0f1c;
+      --text:#111827;--text2:#6b7280;--text3:#9ca3af;
+      --indigo:#4338ca;--violet:#7c3aed;--amber:#f59e0b;--cyan:#0ea5e9;
+      --line:rgba(17,24,39,.08);--line2:rgba(17,24,39,.14);
+      --r:12px;--r-sm:8px;
     }
-    html {
-      scroll-behavior: smooth;
-      background: #ffffff !important;
-      color-scheme: light !important;
-      -webkit-color-scheme: light;
-    }
-    body {
-      font-family: 'Inter', sans-serif;
-      background: #ffffff !important;
-      color: #0a0a0a !important;
-      overflow-x: hidden;
-    }
-    /* garante branco em todos os blocos principais */
-    nav, .ticker + *, section, .prova, .features-header,
-    .features-grid, .manifesto, .testemunho, .planos,
-    .quote, .cta, footer { background-color: #ffffff !important; }
-    /* exceções que devem permanecer com sua própria cor */
-    .ticker { background-color: #0a0a0a !important; }
-    .hero   { background-color: #ffffff !important; }
-    ::selection { background: #f0e000; color: #0a0a0a; }
+    html{scroll-behavior:smooth}
+    body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);overflow-x:hidden}
+    ::selection{background:#ede9fe;color:var(--indigo)}
 
-    /* ── NAV ── */
-    nav {
-      position: fixed; top: 0; left: 0; right: 0; z-index: 200;
-      height: 56px; padding: 0 40px;
-      display: flex; align-items: center; justify-content: space-between;
-      border-bottom: 1px solid var(--linha);
-      background: rgba(255,255,255,0.97); backdrop-filter: blur(16px);
+    /* NAV */
+    nav{
+      position:fixed;top:0;left:0;right:0;z-index:900;
+      height:64px;padding:0 48px;
+      display:flex;align-items:center;justify-content:space-between;
+      background:rgba(5,8,17,.92);backdrop-filter:blur(20px);
+      border-bottom:1px solid rgba(255,255,255,.06);
+      transition:background .35s,border-color .35s;
     }
-    .nav-logo { font-size: 0.7rem; font-weight: 900; letter-spacing: 3px; text-transform: uppercase; color: var(--preto); text-decoration: none; }
-    .nav-logo .tm { font-size: 0.55rem; vertical-align: super; opacity: 1; font-weight: 900; color: var(--amarelo); }
-    .nav-links { display: flex; align-items: center; gap: 36px; }
-    .nav-link { font-size: 0.6rem; font-weight: 600; letter-spacing: 2px; text-transform: uppercase; color: var(--cinza); text-decoration: none; transition: color .2s; }
-    .nav-link:hover { color: var(--preto); }
-    .nav-cta { font-size: 0.6rem; font-weight: 800; letter-spacing: 2px; text-transform: uppercase; color: #fff; background: var(--preto); padding: 9px 20px; text-decoration: none; transition: background .2s; }
-    .nav-cta:hover { background: var(--amarelo); color: var(--preto); }
-    .nav-user { font-size: 0.6rem; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; color: var(--preto); text-decoration: none; display: flex; align-items: center; gap: 10px; }
-    .nav-user-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--amarelo); flex-shrink: 0; }
+    nav.lit{background:rgba(255,255,255,.97);border-bottom-color:var(--line)}
+    .logo{text-decoration:none;display:flex;align-items:center;gap:2px}
+    .logo-p{font-size:1.08rem;font-weight:800;color:#fff;letter-spacing:-.3px;transition:color .35s}
+    nav.lit .logo-p{color:var(--text)}
+    .logo-ia{
+      font-size:1.08rem;font-weight:800;letter-spacing:-.3px;
+      background:linear-gradient(135deg,#818cf8,#a78bfa,#60a5fa);
+      -webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;
+    }
+    .logo-pulse{width:7px;height:7px;border-radius:50%;background:var(--amber);margin-left:3px;flex-shrink:0;animation:pdot 2.2s ease-in-out infinite}
+    @keyframes pdot{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.45;transform:scale(.8)}}
+    .nav-links{display:flex;align-items:center;gap:4px}
+    .nav-a{font-size:.875rem;font-weight:500;color:rgba(255,255,255,.6);text-decoration:none;padding:7px 14px;border-radius:7px;transition:color .2s,background .2s}
+    .nav-a:hover{color:#fff;background:rgba(255,255,255,.08)}
+    nav.lit .nav-a{color:var(--text2)}
+    nav.lit .nav-a:hover{color:var(--text);background:rgba(0,0,0,.04)}
+    .nav-user{font-size:.875rem;font-weight:600;color:rgba(255,255,255,.8);text-decoration:none;padding:7px 14px;border-radius:7px;display:flex;align-items:center;gap:8px;transition:background .2s}
+    .nav-user:hover{background:rgba(255,255,255,.08)}
+    nav.lit .nav-user{color:var(--text)}
+    nav.lit .nav-user:hover{background:rgba(0,0,0,.04)}
+    .nav-udot{width:7px;height:7px;border-radius:50%;background:#34d399;flex-shrink:0}
+    .btn-nav{font-size:.875rem;font-weight:700;text-decoration:none;padding:8px 20px;border-radius:8px;background:var(--amber);color:var(--text);transition:opacity .2s,transform .2s}
+    .btn-nav:hover{opacity:.88;transform:translateY(-1px)}
 
-    /* ── TICKER ── */
-    .ticker { height: 34px; overflow: hidden; display: flex; align-items: center; background: var(--preto); border-bottom: 1px solid var(--linha); }
-    .ticker-track { display: flex; white-space: nowrap; animation: tick 28s linear infinite; }
-    .ticker-item { font-size: 0.52rem; font-weight: 700; letter-spacing: 3px; text-transform: uppercase; color: rgba(255,255,255,0.45); padding: 0 24px; }
-    .ticker-dot { color: var(--amarelo); font-size: 0.38rem; }
-    @keyframes tick { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+    /* TICKER */
+    .ticker{margin-top:64px;height:40px;background:linear-gradient(90deg,#1e1b4b,#1a1840);border-bottom:1px solid rgba(99,102,241,.22);overflow:hidden;display:flex;align-items:center}
+    .tick-track{display:flex;white-space:nowrap;animation:tick 32s linear infinite}
+    .tick-i{font-size:.68rem;font-weight:600;letter-spacing:2px;text-transform:uppercase;color:rgba(165,180,252,.6);padding:0 20px}
+    .tick-d{color:var(--amber);font-size:.4rem}
+    @keyframes tick{from{transform:translateX(0)}to{transform:translateX(-50%)}}
 
-    /* ── 3D CANVAS — inside hero only ── */
-    #scene3d {
-      position: absolute; inset: 0;
-      width: 100%; height: 100%;
-      display: block; z-index: 0;
-      pointer-events: none;
+    /* HERO */
+    .hero{position:relative;min-height:100vh;display:flex;align-items:center;justify-content:center;background:var(--hero);overflow:hidden}
+    #scene3d{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:0;display:block}
+    .hero-glow{
+      position:absolute;inset:0;z-index:1;pointer-events:none;
+      background:
+        radial-gradient(ellipse 60% 60% at 65% 50%,rgba(67,56,202,.2) 0%,transparent 60%),
+        radial-gradient(ellipse 40% 50% at 12% 75%,rgba(124,58,237,.13) 0%,transparent 55%),
+        radial-gradient(ellipse 35% 45% at 88% 18%,rgba(14,165,233,.1) 0%,transparent 50%);
     }
+    .hero-inner{position:relative;z-index:2;max-width:900px;width:100%;padding:120px 48px 90px;text-align:center}
+    .hero-pill{
+      display:inline-flex;align-items:center;gap:9px;
+      background:rgba(99,102,241,.15);border:1px solid rgba(99,102,241,.38);
+      padding:7px 18px;border-radius:100px;
+      font-size:.8rem;font-weight:600;color:#a5b4fc;margin-bottom:36px;
+    }
+    .pill-dot{width:6px;height:6px;border-radius:50%;background:#a5b4fc;animation:pdot 2.4s ease-in-out infinite}
+    .hero h1{font-size:clamp(2.8rem,6.5vw,5.2rem);font-weight:900;line-height:1.08;letter-spacing:-2.5px;color:#fff;margin-bottom:24px}
+    .grad-text{background:linear-gradient(135deg,#818cf8 0%,#c084fc 45%,#67e8f9 100%);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+    .hero-sub{font-size:1.1rem;color:rgba(255,255,255,.5);line-height:1.8;max-width:520px;margin:0 auto 44px}
+    .hero-btns{display:flex;gap:12px;justify-content:center;flex-wrap:wrap}
+    .btn-primary{
+      display:inline-flex;align-items:center;gap:8px;
+      padding:15px 30px;border-radius:10px;
+      background:linear-gradient(135deg,#4338ca,#7c3aed);
+      color:#fff;font-size:.975rem;font-weight:700;text-decoration:none;
+      box-shadow:0 8px 32px rgba(67,56,202,.42);
+      transition:transform .2s,box-shadow .2s;
+    }
+    .btn-primary:hover{transform:translateY(-2px);box-shadow:0 14px 44px rgba(67,56,202,.52)}
+    .btn-ghost-d{
+      display:inline-flex;align-items:center;gap:8px;
+      padding:15px 30px;border-radius:10px;
+      border:1px solid rgba(255,255,255,.18);
+      color:rgba(255,255,255,.72);font-size:.975rem;font-weight:600;
+      text-decoration:none;background:rgba(255,255,255,.04);
+      transition:background .2s,border-color .2s,color .2s;
+    }
+    .btn-ghost-d:hover{background:rgba(255,255,255,.09);border-color:rgba(255,255,255,.35);color:#fff}
+    .hero-foot{
+      position:absolute;bottom:32px;left:50%;transform:translateX(-50%);
+      z-index:2;display:flex;flex-direction:column;align-items:center;gap:10px;
+    }
+    .hero-foot-txt{font-size:.65rem;font-weight:500;letter-spacing:2px;text-transform:uppercase;color:rgba(255,255,255,.22)}
+    .hero-arrow{width:18px;height:18px;border-right:2px solid rgba(255,255,255,.18);border-bottom:2px solid rgba(255,255,255,.18);transform:rotate(45deg);animation:bounce 2s ease-in-out infinite}
+    @keyframes bounce{0%,100%{transform:rotate(45deg) translateY(0)}50%{transform:rotate(45deg) translateY(6px)}}
 
-    /* ── DIVIDERS ── */
-    .divider {
-      height: 1px;
-      background: var(--linha);
-      position: relative;
-    }
-    .divider::after {
-      content: attr(data-label);
-      position: absolute; right: 40px; top: -9px;
-      font-size: 0.48rem; font-weight: 700; letter-spacing: 2px;
-      text-transform: uppercase; color: var(--cinza);
-      background: #ffffff; padding: 0 10px;
-    }
+    /* STATS */
+    .stats{background:var(--bg);display:grid;grid-template-columns:repeat(4,1fr);border-bottom:1px solid var(--line)}
+    .stat{padding:40px 48px;border-right:1px solid var(--line)}
+    .stat:last-child{border-right:none}
+    .stat-n{font-size:2.75rem;font-weight:900;letter-spacing:-2px;line-height:1;background:linear-gradient(135deg,var(--indigo),var(--violet));-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+    .stat-l{font-size:.8rem;font-weight:600;color:var(--text2);margin-top:6px;letter-spacing:.3px}
 
-    /* ── HERO ── */
-    .hero {
-      position: relative;
-      min-height: calc(100vh - 56px - 34px);
-      margin-top: 90px;
-      display: flex; align-items: flex-end;
-      overflow: hidden;
-      border-bottom: 1px solid var(--linha);
-      background: #ffffff;
-    }
-    /* gradient overlay so text stays readable over the 3D */
-    .hero-veil {
-      position: absolute; inset: 0; z-index: 1; pointer-events: none;
-      background: linear-gradient(105deg, rgba(255,255,255,0.88) 38%, rgba(255,255,255,0.15) 65%);
-    }
-    /* text content */
-    .hero-inner {
-      position: relative; z-index: 2;
-      width: 100%; padding: 80px 40px 80px;
-      display: grid; grid-template-columns: 1fr 340px; gap: 60px; align-items: end;
-    }
-    .hero-eyebrow {
-      font-size: 0.52rem; font-weight: 700; letter-spacing: 3px; text-transform: uppercase;
-      color: var(--cinza); margin-bottom: 36px;
-      display: flex; align-items: center; gap: 12px;
-    }
-    .hero-eyebrow::before { content: '001'; color: var(--amarelo); }
-    .hero-eyebrow::after { content: ''; max-width: 36px; flex: 1; height: 1px; background: var(--cinza); opacity: .4; }
-    .hero h1 {
-      font-size: clamp(4.5rem, 11vw, 11rem);
-      font-weight: 900; line-height: .86;
-      letter-spacing: -5px; text-transform: uppercase;
-    }
-    .hero h1 .l2 { color: var(--cinza); }
-    .hero h1 .marca { font-size: .28em; letter-spacing: 0; font-weight: 400; vertical-align: super; color: var(--amarelo); }
-    .hero-right { padding-bottom: 4px; }
-    .hero-desc { font-size: 0.78rem; color: var(--cinza); line-height: 1.9; border-left: 2px solid var(--amarelo); padding-left: 16px; margin-bottom: 28px; }
-    .hero-btns { display: flex; gap: 10px; flex-wrap: wrap; }
+    /* SECTION COMMONS */
+    .sec-label{display:inline-flex;align-items:center;gap:8px;font-size:.72rem;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--indigo);margin-bottom:16px}
+    .sec-label::before{content:'';width:20px;height:2px;background:var(--indigo);border-radius:2px}
+    .sec-head{font-size:clamp(2rem,4vw,3rem);font-weight:900;letter-spacing:-1.5px;line-height:1.1;color:var(--text);margin-bottom:12px}
+    .sec-sub{font-size:1.05rem;color:var(--text2);line-height:1.7;max-width:500px;margin-bottom:56px}
 
-    /* ── HERO CORNER METADATA ── */
-    .hero-meta {
-      position: absolute; font-family: 'Courier New', monospace;
-      font-size: 0.46rem; letter-spacing: 1.5px; text-transform: uppercase;
-      color: rgba(10,10,10,0.3); line-height: 1.9; z-index: 2;
-      pointer-events: none; user-select: none;
+    /* FEATURES */
+    .features{padding:96px 48px;background:var(--bg2);position:relative;overflow:hidden}
+    .feat-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
+    .feat-card{
+      background:var(--bg);border:1px solid var(--line);border-radius:var(--r);padding:28px;
+      transition:transform .2s,box-shadow .2s,border-color .2s;
+      position:relative;overflow:hidden;cursor:default;
     }
-    .hero-meta-tr { top: 16px; right: 40px; text-align: right; }
-    .hero-meta-bl { bottom: 16px; left: 40px; }
+    .feat-card::after{content:'';position:absolute;inset:0;background:linear-gradient(135deg,rgba(67,56,202,.04),transparent);opacity:0;transition:opacity .3s}
+    .feat-card:hover{transform:translateY(-4px);box-shadow:0 16px 48px rgba(0,0,0,.07);border-color:rgba(67,56,202,.24)}
+    .feat-card:hover::after{opacity:1}
+    .feat-icon{width:42px;height:42px;border-radius:9px;background:linear-gradient(135deg,#ede9fe,#ddd6fe);display:flex;align-items:center;justify-content:center;margin-bottom:18px;flex-shrink:0}
+    .feat-icon svg{width:20px;height:20px;stroke:var(--indigo);fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+    .feat-tag{font-size:.68rem;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--indigo);margin-bottom:6px}
+    .feat-title{font-size:1.05rem;font-weight:800;color:var(--text);margin-bottom:8px;letter-spacing:-.2px}
+    .feat-desc{font-size:.875rem;color:var(--text2);line-height:1.7}
 
-    /* ── BUTTONS ── */
-    .btn-solid { display: inline-flex; align-items: center; gap: 8px; padding: 14px 28px; background: var(--preto); color: #fff; font-size: 0.62rem; font-weight: 800; letter-spacing: 2px; text-transform: uppercase; text-decoration: none; transition: background .2s; border: 1px solid var(--preto); }
-    .btn-solid:hover { background: var(--amarelo); color: var(--preto); border-color: var(--amarelo); }
-    .btn-ghost { display: inline-flex; align-items: center; gap: 8px; padding: 14px 28px; background: transparent; color: var(--preto); font-size: 0.62rem; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; text-decoration: none; transition: border-color .2s; border: 1px solid var(--linha-f); }
-    .btn-ghost:hover { border-color: var(--preto); }
+    /* 3D scroll-driven cube in features bg */
+    .feat-cube-wrap{position:absolute;right:3%;top:50%;transform:translateY(-50%);pointer-events:none;perspective:900px;opacity:.06;z-index:0}
 
-    /* ── DIVIDER ── */
-    .divider { height: 1px; background: var(--linha); position: relative; }
-    .divider::after { content: attr(data-label); position: absolute; right: 40px; top: -9px; font-size: 0.48rem; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; color: var(--cinza); background: var(--branco); padding: 0 10px; }
+    /* WHY (dark) */
+    .why{background:var(--dark);padding:100px 48px;display:grid;grid-template-columns:1fr 1fr;gap:80px;align-items:center;position:relative;overflow:hidden}
+    .why-glow{position:absolute;inset:0;pointer-events:none;background:radial-gradient(ellipse 55% 70% at 80% 50%,rgba(67,56,202,.18) 0%,transparent 60%),radial-gradient(ellipse 35% 50% at 20% 20%,rgba(124,58,237,.12) 0%,transparent 55%)}
+    .why>*{position:relative;z-index:1}
+    .why .sec-label{color:#a5b4fc}.why .sec-label::before{background:#a5b4fc}
+    .why .sec-head{color:#fff}.why .sec-sub{color:rgba(255,255,255,.45)}
+    .why-list{display:flex;flex-direction:column}
+    .why-row{padding:26px 0;border-bottom:1px solid rgba(255,255,255,.07);display:flex;align-items:flex-end;gap:14px}
+    .why-row:first-child{border-top:1px solid rgba(255,255,255,.07)}
+    .why-n{font-size:3rem;font-weight:900;letter-spacing:-3px;line-height:1;flex-shrink:0;background:linear-gradient(135deg,#818cf8,#c084fc);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+    .why-d{font-size:.875rem;font-weight:500;color:rgba(255,255,255,.4);line-height:1.5;padding-bottom:2px}
 
-    /* ── FEATURES ── */
-    .features-header { padding: 60px 40px 40px; border-bottom: 1px solid var(--linha); display: flex; align-items: center; justify-content: space-between; }
-    .section-tag { font-size: 0.52rem; font-weight: 700; letter-spacing: 3px; text-transform: uppercase; color: var(--cinza); display: flex; align-items: center; gap: 12px; }
-    .section-tag::before { content: ''; width: 22px; height: 1px; background: var(--cinza); opacity: .5; }
-    .section-title { font-size: clamp(1.6rem, 3vw, 2.4rem); font-weight: 900; letter-spacing: -1.5px; text-transform: uppercase; }
-    .features-grid { display: grid; grid-template-columns: repeat(3, 1fr); }
-    .feat {
-      padding: 44px 40px; border-right: 1px solid var(--linha); border-bottom: 1px solid var(--linha);
-      transition: transform .12s ease, box-shadow .12s ease; will-change: transform;
+    /* Orbital rings in why */
+    .orbit-scene{position:absolute;right:5%;top:50%;transform:translateY(-50%);width:340px;height:340px;pointer-events:none;z-index:0;perspective:700px;display:flex;align-items:center;justify-content:center}
+    .orbit-ring{position:absolute;border-radius:50%;border:1.5px solid}
+    .orbit-r1{width:320px;height:320px;border-color:rgba(99,102,241,.18);animation:orb 14s linear infinite}
+    .orbit-r2{width:230px;height:230px;border-color:rgba(167,139,250,.22);animation:orb 10s linear infinite reverse}
+    .orbit-r3{width:150px;height:150px;border-color:rgba(245,158,11,.28);animation:orb 7s linear infinite}
+    @keyframes orb{from{transform:rotateX(74deg) rotateZ(0)}to{transform:rotateX(74deg) rotateZ(360deg)}}
+    .orbit-dot{position:absolute;width:9px;height:9px;border-radius:50%;background:rgba(167,139,250,.65);top:50%;left:50%;margin:-4px 0 0 -4px}
+
+    /* TESTIMONIALS */
+    .tests{padding:96px 48px;background:var(--bg)}
+    .tests .sec-sub{margin-bottom:48px}
+    .tests-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
+    .test-card{background:var(--bg2);border:1px solid var(--line);border-radius:var(--r);padding:28px;transition:transform .2s,box-shadow .2s}
+    .test-card:hover{transform:translateY(-3px);box-shadow:0 12px 32px rgba(0,0,0,.06)}
+    .test-stars{color:var(--amber);font-size:.9rem;letter-spacing:2px;margin-bottom:12px}
+    .test-body{font-size:.9rem;line-height:1.75;color:var(--text);margin-bottom:14px;font-weight:500}
+    .test-auth{font-size:.78rem;font-weight:600;color:var(--text2)}
+
+    /* PRICING */
+    .pricing{padding:96px 48px;background:var(--bg2);position:relative}
+    #planos{scroll-margin-top:80px}
+    .pricing-top{display:flex;align-items:flex-end;justify-content:space-between;flex-wrap:wrap;gap:24px;margin-bottom:44px}
+    .toggle-wrap{display:flex;align-items:center;gap:10px}
+    .t-l{font-size:.8rem;font-weight:600;color:var(--text3)}.t-l.on{color:var(--text)}
+    .toggle{position:relative;width:40px;height:22px;cursor:pointer}
+    .toggle input{opacity:0;width:0;height:0}
+    .t-sl{position:absolute;inset:0;background:#e5e7eb;border-radius:11px;transition:.3s}
+    .t-sl::before{content:'';position:absolute;width:14px;height:14px;left:4px;top:4px;background:#fff;border-radius:50%;transition:.3s;box-shadow:0 1px 3px rgba(0,0,0,.2)}
+    .toggle input:checked+.t-sl{background:var(--indigo)}
+    .toggle input:checked+.t-sl::before{transform:translateX(18px)}
+    .eco-badge{font-size:.7rem;font-weight:700;color:#059669;background:#d1fae5;padding:3px 10px;border-radius:100px;display:none}
+    .pricing-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;align-items:start}
+    .plan-card{background:var(--bg);border:1px solid var(--line);border-radius:var(--r);padding:36px 28px;position:relative;transition:transform .2s,box-shadow .2s}
+    .plan-card:hover{transform:translateY(-4px)}
+    .plan-card.hot{background:linear-gradient(160deg,#3730a3,#6d28d9);border-color:transparent}
+    .plan-card.hot:hover{box-shadow:0 20px 60px rgba(67,56,202,.35)}
+    .plan-badge{position:absolute;top:-13px;left:50%;transform:translateX(-50%);background:var(--amber);color:var(--text);font-size:.65rem;font-weight:800;letter-spacing:1px;text-transform:uppercase;padding:4px 14px;border-radius:100px;white-space:nowrap}
+    .plan-lbl{font-size:.7rem;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--text2);margin-bottom:10px}
+    .plan-card.hot .plan-lbl{color:rgba(255,255,255,.5)}
+    .plan-name{font-size:1.75rem;font-weight:900;letter-spacing:-1px;margin-bottom:14px}
+    .plan-card.hot .plan-name{color:#fff}
+    .plan-price{font-size:3.4rem;font-weight:900;letter-spacing:-3px;line-height:1}
+    .plan-price sup{font-size:1.2rem;font-weight:700;letter-spacing:0;vertical-align:super}
+    .plan-price sub{font-size:.9rem;font-weight:500;color:var(--text2)}
+    .plan-card.hot .plan-price{color:#fff}.plan-card.hot .plan-price sub{color:rgba(255,255,255,.5)}
+    .plan-price.zero{color:var(--text3)}
+    .plan-period{font-size:.8rem;font-weight:500;color:var(--text2);margin:6px 0 24px;min-height:20px}
+    .plan-card.hot .plan-period{color:rgba(255,255,255,.55)}
+    .plan-feats{list-style:none;margin-bottom:24px}
+    .plan-feats li{font-size:.875rem;color:var(--text2);padding:9px 0;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;gap:8px}
+    .plan-feats li:last-child{border-bottom:none}
+    .plan-feats li.on{color:var(--text);font-weight:500}
+    .plan-card.hot .plan-feats li{color:rgba(255,255,255,.5);border-bottom-color:rgba(255,255,255,.1)}
+    .plan-card.hot .plan-feats li.on{color:rgba(255,255,255,.9)}
+    .chk{font-size:.7rem;font-weight:800;color:var(--indigo);flex-shrink:0}
+    .plan-card.hot .chk{color:rgba(255,255,255,.85)}
+    .xck{font-size:.7rem;color:var(--text3);flex-shrink:0}
+    .plan-card.hot .xck{color:rgba(255,255,255,.2)}
+    .btn-plan{display:block;width:100%;padding:13px 14px;border-radius:8px;text-align:center;text-decoration:none;font-size:.875rem;font-weight:700;transition:all .2s;letter-spacing:.3px}
+    .btn-plan.o{background:transparent;color:var(--indigo);border:2px solid rgba(67,56,202,.3)}
+    .btn-plan.o:hover{background:var(--indigo);color:#fff;border-color:var(--indigo);transform:translateY(-1px)}
+    .btn-plan.w{background:rgba(255,255,255,.15);color:#fff;border:2px solid rgba(255,255,255,.2)}
+    .btn-plan.w:hover{background:rgba(255,255,255,.25);transform:translateY(-1px)}
+    .btn-plan.am{background:var(--amber);color:var(--text);border:2px solid var(--amber)}
+    .btn-plan.am:hover{background:#d97706;border-color:#d97706;transform:translateY(-1px)}
+    .plan-sc{font-size:.7rem;font-weight:600;color:#dc2626;margin-top:10px;text-align:center;min-height:18px}
+    .plan-card.hot .plan-sc{color:#fca5a5}
+
+    /* CTA geo cubes in pricing */
+    .pricing-cube-a{position:absolute;right:4%;top:20%;opacity:.07;perspective:900px;pointer-events:none}
+    .pricing-cube-b{position:absolute;left:3%;bottom:15%;opacity:.05;perspective:900px;pointer-events:none}
+
+    /* QUOTE */
+    .quote-sec{padding:80px 48px;text-align:center;background:var(--bg);border-top:1px solid var(--line);border-bottom:1px solid var(--line);position:relative;overflow:hidden}
+    .quote-sec::before{content:'';position:absolute;inset:0;pointer-events:none;background:radial-gradient(ellipse at 50% 100%,rgba(67,56,202,.05) 0%,transparent 60%)}
+    .quote-q{font-size:clamp(1.4rem,3.5vw,2.5rem);font-weight:800;letter-spacing:-1px;line-height:1.3;max-width:800px;margin:0 auto 20px;position:relative;z-index:1}
+    .quote-q .qi{color:var(--indigo)}
+    .quote-who{font-size:.875rem;font-weight:500;color:var(--text2);position:relative;z-index:1}
+    /* auto-spinning cubes in quote */
+    .q3d{position:absolute;top:50%;transform:translateY(-50%);opacity:.04;perspective:700px;pointer-events:none}
+    .q3d.ql{left:7%}.q3d.qr{right:7%}
+    .qcube{transform-style:preserve-3d}
+    .qcube.qlg{width:90px;height:90px;animation:qspin 18s linear infinite}
+    .qcube.qsm{width:54px;height:54px;animation:qspin 24s linear infinite reverse}
+    .qface{position:absolute;border:2px solid var(--indigo);width:100%;height:100%}
+    .qcube.qlg .qface:nth-child(1){transform:translateZ(45px)}
+    .qcube.qlg .qface:nth-child(2){transform:rotateY(180deg) translateZ(45px)}
+    .qcube.qlg .qface:nth-child(3){transform:rotateY(-90deg) translateZ(45px)}
+    .qcube.qlg .qface:nth-child(4){transform:rotateY(90deg) translateZ(45px)}
+    .qcube.qlg .qface:nth-child(5){transform:rotateX(90deg) translateZ(45px)}
+    .qcube.qlg .qface:nth-child(6){transform:rotateX(-90deg) translateZ(45px)}
+    .qcube.qsm .qface:nth-child(1){transform:translateZ(27px)}
+    .qcube.qsm .qface:nth-child(2){transform:rotateY(180deg) translateZ(27px)}
+    .qcube.qsm .qface:nth-child(3){transform:rotateY(-90deg) translateZ(27px)}
+    .qcube.qsm .qface:nth-child(4){transform:rotateY(90deg) translateZ(27px)}
+    .qcube.qsm .qface:nth-child(5){transform:rotateX(90deg) translateZ(27px)}
+    .qcube.qsm .qface:nth-child(6){transform:rotateX(-90deg) translateZ(27px)}
+    @keyframes qspin{from{transform:rotateX(20deg) rotateY(0)}to{transform:rotateX(20deg) rotateY(360deg)}}
+
+    /* CTA */
+    .cta{background:var(--hero);padding:100px 48px;text-align:center;position:relative;overflow:hidden}
+    #scene3d-2{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:0}
+    .cta-glow{position:absolute;inset:0;pointer-events:none;z-index:0;background:radial-gradient(ellipse at 50% 50%,rgba(67,56,202,.24) 0%,transparent 62%)}
+    .cta-inner{position:relative;z-index:1;max-width:640px;margin:0 auto}
+    .cta h2{font-size:clamp(2.2rem,5vw,4rem);font-weight:900;letter-spacing:-2px;line-height:1.1;color:#fff;margin-bottom:18px}
+    .cta-desc{font-size:1.1rem;color:rgba(255,255,255,.45);margin-bottom:40px;line-height:1.7}
+
+    /* CTA cubes */
+    .cta-cube-a{position:absolute;left:8%;top:15%;opacity:.08;perspective:900px;pointer-events:none;z-index:1}
+    .cta-cube-b{position:absolute;right:8%;bottom:15%;opacity:.06;perspective:900px;pointer-events:none;z-index:1}
+    .cta-cube-c{position:absolute;left:50%;top:10%;transform:translateX(-50%);opacity:.04;perspective:900px;pointer-events:none;z-index:1}
+
+    /* Scroll-driven wireframe cubes (generic) */
+    .sc-wrap{pointer-events:none;perspective:900px;display:flex;align-items:center;justify-content:center}
+    .sc-geo{transform-style:preserve-3d;will-change:transform}
+    .sc-face{position:absolute;background:transparent}
+    /* XL */
+    .sc-geo.xl{width:200px;height:200px}
+    .sc-geo.xl .sc-face{width:200px;height:200px;border:1.5px solid rgba(99,102,241,.25)}
+    .sc-geo.xl .sc-face:nth-child(1){transform:translateZ(100px)}
+    .sc-geo.xl .sc-face:nth-child(2){transform:rotateY(180deg) translateZ(100px)}
+    .sc-geo.xl .sc-face:nth-child(3){transform:rotateY(-90deg) translateZ(100px)}
+    .sc-geo.xl .sc-face:nth-child(4){transform:rotateY(90deg) translateZ(100px)}
+    .sc-geo.xl .sc-face:nth-child(5){transform:rotateX(90deg) translateZ(100px)}
+    .sc-geo.xl .sc-face:nth-child(6){transform:rotateX(-90deg) translateZ(100px)}
+    /* LG */
+    .sc-geo.lg{width:150px;height:150px}
+    .sc-geo.lg .sc-face{width:150px;height:150px;border:1.5px solid rgba(124,58,237,.3)}
+    .sc-geo.lg .sc-face:nth-child(1){transform:translateZ(75px)}
+    .sc-geo.lg .sc-face:nth-child(2){transform:rotateY(180deg) translateZ(75px)}
+    .sc-geo.lg .sc-face:nth-child(3){transform:rotateY(-90deg) translateZ(75px)}
+    .sc-geo.lg .sc-face:nth-child(4){transform:rotateY(90deg) translateZ(75px)}
+    .sc-geo.lg .sc-face:nth-child(5){transform:rotateX(90deg) translateZ(75px)}
+    .sc-geo.lg .sc-face:nth-child(6){transform:rotateX(-90deg) translateZ(75px)}
+    /* MD */
+    .sc-geo.md{width:100px;height:100px}
+    .sc-geo.md .sc-face{width:100px;height:100px;border:1.5px solid rgba(14,165,233,.3)}
+    .sc-geo.md .sc-face:nth-child(1){transform:translateZ(50px)}
+    .sc-geo.md .sc-face:nth-child(2){transform:rotateY(180deg) translateZ(50px)}
+    .sc-geo.md .sc-face:nth-child(3){transform:rotateY(-90deg) translateZ(50px)}
+    .sc-geo.md .sc-face:nth-child(4){transform:rotateY(90deg) translateZ(50px)}
+    .sc-geo.md .sc-face:nth-child(5){transform:rotateX(90deg) translateZ(50px)}
+    .sc-geo.md .sc-face:nth-child(6){transform:rotateX(-90deg) translateZ(50px)}
+    /* SM */
+    .sc-geo.sm{width:65px;height:65px}
+    .sc-geo.sm .sc-face{width:65px;height:65px;border:1.5px solid rgba(245,158,11,.45)}
+    .sc-geo.sm .sc-face:nth-child(1){transform:translateZ(32px)}
+    .sc-geo.sm .sc-face:nth-child(2){transform:rotateY(180deg) translateZ(32px)}
+    .sc-geo.sm .sc-face:nth-child(3){transform:rotateY(-90deg) translateZ(32px)}
+    .sc-geo.sm .sc-face:nth-child(4){transform:rotateY(90deg) translateZ(32px)}
+    .sc-geo.sm .sc-face:nth-child(5){transform:rotateX(90deg) translateZ(32px)}
+    .sc-geo.sm .sc-face:nth-child(6){transform:rotateX(-90deg) translateZ(32px)}
+    /* auto spin for CTA cubes */
+    .auto-spin{animation:aspin 20s linear infinite}
+    .auto-spin-r{animation:aspin 26s linear infinite reverse}
+    .auto-spin-s{animation:aspinS 28s linear infinite}
+    @keyframes aspin{from{transform:rotateX(20deg) rotateY(0)}to{transform:rotateX(20deg) rotateY(360deg)}}
+    @keyframes aspinS{from{transform:rotateX(0) rotateY(0) rotateZ(0)}to{transform:rotateX(360deg) rotateY(540deg) rotateZ(180deg)}}
+
+    /* FOOTER */
+    footer{background:#06070e;padding:36px 48px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:20px;border-top:1px solid rgba(255,255,255,.05)}
+    .f-logo{text-decoration:none;font-size:.95rem;font-weight:800;letter-spacing:-.3px;display:flex;align-items:center}
+    .f-logo-p{color:rgba(255,255,255,.22)}
+    .f-logo-ia{background:linear-gradient(135deg,#818cf8,#a78bfa);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+    .f-links{display:flex;gap:24px}
+    .f-link{font-size:.8rem;font-weight:500;color:rgba(255,255,255,.25);text-decoration:none;transition:color .2s}
+    .f-link:hover{color:rgba(255,255,255,.6)}
+    .f-copy{font-size:.75rem;color:rgba(255,255,255,.18)}
+
+    /* REVEAL */
+    .reveal{opacity:0;transform:translateY(24px);transition:opacity .75s ease,transform .75s ease}
+    .reveal.on{opacity:1;transform:none}
+
+    /* MOBILE */
+    @media(max-width:1024px){
+      .feat-grid{grid-template-columns:repeat(2,1fr)}
+      .why{grid-template-columns:1fr;gap:48px;padding:72px 32px}
+      .orbit-scene{display:none}
+      .pricing-grid{grid-template-columns:1fr;max-width:420px;margin:0 auto}
+      .pricing-cube-a,.pricing-cube-b{display:none}
     }
-    .feat:nth-child(3n) { border-right: none; }
-    .feat:nth-child(4), .feat:nth-child(5), .feat:nth-child(6) { border-bottom: none; }
-    .feat-num { font-size: 0.62rem; font-weight: 700; letter-spacing: 3px; color: var(--amarelo); text-transform: uppercase; margin-bottom: 18px; }
-    .feat-titulo { font-size: 1.05rem; font-weight: 900; letter-spacing: -.3px; text-transform: uppercase; margin-bottom: 12px; line-height: 1.1; }
-    .feat-desc { font-size: 0.82rem; color: rgba(10,10,10,0.55); line-height: 1.85; }
-
-    /* ── SOCIAL PROOF BAND (neuromarketing) ── */
-    .prova {
-      border-bottom: 1px solid var(--linha);
-      display: grid; grid-template-columns: repeat(4, 1fr);
+    @media(max-width:768px){
+      nav{padding:0 20px;height:56px}
+      .ticker{margin-top:56px}
+      .hero-inner{padding:80px 24px 80px}
+      .stats{grid-template-columns:repeat(2,1fr)}
+      .stat:nth-child(2){border-right:none}
+      .stat:nth-child(3){border-top:1px solid var(--line)}
+      .features,.tests,.pricing{padding:64px 24px}
+      .feat-grid{grid-template-columns:1fr}
+      .tests-grid{grid-template-columns:1fr}
+      .feat-cube-wrap{display:none}
+      .quote-sec,.cta{padding:64px 24px}
+      .q3d,.cta-cube-a,.cta-cube-b,.cta-cube-c{display:none}
+      footer{padding:28px 20px;flex-direction:column;gap:12px;align-items:flex-start}
+      .nav-links .nav-a{display:none}
     }
-    .prova-item {
-      padding: 36px 40px; border-right: 1px solid var(--linha);
-      display: flex; flex-direction: column; gap: 6px;
-    }
-    .prova-item:last-child { border-right: none; }
-    .prova-num { font-size: 2.8rem; font-weight: 900; letter-spacing: -2px; line-height: 1; }
-    .prova-num .ac { color: var(--amarelo); }
-    .prova-label { font-size: 0.68rem; font-weight: 600; letter-spacing: 2px; text-transform: uppercase; color: rgba(10,10,10,0.5); }
-
-    /* ── MANIFESTO ── */
-    .manifesto {
-      padding: 100px 40px; border-bottom: 1px solid var(--linha);
-      display: grid; grid-template-columns: 1fr 1fr; gap: 80px; align-items: center;
-      position: relative; overflow: hidden;
-    }
-    .manifesto::after { content: ''; position: absolute; right: 0; top: 0; bottom: 0; width: 50%; background-image: radial-gradient(circle, rgba(0,0,0,0.055) 1px, transparent 1px); background-size: 26px 26px; pointer-events: none; }
-    [data-theme="dark"] .manifesto::after { background-image: radial-gradient(circle, rgba(255,255,255,0.07) 1px, transparent 1px); }
-    .manifesto > * { position: relative; z-index: 1; }
-    .manifesto-tag { font-size: 0.5rem; font-weight: 700; letter-spacing: 3px; text-transform: uppercase; color: var(--amarelo); margin-bottom: 24px; }
-    .manifesto h2 { font-size: clamp(2.4rem, 5vw, 4rem); font-weight: 900; letter-spacing: -2px; text-transform: uppercase; line-height: 1; }
-    .manifesto h2 em { font-style: normal; color: var(--cinza); }
-    .manifesto-stat { padding: 26px 0; border-bottom: 1px solid var(--linha); }
-    .manifesto-stat:first-child { border-top: 1px solid var(--linha); }
-    .stat-num { font-size: 2.8rem; font-weight: 900; letter-spacing: -2px; line-height: 1; margin-bottom: 4px; }
-    .stat-num span { color: var(--amarelo); }
-    .stat-desc { font-size: 0.63rem; font-weight: 600; letter-spacing: 2px; text-transform: uppercase; color: var(--cinza); }
-
-    /* ── TESTIMONIAL (before pricing — anchoring neuromarketing) ── */
-    .testemunho {
-      padding: 64px 40px; border-bottom: 1px solid var(--linha);
-      display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0;
-    }
-    .test-card {
-      padding: 36px 32px; border-right: 1px solid var(--linha);
-    }
-    .test-card:last-child { border-right: none; }
-    .test-stars { color: var(--amarelo); font-size: 0.7rem; letter-spacing: 2px; margin-bottom: 14px; }
-    .test-text { font-size: 0.88rem; line-height: 1.8; color: #0a0a0a; margin-bottom: 16px; font-weight: 500; }
-    .test-autor { font-size: 0.65rem; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; color: rgba(10,10,10,0.5); }
-
-    /* ── PLANOS ── */
-    .planos { border-bottom: 1px solid var(--linha); }
-    .planos-header { padding: 60px 40px 40px; border-bottom: 1px solid var(--linha); display: flex; align-items: flex-end; justify-content: space-between; flex-wrap: wrap; gap: 24px; }
-    .planos-header h2 { font-size: clamp(2rem, 4vw, 3.2rem); font-weight: 900; letter-spacing: -2px; text-transform: uppercase; line-height: 1; }
-    .planos-header-sub { font-size: 0.85rem; color: rgba(10,10,10,0.55); margin-top: 10px; font-weight: 500; }
-    .toggle-wrap { display: flex; align-items: center; gap: 10px; }
-    .t-label { font-size: 0.72rem; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; color: var(--cinza); }
-    .t-label.on { color: var(--preto); }
-    .toggle { position: relative; width: 38px; height: 20px; cursor: pointer; }
-    .toggle input { opacity: 0; width: 0; height: 0; }
-    .t-slider { position: absolute; inset: 0; background: #ddd; border: 1px solid var(--linha); transition: .3s; }
-    .t-slider::before { content: ''; position: absolute; width: 12px; height: 12px; left: 3px; top: 3px; background: var(--cinza); transition: .3s; }
-    .toggle input:checked + .t-slider { background: var(--preto); border-color: var(--preto); }
-    .toggle input:checked + .t-slider::before { transform: translateX(18px); background: #fff; }
-    .eco-tag { font-size: 0.62rem; font-weight: 800; letter-spacing: 2px; text-transform: uppercase; color: var(--preto); background: var(--amarelo); padding: 4px 10px; }
-    .planos-grid { display: grid; grid-template-columns: repeat(3, 1fr); }
-    .plano-card { padding: 48px 36px; border-right: 1px solid var(--linha); position: relative; transition: background .2s; }
-    .plano-card:last-child { border-right: none; }
-    .plano-card:hover { background: rgba(0,0,0,0.02); }
-    /* card destaque: borda superior preta grossa — sinaliza claramente o recomendado */
-    .plano-card.destaque { background: #fafafa; border-top: 3px solid var(--preto); }
-    .plano-card.destaque:hover { background: #f5f5f5; }
-    /* badge MAIS POPULAR */
-    .plano-badge {
-      position: absolute; top: -3px; right: 24px;
-      font-size: 0.62rem; font-weight: 800; letter-spacing: 1.5px;
-      text-transform: uppercase; background: var(--preto); color: #fff;
-      padding: 5px 14px;
-    }
-    /* tag categoria */
-    .plano-tag { font-size: 0.68rem; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; color: rgba(10,10,10,0.5); margin-bottom: 20px; display: flex; align-items: center; gap: 8px; }
-    .plano-tag .dot { width: 6px; height: 6px; background: var(--amarelo); border-radius: 50%; flex-shrink: 0; }
-    .plano-nome { font-size: 2rem; font-weight: 900; letter-spacing: -1px; text-transform: uppercase; margin-bottom: 20px; }
-    .plano-preco { font-size: 3.8rem; font-weight: 900; letter-spacing: -3px; line-height: 1; }
-    .plano-preco sup { font-size: 1.1rem; font-weight: 700; letter-spacing: 0; vertical-align: super; }
-    .plano-preco sub { font-size: 0.82rem; font-weight: 600; color: rgba(10,10,10,0.45); letter-spacing: 0; }
-    .plano-preco.zero { color: rgba(10,10,10,0.35); }
-    .plano-periodo { font-size: 0.72rem; font-weight: 600; letter-spacing: 1.5px; text-transform: uppercase; color: rgba(10,10,10,0.5); margin-top: 8px; margin-bottom: 32px; min-height: 20px; }
-    .plano-features { list-style: none; margin-bottom: 36px; }
-    .plano-features li { font-size: 0.76rem; font-weight: 500; letter-spacing: .3px; text-transform: uppercase; color: rgba(10,10,10,0.28); padding: 11px 0; border-bottom: 1px solid var(--linha); display: flex; align-items: center; justify-content: space-between; }
-    .plano-features li:last-child { border-bottom: none; }
-    .plano-features li.on { color: #0a0a0a; font-weight: 600; }
-    .chk { font-size: 0.7rem; color: var(--preto); font-weight: 900; }
-    .xck { font-size: 0.7rem; color: rgba(0,0,0,0.18); }
-    /* ── BOTÕES DE PLANO ── */
-    .btn-plano {
-      width: 100%; padding: 18px 14px;
-      font-size: 0.74rem; font-weight: 800; font-family: 'Inter', sans-serif;
-      letter-spacing: 3px; text-transform: uppercase;
-      cursor: pointer; transition: all .18s ease;
-      display: block; text-align: center; text-decoration: none; border: 2px solid;
-    }
-    /* Botão principal (BASIC) — amarelo chamativo */
-    .btn-plano.solid {
-      background: var(--amarelo); color: var(--preto);
-      border-color: var(--amarelo);
-      box-shadow: 0 6px 28px rgba(240,224,0,0.55);
-    }
-    .btn-plano.solid:hover {
-      background: var(--preto); color: #fff;
-      border-color: var(--preto); box-shadow: none;
-      transform: translateY(-2px);
-    }
-    /* Botão secundário (FREE, PRO) — contorno escuro */
-    .btn-plano.ghost {
-      background: transparent; color: var(--preto);
-      border-color: rgba(10,10,10,0.35);
-    }
-    .btn-plano.ghost:hover {
-      background: var(--preto); color: #fff;
-      border-color: var(--preto);
-      transform: translateY(-2px);
-    }
-    /* scarcity line */
-    .plano-scarcity { font-size: 0.64rem; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; color: #dc2626; margin-top: 12px; text-align: center; min-height: 18px; }
-
-    /* ── QUOTE ── */
-    .quote { padding: 100px 40px; border-bottom: 1px solid var(--linha); text-align: center; position: relative; overflow: hidden; }
-    .q3d { position: absolute; top: 50%; transform: translateY(-50%); opacity: 0.05; perspective: 700px; pointer-events: none; }
-    .q3d.left { left: 7%; }
-    .q3d.right { right: 7%; }
-    .cube3d { transform-style: preserve-3d; animation: spinCube 16s linear infinite; }
-    .cube3d.lg { width: 88px; height: 88px; }
-    .cube3d.sm { width: 52px; height: 52px; animation-duration: 22s; animation-direction: reverse; }
-    .face { position: absolute; border: 2px solid var(--preto); width: 100%; height: 100%; }
-    .cube3d.lg .front  { transform: translateZ(44px); }
-    .cube3d.lg .back   { transform: rotateY(180deg) translateZ(44px); }
-    .cube3d.lg .left   { transform: rotateY(-90deg) translateZ(44px); }
-    .cube3d.lg .right  { transform: rotateY(90deg) translateZ(44px); }
-    .cube3d.lg .top    { transform: rotateX(90deg) translateZ(44px); }
-    .cube3d.lg .bottom { transform: rotateX(-90deg) translateZ(44px); }
-    .cube3d.sm .front  { transform: translateZ(26px); }
-    .cube3d.sm .back   { transform: rotateY(180deg) translateZ(26px); }
-    .cube3d.sm .left   { transform: rotateY(-90deg) translateZ(26px); }
-    .cube3d.sm .right  { transform: rotateY(90deg) translateZ(26px); }
-    .cube3d.sm .top    { transform: rotateX(90deg) translateZ(26px); }
-    .cube3d.sm .bottom { transform: rotateX(-90deg) translateZ(26px); }
-    @keyframes spinCube { from { transform: rotateX(20deg) rotateY(0); } to { transform: rotateX(20deg) rotateY(360deg); } }
-    .quote-text { font-size: clamp(1.4rem, 3.5vw, 2.6rem); font-weight: 900; letter-spacing: -1px; text-transform: uppercase; line-height: 1.25; max-width: 820px; margin: 0 auto 24px; position: relative; z-index: 1; }
-    .quote-text .q { color: var(--amarelo); }
-    .quote-autor { font-size: 0.56rem; font-weight: 600; letter-spacing: 3px; text-transform: uppercase; color: var(--cinza); position: relative; z-index: 1; }
-
-    /* ── CTA ── */
-    .cta { padding: 100px 40px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--linha); flex-wrap: wrap; gap: 40px; }
-    .cta h2 { font-size: clamp(2.4rem, 5vw, 4.2rem); font-weight: 900; letter-spacing: -2.5px; text-transform: uppercase; line-height: 1; }
-    .cta h2 .sub { color: var(--cinza); display: block; }
-
-    /* ── FOOTER ── */
-    footer { padding: 28px 40px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 16px; }
-    .footer-logo { font-size: 0.62rem; font-weight: 900; letter-spacing: 3px; text-transform: uppercase; color: rgba(10,10,10,0.28); text-decoration: none; }
-    [data-theme="dark"] .footer-logo { color: rgba(240,240,236,0.28); }
-    .footer-logo .tm { font-size: 0.42rem; vertical-align: super; font-weight: 400; }
-    .footer-links { display: flex; gap: 28px; }
-    .footer-link { font-size: 0.65rem; font-weight: 600; letter-spacing: 2px; text-transform: uppercase; color: rgba(10,10,10,0.4); text-decoration: none; transition: color .2s; }
-    [data-theme="dark"] .footer-link { color: rgba(240,240,236,0.28); }
-    .footer-link:hover { color: var(--preto); }
-    .footer-copy { font-size: 0.5rem; letter-spacing: 1.5px; text-transform: uppercase; color: rgba(10,10,10,0.22); }
-    [data-theme="dark"] .footer-copy { color: rgba(240,240,236,0.22); }
-
-    /* ── SCROLL-DRIVEN 3D DECORATIONS ── */
-    .features-header { position: relative; }
-    .cta { position: relative; overflow: hidden; }
-
-    /* Generic geo3d wireframe cube system */
-    .geo3d-wrap {
-      position: absolute; pointer-events: none; z-index: 0;
-      perspective: 800px; display: flex; align-items: center; justify-content: center;
-    }
-    .geo3d { transform-style: preserve-3d; will-change: transform; }
-    .geo-face {
-      position: absolute; background: transparent;
-      border: 1.5px solid rgba(10,10,10,0.18);
-    }
-
-    /* Sizes */
-    .geo3d.geo3d-xl { width: 200px; height: 200px; }
-    .geo3d.geo3d-xl .geo-face { width: 200px; height: 200px; }
-    .geo3d.geo3d-xl .gf-front  { transform: translateZ(100px); }
-    .geo3d.geo3d-xl .gf-back   { transform: rotateY(180deg) translateZ(100px); }
-    .geo3d.geo3d-xl .gf-left   { transform: rotateY(-90deg) translateZ(100px); }
-    .geo3d.geo3d-xl .gf-right  { transform: rotateY(90deg) translateZ(100px); }
-    .geo3d.geo3d-xl .gf-top    { transform: rotateX(90deg) translateZ(100px); }
-    .geo3d.geo3d-xl .gf-bottom { transform: rotateX(-90deg) translateZ(100px); }
-
-    .geo3d.geo3d-lg { width: 140px; height: 140px; }
-    .geo3d.geo3d-lg .geo-face { width: 140px; height: 140px; }
-    .geo3d.geo3d-lg .gf-front  { transform: translateZ(70px); }
-    .geo3d.geo3d-lg .gf-back   { transform: rotateY(180deg) translateZ(70px); }
-    .geo3d.geo3d-lg .gf-left   { transform: rotateY(-90deg) translateZ(70px); }
-    .geo3d.geo3d-lg .gf-right  { transform: rotateY(90deg) translateZ(70px); }
-    .geo3d.geo3d-lg .gf-top    { transform: rotateX(90deg) translateZ(70px); }
-    .geo3d.geo3d-lg .gf-bottom { transform: rotateX(-90deg) translateZ(70px); }
-
-    .geo3d.geo3d-sm { width: 70px; height: 70px; }
-    .geo3d.geo3d-sm .geo-face { width: 70px; height: 70px; }
-    .geo3d.geo3d-sm .gf-front  { transform: translateZ(35px); }
-    .geo3d.geo3d-sm .gf-back   { transform: rotateY(180deg) translateZ(35px); }
-    .geo3d.geo3d-sm .gf-left   { transform: rotateY(-90deg) translateZ(35px); }
-    .geo3d.geo3d-sm .gf-right  { transform: rotateY(90deg) translateZ(35px); }
-    .geo3d.geo3d-sm .gf-top    { transform: rotateX(90deg) translateZ(35px); }
-    .geo3d.geo3d-sm .gf-bottom { transform: rotateX(-90deg) translateZ(35px); }
-
-    /* Gold variant */
-    .geo3d.gold .geo-face { border-color: rgba(240,224,0,0.6); }
-
-    /* Positions — features header */
-    .feat-geo-wrap {
-      position: absolute; right: 3%; top: 50%; transform: translateY(-50%);
-      pointer-events: none; z-index: 0; perspective: 800px; opacity: 0.07;
-    }
-
-    /* Manifesto geo (inside .manifesto which has overflow:hidden) */
-    .mani-geo-a {
-      position: absolute; right: 5%;  top: 40%;
-      pointer-events: none; z-index: 1; perspective: 800px; opacity: 0.09;
-    }
-    .mani-geo-b {
-      position: absolute; right: 17%; top: 20%;
-      pointer-events: none; z-index: 1; perspective: 800px; opacity: 0.06;
-    }
-
-    /* CTA geo (inside .cta which has overflow:hidden) */
-    .cta-geo {
-      position: absolute; right: 12%; top: 50%; transform: translateY(-50%);
-      pointer-events: none; z-index: 0; perspective: 1000px; opacity: 0.06;
-    }
-
-    /* ── anchors / reveal ── */
-    #planos { scroll-margin-top: 90px; }
-    .reveal { opacity: 0; transform: translateY(24px); transition: opacity .8s ease, transform .8s ease; }
-    .reveal.on { opacity: 1; transform: none; }
-
-    /* ── MOBILE ── */
-    @media (max-width: 960px) {
-      nav { padding: 0 20px; } .nav-links { gap: 18px; }
-      .hero-inner { grid-template-columns: 1fr; padding: 60px 20px 64px; }
-      .hero-right { display: none; }
-      .features-grid { grid-template-columns: 1fr 1fr; }
-      .feat:nth-child(2n) { border-right: none; }
-      .feat:nth-child(3n) { border-right: 1px solid var(--linha); }
-      .feat:nth-child(2n) { border-right: none; }
-      .feat:nth-child(4), .feat:nth-child(5), .feat:nth-child(6) { border-bottom: 1px solid var(--linha); }
-      .feat:nth-child(5), .feat:nth-child(6) { border-bottom: none; }
-      .prova { grid-template-columns: 1fr 1fr; }
-      .prova-item:nth-child(2) { border-right: none; }
-      .prova-item:nth-child(3) { border-top: 1px solid var(--linha); }
-      .manifesto { grid-template-columns: 1fr; gap: 48px; padding: 60px 20px; }
-      .manifesto::after { width: 100%; top: 55%; }
-      .testemunho { grid-template-columns: 1fr; }
-      .test-card { border-right: none; border-bottom: 1px solid var(--linha); }
-      .test-card:last-child { border-bottom: none; }
-      .planos-header { padding: 40px 20px 32px; flex-direction: column; align-items: flex-start; }
-      .planos-grid { grid-template-columns: 1fr; }
-      .plano-card { border-right: none; border-bottom: 1px solid var(--linha); }
-      .plano-card:last-child { border-bottom: none; }
-      .quote, .cta { padding: 64px 20px; }
-      .cta { flex-direction: column; }
-      footer { padding: 24px 20px; flex-direction: column; gap: 10px; }
-      .divider::after { right: 20px; }
-      .features-header { padding: 40px 20px 32px; flex-direction: column; align-items: flex-start; gap: 16px; }
-      .q3d { display: none; }
-      .feat-geo-wrap, .mani-geo-a, .mani-geo-b, .cta-geo { display: none; }
-    }
-    @media (max-width: 600px) {
-      .features-grid { grid-template-columns: 1fr; }
-      .feat { border-right: none !important; border-bottom: 1px solid var(--linha) !important; }
-      .feat:last-child { border-bottom: none !important; }
-      .nav-links .nav-link { display: none; }
+    @media(max-width:480px){
+      .feat-grid{grid-template-columns:1fr}
     }
   </style>
 </head>
 <body>
 
-<nav>
-  <a class="nav-logo" href="/">PROFESSOR<span class="tm">IA™</span></a>
+<nav id="nav">
+  <a class="logo" href="/">
+    <span class="logo-p">Professor</span><span class="logo-ia">IA</span>
+    <span class="logo-pulse"></span>
+  </a>
   <div class="nav-links">
-    <a class="nav-link" href="#planos">PLANOS</a>
+    <a class="nav-a" href="#planos">Planos</a>
     {% if current_user.is_authenticated %}
-    <a class="nav-user" href="/chat"><span class="nav-user-dot"></span>OLÁ, {{ current_user.nome.split()[0] | upper }}</a>
+    <a class="nav-user" href="/chat"><span class="nav-udot"></span>Olá, {{ current_user.nome.split()[0] }}</a>
     {% else %}
-    <a class="nav-link" href="/login">LOGIN</a>
+    <a class="nav-a" href="/login">Entrar</a>
+    <a class="btn-nav" href="/cadastro">Começar grátis</a>
     {% endif %}
   </div>
 </nav>
 
+<!-- TICKER -->
 <div class="ticker">
-  <div class="ticker-track">
-    <span class="ticker-item">PLANOS DE AULA</span><span class="ticker-dot">●</span>
-    <span class="ticker-item">PROVAS E AVALIAÇÕES</span><span class="ticker-dot">●</span>
-    <span class="ticker-item">CAÇA-PALAVRAS</span><span class="ticker-dot">●</span>
-    <span class="ticker-item">CRUZADINHAS</span><span class="ticker-dot">●</span>
-    <span class="ticker-item">MAPAS MENTAIS</span><span class="ticker-dot">●</span>
-    <span class="ticker-item">PLANEJAMENTO ANUAL</span><span class="ticker-dot">●</span>
-    <span class="ticker-item">BILHETES AOS PAIS</span><span class="ticker-dot">●</span>
-    <span class="ticker-item">ADAPTAÇÕES NEE</span><span class="ticker-dot">●</span>
-    <span class="ticker-item">RUBRICAS</span><span class="ticker-dot">●</span>
-    <span class="ticker-item">RESUMOS DE CONTEÚDO</span><span class="ticker-dot">●</span>
-    <span class="ticker-item">PLANOS DE AULA</span><span class="ticker-dot">●</span>
-    <span class="ticker-item">PROVAS E AVALIAÇÕES</span><span class="ticker-dot">●</span>
-    <span class="ticker-item">CAÇA-PALAVRAS</span><span class="ticker-dot">●</span>
-    <span class="ticker-item">CRUZADINHAS</span><span class="ticker-dot">●</span>
-    <span class="ticker-item">MAPAS MENTAIS</span><span class="ticker-dot">●</span>
-    <span class="ticker-item">PLANEJAMENTO ANUAL</span><span class="ticker-dot">●</span>
-    <span class="ticker-item">BILHETES AOS PAIS</span><span class="ticker-dot">●</span>
-    <span class="ticker-item">ADAPTAÇÕES NEE</span><span class="ticker-dot">●</span>
-    <span class="ticker-item">RUBRICAS</span><span class="ticker-dot">●</span>
-    <span class="ticker-item">RESUMOS DE CONTEÚDO</span><span class="ticker-dot">●</span>
+  <div class="tick-track">
+    <span class="tick-i">Planos de Aula</span><span class="tick-d">●</span>
+    <span class="tick-i">Provas e Avaliações</span><span class="tick-d">●</span>
+    <span class="tick-i">Caça-Palavras</span><span class="tick-d">●</span>
+    <span class="tick-i">Cruzadinhas</span><span class="tick-d">●</span>
+    <span class="tick-i">Mapas Mentais</span><span class="tick-d">●</span>
+    <span class="tick-i">Planejamento Anual BNCC</span><span class="tick-d">●</span>
+    <span class="tick-i">Bilhetes aos Pais</span><span class="tick-d">●</span>
+    <span class="tick-i">Adaptações NEE</span><span class="tick-d">●</span>
+    <span class="tick-i">Rubricas</span><span class="tick-d">●</span>
+    <span class="tick-i">Resumos de Conteúdo</span><span class="tick-d">●</span>
+    <span class="tick-i">Planos de Aula</span><span class="tick-d">●</span>
+    <span class="tick-i">Provas e Avaliações</span><span class="tick-d">●</span>
+    <span class="tick-i">Caça-Palavras</span><span class="tick-d">●</span>
+    <span class="tick-i">Cruzadinhas</span><span class="tick-d">●</span>
+    <span class="tick-i">Mapas Mentais</span><span class="tick-d">●</span>
+    <span class="tick-i">Planejamento Anual BNCC</span><span class="tick-d">●</span>
+    <span class="tick-i">Bilhetes aos Pais</span><span class="tick-d">●</span>
+    <span class="tick-i">Adaptações NEE</span><span class="tick-d">●</span>
+    <span class="tick-i">Rubricas</span><span class="tick-d">●</span>
+    <span class="tick-i">Resumos de Conteúdo</span><span class="tick-d">●</span>
   </div>
 </div>
 
 <!-- HERO -->
 <section class="hero">
   <canvas id="scene3d"></canvas>
-  <div class="hero-veil"></div>
-  <div class="hero-meta hero-meta-tr">SISTEMA: PROFESSORIA™<br>MODELO: IA v2.0<br>STATUS: ATIVO</div>
-  <div class="hero-meta hero-meta-bl">© 2026 ASSISTENTE PEDAGÓGICO<br>BRASIL // BNCC // WEB</div>
+  <div class="hero-glow"></div>
   <div class="hero-inner">
-    <div class="hero-left">
-      <div class="hero-eyebrow">ASSISTENTE PEDAGÓGICO DE IA</div>
-      <h1>O FIM DO<br/>PLANO<br/><span class="l2">"MANUAL"<span class="marca">®</span></span></h1>
-    </div>
-    <div class="hero-right">
-      <p class="hero-desc">Gere planos de aula completos, provas, caça-palavras e planejamentos em segundos. Feito para professores brasileiros. Alinhado à BNCC.</p>
-      <div class="hero-btns">
-        {% if current_user.is_authenticated %}
-          {% if current_user.assinatura_ativa or current_user.is_admin %}
-            <a href="/chat" class="btn-solid">"ACESSAR_SISTEMA" →</a>
-          {% else %}
-            <a href="/planos" class="btn-solid">"VER PLANOS" →</a>
-          {% endif %}
+    <div class="hero-pill"><span class="pill-dot"></span>Assistente pedagógico com IA · BNCC</div>
+    <h1>Planeje melhor,<br/><span class="grad-text">ensine com mais impacto.</span></h1>
+    <p class="hero-sub">Gere planos de aula, provas, caça-palavras, cruzadinhas e muito mais em segundos. Feito para professores brasileiros.</p>
+    <div class="hero-btns">
+      {% if current_user.is_authenticated %}
+        {% if current_user.assinatura_ativa or current_user.is_admin %}
+          <a href="/chat" class="btn-primary">Acessar sistema →</a>
         {% else %}
-          <a href="/cadastro" class="btn-solid">"ACESSAR_SISTEMA" →</a>
+          <a href="/planos" class="btn-primary">Ver planos →</a>
+          <a href="/chat" class="btn-ghost-d">Explorar grátis</a>
         {% endif %}
-      </div>
+      {% else %}
+        <a href="/cadastro" class="btn-primary">Começar grátis →</a>
+        <a href="/login" class="btn-ghost-d">Já tenho conta</a>
+      {% endif %}
     </div>
+  </div>
+  <div class="hero-foot">
+    <span class="hero-foot-txt">Explorar</span>
+    <span class="hero-arrow"></span>
   </div>
 </section>
 
-<!-- SOCIAL PROOF NUMBERS — neuromarketing anchoring -->
-<div class="prova reveal">
-  <div class="prova-item">
-    <div class="prova-num"><span class="count" data-val="12000">0</span><span class="ac">+</span></div>
-    <div class="prova-label">PROFESSORES ATIVOS</div>
+<!-- STATS -->
+<div class="stats reveal">
+  <div class="stat">
+    <div class="stat-n"><span class="count" data-val="12000">0</span>+</div>
+    <div class="stat-l">Professores ativos</div>
   </div>
-  <div class="prova-item">
-    <div class="prova-num"><span class="count" data-val="5">0</span><span class="ac">h</span></div>
-    <div class="prova-label">ECONOMIZADAS / SEMANA</div>
+  <div class="stat">
+    <div class="stat-n"><span class="count" data-val="5">0</span>h</div>
+    <div class="stat-l">Economizadas por semana</div>
   </div>
-  <div class="prova-item">
-    <div class="prova-num"><span class="count" data-val="98">0</span><span class="ac">%</span></div>
-    <div class="prova-label">DE SATISFAÇÃO</div>
+  <div class="stat">
+    <div class="stat-n"><span class="count" data-val="98">0</span>%</div>
+    <div class="stat-l">De satisfação</div>
   </div>
-  <div class="prova-item">
-    <div class="prova-num"><span class="count" data-val="30">0</span><span class="ac">s</span></div>
-    <div class="prova-label">PARA GERAR UM PLANO</div>
+  <div class="stat">
+    <div class="stat-n"><span class="count" data-val="30">0</span>s</div>
+    <div class="stat-l">Para gerar um plano</div>
   </div>
 </div>
 
 <!-- FEATURES -->
-<div class="divider" data-label="FUNCIONALIDADES"></div>
-<div class="features-header" id="features">
-  <div class="section-tag">002 — O QUE VOCÊ PODE CRIAR</div>
-  <div class="section-title">TUDO EM<br/>SEGUNDOS</div>
-  <div class="feat-geo-wrap">
-    <div class="geo3d geo3d-lg" id="featCube">
-      <div class="geo-face gf-front"></div><div class="geo-face gf-back"></div>
-      <div class="geo-face gf-left"></div><div class="geo-face gf-right"></div>
-      <div class="geo-face gf-top"></div><div class="geo-face gf-bottom"></div>
+<section class="features reveal" id="features">
+  <!-- Scroll-driven cube decoration -->
+  <div class="feat-cube-wrap">
+    <div class="sc-wrap">
+      <div class="sc-geo xl" id="featCube">
+        <div class="sc-face"></div><div class="sc-face"></div>
+        <div class="sc-face"></div><div class="sc-face"></div>
+        <div class="sc-face"></div><div class="sc-face"></div>
+      </div>
     </div>
   </div>
-</div>
-<section class="features-grid reveal">
-  <div class="feat">
-    <div class="feat-num">F — 01</div>
-    <div class="feat-titulo">"PLANO DE AULA"</div>
-    <p class="feat-desc">Objetivos, conteúdo, metodologia e avaliação. Gerado completo e alinhado à BNCC em segundos.</p>
-  </div>
-  <div class="feat">
-    <div class="feat-num">F — 02</div>
-    <div class="feat-titulo">"PROVA"</div>
-    <p class="feat-desc">Questões abertas e múltipla escolha com gabarito automático. Defina tema, série e nível.</p>
-  </div>
-  <div class="feat">
-    <div class="feat-num">F — 03</div>
-    <div class="feat-titulo">"CAÇA-PALAVRAS"</div>
-    <p class="feat-desc">Grade 15×15 formatada com lista de palavras sobre qualquer tema. Pronto para imprimir.</p>
-  </div>
-  <div class="feat">
-    <div class="feat-num">F — 04</div>
-    <div class="feat-titulo">"CRUZADINHA"</div>
-    <p class="feat-desc">Grade com pistas horizontal e vertical, gabarito incluso. Pronta para imprimir.</p>
-  </div>
-  <div class="feat">
-    <div class="feat-num">F — 05</div>
-    <div class="feat-titulo">"MAPA MENTAL"</div>
-    <p class="feat-desc">Estrutura visual em árvore com ramos, sub-ramos e palavras-chave. Qualquer tema.</p>
-  </div>
-  <div class="feat">
-    <div class="feat-num">F — 06</div>
-    <div class="feat-titulo">"NEE"</div>
-    <p class="feat-desc">Material adaptado para DI, TEA, TDAH, Dislexia, Baixa Visão e CAA automaticamente.</p>
+
+  <div class="sec-label">O que você pode criar</div>
+  <h2 class="sec-head">Tudo em segundos,<br/>com qualidade pedagógica.</h2>
+  <p class="sec-sub">Do planejamento à avaliação, a ProfessorIA cuida da parte burocrática para você focar no que importa: ensinar.</p>
+
+  <div class="feat-grid">
+    <div class="feat-card">
+      <div class="feat-icon">
+        <svg viewBox="0 0 24 24"><path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+      </div>
+      <div class="feat-tag">01 — Planejamento</div>
+      <div class="feat-title">Plano de Aula</div>
+      <p class="feat-desc">Objetivos, conteúdo, metodologia e avaliação. Gerado completo e alinhado à BNCC em segundos.</p>
+    </div>
+    <div class="feat-card">
+      <div class="feat-icon">
+        <svg viewBox="0 0 24 24"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/></svg>
+      </div>
+      <div class="feat-tag">02 — Avaliação</div>
+      <div class="feat-title">Provas e Testes</div>
+      <p class="feat-desc">Questões abertas e múltipla escolha com gabarito automático. Defina tema, série e nível de dificuldade.</p>
+    </div>
+    <div class="feat-card">
+      <div class="feat-icon">
+        <svg viewBox="0 0 24 24"><path d="M4 5a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1H5a1 1 0 01-1-1V5zm0 10a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1H5a1 1 0 01-1-1v-4zm10-10a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1V5zm0 10a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1v-4z"/></svg>
+      </div>
+      <div class="feat-tag">03 — Atividade</div>
+      <div class="feat-title">Caça-Palavras</div>
+      <p class="feat-desc">Grade 15×15 formatada com lista de palavras sobre qualquer tema. Pronto para imprimir em segundos.</p>
+    </div>
+    <div class="feat-card">
+      <div class="feat-icon">
+        <svg viewBox="0 0 24 24"><path d="M11 4a2 2 0 114 0v1a1 1 0 001 1h3a1 1 0 011 1v3a1 1 0 01-1 1h-1a2 2 0 100 4h1a1 1 0 011 1v3a1 1 0 01-1 1h-3a1 1 0 01-1-1v-1a2 2 0 10-4 0v1a1 1 0 01-1 1H7a1 1 0 01-1-1v-3a1 1 0 00-1-1H4a2 2 0 110-4h1a1 1 0 001-1V7a1 1 0 011-1h3a1 1 0 001-1V4z"/></svg>
+      </div>
+      <div class="feat-tag">04 — Atividade</div>
+      <div class="feat-title">Cruzadinha</div>
+      <p class="feat-desc">Grade com pistas horizontal e vertical, gabarito incluso. Perfeita para fixação de conteúdo.</p>
+    </div>
+    <div class="feat-card">
+      <div class="feat-icon">
+        <svg viewBox="0 0 24 24"><path d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"/></svg>
+      </div>
+      <div class="feat-tag">05 — Visual</div>
+      <div class="feat-title">Mapa Mental</div>
+      <p class="feat-desc">Estrutura visual em árvore com ramos, sub-ramos e palavras-chave. Facilita a compreensão de qualquer tema.</p>
+    </div>
+    <div class="feat-card">
+      <div class="feat-icon">
+        <svg viewBox="0 0 24 24"><path d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/></svg>
+      </div>
+      <div class="feat-tag">06 — Inclusão</div>
+      <div class="feat-title">Adaptações NEE</div>
+      <p class="feat-desc">Material adaptado automaticamente para DI, TEA, TDAH, Dislexia, Baixa Visão e CAA.</p>
+    </div>
   </div>
 </section>
 
-<!-- MANIFESTO + STATS -->
-<div class="divider" data-label="POR QUÊ EXISTE"></div>
-<section class="manifesto reveal">
-  <!-- Scroll-driven 3D decorations on the right side -->
-  <div class="mani-geo-a">
-    <div class="geo3d geo3d-xl" id="maniCubeA">
-      <div class="geo-face gf-front"></div><div class="geo-face gf-back"></div>
-      <div class="geo-face gf-left"></div><div class="geo-face gf-right"></div>
-      <div class="geo-face gf-top"></div><div class="geo-face gf-bottom"></div>
-    </div>
-  </div>
-  <div class="mani-geo-b">
-    <div class="geo3d geo3d-sm gold" id="maniCubeB">
-      <div class="geo-face gf-front"></div><div class="geo-face gf-back"></div>
-      <div class="geo-face gf-left"></div><div class="geo-face gf-right"></div>
-      <div class="geo-face gf-top"></div><div class="geo-face gf-bottom"></div>
-    </div>
+<!-- WHY / MISSION (dark) -->
+<section class="why reveal">
+  <div class="why-glow"></div>
+  <!-- Orbital rings decoration -->
+  <div class="orbit-scene">
+    <div class="orbit-ring orbit-r1"></div>
+    <div class="orbit-ring orbit-r2"></div>
+    <div class="orbit-ring orbit-r3"></div>
+    <div class="orbit-dot"></div>
   </div>
   <div>
-    <div class="manifesto-tag">003 — MISSÃO</div>
-    <h2>FEITO PARA<br/>QUEM<br/><em>ENSINA.</em></h2>
+    <div class="sec-label">Por que existe</div>
+    <h2 class="sec-head">Feita para quem<br/>dedica a vida<br/>a ensinar.</h2>
+    <p class="sec-sub">Professores brasileiros gastam em média 5 horas por semana só em planejamento. A ProfessorIA devolve esse tempo para o que realmente importa.</p>
   </div>
-  <div>
-    <div class="manifesto-stat">
-      <div class="stat-num"><span class="count" data-val="5">5</span><span>h</span></div>
-      <div class="stat-desc">economizadas por semana em planejamento</div>
+  <div class="why-list">
+    <div class="why-row">
+      <div class="why-n">5h</div>
+      <div class="why-d">economizadas por semana em planejamento e burocracia</div>
     </div>
-    <div class="manifesto-stat">
-      <div class="stat-num">+<span class="count" data-val="8">8</span><span>×</span></div>
-      <div class="stat-desc">mais rápido que criar do zero</div>
+    <div class="why-row">
+      <div class="why-n">+8×</div>
+      <div class="why-d">mais rápido que criar do zero, com qualidade profissional</div>
     </div>
-    <div class="manifesto-stat">
-      <div class="stat-num"><span class="count" data-val="100">100</span><span>%</span></div>
-      <div class="stat-desc">alinhado à BNCC e currículo nacional</div>
+    <div class="why-row">
+      <div class="why-n">100%</div>
+      <div class="why-d">alinhado à BNCC e ao currículo nacional brasileiro</div>
     </div>
   </div>
 </section>
 
-<!-- TESTIMONIALS — prova social antes dos planos (neuromarketing) -->
-<div class="divider" data-label="DEPOIMENTOS"></div>
-<section class="testemunho reveal">
-  <div class="test-card">
-    <div class="test-stars">★★★★★</div>
-    <p class="test-text">"O que eu levava 3 horas para fazer agora fica pronto em 30 segundos. Uso todo domingo à noite antes da semana."</p>
-    <div class="test-autor">— Carla M. · Professora de Português · SP</div>
-  </div>
-  <div class="test-card">
-    <div class="test-stars">★★★★★</div>
-    <p class="test-text">"Os planos saem alinhados à BNCC automaticamente. Economizo tempo e ainda entrego um material muito mais profissional."</p>
-    <div class="test-autor">— Roberto A. · Professor de Ciências · MG</div>
-  </div>
-  <div class="test-card">
-    <div class="test-stars">★★★★★</div>
-    <p class="test-text">"Trabalho com alunos NEE e a adaptação automática é incrível. Antes eu fazia tudo na mão, agora é questão de segundos."</p>
-    <div class="test-autor">— Ana P. · Educadora Especial · RJ</div>
+<!-- TESTIMONIALS -->
+<section class="tests reveal">
+  <div class="sec-label">Depoimentos</div>
+  <h2 class="sec-head">O que professores dizem.</h2>
+  <p class="sec-sub">Mais de 12.000 educadores brasileiros já usam a ProfessorIA no dia a dia.</p>
+  <div class="tests-grid">
+    <div class="test-card">
+      <div class="test-stars">★★★★★</div>
+      <p class="test-body">"O que eu levava 3 horas para fazer agora fica pronto em 30 segundos. Uso todo domingo à noite antes da semana."</p>
+      <div class="test-auth">— Carla M. · Professora de Português · SP</div>
+    </div>
+    <div class="test-card">
+      <div class="test-stars">★★★★★</div>
+      <p class="test-body">"Os planos saem alinhados à BNCC automaticamente. Economizo tempo e ainda entrego um material muito mais profissional."</p>
+      <div class="test-auth">— Roberto A. · Professor de Ciências · MG</div>
+    </div>
+    <div class="test-card">
+      <div class="test-stars">★★★★★</div>
+      <p class="test-body">"Trabalho com alunos NEE e a adaptação automática é incrível. Antes eu fazia tudo na mão, agora é questão de segundos."</p>
+      <div class="test-auth">— Ana P. · Educadora Especial · RJ</div>
+    </div>
   </div>
 </section>
 
-<!-- PLANOS -->
-<div class="divider" data-label="PREÇOS"></div>
-<section class="planos reveal" id="planos">
-  <div class="planos-header">
+<!-- PRICING -->
+<section class="pricing reveal" id="planos">
+  <!-- Scroll-driven cube decorations -->
+  <div class="pricing-cube-a">
+    <div class="sc-wrap">
+      <div class="sc-geo lg" id="priceCubeA">
+        <div class="sc-face"></div><div class="sc-face"></div>
+        <div class="sc-face"></div><div class="sc-face"></div>
+        <div class="sc-face"></div><div class="sc-face"></div>
+      </div>
+    </div>
+  </div>
+  <div class="pricing-cube-b">
+    <div class="sc-wrap">
+      <div class="sc-geo sm" id="priceCubeB">
+        <div class="sc-face"></div><div class="sc-face"></div>
+        <div class="sc-face"></div><div class="sc-face"></div>
+        <div class="sc-face"></div><div class="sc-face"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="sec-label">Preços</div>
+  <div class="pricing-top">
     <div>
-      <h2>ESCOLHA<br/>SEU PLANO</h2>
-      <p class="planos-header-sub">Sem fidelidade. Cancele quando quiser.</p>
+      <h2 class="sec-head" style="margin-bottom:8px">Escolha seu plano.</h2>
+      <p style="font-size:.95rem;color:var(--text2)">Sem fidelidade. Cancele quando quiser.</p>
     </div>
     <div class="toggle-wrap">
-      <span class="t-label on" id="lbl-m">MENSAL</span>
+      <span class="t-l on" id="lbl-m">Mensal</span>
       <label class="toggle">
         <input type="checkbox" id="tog-anual" onchange="alternar()"/>
-        <span class="t-slider"></span>
+        <span class="t-sl"></span>
       </label>
-      <span class="t-label" id="lbl-a">ANUAL</span>
-      <span class="eco-tag" id="eco" style="display:none">2 MESES GRÁTIS</span>
+      <span class="t-l" id="lbl-a">Anual</span>
+      <span class="eco-badge" id="eco">2 meses grátis</span>
     </div>
   </div>
-  <div class="planos-grid">
-    <div class="plano-card">
-      <div class="plano-tag">PARA COMEÇAR</div>
-      <div class="plano-nome">FREE</div>
-      <div class="plano-preco zero">R$ 0</div>
-      <div class="plano-periodo">PARA SEMPRE</div>
-      <ul class="plano-features">
-        <li class="on">5 GERAÇÕES / MÊS <span class="chk">✓</span></li>
-        <li class="on">CHAT COM IA <span class="chk">✓</span></li>
-        <li class="on">PLANOS DE AULA <span class="chk">✓</span></li>
-        <li>PROVAS E AVALIAÇÕES <span class="xck">—</span></li>
-        <li>CAÇA-PALAVRAS <span class="xck">—</span></li>
-        <li>ADAPTAÇÕES NEE <span class="xck">—</span></li>
-        <li>EXPORTAR DOCX <span class="xck">—</span></li>
+  <div class="pricing-grid">
+    <div class="plan-card">
+      <div class="plan-lbl">Para começar</div>
+      <div class="plan-name">Free</div>
+      <div class="plan-price zero">R$ 0</div>
+      <div class="plan-period">Para sempre</div>
+      <ul class="plan-feats">
+        <li class="on">5 gerações / mês <span class="chk">✓</span></li>
+        <li class="on">Chat com IA <span class="chk">✓</span></li>
+        <li class="on">Planos de aula <span class="chk">✓</span></li>
+        <li>Provas e avaliações <span class="xck">—</span></li>
+        <li>Caça-palavras <span class="xck">—</span></li>
+        <li>Adaptações NEE <span class="xck">—</span></li>
+        <li>Exportar DOCX <span class="xck">—</span></li>
       </ul>
-      <a href="/cadastro" class="btn-plano ghost">COMEÇAR GRÁTIS</a>
-      <div class="plano-scarcity"></div>
+      <a href="/cadastro" class="btn-plan o">Começar grátis</a>
+      <div class="plan-sc"></div>
     </div>
-    <div class="plano-card destaque">
-      <div class="plano-badge">MAIS POPULAR</div>
-      <div class="plano-tag"><span class="dot"></span>RECOMENDADO</div>
-      <div class="plano-nome">BASIC</div>
-      <div class="plano-preco" id="preco-basic"><sup>R$</sup>39<sub>/MÊS</sub></div>
-      <div class="plano-periodo" id="per-basic">ACESSO INDIVIDUAL ILIMITADO</div>
-      <ul class="plano-features">
-        <li class="on">GERAÇÕES ILIMITADAS <span class="chk">✓</span></li>
-        <li class="on">CHAT COM IA <span class="chk">✓</span></li>
-        <li class="on">PLANOS DE AULA <span class="chk">✓</span></li>
-        <li class="on">PROVAS E AVALIAÇÕES <span class="chk">✓</span></li>
-        <li class="on">CAÇA-PALAVRAS <span class="chk">✓</span></li>
-        <li class="on">ADAPTAÇÕES NEE <span class="chk">✓</span></li>
-        <li class="on">EXPORTAR DOCX <span class="chk">✓</span></li>
+    <div class="plan-card hot">
+      <div class="plan-badge">Mais popular</div>
+      <div class="plan-lbl">Recomendado</div>
+      <div class="plan-name">Basic</div>
+      <div class="plan-price" id="preco-basic"><sup>R$</sup>39<sub>/mês</sub></div>
+      <div class="plan-period" id="per-basic">Acesso individual ilimitado</div>
+      <ul class="plan-feats">
+        <li class="on">Gerações ilimitadas <span class="chk">✓</span></li>
+        <li class="on">Chat com IA <span class="chk">✓</span></li>
+        <li class="on">Planos de aula <span class="chk">✓</span></li>
+        <li class="on">Provas e avaliações <span class="chk">✓</span></li>
+        <li class="on">Caça-palavras <span class="chk">✓</span></li>
+        <li class="on">Adaptações NEE <span class="chk">✓</span></li>
+        <li class="on">Exportar DOCX <span class="chk">✓</span></li>
       </ul>
-      <a href="/stripe/checkout/basic" class="btn-plano solid" id="btn-basic">ASSINAR BASIC →</a>
-      <div class="plano-scarcity" id="sc-basic">⚡ OFERTA POR TEMPO LIMITADO</div>
+      <a href="/stripe/checkout/basic" class="btn-plan am" id="btn-basic">Assinar Basic →</a>
+      <div class="plan-sc" id="sc-basic">⚡ Oferta por tempo limitado</div>
     </div>
-    <div class="plano-card">
-      <div class="plano-tag">COMPLETO</div>
-      <div class="plano-nome">PRO</div>
-      <div class="plano-preco" id="preco-pro"><sup>R$</sup>59<sub>/MÊS</sub></div>
-      <div class="plano-periodo" id="per-pro">TUDO DO BASIC + MAIS</div>
-      <ul class="plano-features">
-        <li class="on">TUDO DO BASIC <span class="chk">✓</span></li>
-        <li class="on">PLANEJAMENTO ANUAL BNCC <span class="chk">✓</span></li>
-        <li class="on">HISTÓRICO COMPLETO <span class="chk">✓</span></li>
-        <li class="on">ENTRADA E SAÍDA DE ÁUDIO <span class="chk">✓</span></li>
-        <li class="on">SUPORTE PRIORITÁRIO <span class="chk">✓</span></li>
+    <div class="plan-card">
+      <div class="plan-lbl">Completo</div>
+      <div class="plan-name">Pro</div>
+      <div class="plan-price" id="preco-pro"><sup>R$</sup>59<sub>/mês</sub></div>
+      <div class="plan-period" id="per-pro">Tudo do Basic + mais</div>
+      <ul class="plan-feats">
+        <li class="on">Tudo do Basic <span class="chk">✓</span></li>
+        <li class="on">Planejamento anual BNCC <span class="chk">✓</span></li>
+        <li class="on">Histórico completo <span class="chk">✓</span></li>
+        <li class="on">Entrada e saída de áudio <span class="chk">✓</span></li>
+        <li class="on">Suporte prioritário <span class="chk">✓</span></li>
       </ul>
-      <a href="/stripe/checkout/pro" class="btn-plano ghost" id="btn-pro">ASSINAR PRO →</a>
-      <div class="plano-scarcity"></div>
+      <a href="/stripe/checkout/pro" class="btn-plan o" id="btn-pro">Assinar Pro →</a>
+      <div class="plan-sc"></div>
     </div>
   </div>
 </section>
 
 <!-- QUOTE -->
-<div class="divider" data-label="DEPOIMENTO"></div>
-<div class="quote reveal">
-  <div class="q3d left">
-    <div class="cube3d lg">
-      <div class="face front"></div><div class="face back"></div>
-      <div class="face left"></div><div class="face right"></div>
-      <div class="face top"></div><div class="face bottom"></div>
+<div class="quote-sec reveal">
+  <div class="q3d ql">
+    <div class="qcube qlg">
+      <div class="qface"></div><div class="qface"></div>
+      <div class="qface"></div><div class="qface"></div>
+      <div class="qface"></div><div class="qface"></div>
     </div>
   </div>
-  <div class="q3d right">
-    <div class="cube3d sm">
-      <div class="face front"></div><div class="face back"></div>
-      <div class="face left"></div><div class="face right"></div>
-      <div class="face top"></div><div class="face bottom"></div>
+  <div class="q3d qr">
+    <div class="qcube qsm">
+      <div class="qface"></div><div class="qface"></div>
+      <div class="qface"></div><div class="qface"></div>
+      <div class="qface"></div><div class="qface"></div>
     </div>
   </div>
-  <p class="quote-text"><span class="q">"</span>O QUE LEVAVA HORAS AGORA<br/>LEVA MINUTOS. ISSO MUDOU<br/>MEU DOMINGO.<span class="q">"</span></p>
-  <p class="quote-autor">— Professora de História · Rede Pública · São Paulo</p>
+  <p class="quote-q"><span class="qi">"</span>O que levava horas agora leva minutos.<br/>Isso mudou o meu domingo.<span class="qi">"</span></p>
+  <p class="quote-who">— Professora de História · Rede Pública · São Paulo</p>
 </div>
 
+<!-- CTA -->
 <section class="cta reveal">
-  <div class="cta-geo" id="ctaGeo">
-    <div class="geo3d geo3d-xl" id="ctaCube">
-      <div class="geo-face gf-front"></div><div class="geo-face gf-back"></div>
-      <div class="geo-face gf-left"></div><div class="geo-face gf-right"></div>
-      <div class="geo-face gf-top"></div><div class="geo-face gf-bottom"></div>
+  <canvas id="scene3d-2"></canvas>
+  <div class="cta-glow"></div>
+  <!-- CSS 3D cubes decorating the CTA -->
+  <div class="cta-cube-a">
+    <div class="sc-wrap">
+      <div class="sc-geo xl auto-spin" id="ctaCubeA">
+        <div class="sc-face"></div><div class="sc-face"></div>
+        <div class="sc-face"></div><div class="sc-face"></div>
+        <div class="sc-face"></div><div class="sc-face"></div>
+      </div>
     </div>
   </div>
-  <h2>COMECE<br/><span class="sub">HOJE, GRÁTIS.</span></h2>
-  {% if current_user.is_authenticated %}
-    {% if current_user.assinatura_ativa or current_user.is_admin %}
-      <a href="/chat" class="btn-solid" style="font-size:.65rem;padding:16px 40px">ACESSAR SISTEMA →</a>
+  <div class="cta-cube-b">
+    <div class="sc-wrap">
+      <div class="sc-geo md auto-spin-r" id="ctaCubeB">
+        <div class="sc-face"></div><div class="sc-face"></div>
+        <div class="sc-face"></div><div class="sc-face"></div>
+        <div class="sc-face"></div><div class="sc-face"></div>
+      </div>
+    </div>
+  </div>
+  <div class="cta-cube-c">
+    <div class="sc-wrap">
+      <div class="sc-geo sm auto-spin-s" id="ctaCubeC">
+        <div class="sc-face"></div><div class="sc-face"></div>
+        <div class="sc-face"></div><div class="sc-face"></div>
+        <div class="sc-face"></div><div class="sc-face"></div>
+      </div>
+    </div>
+  </div>
+  <div class="cta-inner">
+    <div class="hero-pill" style="margin-bottom:28px"><span class="pill-dot"></span>Comece hoje, é grátis</div>
+    <h2>Pronto para<br/><span class="grad-text">economizar horas</span><br/>toda semana?</h2>
+    <p class="cta-desc">Junte-se a mais de 12.000 professores que já usam a IA para planejar melhor e ensinar com mais qualidade.</p>
+    {% if current_user.is_authenticated %}
+      {% if current_user.assinatura_ativa or current_user.is_admin %}
+        <a href="/chat" class="btn-primary" style="font-size:1rem;padding:16px 36px">Acessar sistema →</a>
+      {% else %}
+        <a href="/planos" class="btn-primary" style="font-size:1rem;padding:16px 36px">Ver planos →</a>
+      {% endif %}
     {% else %}
-      <a href="/planos" class="btn-solid" style="font-size:.65rem;padding:16px 40px">VER PLANOS →</a>
+      <a href="/cadastro" class="btn-primary" style="font-size:1rem;padding:16px 36px">Criar conta grátis →</a>
     {% endif %}
-  {% else %}
-    <a href="/cadastro" class="btn-solid" style="font-size:.65rem;padding:16px 40px">CRIAR CONTA GRÁTIS →</a>
-  {% endif %}
+  </div>
 </section>
 
 <footer>
-  <a class="footer-logo" href="/">PROFESSOR<span class="tm">IA™</span></a>
-  <div class="footer-links">
-    <a class="footer-link" href="#planos">PLANOS</a>
-    <a class="footer-link" href="/login">LOGIN</a>
-    <a class="footer-link" href="/cadastro">CADASTRO</a>
-    <a class="footer-link" href="/termos">TERMOS</a>
-    <a class="footer-link" href="/privacidade">PRIVACIDADE</a>
+  <a class="f-logo" href="/"><span class="f-logo-p">Professor</span><span class="f-logo-ia">IA</span></a>
+  <div class="f-links">
+    <a class="f-link" href="#planos">Planos</a>
+    <a class="f-link" href="/login">Login</a>
+    <a class="f-link" href="/cadastro">Cadastro</a>
+    <a class="f-link" href="/termos">Termos</a>
+    <a class="f-link" href="/privacidade">Privacidade</a>
   </div>
-  <span class="footer-copy">© 2025 PROFESSORIA</span>
+  <span class="f-copy">© 2026 ProfessorIA</span>
 </footer>
 
 <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js"></script>
 <script>
-/* ═══════════════════════════════════════════════
-   ProfessorIA — Neural Intelligence Scene
-   Dodecahedron + Icosahedron + Neural Network
-   ═══════════════════════════════════════════════ */
-(function () {
+/* ═══════════════════════════════════════════
+   HERO — Glowing Neural Scene (Purple/Indigo)
+   ═══════════════════════════════════════════ */
+(function(){
   var canvas = document.getElementById('scene3d');
   var hero   = canvas.parentElement;
+  var W = hero.clientWidth, H = hero.clientHeight;
 
-  var renderer = new THREE.WebGLRenderer({ canvas: canvas, antialias: true, alpha: true });
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-  renderer.setClearColor(0x000000, 0);
+  var renderer = new THREE.WebGLRenderer({canvas:canvas, antialias:true, alpha:true});
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio,2));
+  renderer.setClearColor(0x000000,0);
 
   var scene  = new THREE.Scene();
-  var camera = new THREE.PerspectiveCamera(52, 1, 0.1, 100);
+  var camera = new THREE.PerspectiveCamera(52,W/H,0.1,100);
   camera.position.z = 6;
 
   var group = new THREE.Group();
   scene.add(group);
 
-  var C_DARK = 0x0a0a0a;
-  var C_GOLD = 0xf0e000;
+  var C_IND  = 0x6366f1;
+  var C_VIO  = 0x8b5cf6;
+  var C_AMB  = 0xf59e0b;
+  var C_CYN  = 0x22d3ee;
+  var C_WHT  = 0xffffff;
+  var ADD    = THREE.AdditiveBlending;
 
-  /* ── 1. CENTRAL DODECAHEDRON (brain / intelligence) ── */
-  var dodGeo  = new THREE.DodecahedronGeometry(1.5, 0);
-  var dodEdge = new THREE.EdgesGeometry(dodGeo);
-  var dodMat  = new THREE.LineBasicMaterial({ color: C_DARK, transparent: true, opacity: 0.85 });
-  var dodMesh = new THREE.LineSegments(dodEdge, dodMat);
-  group.add(dodMesh);
+  /* Central icosahedron — indigo glow */
+  var icoG = new THREE.IcosahedronGeometry(1.7,1);
+  var icoE = new THREE.EdgesGeometry(icoG);
+  var icoM = new THREE.LineBasicMaterial({color:C_IND,transparent:true,opacity:.75,blending:ADD});
+  var ico  = new THREE.LineSegments(icoE,icoM);
+  group.add(ico);
 
-  /* ── 2. OUTER ICOSAHEDRON SHELL (cortex layer) ── */
-  var icoGeo  = new THREE.IcosahedronGeometry(2.7, 0);
-  var icoEdge = new THREE.EdgesGeometry(icoGeo);
-  var icoMat  = new THREE.LineBasicMaterial({ color: C_DARK, transparent: true, opacity: 0.14 });
-  var icoMesh = new THREE.LineSegments(icoEdge, icoMat);
-  group.add(icoMesh);
+  /* Outer dodecahedron — violet, subtle */
+  var dodG = new THREE.DodecahedronGeometry(3.1,0);
+  var dodE = new THREE.EdgesGeometry(dodG);
+  var dodM = new THREE.LineBasicMaterial({color:C_VIO,transparent:true,opacity:.18,blending:ADD});
+  var dod  = new THREE.LineSegments(dodE,dodM);
+  group.add(dod);
 
-  /* ── 3. NEURAL NODES (neurons) ── */
-  var NODE_DATA = [
-    { r:2.9, t:0.0,  p:0.8,  gold:true  },
-    { r:3.2, t:1.1,  p:1.6,  gold:false },
-    { r:2.5, t:2.3,  p:0.5,  gold:false },
-    { r:3.5, t:3.5,  p:1.9,  gold:true  },
-    { r:2.8, t:4.7,  p:0.3,  gold:false },
-    { r:3.1, t:5.8,  p:2.1,  gold:false },
-    { r:2.7, t:0.7,  p:2.8,  gold:true  },
-    { r:3.3, t:2.0,  p:1.1,  gold:false },
-    { r:2.4, t:3.2,  p:0.7,  gold:false },
-    { r:3.6, t:4.4,  p:2.5,  gold:false },
-    { r:2.9, t:5.6,  p:1.4,  gold:true  },
-    { r:3.0, t:1.8,  p:2.0,  gold:false },
+  /* Orbiting octahedron — cyan, small */
+  var octG = new THREE.OctahedronGeometry(0.7,0);
+  var octE = new THREE.EdgesGeometry(octG);
+  var octM = new THREE.LineBasicMaterial({color:C_CYN,transparent:true,opacity:.55,blending:ADD});
+  var oct  = new THREE.LineSegments(octE,octM);
+  oct.position.set(2.8,0,0);
+  group.add(oct);
+
+  /* Second orbiting octahedron */
+  var oct2 = new THREE.LineSegments(octE.clone(), new THREE.LineBasicMaterial({color:C_AMB,transparent:true,opacity:.45,blending:ADD}));
+  oct2.position.set(-2.4,1.2,0);
+  group.add(oct2);
+
+  /* Neural nodes */
+  var NODES = [
+    {r:2.9,t:0.0, p:0.8, gold:true},
+    {r:3.2,t:1.1, p:1.6, gold:false},
+    {r:2.5,t:2.3, p:0.5, gold:false},
+    {r:3.5,t:3.5, p:1.9, gold:true},
+    {r:2.8,t:4.7, p:0.3, gold:false},
+    {r:3.1,t:5.8, p:2.1, gold:false},
+    {r:2.7,t:0.7, p:2.8, gold:true},
+    {r:3.3,t:2.0, p:1.1, gold:false},
+    {r:2.4,t:3.2, p:0.7, gold:false},
+    {r:3.6,t:4.4, p:2.5, gold:false},
+    {r:2.9,t:5.6, p:1.4, gold:true},
+    {r:3.0,t:1.8, p:2.0, gold:false},
   ];
-  var nodeMeshes = NODE_DATA.map(function(d) {
-    var x = d.r * Math.sin(d.p) * Math.cos(d.t);
-    var y = d.r * Math.sin(d.p) * Math.sin(d.t);
-    var z = d.r * Math.cos(d.p) * 0.5;
-    var geo = new THREE.SphereGeometry(d.gold ? 0.055 : 0.038, 8, 8);
-    var mat = new THREE.MeshBasicMaterial({ color: d.gold ? C_GOLD : C_DARK, transparent: true, opacity: d.gold ? 1.0 : 0.45 });
-    var m = new THREE.Mesh(geo, mat);
-    m.position.set(x, y, z);
-    m.userData = { ox: x, oy: y, oz: z, phase: d.t };
-    group.add(m);
-    return m;
+  var nodeMeshes = NODES.map(function(d){
+    var x = d.r*Math.sin(d.p)*Math.cos(d.t);
+    var y = d.r*Math.sin(d.p)*Math.sin(d.t);
+    var z = d.r*Math.cos(d.p)*0.5;
+    var g = new THREE.SphereGeometry(d.gold?0.065:0.042,8,8);
+    var c = d.gold ? C_AMB : C_IND;
+    var m = new THREE.MeshBasicMaterial({color:c,transparent:true,opacity:d.gold?1.0:0.6,blending:ADD});
+    var mesh = new THREE.Mesh(g,m);
+    mesh.position.set(x,y,z);
+    mesh.userData={ox:x,oy:y,oz:z,phase:d.t};
+    group.add(mesh);
+    return mesh;
   });
 
-  /* ── 4. SYNAPTIC CONNECTIONS (axons between neurons) ── */
-  var CONN = [
-    [0,1],[1,2],[2,3],[3,4],[4,5],[5,0],
-    [6,7],[7,8],[8,9],[9,10],[10,11],[11,6],
-    [0,6],[1,7],[2,8],[3,9],[4,10],[5,11],
-  ];
-  CONN.forEach(function(pair) {
-    var a = nodeMeshes[pair[0]].userData;
-    var b = nodeMeshes[pair[1]].userData;
-    var pts = new Float32Array([a.ox, a.oy, a.oz, b.ox, b.oy, b.oz]);
-    var geo = new THREE.BufferGeometry();
-    geo.setAttribute('position', new THREE.BufferAttribute(pts, 3));
-    group.add(new THREE.LineSegments(geo,
-      new THREE.LineBasicMaterial({ color: C_DARK, transparent: true, opacity: 0.10 })));
+  /* Axon connections */
+  var CONN=[[0,1],[1,2],[2,3],[3,4],[4,5],[5,0],[6,7],[7,8],[8,9],[9,10],[10,11],[11,6],[0,6],[1,7],[2,8],[3,9],[4,10],[5,11]];
+  CONN.forEach(function(pair){
+    var a=nodeMeshes[pair[0]].userData, b=nodeMeshes[pair[1]].userData;
+    var pts=new Float32Array([a.ox,a.oy,a.oz,b.ox,b.oy,b.oz]);
+    var bg=new THREE.BufferGeometry();
+    bg.setAttribute('position',new THREE.BufferAttribute(pts,3));
+    group.add(new THREE.LineSegments(bg, new THREE.LineBasicMaterial({color:C_IND,transparent:true,opacity:.12,blending:ADD})));
   });
 
-  /* ── 5. GOLD DATA PARTICLES ── */
-  var pN = 140;
-  var pPos = new Float32Array(pN * 3);
-  for (var i = 0; i < pN; i++) {
-    pPos[i*3]   = (Math.random() - 0.5) * 14;
-    pPos[i*3+1] = (Math.random() - 0.5) * 10;
-    pPos[i*3+2] = (Math.random() - 0.5) * 6;
+  /* Particles — mix of indigo/violet/amber */
+  var pN=380;
+  var pPos=new Float32Array(pN*3);
+  var pColors=new Float32Array(pN*3);
+  var colorOptions=[[0.39,0.4,0.95],[0.55,0.36,0.98],[0.96,0.62,0.04],[0.13,0.83,0.93]];
+  for(var i=0;i<pN;i++){
+    pPos[i*3]=(Math.random()-.5)*16;
+    pPos[i*3+1]=(Math.random()-.5)*12;
+    pPos[i*3+2]=(Math.random()-.5)*8;
+    var co=colorOptions[Math.floor(Math.random()*colorOptions.length)];
+    pColors[i*3]=co[0]; pColors[i*3+1]=co[1]; pColors[i*3+2]=co[2];
   }
-  var pGeo = new THREE.BufferGeometry();
-  pGeo.setAttribute('position', new THREE.BufferAttribute(pPos, 3));
-  group.add(new THREE.Points(pGeo, new THREE.PointsMaterial({ color: C_GOLD, size: 0.04, transparent: true, opacity: 0.55 })));
+  var pBg=new THREE.BufferGeometry();
+  pBg.setAttribute('position',new THREE.BufferAttribute(pPos,3));
+  pBg.setAttribute('color',new THREE.BufferAttribute(pColors,3));
+  group.add(new THREE.Points(pBg, new THREE.PointsMaterial({size:.055,transparent:true,opacity:.6,vertexColors:true,blending:ADD})));
 
-  /* ── RESIZE ── */
-  function resize() {
-    var w = hero.clientWidth, h = hero.clientHeight;
-    if (!w || !h) return;
-    renderer.setSize(w, h);
-    camera.aspect = w / h;
+  /* Resize */
+  function resize(){
+    W=hero.clientWidth; H=hero.clientHeight;
+    if(!W||!H)return;
+    renderer.setSize(W,H);
+    camera.aspect=W/H;
     camera.updateProjectionMatrix();
   }
   resize();
-  if (window.ResizeObserver) new ResizeObserver(resize).observe(hero);
-  else window.addEventListener('resize', resize);
+  if(window.ResizeObserver) new ResizeObserver(resize).observe(hero);
+  else window.addEventListener('resize',resize);
 
-  /* ── MOUSE PARALLAX ── */
-  var mx = 0, my = 0;
-  document.addEventListener('mousemove', function(e) {
-    mx =  (e.clientX / window.innerWidth  - 0.5) * 0.45;
-    my = -(e.clientY / window.innerHeight - 0.5) * 0.35;
+  /* Mouse parallax */
+  var mx=0,my=0;
+  document.addEventListener('mousemove',function(e){
+    mx=(e.clientX/window.innerWidth-.5)*.5;
+    my=-(e.clientY/window.innerHeight-.5)*.38;
   });
 
-  /* ── ANIMATE ── */
-  var t = 0;
-  (function animate() {
+  /* Animate */
+  var t=0, octAngle=0;
+  (function animate(){
     requestAnimationFrame(animate);
-    t += 0.006;
-    /* dodecahedron: slow multi-axis rotation */
-    dodMesh.rotation.x += 0.003;
-    dodMesh.rotation.y += 0.005;
-    /* icosahedron: opposite slow rotation */
-    icoMesh.rotation.x -= 0.0015;
-    icoMesh.rotation.y += 0.002;
-    /* nodes: gentle neural float */
-    nodeMeshes.forEach(function(m) {
-      m.position.y = m.userData.oy + Math.sin(t * 0.5 + m.userData.phase) * 0.08;
-      m.position.x = m.userData.ox + Math.cos(t * 0.4 + m.userData.phase) * 0.05;
+    t+=0.006; octAngle+=0.018;
+    ico.rotation.x+=0.003; ico.rotation.y+=0.005;
+    dod.rotation.x-=0.0015; dod.rotation.y+=0.0025;
+    /* Orbiting octahedra */
+    oct.position.x=Math.cos(octAngle)*3.0;
+    oct.position.z=Math.sin(octAngle)*1.5;
+    oct.rotation.y+=0.02; oct.rotation.x+=0.015;
+    oct2.position.x=Math.cos(octAngle+Math.PI)*2.6;
+    oct2.position.z=Math.sin(octAngle+Math.PI)*1.3;
+    oct2.rotation.y-=0.016; oct2.rotation.z+=0.012;
+    /* Node float */
+    nodeMeshes.forEach(function(m){
+      m.position.y=m.userData.oy+Math.sin(t*.5+m.userData.phase)*.09;
+      m.position.x=m.userData.ox+Math.cos(t*.4+m.userData.phase)*.06;
     });
-    /* scroll parallax — hero drifts up and tilts as user scrolls */
-    var sY = window.scrollY || 0;
-    var heroH = hero.clientHeight || window.innerHeight;
-    var scrollP = Math.min(sY / heroH, 1);
-    camera.position.y = scrollP * -1.4;
-    camera.position.z = 6 + scrollP * 1.2;
-    /* mouse parallax */
-    var targetY = mx + scrollP * 0.12;
-    var targetX = my - scrollP * 0.08;
-    group.rotation.y += (targetY - group.rotation.y) * 0.04;
-    group.rotation.x += (targetX - group.rotation.x) * 0.04;
-    renderer.render(scene, camera);
+    /* Scroll parallax */
+    var sY=window.scrollY||0;
+    var heroH=hero.clientHeight||window.innerHeight;
+    var sP=Math.min(sY/heroH,1);
+    camera.position.y=sP*-1.5;
+    camera.position.z=6+sP*1.3;
+    /* Mouse */
+    var tY=mx+sP*.12, tX=my-sP*.08;
+    group.rotation.y+=(tY-group.rotation.y)*.045;
+    group.rotation.x+=(tX-group.rotation.x)*.045;
+    renderer.render(scene,camera);
   })();
 })();
 
-/* ── CARD 3D TILT ── */
-document.querySelectorAll('.feat').forEach(function(card) {
-  card.addEventListener('mousemove', function(e) {
-    var r = card.getBoundingClientRect();
-    var x = (e.clientX - r.left) / r.width  - 0.5;
-    var y = (e.clientY - r.top)  / r.height - 0.5;
-    card.style.transform = 'perspective(700px) rotateY('+(x*8)+'deg) rotateX('+(-y*8)+'deg) translateZ(8px)';
-    card.style.boxShadow = '0 8px 32px rgba(0,0,0,0.07)';
+/* ═══════════════════════════════════════════
+   CTA — Orbital Rings Scene
+   ═══════════════════════════════════════════ */
+(function(){
+  var canvas=document.getElementById('scene3d-2');
+  var wrap=canvas.parentElement;
+  var W=wrap.clientWidth||window.innerWidth;
+  var H=wrap.clientHeight||400;
+
+  var renderer=new THREE.WebGLRenderer({canvas:canvas,antialias:true,alpha:true});
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio,2));
+  renderer.setClearColor(0,0);
+
+  var scene=new THREE.Scene();
+  var camera=new THREE.PerspectiveCamera(50,W/H,.1,100);
+  camera.position.z=5;
+
+  var C_IND=0x6366f1, C_VIO=0x8b5cf6, C_AMB=0xf59e0b;
+  var ADD=THREE.AdditiveBlending;
+  var group=new THREE.Group();
+  scene.add(group);
+
+  /* Central glowing sphere */
+  var sG=new THREE.SphereGeometry(.5,32,32);
+  var sM=new THREE.MeshBasicMaterial({color:C_IND,transparent:true,opacity:.3,blending:ADD});
+  group.add(new THREE.Mesh(sG,sM));
+
+  /* Torus rings */
+  [[2.2,.04,C_IND,.3],[1.5,.04,C_VIO,.35],[.9,.04,C_AMB,.4]].forEach(function(p,i){
+    var tg=new THREE.TorusGeometry(p[0],p[1],8,64);
+    var tm=new THREE.MeshBasicMaterial({color:p[2],transparent:true,opacity:p[3],blending:ADD});
+    var mesh=new THREE.Mesh(tg,tm);
+    mesh.rotation.x=Math.PI/2+(i*.4);
+    mesh.rotation.z=i*.6;
+    group.add(mesh);
   });
-  card.addEventListener('mouseleave', function() {
-    card.style.transform = '';
-    card.style.boxShadow = '';
-  });
+
+  /* Particles */
+  var pN=200, pos=new Float32Array(pN*3);
+  for(var i=0;i<pN;i++){
+    var r=1.5+Math.random()*3;
+    var th=Math.random()*Math.PI*2;
+    var ph=Math.random()*Math.PI;
+    pos[i*3]=r*Math.sin(ph)*Math.cos(th);
+    pos[i*3+1]=r*Math.sin(ph)*Math.sin(th);
+    pos[i*3+2]=r*Math.cos(ph);
+  }
+  var pbg=new THREE.BufferGeometry();
+  pbg.setAttribute('position',new THREE.BufferAttribute(pos,3));
+  group.add(new THREE.Points(pbg, new THREE.PointsMaterial({color:C_VIO,size:.06,transparent:true,opacity:.5,blending:ADD})));
+
+  function resize(){
+    W=wrap.clientWidth; H=wrap.clientHeight;
+    if(!W||!H)return;
+    renderer.setSize(W,H);
+    camera.aspect=W/H;
+    camera.updateProjectionMatrix();
+  }
+  resize();
+  if(window.ResizeObserver) new ResizeObserver(resize).observe(wrap);
+  else window.addEventListener('resize',resize);
+
+  (function animate(){
+    requestAnimationFrame(animate);
+    group.rotation.y+=.004;
+    group.rotation.x+=.002;
+    renderer.render(scene,camera);
+  })();
+})();
+
+/* NAV scroll state */
+window.addEventListener('scroll',function(){
+  document.getElementById('nav').classList.toggle('lit', window.scrollY > 80);
 });
 
-/* ── SCROLL REVEAL ── */
-var obs = new IntersectionObserver(function(es) {
-  es.forEach(function(e) { if (e.isIntersecting) e.target.classList.add('on'); });
-}, { threshold: 0.06 });
-document.querySelectorAll('.reveal').forEach(function(el) { obs.observe(el); });
+/* Card 3D tilt */
+document.querySelectorAll('.feat-card').forEach(function(card){
+  card.addEventListener('mousemove',function(e){
+    var r=card.getBoundingClientRect();
+    var x=(e.clientX-r.left)/r.width-.5;
+    var y=(e.clientY-r.top)/r.height-.5;
+    card.style.transform='perspective(700px) rotateY('+(x*8)+'deg) rotateX('+(-y*8)+'deg) translateZ(8px)';
+  });
+  card.addEventListener('mouseleave',function(){card.style.transform=''});
+});
 
-/* ── STAT COUNTER ── */
-var counted = false;
-new IntersectionObserver(function(es) {
-  if (counted) return;
-  es.forEach(function(entry) {
-    if (!entry.isIntersecting) return;
-    counted = true;
-    document.querySelectorAll('.count').forEach(function(el) {
-      var target = parseInt(el.dataset.val, 10);
-      var t0 = Date.now(), dur = 1800;
-      (function tick() {
-        var p = Math.min((Date.now() - t0) / dur, 1);
-        var ease = 1 - Math.pow(1 - p, 3);
-        el.textContent = target >= 1000
-          ? Math.round(ease * target).toLocaleString('pt-BR')
-          : Math.round(ease * target);
-        if (p < 1) requestAnimationFrame(tick);
-        else el.textContent = target >= 1000 ? target.toLocaleString('pt-BR') : target;
+/* Scroll reveal */
+var obs=new IntersectionObserver(function(es){
+  es.forEach(function(e){if(e.isIntersecting)e.target.classList.add('on')});
+},{threshold:.06});
+document.querySelectorAll('.reveal').forEach(function(el){obs.observe(el)});
+
+/* Stat counter */
+var counted=false;
+new IntersectionObserver(function(es){
+  if(counted)return;
+  es.forEach(function(entry){
+    if(!entry.isIntersecting)return;
+    counted=true;
+    document.querySelectorAll('.count').forEach(function(el){
+      var target=parseInt(el.dataset.val,10), t0=Date.now(), dur=1800;
+      (function tick(){
+        var p=Math.min((Date.now()-t0)/dur,1), ease=1-Math.pow(1-p,3);
+        el.textContent=target>=1000?Math.round(ease*target).toLocaleString('pt-BR'):Math.round(ease*target);
+        if(p<1)requestAnimationFrame(tick);
+        else el.textContent=target>=1000?target.toLocaleString('pt-BR'):target;
       })();
     });
   });
-}, { threshold: 0.4 }).observe(document.querySelector('.prova') || document.body);
+},{threshold:.4}).observe(document.querySelector('.stats')||document.body);
 
-/* ── SCROLL-DRIVEN CSS 3D ROTATION ── */
-(function() {
-  var geos = [
-    { id: 'featCube',  rx0: 18,  rxS:  0.025, ry0:  0,   ryS:  0.06,  rz0: 0 },
-    { id: 'maniCubeA', rx0: 25,  rxS: -0.018, ry0: 12,   ryS:  0.05,  rz0: 5 },
-    { id: 'maniCubeB', rx0: -15, rxS:  0.030, ry0: -8,   ryS: -0.07,  rz0: 0 },
-    { id: 'ctaCube',   rx0: 20,  rxS:  0.012, ry0: 30,   ryS:  0.04,  rz0: 8 },
+/* Scroll-driven CSS 3D cubes */
+(function(){
+  var cubes=[
+    {id:'featCube',   rx0:18, rxS:.024, ry0:0,  ryS:.058, rz0:0},
+    {id:'priceCubeA', rx0:25, rxS:-.018,ry0:12, ryS:.048, rz0:5},
+    {id:'priceCubeB', rx0:-15,rxS:.030, ry0:-8, ryS:-.068,rz0:0},
   ];
-  var els = geos.map(function(g) {
-    return { el: document.getElementById(g.id), cfg: g };
-  }).filter(function(o) { return !!o.el; });
-
-  var smoothS = 0;
-  function loop() {
-    smoothS += (window.scrollY - smoothS) * 0.07;
-    els.forEach(function(o) {
-      var c = o.cfg;
-      var rx = c.rx0 + smoothS * c.rxS;
-      var ry = c.ry0 + smoothS * c.ryS;
-      o.el.style.transform =
-        'rotateX(' + rx + 'deg) rotateY(' + ry + 'deg) rotateZ(' + c.rz0 + 'deg)';
+  var els=cubes.map(function(g){return{el:document.getElementById(g.id),cfg:g}}).filter(function(o){return!!o.el});
+  var sS=0;
+  (function loop(){
+    sS+=(window.scrollY-sS)*.07;
+    els.forEach(function(o){
+      var c=o.cfg;
+      o.el.style.transform='rotateX('+(c.rx0+sS*c.rxS)+'deg) rotateY('+(c.ry0+sS*c.ryS)+'deg) rotateZ('+c.rz0+'deg)';
     });
     requestAnimationFrame(loop);
-  }
-  loop();
+  })();
 })();
 
-/* ── PLAN TOGGLE ── */
-function alternar() {
-  var anual = document.getElementById('tog-anual').checked;
-  document.getElementById('lbl-m').classList.toggle('on', !anual);
-  document.getElementById('lbl-a').classList.toggle('on', anual);
-  document.getElementById('eco').style.display = anual ? 'inline' : 'none';
-  var bb = document.getElementById('btn-basic'), bp = document.getElementById('btn-pro');
-  if (anual) {
-    document.getElementById('preco-basic').innerHTML = '<sup>R$</sup>390<sub>/ANO</sub>';
-    document.getElementById('per-basic').textContent = 'R$ 32,50/MÊS · 2 MESES GRÁTIS';
-    document.getElementById('preco-pro').innerHTML   = '<sup>R$</sup>590<sub>/ANO</sub>';
-    document.getElementById('per-pro').textContent   = 'R$ 49,16/MÊS · 2 MESES GRÁTIS';
-    if (bb) bb.href = '/stripe/checkout/basic_anual';
-    if (bp) bp.href = '/stripe/checkout/pro_anual';
-  } else {
-    document.getElementById('preco-basic').innerHTML = '<sup>R$</sup>39<sub>/MÊS</sub>';
-    document.getElementById('per-basic').textContent = 'ACESSO INDIVIDUAL ILIMITADO';
-    document.getElementById('preco-pro').innerHTML   = '<sup>R$</sup>59<sub>/MÊS</sub>';
-    document.getElementById('per-pro').textContent   = 'TUDO DO BASIC + MAIS';
-    if (bb) bb.href = '/stripe/checkout/basic';
-    if (bp) bp.href = '/stripe/checkout/pro';
+/* Pricing toggle */
+function alternar(){
+  var anual=document.getElementById('tog-anual').checked;
+  document.getElementById('lbl-m').classList.toggle('on',!anual);
+  document.getElementById('lbl-a').classList.toggle('on',anual);
+  document.getElementById('eco').style.display=anual?'inline':'none';
+  var bb=document.getElementById('btn-basic'), bp=document.getElementById('btn-pro');
+  if(anual){
+    document.getElementById('preco-basic').innerHTML='<sup>R$</sup>390<sub>/ano</sub>';
+    document.getElementById('per-basic').textContent='R$ 32,50/mês · 2 meses grátis';
+    document.getElementById('preco-pro').innerHTML='<sup>R$</sup>590<sub>/ano</sub>';
+    document.getElementById('per-pro').textContent='R$ 49,16/mês · 2 meses grátis';
+    if(bb)bb.href='/stripe/checkout/basic_anual';
+    if(bp)bp.href='/stripe/checkout/pro_anual';
+  }else{
+    document.getElementById('preco-basic').innerHTML='<sup>R$</sup>39<sub>/mês</sub>';
+    document.getElementById('per-basic').textContent='Acesso individual ilimitado';
+    document.getElementById('preco-pro').innerHTML='<sup>R$</sup>59<sub>/mês</sub>';
+    document.getElementById('per-pro').textContent='Tudo do Basic + mais';
+    if(bb)bb.href='/stripe/checkout/basic';
+    if(bp)bp.href='/stripe/checkout/pro';
   }
 }
 </script>
-<!-- theme.js removed — landing page always light -->
 </body>
 </html>

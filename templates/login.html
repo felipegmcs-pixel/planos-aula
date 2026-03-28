@@ -2,115 +2,140 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8"/>
-  <script>!function(){var t=localStorage.getItem("pia-theme")||"light",a="system"===t?(window.matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light"):t;document.documentElement.setAttribute("data-theme",a),document.documentElement.style.colorScheme=a}();</script>
-  
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Entrar — ProfessorIA™</title>
+  <title>Entrar — ProfessorIA</title>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet"/>
   <style>
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-    :root { --preto: #0a0a0a; --branco: #ffffff; --amarelo: #f0e000; --cinza: #666660; --linha: rgba(0,0,0,0.09); }
-    body { font-family: 'Inter', sans-serif; background: var(--branco); color: var(--preto); min-height: 100vh; display: grid; grid-template-rows: 56px 1fr; }
-    ::selection { background: var(--amarelo); color: var(--preto); }
-
-    nav {
-      padding: 0 40px; height: 56px;
-      display: flex; align-items: center; justify-content: space-between;
-      border-bottom: 1px solid var(--linha);
-      position: fixed; top: 0; left: 0; right: 0; z-index: 10;
-      background: rgba(255,255,255,0.97); backdrop-filter: blur(16px);
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    :root{
+      --bg:#ffffff;--text:#111827;--text2:#6b7280;--text3:#9ca3af;
+      --indigo:#4338ca;--violet:#7c3aed;--amber:#f59e0b;
+      --line:rgba(17,24,39,.08);--line2:rgba(17,24,39,.14);
+      --hero:#050811;--r:10px;
     }
-    .nav-logo { font-size: 0.7rem; font-weight: 900; letter-spacing: 3px; text-transform: uppercase; color: var(--preto); text-decoration: none; }
-    .nav-logo .tm { font-size: 0.45rem; vertical-align: super; opacity: 0.4; font-weight: 400; }
-    .nav-link { font-size: 0.6rem; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; color: var(--cinza); text-decoration: none; transition: color .2s; }
-    .nav-link:hover { color: var(--preto); }
+    body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;display:flex;flex-direction:column}
+    ::selection{background:#ede9fe;color:var(--indigo)}
 
-    .page { display: flex; min-height: calc(100vh - 56px); margin-top: 56px; }
+    /* NAV */
+    nav{height:60px;padding:0 40px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--line);flex-shrink:0}
+    .logo{text-decoration:none;display:flex;align-items:center;gap:2px}
+    .logo-p{font-size:1rem;font-weight:800;color:var(--text);letter-spacing:-.3px}
+    .logo-ia{font-size:1rem;font-weight:800;letter-spacing:-.3px;background:linear-gradient(135deg,#818cf8,#a78bfa,#60a5fa);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+    .logo-dot{width:6px;height:6px;border-radius:50%;background:var(--amber);margin-left:2px;flex-shrink:0}
+    .nav-r{font-size:.875rem;font-weight:600;color:var(--text2);text-decoration:none;transition:color .2s}
+    .nav-r:hover{color:var(--text)}
 
-    /* Left col — decorative */
-    .left {
-      width: 420px; flex-shrink: 0;
-      border-right: 1px solid var(--linha);
-      padding: 60px 48px;
-      display: flex; flex-direction: column; justify-content: space-between;
-      background: var(--preto); color: var(--branco);
+    /* LAYOUT */
+    .page{flex:1;display:flex}
+
+    /* LEFT PANEL */
+    .left{
+      width:420px;flex-shrink:0;
+      background:var(--hero);
+      padding:56px 48px;
+      display:flex;flex-direction:column;justify-content:space-between;
+      position:relative;overflow:hidden;
     }
-    .left-tag { font-size: 0.52rem; font-weight: 700; letter-spacing: 3px; text-transform: uppercase; color: rgba(255,255,255,0.4); margin-bottom: 40px; }
-    .left-headline { font-size: clamp(2rem, 4vw, 3rem); font-weight: 900; letter-spacing: -2px; text-transform: uppercase; line-height: 1; margin-bottom: 20px; }
-    .left-headline span { color: var(--amarelo); }
-    .left-desc { font-size: 0.75rem; color: rgba(255,255,255,0.45); line-height: 1.8; }
-    .left-bottom { font-size: 0.52rem; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; color: rgba(255,255,255,0.2); }
+    .left-glow{position:absolute;inset:0;pointer-events:none;background:radial-gradient(ellipse 70% 60% at 70% 40%,rgba(67,56,202,.22) 0%,transparent 65%),radial-gradient(ellipse 50% 50% at 20% 80%,rgba(124,58,237,.15) 0%,transparent 60%)}
+    .left-cube{position:absolute;right:-30px;top:50%;transform:translateY(-50%);perspective:900px;pointer-events:none;opacity:.12;z-index:0}
+    .left>*{position:relative;z-index:1}
+    .left-tag{font-size:.7rem;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:rgba(255,255,255,.35);margin-bottom:40px}
+    .left-h{font-size:clamp(2rem,3.5vw,3rem);font-weight:900;letter-spacing:-1.5px;line-height:1.05;color:#fff;margin-bottom:18px}
+    .left-h .grad{background:linear-gradient(135deg,#818cf8,#c084fc);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+    .left-desc{font-size:.9rem;color:rgba(255,255,255,.4);line-height:1.75}
+    .left-bottom{font-size:.7rem;font-weight:600;letter-spacing:1.5px;color:rgba(255,255,255,.18)}
 
-    /* Right col — form */
-    .right { flex: 1; display: flex; align-items: center; justify-content: center; padding: 60px 40px; }
-    .box { width: 100%; max-width: 380px; }
+    /* CSS 3D cube */
+    .cube-wrap{perspective:800px;display:flex;align-items:center;justify-content:center}
+    .cube{transform-style:preserve-3d;animation:cspin 22s linear infinite;width:140px;height:140px}
+    .c-face{position:absolute;width:140px;height:140px;border:1.5px solid rgba(99,102,241,.5)}
+    .c-face:nth-child(1){transform:translateZ(70px)}
+    .c-face:nth-child(2){transform:rotateY(180deg) translateZ(70px)}
+    .c-face:nth-child(3){transform:rotateY(-90deg) translateZ(70px)}
+    .c-face:nth-child(4){transform:rotateY(90deg) translateZ(70px)}
+    .c-face:nth-child(5){transform:rotateX(90deg) translateZ(70px)}
+    .c-face:nth-child(6){transform:rotateX(-90deg) translateZ(70px)}
+    @keyframes cspin{from{transform:rotateX(18deg) rotateY(0)}to{transform:rotateX(18deg) rotateY(360deg)}}
 
-    .box-tag { font-size: 0.52rem; font-weight: 700; letter-spacing: 3px; text-transform: uppercase; color: var(--cinza); margin-bottom: 28px; display: flex; align-items: center; gap: 10px; }
-    .box-tag::after { content: ''; flex: 1; max-width: 32px; height: 1px; background: var(--cinza); opacity: .4; }
+    /* RIGHT PANEL */
+    .right{flex:1;display:flex;align-items:center;justify-content:center;padding:60px 40px}
+    .box{width:100%;max-width:380px}
 
-    h1 { font-size: clamp(2.2rem, 5vw, 3rem); font-weight: 900; letter-spacing: -2.5px; text-transform: uppercase; line-height: 1; margin-bottom: 40px; }
+    .box-step{font-size:.7rem;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--indigo);margin-bottom:12px;display:flex;align-items:center;gap:8px}
+    .box-step::before{content:'';width:16px;height:2px;background:var(--indigo);border-radius:2px}
+    h1{font-size:clamp(2rem,5vw,2.8rem);font-weight:900;letter-spacing:-1.5px;line-height:1.05;color:var(--text);margin-bottom:36px}
 
-    .alert { border: 1px solid rgba(185,28,28,0.25); background: rgba(185,28,28,0.05); color: #991b1b; padding: 12px 16px; font-size: 0.72rem; font-weight: 700; letter-spacing: .5px; text-transform: uppercase; margin-bottom: 28px; }
+    .alert{padding:12px 16px;font-size:.82rem;font-weight:600;border-radius:var(--r);margin-bottom:24px}
+    .alert-erro{background:rgba(185,28,28,.06);border:1px solid rgba(185,28,28,.2);color:#991b1b}
+    .alert-ok{background:rgba(5,150,105,.06);border:1px solid rgba(5,150,105,.2);color:#065f46}
 
-    .field { margin-bottom: 28px; }
-    label { font-size: 0.52rem; font-weight: 700; letter-spacing: 3px; text-transform: uppercase; color: var(--cinza); display: block; margin-bottom: 10px; }
-    input[type=email], input[type=password] {
-      width: 100%; padding: 12px 0; border: none;
-      border-bottom: 1.5px solid rgba(0,0,0,0.14);
-      font-size: 0.9rem; font-family: 'Inter', sans-serif; font-weight: 400;
-      color: var(--preto); background: transparent; transition: border-color .2s;
+    .field{margin-bottom:24px}
+    label{font-size:.72rem;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--text2);display:block;margin-bottom:8px}
+    input[type=email],input[type=password]{
+      width:100%;padding:11px 14px;
+      border:1.5px solid var(--line2);border-radius:var(--r);
+      font-size:.95rem;font-family:'Inter',sans-serif;font-weight:400;
+      color:var(--text);background:var(--bg);
+      transition:border-color .2s,box-shadow .2s;outline:none;
     }
-    input:focus { outline: none; border-bottom-color: var(--preto); }
-    input::placeholder { color: var(--cinza); font-weight: 300; opacity: 0.5; }
+    input:focus{border-color:var(--indigo);box-shadow:0 0 0 3px rgba(67,56,202,.1)}
+    input::placeholder{color:var(--text3);font-weight:400}
 
-    .btn {
-      width: 100%; padding: 15px;
-      background: var(--preto); color: var(--branco);
-      border: none; font-size: 0.65rem; font-weight: 900;
-      font-family: 'Inter', sans-serif; letter-spacing: 2.5px;
-      text-transform: uppercase; cursor: pointer; transition: background .2s, color .2s; margin-top: 8px;
+    .btn{
+      width:100%;padding:13px;
+      background:linear-gradient(135deg,#4338ca,#7c3aed);color:#fff;
+      border:none;font-size:.9rem;font-weight:700;font-family:'Inter',sans-serif;
+      border-radius:var(--r);cursor:pointer;
+      transition:opacity .2s,transform .2s;margin-top:8px;
+      box-shadow:0 4px 18px rgba(67,56,202,.3);
     }
-    .btn:hover { background: var(--amarelo); color: var(--preto); }
+    .btn:hover{opacity:.9;transform:translateY(-1px)}
 
-    .link-block {
-      margin-top: 28px; padding-top: 28px; border-top: 1px solid var(--linha);
-      font-size: 0.6rem; font-weight: 600; letter-spacing: 1.5px;
-      text-transform: uppercase; color: var(--cinza);
-      display: flex; align-items: center; justify-content: space-between;
-    }
-    .link-block a { color: var(--preto); text-decoration: none; font-weight: 700; }
-    .link-block a:hover { text-decoration: underline; }
+    .links{margin-top:24px;padding-top:24px;border-top:1px solid var(--line);display:flex;flex-direction:column;gap:12px}
+    .link-row{display:flex;align-items:center;justify-content:space-between;font-size:.82rem}
+    .link-label{color:var(--text2);font-weight:500}
+    .link-a{color:var(--indigo);font-weight:700;text-decoration:none;transition:opacity .2s}
+    .link-a:hover{opacity:.75}
 
-    @media (max-width: 700px) {
-      .left { display: none; }
-      .right { padding: 40px 24px; }
-    }
+    @media(max-width:700px){.left{display:none}.right{padding:40px 24px}}
   </style>
-  <link rel="stylesheet" href="/static/theme.css"/>
 </head>
 <body>
 <nav>
-  <a class="nav-logo" href="/">PROFESSOR<span class="tm">IA™</span></a>
-  <a class="nav-link" href="/cadastro">CRIAR CONTA →</a>
+  <a class="logo" href="/">
+    <span class="logo-p">Professor</span><span class="logo-ia">IA</span>
+    <span class="logo-dot"></span>
+  </a>
+  <a class="nav-r" href="/cadastro">Criar conta →</a>
 </nav>
 
 <div class="page">
   <div class="left">
+    <div class="left-glow"></div>
+    <div class="left-cube">
+      <div class="cube-wrap">
+        <div class="cube">
+          <div class="c-face"></div><div class="c-face"></div>
+          <div class="c-face"></div><div class="c-face"></div>
+          <div class="c-face"></div><div class="c-face"></div>
+        </div>
+      </div>
+    </div>
     <div>
-      <div class="left-tag">001 — ACESSO</div>
-      <div class="left-headline">PARA QUEM<br/><span>"ENSINA."</span></div>
+      <div class="left-tag">Acesso à plataforma</div>
+      <div class="left-h">Bem-vindo<br/>de volta a<br/><span class="grad">ProfessorIA.</span></div>
       <p class="left-desc">Gere planos de aula, provas e materiais pedagógicos em segundos com IA.</p>
     </div>
-    <div class="left-bottom">© 2025 PROFESSORIA™</div>
+    <div class="left-bottom">© 2026 ProfessorIA</div>
   </div>
 
   <div class="right">
     <div class="box">
-      <div class="box-tag">001 — ACESSO</div>
-      <h1>ENTRAR</h1>
+      <div class="box-step">Entrar na conta</div>
+      <h1>Olá,<br/>professor.</h1>
 
       {% with messages = get_flashed_messages() %}
-        {% if messages %}<div class="alert">{{ messages[0] }}</div>{% endif %}
+        {% if messages %}<div class="alert alert-erro">{{ messages[0] }}</div>{% endif %}
       {% endwith %}
 
       <form method="POST">
@@ -122,20 +147,21 @@
           <label>Senha</label>
           <input type="password" name="senha" placeholder="••••••••" required/>
         </div>
-        <button type="submit" class="btn">ENTRAR →</button>
+        <button type="submit" class="btn">Entrar →</button>
       </form>
 
-      <div class="link-block">
-        <span>NÃO TEM CONTA?</span>
-        <a href="/cadastro">CRIAR CONTA →</a>
-      </div>
-      <div class="link-block" style="border-top: none; margin-top: 0; padding-top: 16px;">
-        <span>ESQUECEU A SENHA?</span>
-        <a href="/esqueci-senha">REDEFINIR →</a>
+      <div class="links">
+        <div class="link-row">
+          <span class="link-label">Não tem conta?</span>
+          <a class="link-a" href="/cadastro">Criar conta grátis →</a>
+        </div>
+        <div class="link-row">
+          <span class="link-label">Esqueceu a senha?</span>
+          <a class="link-a" href="/esqueci-senha">Redefinir →</a>
+        </div>
       </div>
     </div>
   </div>
 </div>
-<script src="/static/theme.js"></script>
 </body>
 </html>
