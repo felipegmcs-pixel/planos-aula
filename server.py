@@ -3135,3 +3135,56 @@ def erro_interno(e):
 if __name__ == '__main__':
     port = int(os.environ.get("PORT", 5001))
     app.run(debug=False, host='0.0.0.0', port=port)
+@app.route('/api/pagamento/pix/<plano_id>', methods=['POST'])
+@login_required
+def criar_pix_mp(plano_id):
+    if plano_id not in PLANOS:
+        return jsonify({'erro': 'Plano inválido'}), 400
+    
+    plano = PLANOS[plano_id]
+    import uuid
+    import requests as req
+
+    idempotency_key = str(uuid.uuid4())
+
+    payment_data = {
+        "transaction_amount": float(plano['preco']),
+        "description": f"Plano {plano['nome']} - ProfessorIA",
+        "payment_method_id": "pix",
+        "payer": {
+            "email": current_user.email,
+            "first_name": current_user.nome.split()[0],
+        },
+        "external_reference": f"{current_user.id}|{plano_id}",
+        "notification_url": f"{SITE_URL}/pagamento/webhook"
+    }
+
+    headers = {
+        "Authorization": f"Bearer {MP_ACCESS_TOKEN}",
+        "X-Idempotency-Key": idempotency_key
+    }
+
+    try:
+        response = req.post(
+            "https://api.mercadopago.com/v1/payments",
+            json=payment_data,
+            headers=headers
+        )
+        res = response.json()
+
+        if response.status_code == 201:
+            pix_info = res['point_of_interaction']['transaction_data']
+            return jsonify({
+                'status': 'pending',
+                'qr_code_base64': pix_info['qr_code_base_64'],
+                'copy_paste': pix_info['qr_code']
+            })
+        else:
+            return jsonify({'erro': res.get('message', 'Erro ao gerar PIX')}), 400
+    except Exception as e:
+        return jsonify({'erro': str(e)}), 500
+
+# ESTE BLOCO ABAIXO DEVE SER O FINAL ABSOLUTO DO ARQUIVO
+if __name__ == '__main__':
+    port = int(os.environ.get("PORT", 5001))
+    app.run(debug=False, host='0.0.0.0', port=port)
