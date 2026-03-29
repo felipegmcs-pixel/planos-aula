@@ -1434,6 +1434,39 @@ def admin_desativar(uid):
     conn.close()
     return redirect(url_for('admin'))
 
+@app.route('/admin/update', methods=['POST'])
+@login_required
+def admin_update():
+    if not current_user.is_admin:
+        return jsonify({'erro': 'Não autorizado'}), 403
+    data   = request.json or {}
+    uid    = data.get('uid')
+    action = data.get('action')
+    if not uid:
+        return jsonify({'erro': 'uid obrigatório'}), 400
+    conn = get_db()
+    if action == 'ativar':
+        dias = int(data.get('dias', 30))
+        plano = data.get('plano', 'professor')
+        if dias == 0:
+            valido_ate = '2099-12-31'
+        else:
+            valido_ate = (datetime.now() + timedelta(days=dias)).strftime('%Y-%m-%d')
+        conn.execute('UPDATE usuarios SET ativo=1, plano=?, valido_ate=? WHERE id=?',
+                     (plano, valido_ate, uid))
+    elif action == 'desativar':
+        conn.execute('UPDATE usuarios SET ativo=0 WHERE id=?', (uid,))
+    elif action == 'set_plan':
+        conn.execute('UPDATE usuarios SET plano=? WHERE id=?', (data.get('plano','professor'), uid))
+    else:
+        conn.close()
+        return jsonify({'erro': 'Ação inválida'}), 400
+    conn.commit()
+    row = conn.execute('SELECT id, ativo, plano, valido_ate FROM usuarios WHERE id=?', (uid,)).fetchone()
+    conn.close()
+    return jsonify({'ok': True, 'ativo': row['ativo'], 'plano': row['plano'],
+                    'valido_ate': row['valido_ate'] or ''})
+
 # ─── Conta / Perfil ───────────────────────────────────────────────────────────
 
 @app.route('/conta')

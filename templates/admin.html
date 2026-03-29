@@ -1,110 +1,376 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8"/>
-  <script>!function(){var t=localStorage.getItem("pia-theme")||"light",a="system"===t?(window.matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light"):t;document.documentElement.setAttribute("data-theme",a),document.documentElement.style.colorScheme=a}();</script>
-  
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Admin — Plano de Aula IA</title>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet"/>
+  <title>Admin — ProfessorIA</title>
+  <link rel="icon" type="image/svg+xml" href="/static/logo.svg"/>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet"/>
   <style>
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-    :root { --preto: #0a0a0a; --branco: #ffffff; --cinza-100: #f5f5f5; --cinza-200: #e2e2e2; --cinza-400: #a0a0a0; --cinza-600: #555555; --azul: #2b4fc7; --linha: #e2e2e2; --verde: #059669; --vermelho: #dc2626; }
-    body { font-family: 'Inter', sans-serif; background: var(--branco); color: var(--preto); min-height: 100vh; }
-    .top-bar { height: 3px; background: var(--azul); }
-    nav { padding: 0 40px; height: 60px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--linha); position: sticky; top: 0; background: var(--branco); z-index: 100; }
-    .nav-logo { font-weight: 800; font-size: 0.92rem; letter-spacing: .5px; text-transform: uppercase; color: var(--preto); text-decoration: none; }
-    .nav-logo span { color: var(--azul); }
-    .nav-link { font-size: 0.82rem; font-weight: 500; color: var(--cinza-600); text-decoration: none; letter-spacing: .3px; transition: color .2s; }
-    .nav-link:hover { color: var(--preto); }
-    .hero { padding: 64px 40px 48px; border-bottom: 1px solid var(--linha); max-width: 1200px; margin: 0 auto; }
-    .hero-tag { font-size: 0.68rem; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; color: var(--azul); margin-bottom: 20px; display: inline-flex; align-items: center; gap: 10px; }
-    .hero-tag::after { content: ''; display: block; height: 1px; width: 40px; background: var(--azul); }
-    h1 { font-size: clamp(2rem, 5vw, 3.2rem); font-weight: 900; letter-spacing: -1.5px; text-transform: uppercase; line-height: 1; margin-bottom: 12px; }
-    .hero p { font-size: 0.9rem; color: var(--cinza-600); line-height: 1.6; }
-    .container { max-width: 1200px; margin: 0 auto; padding: 48px 40px 100px; }
-    table { width: 100%; border-collapse: collapse; font-size: 0.82rem; }
-    thead { border-bottom: 2px solid var(--linha); }
-    th { font-size: 0.68rem; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; color: var(--cinza-600); text-align: left; padding: 12px 16px; }
-    td { padding: 16px; border-bottom: 1px solid var(--linha); }
-    tbody tr:hover { background: var(--hover-bg); }
-    .badge { display: inline-block; font-size: 0.68rem; font-weight: 700; letter-spacing: .5px; text-transform: uppercase; padding: 4px 10px; border: 1px solid; }
-    .badge-ativo { color: var(--verde); background: #ecfdf5; border-color: #a7f3d0; }
-    .badge-inativo { color: var(--cinza-600); background: var(--cinza-100); border-color: var(--cinza-200); }
-    .acoes { display: flex; gap: 8px; }
-    .btn-sm { padding: 6px 12px; font-size: 0.72rem; font-weight: 600; font-family: 'Inter', sans-serif; letter-spacing: .5px; text-transform: uppercase; border: 1px solid var(--linha); background: var(--branco); color: var(--preto); cursor: pointer; transition: all .2s; }
-    .btn-sm:hover { background: var(--preto); color: var(--branco); border-color: var(--preto); }
-    .btn-vermelho:hover { background: var(--vermelho); border-color: var(--vermelho); }
-    @media (max-width: 900px) {
-      nav { padding: 0 20px; }
-      .hero { padding: 40px 20px 32px; }
-      .container { padding: 32px 20px 80px; overflow-x: auto; }
-      table { min-width: 800px; }
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    :root{
+      --bg:#f7f8ff;--card:#fff;--text:#111827;--text2:#6b7280;--text3:#9ca3af;
+      --indigo:#4338ca;--violet:#7c3aed;--amber:#f59e0b;--red:#dc2626;--green:#059669;
+      --line:rgba(17,24,39,.08);--r:10px;
+    }
+    body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
+
+    /* NAV */
+    nav{height:58px;padding:0 32px;display:flex;align-items:center;justify-content:space-between;
+        background:#fff;border-bottom:1px solid var(--line);position:sticky;top:0;z-index:100;
+        box-shadow:0 1px 0 var(--line)}
+    .nav-logo{text-decoration:none;font-size:.92rem;font-weight:800;color:var(--text);display:flex;align-items:center;gap:8px}
+    .nav-logo-ia{background:linear-gradient(135deg,#818cf8,#a78bfa);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+    .nav-mark{width:26px;height:26px;border-radius:7px;background:linear-gradient(135deg,#4338ca,#7c3aed);
+               display:flex;align-items:center;justify-content:center}
+    .nav-links{display:flex;align-items:center;gap:20px}
+    .nav-link{font-size:.8rem;font-weight:500;color:var(--text2);text-decoration:none;transition:color .2s}
+    .nav-link:hover{color:var(--text)}
+
+    /* HERO */
+    .hero{padding:36px 32px 24px;max-width:1240px;margin:0 auto}
+    .hero-tag{font-size:.65rem;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--indigo);margin-bottom:12px}
+    .hero h1{font-size:1.9rem;font-weight:900;letter-spacing:-1px;color:var(--text)}
+    .hero p{font-size:.85rem;color:var(--text2);margin-top:4px}
+
+    /* STATS */
+    .stats{display:flex;gap:14px;padding:0 32px 24px;max-width:1240px;margin:0 auto}
+    .stat-card{flex:1;background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:18px 20px}
+    .stat-num{font-size:1.6rem;font-weight:900;letter-spacing:-1px;color:var(--text)}
+    .stat-num.green{color:var(--green)}
+    .stat-num.red{color:var(--red)}
+    .stat-label{font-size:.72rem;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.8px;margin-top:2px}
+
+    /* TOOLBAR */
+    .toolbar{display:flex;gap:12px;align-items:center;padding:0 32px 16px;max-width:1240px;margin:0 auto}
+    .search-box{position:relative;flex:1;max-width:320px}
+    .search-box input{width:100%;padding:8px 12px 8px 36px;border:1.5px solid var(--line);border-radius:var(--r);
+                      font-size:.82rem;font-family:'Inter',sans-serif;color:var(--text);background:#fff;outline:none;transition:border-color .2s}
+    .search-box input:focus{border-color:var(--indigo)}
+    .search-icon{position:absolute;left:11px;top:50%;transform:translateY(-50%);width:14px;height:14px;color:var(--text3)}
+    .filter-select{padding:8px 12px;border:1.5px solid var(--line);border-radius:var(--r);font-size:.82rem;
+                   font-family:'Inter',sans-serif;color:var(--text);background:#fff;outline:none;cursor:pointer}
+
+    /* TABLE */
+    .table-wrap{padding:0 32px 60px;max-width:1240px;margin:0 auto}
+    .table-card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);overflow:hidden}
+    table{width:100%;border-collapse:collapse;font-size:.82rem}
+    thead{border-bottom:1px solid var(--line)}
+    th{font-size:.65rem;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;color:var(--text2);
+       padding:12px 16px;text-align:left;white-space:nowrap}
+    td{padding:13px 16px;border-bottom:1px solid var(--line);vertical-align:middle}
+    tr:last-child td{border-bottom:none}
+    tr{transition:background .15s}
+    tr:hover td{background:#f9faff}
+
+    /* AVATAR */
+    .avatar{width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,#4338ca,#7c3aed);
+            display:flex;align-items:center;justify-content:center;font-size:.65rem;font-weight:800;color:#fff;flex-shrink:0}
+    .user-info{display:flex;align-items:center;gap:10px}
+    .user-name-td{font-weight:600;color:var(--text);font-size:.83rem}
+    .user-email-td{font-size:.72rem;color:var(--text2)}
+
+    /* BADGES */
+    .badge{display:inline-flex;align-items:center;gap:4px;padding:3px 9px;border-radius:20px;
+           font-size:.68rem;font-weight:700;letter-spacing:.3px}
+    .badge-ativo{background:#ecfdf5;color:var(--green);border:1px solid #a7f3d0}
+    .badge-inativo{background:#f9fafb;color:var(--text3);border:1px solid #e5e7eb}
+    .badge-vencido{background:#fef2f2;color:var(--red);border:1px solid #fecaca}
+
+    /* PLAN SELECT */
+    .plan-sel{padding:5px 8px;border:1.5px solid var(--line);border-radius:6px;font-size:.75rem;
+              font-family:'Inter',sans-serif;color:var(--text);background:#fff;cursor:pointer;outline:none}
+    .plan-sel:focus{border-color:var(--indigo)}
+
+    /* TOGGLE SWITCH */
+    .toggle{position:relative;width:38px;height:22px;flex-shrink:0}
+    .toggle input{opacity:0;width:0;height:0;position:absolute}
+    .toggle-slider{position:absolute;inset:0;background:#e5e7eb;border-radius:22px;cursor:pointer;transition:.25s}
+    .toggle-slider::before{content:'';position:absolute;width:16px;height:16px;left:3px;bottom:3px;
+                             background:#fff;border-radius:50%;transition:.25s;box-shadow:0 1px 3px rgba(0,0,0,.2)}
+    .toggle input:checked + .toggle-slider{background:linear-gradient(135deg,#4338ca,#7c3aed)}
+    .toggle input:checked + .toggle-slider::before{transform:translateX(16px)}
+
+    /* QUICK ACTIONS */
+    .quick-btns{display:flex;gap:5px;flex-wrap:wrap}
+    .qbtn{padding:4px 9px;border:1.5px solid var(--line);border-radius:6px;font-size:.7rem;
+          font-weight:600;font-family:'Inter',sans-serif;color:var(--text2);background:#fff;
+          cursor:pointer;transition:all .15s;white-space:nowrap}
+    .qbtn:hover{background:var(--indigo);color:#fff;border-color:var(--indigo)}
+    .qbtn.inf:hover{background:var(--violet);border-color:var(--violet)}
+
+    /* VALIDO */
+    .valido-date{font-size:.78rem;font-weight:500;color:var(--text)}
+    .valido-days{font-size:.68rem;color:var(--text2)}
+    .valido-days.vencido{color:var(--red)}
+    .valido-days.soon{color:var(--amber)}
+
+    /* TOAST */
+    .toast{position:fixed;bottom:28px;right:28px;background:#111827;color:#fff;
+           padding:12px 20px;border-radius:var(--r);font-size:.82rem;font-weight:600;
+           z-index:9999;opacity:0;transform:translateY(10px);transition:all .25s;pointer-events:none}
+    .toast.show{opacity:1;transform:translateY(0)}
+    .toast.err{background:var(--red)}
+
+    /* EMPTY */
+    .empty{padding:48px;text-align:center;color:var(--text2);font-size:.85rem}
+
+    @media(max-width:900px){
+      nav,  .hero, .stats, .toolbar, .table-wrap{padding-left:16px;padding-right:16px}
+      .stats{flex-wrap:wrap}
+      .table-card{overflow-x:auto}
+      table{min-width:760px}
     }
   </style>
-  <link rel="stylesheet" href="/static/theme.css"/>
 </head>
 <body>
-<div class="top-bar"></div>
+
 <nav>
-  <a class="nav-logo" href="/">Plano de Aula <span>IA</span></a>
-  <a class="nav-link" href="/logout">Sair →</a>
+  <a class="nav-logo" href="/">
+    <span class="nav-mark">
+      <svg viewBox="0 0 20 20" fill="none" width="18" height="18">
+        <circle cx="5"  cy="10" r="2" fill="white" opacity=".9"/>
+        <circle cx="10" cy="5"  r="2" fill="white" opacity=".9"/>
+        <circle cx="10" cy="15" r="2" fill="white" opacity=".9"/>
+        <circle cx="15" cy="10" r="2" fill="#f59e0b"/>
+        <line x1="5" y1="10" x2="10" y2="5"  stroke="white" stroke-width=".8" opacity=".5"/>
+        <line x1="5" y1="10" x2="10" y2="15" stroke="white" stroke-width=".8" opacity=".5"/>
+        <line x1="10" y1="5"  x2="15" y2="10" stroke="white" stroke-width=".8" opacity=".5"/>
+        <line x1="10" y1="15" x2="15" y2="10" stroke="white" stroke-width=".8" opacity=".5"/>
+      </svg>
+    </span>
+    Professor<span class="nav-logo-ia">IA</span>&nbsp;·&nbsp;Admin
+  </a>
+  <div class="nav-links">
+    <a class="nav-link" href="/chat">← Voltar ao chat</a>
+    <a class="nav-link" href="/logout">Sair</a>
+  </div>
 </nav>
+
 <div class="hero">
-  <div class="hero-tag">Administração</div>
+  <div class="hero-tag">Painel de controle</div>
   <h1>Usuários</h1>
-  <p>Gerencie contas e assinaturas de todos os usuários do sistema.</p>
+  <p>Gerencie contas, planos e assinaturas em tempo real.</p>
 </div>
-<div class="container">
-  <table>
-    <thead>
-      <tr>
-        <th>ID</th>
-        <th>Nome</th>
-        <th>E-mail</th>
-        <th>Plano</th>
-        <th>Status</th>
-        <th>Válido até</th>
-        <th>Cadastro</th>
-        <th>Ações</th>
-      </tr>
-    </thead>
-    <tbody>
-      {% for u in users %}
-      <tr>
-        <td>{{ u.id }}</td>
-        <td>{{ u.nome }}</td>
-        <td>{{ u.email }}</td>
-        <td>{{ u.plano|title if u.plano else '—' }}</td>
-        <td>
-          {% if u.ativo %}
-            <span class="badge badge-ativo">Ativo</span>
-          {% else %}
-            <span class="badge badge-inativo">Inativo</span>
-          {% endif %}
-        </td>
-        <td>{{ u.valido_ate if u.valido_ate else '—' }}</td>
-        <td>{{ u.criado_em }}</td>
-        <td>
-          <div class="acoes">
-            {% if u.ativo %}
-              <form method="POST" action="/admin/desativar/{{ u.id }}" style="display:inline;">
-                <button type="submit" class="btn-sm btn-vermelho">Desativar</button>
-              </form>
+
+<!-- STATS -->
+{% set total   = users | length %}
+{% set ativos  = users | selectattr('ativo', 'equalto', 1) | list | length %}
+{% set inativos = total - ativos %}
+<div class="stats">
+  <div class="stat-card">
+    <div class="stat-num">{{ total }}</div>
+    <div class="stat-label">Total de usuários</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-num green">{{ ativos }}</div>
+    <div class="stat-label">Contas ativas</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-num red">{{ inativos }}</div>
+    <div class="stat-label">Contas inativas</div>
+  </div>
+</div>
+
+<!-- TOOLBAR -->
+<div class="toolbar">
+  <div class="search-box">
+    <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+    </svg>
+    <input type="text" id="searchInput" placeholder="Buscar por nome ou e-mail..." oninput="filtrar()"/>
+  </div>
+  <select class="filter-select" id="filterStatus" onchange="filtrar()">
+    <option value="">Todos os status</option>
+    <option value="ativo">Ativos</option>
+    <option value="inativo">Inativos</option>
+  </select>
+  <select class="filter-select" id="filterPlan" onchange="filtrar()">
+    <option value="">Todos os planos</option>
+    <option value="gratis">Grátis</option>
+    <option value="professor">Professor</option>
+    <option value="premium">Premium</option>
+  </select>
+</div>
+
+<!-- TABLE -->
+<div class="table-wrap">
+  <div class="table-card">
+    <table id="tbl">
+      <thead>
+        <tr>
+          <th>Usuário</th>
+          <th>Plano</th>
+          <th>Status</th>
+          <th>Válido até</th>
+          <th>Ativar por</th>
+          <th>Cadastro</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for u in users %}
+        {% set is_ativo = u.ativo == 1 %}
+        {% set dias_restantes = none %}
+        <tr data-nome="{{ u.nome|lower }}" data-email="{{ u.email|lower }}"
+            data-status="{{ 'ativo' if is_ativo else 'inativo' }}"
+            data-plan="{{ u.plano or 'gratis' }}">
+
+          <!-- Usuário -->
+          <td>
+            <div class="user-info">
+              <div class="avatar">{{ u.nome[:2].upper() }}</div>
+              <div>
+                <div class="user-name-td">{{ u.nome }}</div>
+                <div class="user-email-td">{{ u.email }}</div>
+              </div>
+            </div>
+          </td>
+
+          <!-- Plano -->
+          <td>
+            <select class="plan-sel" onchange="setPlano({{ u.id }}, this.value)">
+              <option value="gratis"    {% if u.plano == 'gratis'    %}selected{% endif %}>Grátis</option>
+              <option value="professor" {% if u.plano == 'professor' or not u.plano %}selected{% endif %}>Professor</option>
+              <option value="premium"   {% if u.plano == 'premium'   %}selected{% endif %}>Premium</option>
+            </select>
+          </td>
+
+          <!-- Toggle ativo/inativo -->
+          <td>
+            <div style="display:flex;align-items:center;gap:8px">
+              <label class="toggle">
+                <input type="checkbox" id="tog-{{ u.id }}" {% if is_ativo %}checked{% endif %}
+                       onchange="toggleAtivo({{ u.id }}, this.checked)"/>
+                <span class="toggle-slider"></span>
+              </label>
+              <span id="badge-{{ u.id }}" class="badge {{ 'badge-ativo' if is_ativo else 'badge-inativo' }}">
+                {{ 'Ativo' if is_ativo else 'Inativo' }}
+              </span>
+            </div>
+          </td>
+
+          <!-- Válido até -->
+          <td id="valido-{{ u.id }}">
+            {% if u.valido_ate %}
+              <div class="valido-date">{{ u.valido_ate }}</div>
+              {% if is_ativo %}
+                <div class="valido-days">em uso</div>
+              {% endif %}
             {% else %}
-              <form method="POST" action="/admin/ativar/{{ u.id }}" style="display:inline;">
-                <input type="hidden" name="dias" value="30"/>
-                <input type="hidden" name="plano" value="professor"/>
-                <button type="submit" class="btn-sm">Ativar 30d</button>
-              </form>
+              <div class="valido-days">—</div>
             {% endif %}
-          </div>
-        </td>
-      </tr>
-      {% endfor %}
-    </tbody>
-  </table>
+          </td>
+
+          <!-- Quick activate buttons -->
+          <td>
+            <div class="quick-btns">
+              <button class="qbtn" onclick="ativar({{ u.id }}, 30)">30d</button>
+              <button class="qbtn" onclick="ativar({{ u.id }}, 90)">90d</button>
+              <button class="qbtn" onclick="ativar({{ u.id }}, 365)">1 ano</button>
+              <button class="qbtn inf" onclick="ativar({{ u.id }}, 0)">∞</button>
+            </div>
+          </td>
+
+          <!-- Cadastro -->
+          <td style="color:var(--text2);font-size:.75rem;white-space:nowrap">
+            {{ u.criado_em[:10] if u.criado_em else '—' }}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    <div class="empty" id="emptyMsg" style="display:none">Nenhum usuário encontrado.</div>
+  </div>
 </div>
-<script src="/static/theme.js"></script>
+
+<div class="toast" id="toast"></div>
+
+<script>
+  async function req(action, uid, extra={}) {
+    try {
+      const r = await fetch('/admin/update', {
+        method: 'POST',
+        headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({action, uid, ...extra})
+      });
+      const d = await r.json();
+      if (d.erro) { showToast(d.erro, true); return null; }
+      return d;
+    } catch(e) { showToast('Erro de conexão', true); return null; }
+  }
+
+  async function toggleAtivo(uid, checked) {
+    const d = await req(checked ? 'ativar' : 'desativar', uid,
+                        checked ? {dias: 30, plano: getPlan(uid)} : {});
+    if (!d) return;
+    updateRow(uid, d);
+    showToast(checked ? 'Conta ativada (30 dias)' : 'Conta desativada');
+  }
+
+  async function ativar(uid, dias) {
+    const plano = getPlan(uid);
+    const d = await req('ativar', uid, {dias, plano});
+    if (!d) return;
+    // Sync toggle
+    const tog = document.getElementById('tog-'+uid);
+    if (tog) tog.checked = true;
+    updateRow(uid, d);
+    showToast(dias === 0 ? 'Ativado por tempo ilimitado ∞' : `Ativado por ${dias} dias`);
+  }
+
+  async function setPlano(uid, plano) {
+    const d = await req('set_plan', uid, {plano});
+    if (!d) return;
+    showToast(`Plano alterado para ${plano}`);
+  }
+
+  function getPlan(uid) {
+    const row = document.querySelector(`tr [onchange*="setPlano(${uid}"]`);
+    return row ? row.value : 'professor';
+  }
+
+  function updateRow(uid, d) {
+    const badge = document.getElementById('badge-'+uid);
+    const validoCell = document.getElementById('valido-'+uid);
+    if (badge) {
+      badge.className = 'badge ' + (d.ativo ? 'badge-ativo' : 'badge-inativo');
+      badge.textContent = d.ativo ? 'Ativo' : 'Inativo';
+    }
+    if (validoCell && d.valido_ate) {
+      validoCell.innerHTML = `<div class="valido-date">${d.valido_ate}</div>${d.ativo ? '<div class="valido-days">em uso</div>':''}`;
+    }
+    // Update data-status for filter
+    const row = badge?.closest('tr');
+    if (row) row.dataset.status = d.ativo ? 'ativo' : 'inativo';
+  }
+
+  function filtrar() {
+    const q     = document.getElementById('searchInput').value.toLowerCase();
+    const st    = document.getElementById('filterStatus').value;
+    const pl    = document.getElementById('filterPlan').value;
+    let visible = 0;
+    document.querySelectorAll('#tbl tbody tr').forEach(tr => {
+      const nome  = tr.dataset.nome  || '';
+      const email = tr.dataset.email || '';
+      const status = tr.dataset.status || '';
+      const plan   = tr.dataset.plan  || '';
+      const show = (!q  || nome.includes(q) || email.includes(q))
+                && (!st || status === st)
+                && (!pl || plan === pl);
+      tr.style.display = show ? '' : 'none';
+      if (show) visible++;
+    });
+    document.getElementById('emptyMsg').style.display = visible === 0 ? '' : 'none';
+  }
+
+  let toastTimer;
+  function showToast(msg, err=false) {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.className = 'toast show' + (err ? ' err' : '');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => t.className = 'toast', 2800);
+  }
+</script>
 </body>
 </html>
