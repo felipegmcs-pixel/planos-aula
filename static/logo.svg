@@ -1,49 +1,49 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none">
   <defs>
-    <!-- Deep ancient lapis: wisdom, permanence -->
+    <!-- Deep warm earth — ancient clay, not purple -->
     <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0%" stop-color="#1e1b4b"/>
-      <stop offset="100%" stop-color="#3b0764"/>
+      <stop offset="0%" stop-color="#120c06"/>
+      <stop offset="100%" stop-color="#060301"/>
     </linearGradient>
-    <!-- Amber warmth radiating from the child held within -->
-    <radialGradient id="warm" cx="50%" cy="57%" r="45%">
-      <stop offset="0%"   stop-color="#fbbf24" stop-opacity="0.55"/>
-      <stop offset="100%" stop-color="#fbbf24" stop-opacity="0"/>
+    <!-- The child's warmth radiating upward -->
+    <radialGradient id="glow" cx="50%" cy="35%" r="35%">
+      <stop offset="0%" stop-color="#c2770a" stop-opacity="0.6"/>
+      <stop offset="100%" stop-color="#c2770a" stop-opacity="0"/>
     </radialGradient>
-    <!-- Subtle white glow on the embrace arc -->
-    <filter id="arcGlow" x="-20%" y="-20%" width="140%" height="140%">
-      <feGaussianBlur in="SourceGraphic" stdDeviation="1.2" result="blur"/>
-      <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
-    </filter>
   </defs>
 
-  <!-- Background: ancient stone, rounded -->
+  <!-- Background: ancient dark earth -->
   <rect width="64" height="64" rx="14" fill="url(#bg)"/>
 
-  <!-- Her love: amber warmth at the heart of the embrace -->
-  <circle cx="32" cy="36" r="22" fill="url(#warm)"/>
+  <!-- Warmth from the child -->
+  <circle cx="32" cy="22" r="22" fill="url(#glow)"/>
 
   <!--
-    The embrace: a 340° arc — almost complete, open at the top.
-    Center (32, 36), r=18.
-    Opening at top: 10° from the vertical on each side.
-      Left endpoint:  (32 - 18·sin10°, 36 - 18·cos10°) ≈ (29, 18)
-      Right endpoint: (32 + 18·sin10°, 36 - 18·cos10°) ≈ (35, 18)
-    The arc goes the long way around (clockwise through the bottom) — large-arc=1, sweep=1.
-    This is the universal ancient gesture of a mother's arms wrapping her child.
+    The embrace: a thick arc sweeping from upper-left, around the bottom,
+    back to upper-right. Ancient vessel / mother's arms cradling the child.
+    Found in every civilization as the symbol of containing love.
   -->
-  <path d="M 29 18 A 18 18 0 1 1 35 18"
-        stroke="white" stroke-width="2.8" stroke-linecap="round"
-        fill="none" opacity="0.90" filter="url(#arcGlow)"/>
+  <path d="M 10 34 C 10 58 54 58 54 34"
+        stroke="#f0ddb0" stroke-width="4.5" stroke-linecap="round" fill="none" opacity="0.88"/>
 
-  <!-- Subtle inner echo: the space of protection held within the embrace -->
-  <circle cx="32" cy="36" r="11" stroke="white" stroke-width="0.6"
-          opacity="0.12" fill="none"/>
+  <!--
+    The child: a 4-pointed star resting in the cup of the embrace.
+    The top ray is longest — his ambition, the future she always believed in.
+  -->
+  <!-- Top ray (longest — aspiration) -->
+  <path d="M32 11 C32.9 11 33.7 18.5 32 23 C30.3 18.5 31.1 11 32 11 Z"
+        fill="#c2770a"/>
+  <!-- Bottom ray -->
+  <path d="M32 33 C32.7 33 33.2 27 32 23 C30.8 27 31.3 33 32 33 Z"
+        fill="#c2770a" opacity="0.78"/>
+  <!-- Right ray -->
+  <path d="M42 23 C42 23.8 36 24.3 32 23 C36 21.7 42 22.2 42 23 Z"
+        fill="#c2770a" opacity="0.82"/>
+  <!-- Left ray -->
+  <path d="M22 23 C22 23.8 28 24.3 32 23 C28 21.7 22 22.2 22 23 Z"
+        fill="#c2770a" opacity="0.82"/>
 
-  <!-- The child — amber life cradled at the center -->
-  <circle cx="32" cy="36" r="6.5" fill="#f59e0b"/>
-  <!-- The soul within: white light -->
-  <circle cx="32" cy="36" r="3"   fill="white" opacity="0.94"/>
-  <!-- The spark of consciousness -->
-  <circle cx="32" cy="36" r="1.1" fill="#fbbf24" opacity="0.85"/>
+  <!-- The soul at the center of the star -->
+  <circle cx="32" cy="23" r="3" fill="#fef3c7" opacity="0.96"/>
+  <circle cx="32" cy="23" r="1.2" fill="#c2770a" opacity="0.7"/>
 </svg>

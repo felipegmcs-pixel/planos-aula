@@ -95,7 +95,7 @@
     }
     @keyframes iconTyping {
       0%,100% { filter: brightness(1) drop-shadow(0 0 0px transparent); transform: scale(1); }
-      50%     { filter: brightness(1.3) drop-shadow(0 0 14px rgba(245,158,11,.85)); transform: scale(1.1); }
+      50%     { filter: brightness(1.4) drop-shadow(0 0 12px rgba(194,119,10,.9)); transform: scale(1.1); }
     }
     @keyframes nodeFlow {
       0%   { stroke-dashoffset: 20; }
@@ -159,8 +159,8 @@
     /* ─── ProfessorIA animated icon mark ─── */
     .pia-mark {
       width: 30px; height: 30px; border-radius: 8px; flex-shrink: 0;
-      background: linear-gradient(135deg, #4338ca, #7c3aed);
-      box-shadow: 0 2px 12px rgba(67,56,202,.35);
+      background: linear-gradient(135deg, #1a0e06, #0d0703);
+      box-shadow: 0 2px 12px rgba(194,119,10,.28);
       transition: filter .3s, transform .3s, box-shadow .3s;
       display: block;
     }
@@ -748,26 +748,22 @@
         <span class="pia-mark" id="piaMark">
           <svg viewBox="0 0 30 30" fill="none" xmlns="http://www.w3.org/2000/svg" width="30" height="30">
             <defs>
-              <radialGradient id="sw" cx="50%" cy="57%" r="45%">
-                <stop offset="0%"   stop-color="#fbbf24" stop-opacity="0.6"/>
-                <stop offset="100%" stop-color="#fbbf24" stop-opacity="0"/>
+              <radialGradient id="sg" cx="50%" cy="37%" r="40%">
+                <stop offset="0%" stop-color="#c2770a" stop-opacity="0.65"/>
+                <stop offset="100%" stop-color="#c2770a" stop-opacity="0"/>
               </radialGradient>
             </defs>
-            <!-- Amber warmth at the heart of the embrace -->
-            <circle cx="15" cy="17" r="11" fill="url(#sw)"/>
-            <!--
-              The embrace: 340° arc, open at top.
-              Center (15, 17), r=8.5.
-              10° from vertical: left=(15-1.48, 17-8.37)=(13.5, 8.6), right=(16.5, 8.6)
-            -->
-            <path d="M 13.5 8.6 A 8.5 8.5 0 1 1 16.5 8.6"
-                  stroke="white" stroke-width="1.6" stroke-linecap="round" fill="none" opacity="0.90"/>
-            <!-- Inner echo: the protected space -->
-            <circle cx="15" cy="17" r="5.2" stroke="white" stroke-width="0.5" opacity="0.13" fill="none"/>
-            <!-- The child — amber life held within -->
-            <circle cx="15" cy="17" r="3.1" fill="#f59e0b"/>
-            <circle cx="15" cy="17" r="1.4" fill="white" opacity="0.94"/>
-            <circle cx="15" cy="17" r="0.5" fill="#fbbf24" opacity="0.85"/>
+            <!-- Warmth from the child -->
+            <circle cx="15" cy="11" r="12" fill="url(#sg)"/>
+            <!-- The embrace: mother's arms, ancient vessel shape -->
+            <path d="M 4 16 C 4 27 26 27 26 16"
+                  stroke="#f0ddb0" stroke-width="2.2" stroke-linecap="round" fill="none" opacity="0.88"/>
+            <!-- The child: 4-pointed star in the cup -->
+            <path d="M15 5 C15.4 5 15.8 9 15 11 C14.2 9 14.6 5 15 5 Z" fill="#c2770a"/>
+            <path d="M15 16 C15.3 16 15.6 13 15 11 C14.4 13 14.7 16 15 16 Z" fill="#c2770a" opacity="0.78"/>
+            <path d="M20 11 C20 11.4 17 11.7 15 11 C17 10.3 20 10.6 20 11 Z" fill="#c2770a" opacity="0.82"/>
+            <path d="M10 11 C10 11.4 13 11.7 15 11 C13 10.3 10 10.6 10 11 Z" fill="#c2770a" opacity="0.82"/>
+            <circle cx="15" cy="11" r="1.5" fill="#fef3c7" opacity="0.96"/>
           </svg>
         </span>
         <span class="logo-p">Professor</span><span class="logo-ia">IA</span>
