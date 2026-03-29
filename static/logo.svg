@@ -1,49 +1,43 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none">
   <defs>
-    <!-- Deep warm earth — ancient clay, not purple -->
+    <!-- Deep midnight blue — não roxo, azul escuro puro -->
     <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0%" stop-color="#120c06"/>
-      <stop offset="100%" stop-color="#060301"/>
+      <stop offset="0%" stop-color="#07101f"/>
+      <stop offset="100%" stop-color="#030912"/>
     </linearGradient>
-    <!-- The child's warmth radiating upward -->
-    <radialGradient id="glow" cx="50%" cy="35%" r="35%">
-      <stop offset="0%" stop-color="#c2770a" stop-opacity="0.6"/>
-      <stop offset="100%" stop-color="#c2770a" stop-opacity="0"/>
+    <!-- Glow coral do filho -->
+    <radialGradient id="glow" cx="70%" cy="50%" r="30%">
+      <stop offset="0%" stop-color="#f97316" stop-opacity="0.45"/>
+      <stop offset="100%" stop-color="#f97316" stop-opacity="0"/>
     </radialGradient>
+    <!--
+      Máscara para criar o crescente:
+      círculo externo (mãe) MENOS círculo interno deslocado = lua crescente
+    -->
+    <mask id="cres">
+      <rect width="64" height="64" fill="white"/>
+      <circle cx="37" cy="32" r="16" fill="black"/>
+    </mask>
   </defs>
 
-  <!-- Background: ancient dark earth -->
+  <!-- Fundo: azul meia-noite profundo -->
   <rect width="64" height="64" rx="14" fill="url(#bg)"/>
 
-  <!-- Warmth from the child -->
-  <circle cx="32" cy="22" r="22" fill="url(#glow)"/>
+  <!-- Luz do filho irradiando para o universo -->
+  <circle cx="44" cy="32" r="20" fill="url(#glow)"/>
 
   <!--
-    The embrace: a thick arc sweeping from upper-left, around the bottom,
-    back to upper-right. Ancient vessel / mother's arms cradling the child.
-    Found in every civilization as the symbol of containing love.
+    A mãe: crescente lunar — símbolo da deusa-mãe em TODAS as civilizações antigas.
+    Mesopotâmia (Inanna/Ishtar), Egito (Ísis), Grécia (Selene/Ártemis),
+    Roma, Babilônia, Suméria — a lua sempre representou a mãe que protege.
+    O crescente "abraça" o filho em seu colo côncavo.
   -->
-  <path d="M 10 34 C 10 58 54 58 54 34"
-        stroke="#f0ddb0" stroke-width="4.5" stroke-linecap="round" fill="none" opacity="0.88"/>
+  <circle cx="27" cy="32" r="20" fill="#f97316" opacity="0.93" mask="url(#cres)"/>
 
   <!--
-    The child: a 4-pointed star resting in the cup of the embrace.
-    The top ray is longest — his ambition, the future she always believed in.
+    O filho: ponto de luz no colo do crescente.
+    Precioso, protegido, iluminado.
   -->
-  <!-- Top ray (longest — aspiration) -->
-  <path d="M32 11 C32.9 11 33.7 18.5 32 23 C30.3 18.5 31.1 11 32 11 Z"
-        fill="#c2770a"/>
-  <!-- Bottom ray -->
-  <path d="M32 33 C32.7 33 33.2 27 32 23 C30.8 27 31.3 33 32 33 Z"
-        fill="#c2770a" opacity="0.78"/>
-  <!-- Right ray -->
-  <path d="M42 23 C42 23.8 36 24.3 32 23 C36 21.7 42 22.2 42 23 Z"
-        fill="#c2770a" opacity="0.82"/>
-  <!-- Left ray -->
-  <path d="M22 23 C22 23.8 28 24.3 32 23 C28 21.7 22 22.2 22 23 Z"
-        fill="#c2770a" opacity="0.82"/>
-
-  <!-- The soul at the center of the star -->
-  <circle cx="32" cy="23" r="3" fill="#fef3c7" opacity="0.96"/>
-  <circle cx="32" cy="23" r="1.2" fill="#c2770a" opacity="0.7"/>
+  <circle cx="44" cy="32" r="6" fill="#fef4e4"/>
+  <circle cx="44" cy="32" r="3" fill="white"/>
 </svg>
