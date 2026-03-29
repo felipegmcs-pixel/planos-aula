@@ -748,34 +748,26 @@
         <span class="pia-mark" id="piaMark">
           <svg viewBox="0 0 30 30" fill="none" xmlns="http://www.w3.org/2000/svg" width="30" height="30">
             <defs>
-              <radialGradient id="sw" cx="50%" cy="60%" r="50%">
-                <stop offset="0%"   stop-color="#fbbf24" stop-opacity="0.55"/>
+              <radialGradient id="sw" cx="50%" cy="57%" r="45%">
+                <stop offset="0%"   stop-color="#fbbf24" stop-opacity="0.6"/>
                 <stop offset="100%" stop-color="#fbbf24" stop-opacity="0"/>
               </radialGradient>
-              <linearGradient id="rtop" x1="0.5" y1="0" x2="0.5" y2="1">
-                <stop offset="0%"   stop-color="white" stop-opacity="0.95"/>
-                <stop offset="100%" stop-color="white" stop-opacity="0.3"/>
-              </linearGradient>
             </defs>
-            <!-- amber warmth -->
-            <circle cx="15" cy="17" r="13" fill="url(#sw)"/>
-            <!-- top ray — the belief that always pointed up -->
-            <path d="M15 2 C15.8 2 16.5 11.5 15 15 C13.5 11.5 14.2 2 15 2 Z" fill="url(#rtop)"/>
-            <!-- bottom ray -->
-            <path d="M15 28 C15.7 28 16.2 19.5 15 15 C13.8 19.5 14.3 28 15 28 Z" fill="white" opacity="0.48"/>
-            <!-- right ray -->
-            <path d="M28 15 C28 15.7 19.5 16.2 15 15 C19.5 13.8 28 14.3 28 15 Z" fill="white" opacity="0.7"/>
-            <!-- left ray -->
-            <path d="M2 15 C2 15.7 10.5 16.2 15 15 C10.5 13.8 2 14.3 2 15 Z" fill="white" opacity="0.7"/>
-            <!-- diagonal glints -->
-            <line x1="15" y1="15" x2="22" y2="8"  stroke="white" stroke-width="0.8" opacity="0.2" stroke-linecap="round"/>
-            <line x1="15" y1="15" x2="8"  y2="8"  stroke="white" stroke-width="0.8" opacity="0.16" stroke-linecap="round"/>
-            <line x1="15" y1="15" x2="22" y2="22" stroke="white" stroke-width="0.6" opacity="0.1"  stroke-linecap="round"/>
-            <line x1="15" y1="15" x2="8"  y2="22" stroke="white" stroke-width="0.6" opacity="0.1"  stroke-linecap="round"/>
-            <!-- heart: amber core -->
-            <circle cx="15" cy="15" r="3.2" fill="#f59e0b"/>
-            <circle cx="15" cy="15" r="1.4" fill="white" opacity="0.92"/>
-            <line x1="15" y1="23" x2="23" y2="15" stroke="white" stroke-width="1" opacity=".5" stroke-dasharray="12" stroke-linecap="round"/>
+            <!-- Amber warmth at the heart of the embrace -->
+            <circle cx="15" cy="17" r="11" fill="url(#sw)"/>
+            <!--
+              The embrace: 340° arc, open at top.
+              Center (15, 17), r=8.5.
+              10° from vertical: left=(15-1.48, 17-8.37)=(13.5, 8.6), right=(16.5, 8.6)
+            -->
+            <path d="M 13.5 8.6 A 8.5 8.5 0 1 1 16.5 8.6"
+                  stroke="white" stroke-width="1.6" stroke-linecap="round" fill="none" opacity="0.90"/>
+            <!-- Inner echo: the protected space -->
+            <circle cx="15" cy="17" r="5.2" stroke="white" stroke-width="0.5" opacity="0.13" fill="none"/>
+            <!-- The child — amber life held within -->
+            <circle cx="15" cy="17" r="3.1" fill="#f59e0b"/>
+            <circle cx="15" cy="17" r="1.4" fill="white" opacity="0.94"/>
+            <circle cx="15" cy="17" r="0.5" fill="#fbbf24" opacity="0.85"/>
           </svg>
         </span>
         <span class="logo-p">Professor</span><span class="logo-ia">IA</span>
