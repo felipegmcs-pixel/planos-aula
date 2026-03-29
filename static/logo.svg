@@ -1,30 +1,61 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none">
   <defs>
     <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0%" stop-color="#4338ca"/>
-      <stop offset="100%" stop-color="#7c3aed"/>
+      <stop offset="0%" stop-color="#3730a3"/>
+      <stop offset="100%" stop-color="#6d28d9"/>
     </linearGradient>
-    <linearGradient id="shine" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0%" stop-color="white" stop-opacity="0.15"/>
-      <stop offset="100%" stop-color="white" stop-opacity="0"/>
+    <!-- Amber warmth radiating from the heart — her love -->
+    <radialGradient id="warm" cx="50%" cy="56%" r="48%">
+      <stop offset="0%"   stop-color="#fbbf24" stop-opacity="0.5"/>
+      <stop offset="100%" stop-color="#fbbf24" stop-opacity="0"/>
+    </radialGradient>
+    <!-- Top ray gradient — belief pointing upward -->
+    <linearGradient id="rayTop" x1="0.5" y1="0" x2="0.5" y2="1">
+      <stop offset="0%"   stop-color="white" stop-opacity="0.95"/>
+      <stop offset="100%" stop-color="white" stop-opacity="0.3"/>
     </linearGradient>
   </defs>
 
-  <!-- Background rounded square -->
+  <!-- Rounded square background -->
   <rect width="64" height="64" rx="15" fill="url(#bg)"/>
-  <!-- Subtle top shine -->
-  <rect width="64" height="32" rx="15" fill="url(#shine)"/>
 
-  <!-- Letter P — stem -->
-  <rect x="13" y="12" width="9" height="40" rx="4.5" fill="white"/>
+  <!-- Her warmth: amber glow emanating from the heart -->
+  <circle cx="32" cy="36" r="26" fill="url(#warm)"/>
 
-  <!-- Letter P — bowl outer -->
-  <path d="M22 12 L37 12 Q50 12 50 25 Q50 38 37 38 L22 38 Z" fill="white"/>
-  <!-- Letter P — bowl inner cutout (gradient color to punch hole) -->
-  <path d="M22 18 L35 18 Q44 18 44 25 Q44 32 35 32 L22 32 Z" fill="url(#bg)"/>
+  <!-- The spark — 4-pointed lodestar -->
 
-  <!-- Amber accent dot — bottom right corner -->
-  <circle cx="50" cy="50" r="8" fill="#f59e0b"/>
-  <!-- Dot inner glint -->
-  <circle cx="48" cy="48" r="3" fill="white" opacity="0.35"/>
+  <!-- Top ray (longest): aspiration, the belief that always pointed up -->
+  <path d="M32 6
+           C33.5 6 34.8 24.5 32 32
+           C29.2 24.5 30.5 6 32 6 Z"
+        fill="url(#rayTop)"/>
+
+  <!-- Bottom ray: grounding, roots, where you come from -->
+  <path d="M32 58
+           C33.2 58 34.2 41.5 32 32
+           C29.8 41.5 30.8 58 32 58 Z"
+        fill="white" opacity="0.48"/>
+
+  <!-- Right ray -->
+  <path d="M57 32
+           C57 33.2 41.5 34.2 32 32
+           C41.5 29.8 57 30.8 57 32 Z"
+        fill="white" opacity="0.7"/>
+
+  <!-- Left ray -->
+  <path d="M7 32
+           C7 33.2 22.5 34.2 32 32
+           C22.5 29.8 7 30.8 7 32 Z"
+        fill="white" opacity="0.7"/>
+
+  <!-- Subtle diagonal glints: enthusiasm radiating in all directions -->
+  <line x1="32" y1="32" x2="47" y2="17" stroke="white" stroke-width="1.4" opacity="0.20" stroke-linecap="round"/>
+  <line x1="32" y1="32" x2="17" y2="17" stroke="white" stroke-width="1.4" opacity="0.16" stroke-linecap="round"/>
+  <line x1="32" y1="32" x2="47" y2="47" stroke="white" stroke-width="1"   opacity="0.11" stroke-linecap="round"/>
+  <line x1="32" y1="32" x2="17" y2="47" stroke="white" stroke-width="1"   opacity="0.11" stroke-linecap="round"/>
+
+  <!-- The heart of it all: her love, amber and steady -->
+  <circle cx="32" cy="32" r="6.5" fill="#f59e0b"/>
+  <!-- Inner light — the purity of that belief -->
+  <circle cx="32" cy="32" r="2.8" fill="white" opacity="0.92"/>
 </svg>

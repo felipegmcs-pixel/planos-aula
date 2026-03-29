@@ -164,29 +164,41 @@ Exemplo de grade (dentro de bloco de código):
   4  _  _  _  _  _
 ```
 
-MAPA MENTAL — geração direta:
-Quando pedirem um mapa mental, gere imediatamente com a seguinte estrutura:
+MAPA MENTAL — geração direta (estilo infográfico visual):
+Quando pedirem um mapa mental, gere com a seguinte estrutura que permite exportação visual colorida:
 
-1. Cabeçalho: Nome: _____________ Data: ___/___/___ (underscores simples)
-2. Use estrutura de árvore com caracteres Unicode (├──, └──, │) e emojis
-3. Estrutura: TEMA CENTRAL → 5-6 ramos principais → 3-4 sub-ramos cada
-4. Palavras-chave curtas e objetivas em cada ramo
-5. Ao final: seção "💡 PARA APRENDER MAIS" com sugestões de pesquisa
+Use exatamente este formato estruturado — NÃO use árvore Unicode (├──), use seções com ## e listas:
 
-Exemplo de formato:
-```
-🧠 TEMA CENTRAL
-├── 🔵 RAMO 1
-│   ├── subtópico 1.1
-│   ├── subtópico 1.2
-│   └── subtópico 1.3
-├── 🟡 RAMO 2
-│   ├── subtópico 2.1
-│   └── subtópico 2.2
-└── 🟢 RAMO 3
-    ├── subtópico 3.1
-    └── subtópico 3.2
-```
+## 🧠 TEMA CENTRAL: [TEMA EM MAIÚSCULAS]
+
+### 🔴 [CATEGORIA 1 — ex: NÚMEROS / DATAS / CAUSAS]
+- item curto e direto
+- item curto e direto
+- item curto e direto
+
+### 🔵 [CATEGORIA 2 — ex: PERSONAGENS / ANTECEDENTES]
+- item curto e direto
+- item curto e direto
+
+### 🟡 [CATEGORIA 3 — ex: CONSEQUÊNCIAS / ALIANÇAS]
+- item curto e direto
+- item curto e direto
+
+### 🟢 [CATEGORIA 4]
+- item curto e direto
+
+### 🟣 [CATEGORIA 5]
+- item curto e direto
+
+### 🟠 [CATEGORIA 6 — opcional]
+- item curto e direto
+
+Regras obrigatórias para mapa mental:
+- Máximo 5-7 palavras por item (palavras-chave, não frases longas)
+- 5 a 7 categorias temáticas, cada uma com 3-6 itens
+- Use emojis de cor antes de cada ### (🔴🔵🟡🟢🟣🟠) para categorias
+- O título ## deve sempre começar com "🧠 TEMA CENTRAL:"
+- NÃO use Unicode de árvore (├ └ │) — só listas com -
 
 PLANO DE AULA — formato oficial para exportação DOCX:
 Quando o professor pedir um plano de aula, use EXATAMENTE esta estrutura para que o sistema possa exportar no formato oficial da Secretaria de Educação:
@@ -2163,12 +2175,224 @@ def _pia_md_table(doc, lines):
     ep = doc.add_paragraph()
     ep.paragraph_format.space_after = Pt(4)
 
+# Palette: 6 vivid colors for mind map categories (matching emoji color order: red, blue, yellow, green, purple, orange)
+_MM_PALETTE = [
+    ('e53e3e', 'fff5f5'),  # red
+    ('2b6cb0', 'ebf8ff'),  # blue
+    ('d69e2e', 'fffff0'),  # yellow
+    ('276749', 'f0fff4'),  # green
+    ('6b46c1', 'faf5ff'),  # purple
+    ('c05621', 'fffaf0'),  # orange
+]
+
+
 def _detect_doc_type(texto):
-    """Returns 'plano_aula' or 'outro' based on content."""
+    """Returns 'plano_aula', 'mapa_mental', or 'outro'."""
     t = texto.lower()
+    if ('🧠 tema central' in t or '## 🧠' in t or
+            (('### 🔴' in t or '### 🔵' in t) and '## 🧠' in t)):
+        return 'mapa_mental'
     signals = ['### aula', '**conteúdo e objetivos', '**estratégias didáticas',
                '**recursos pedagógicos', 'planejamento da aula', '**avaliação:']
     return 'plano_aula' if sum(1 for s in signals if s in t) >= 3 else 'outro'
+
+
+def _parse_mapa_mental(texto):
+    """
+    Parses structured mind map text into (titulo, categorias).
+    Returns (str, list of {'titulo': str, 'cor_idx': int, 'itens': [str]})
+    """
+    import re
+    titulo = 'MAPA MENTAL'
+    m = re.search(r'##\s+🧠\s+TEMA\s+CENTRAL\s*:\s*(.+)', texto, re.IGNORECASE)
+    if m:
+        titulo = re.sub(r'[*_`]', '', m.group(1)).strip().upper()
+
+    categorias = []
+    # Split by ### sections
+    parts = re.split(r'\n###\s+', texto)
+    color_emojis = {'🔴': 0, '🔵': 1, '🟡': 2, '🟢': 3, '🟣': 4, '🟠': 5}
+    ci = 0
+    for part in parts[1:]:  # skip content before first ###
+        lines = part.strip().split('\n')
+        if not lines:
+            continue
+        cat_title = re.sub(r'[*_`]', '', lines[0]).strip()
+        # Determine color index from emoji
+        cor_idx = ci % len(_MM_PALETTE)
+        for emoji, idx in color_emojis.items():
+            if emoji in cat_title:
+                cor_idx = idx
+                break
+        # Clean emoji from title
+        cat_clean = re.sub(r'[\U0001F7E0-\U0001F7E6🧠🔴🔵🟡🟢🟣🟠]', '', cat_title).strip(' —:-')
+        cat_clean = re.sub(r'\s+', ' ', cat_clean).strip()
+        # Extract bullet items
+        itens = []
+        for line in lines[1:]:
+            line = line.strip()
+            if line.startswith('-') or line.startswith('•') or line.startswith('*'):
+                item = re.sub(r'^[-•*]\s*', '', line).strip()
+                item = re.sub(r'\*\*([^*]+)\*\*', r'\1', item)
+                if item:
+                    itens.append(item)
+        if cat_clean and itens:
+            categorias.append({'titulo': cat_clean.upper(), 'cor_idx': cor_idx, 'itens': itens})
+        ci += 1
+    return titulo, categorias
+
+
+def _hex_to_rgb(h):
+    h = h.lstrip('#')
+    return RGBColor(int(h[0:2], 16), int(h[2:4], 16), int(h[4:6], 16))
+
+
+def gerar_mapa_mental_docx(texto, meta=None):
+    """Gera DOCX visual de mapa mental no estilo infográfico Descomplica."""
+    import re
+    if meta is None:
+        meta = {}
+    escola    = meta.get('escola', '').strip()
+    professor = meta.get('professor', '').strip()
+    disciplina = meta.get('disciplina', '').strip()
+
+    titulo, categorias = _parse_mapa_mental(texto)
+
+    doc = Document()
+    for sec in doc.sections:
+        sec.page_height   = Cm(29.7)
+        sec.page_width    = Cm(21.0)
+        sec.top_margin    = Cm(1.5)
+        sec.bottom_margin = Cm(1.5)
+        sec.left_margin   = Cm(1.5)
+        sec.right_margin  = Cm(1.5)
+
+    doc.styles['Normal'].font.name = 'Arial'
+    doc.styles['Normal'].font.size = Pt(10)
+
+    # ── HEADER ──────────────────────────────────────────────────────────
+    if escola or professor:
+        hp = doc.add_paragraph()
+        hp.alignment = WD_ALIGN_PARAGRAPH.CENTER
+        hp.paragraph_format.space_before = Pt(0)
+        hp.paragraph_format.space_after  = Pt(2)
+        parts = []
+        if escola: parts.append(escola)
+        if professor: parts.append(f'Prof(a). {professor}')
+        if disciplina: parts.append(disciplina)
+        run = hp.add_run('  ·  '.join(parts))
+        run.font.size = Pt(8)
+        run.font.color.rgb = RGBColor(0x88, 0x88, 0x88)
+
+    # ── CENTRAL TITLE BOX ───────────────────────────────────────────────
+    title_tbl = doc.add_table(rows=1, cols=1)
+    _pia_no_borders(title_tbl)
+    tc = title_tbl.cell(0, 0)
+    # Dark indigo background for title
+    set_cell_bg(tc, '312e81')
+    # Add colored top stripe feel via border
+    tcPr = tc._tc.get_or_add_tcPr()
+    tcBorders = OxmlElement('w:tcBorders')
+    for side in ('top', 'left', 'bottom', 'right'):
+        el = OxmlElement(f'w:{side}')
+        el.set(qn('w:val'), 'single')
+        el.set(qn('w:sz'), '6')
+        el.set(qn('w:color'), '4338ca')
+        tcBorders.append(el)
+    tcPr.append(tcBorders)
+
+    tp = tc.paragraphs[0]
+    tp.alignment = WD_ALIGN_PARAGRAPH.CENTER
+    tp.paragraph_format.space_before = Pt(10)
+    tp.paragraph_format.space_after  = Pt(10)
+    tr = tp.add_run(titulo)
+    tr.font.bold  = True
+    tr.font.size  = Pt(18)
+    tr.font.name  = 'Arial'
+    tr.font.color.rgb = RGBColor(0xFF, 0xFF, 0xFF)
+
+    doc.add_paragraph().paragraph_format.space_after = Pt(6)
+
+    # ── CATEGORY GRID: 2 columns ─────────────────────────────────────────
+    # Fill in pairs; if odd, last row has 1 cell spanning
+    n = len(categorias)
+    pairs = [(categorias[i], categorias[i+1] if i+1 < n else None)
+             for i in range(0, n, 2)]
+
+    for left_cat, right_cat in pairs:
+        row_tbl = doc.add_table(rows=1, cols=2)
+        _pia_no_borders(row_tbl)
+        row_tbl.columns[0].width = Cm(8.5)
+        row_tbl.columns[1].width = Cm(8.5)
+
+        for col_i, cat in enumerate([left_cat, right_cat]):
+            cell = row_tbl.cell(0, col_i)
+            if cat is None:
+                continue
+            fg, bg = _MM_PALETTE[cat['cor_idx'] % len(_MM_PALETTE)]
+
+            # Background of card
+            set_cell_bg(cell, bg)
+
+            # Card borders
+            tc2  = cell._tc
+            tcP2 = tc2.get_or_add_tcPr()
+            tcB2 = OxmlElement('w:tcBorders')
+            for side in ('top', 'left', 'bottom', 'right'):
+                el = OxmlElement(f'w:{side}')
+                el.set(qn('w:val'), 'single')
+                el.set(qn('w:sz'), '8')
+                el.set(qn('w:color'), fg)
+                tcB2.append(el)
+            tcP2.append(tcB2)
+
+            # Cell left margin via inner table padding
+            tcMar = OxmlElement('w:tcMar')
+            for m_side, val in [('top','80'),('left','120'),('bottom','80'),('right','120')]:
+                m_el = OxmlElement(f'w:{m_side}')
+                m_el.set(qn('w:w'), val)
+                m_el.set(qn('w:type'), 'dxa')
+                tcMar.append(m_el)
+            tcP2.append(tcMar)
+
+            # Category title
+            title_p = cell.paragraphs[0]
+            title_p.paragraph_format.space_before = Pt(4)
+            title_p.paragraph_format.space_after  = Pt(4)
+            t_run = title_p.add_run(cat['titulo'])
+            t_run.font.bold  = True
+            t_run.font.size  = Pt(10)
+            t_run.font.name  = 'Arial'
+            t_run.font.color.rgb = _hex_to_rgb(fg)
+
+            # Items
+            for item in cat['itens']:
+                item_p = cell.add_paragraph()
+                item_p.paragraph_format.space_before = Pt(1)
+                item_p.paragraph_format.space_after  = Pt(1)
+                bullet = item_p.add_run('▸ ')
+                bullet.font.size  = Pt(8)
+                bullet.font.color.rgb = _hex_to_rgb(fg)
+                i_run = item_p.add_run(item)
+                i_run.font.size  = Pt(8.5)
+                i_run.font.name  = 'Arial'
+                i_run.font.color.rgb = RGBColor(0x1a, 0x20, 0x2c)
+
+            item_p = cell.add_paragraph()
+            item_p.paragraph_format.space_after = Pt(2)
+
+        doc.add_paragraph().paragraph_format.space_after = Pt(4)
+
+    # ── FOOTER ──────────────────────────────────────────────────────────
+    _pia_hrule(doc, thick=False, color='aaaaaa')
+    pf = doc.add_paragraph()
+    pf.alignment = WD_ALIGN_PARAGRAPH.CENTER
+    pf.paragraph_format.space_before = Pt(0)
+    parts_f = ['Gerado por ProfessorIA™', datetime.now().strftime('%d/%m/%Y')]
+    if escola: parts_f.append(escola)
+    _pr(pf, '  ·  '.join(parts_f), size=7, color='888880')
+
+    return doc
 
 
 def _parse_plano_aula(texto):
@@ -2463,10 +2687,13 @@ def gerar_docx_pia(texto, meta=None, logo_path=None):
     if meta is None:
         meta = {}
 
-    # Roteamento: plano de aula usa formato oficial Secretaria de Educação
-    if _detect_doc_type(texto) == 'plano_aula':
+    # Roteamento por tipo de documento
+    doc_type = _detect_doc_type(texto)
+    if doc_type == 'plano_aula':
         logo_estado_abs = meta.get('logo_estado_path')
         return gerar_plano_aula_docx(texto, meta=meta, logo_estado_path=logo_estado_abs)
+    if doc_type == 'mapa_mental':
+        return gerar_mapa_mental_docx(texto, meta=meta)
 
     escola    = meta.get('escola', '').strip()
     professor = meta.get('professor', '').strip()
