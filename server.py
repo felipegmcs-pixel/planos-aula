@@ -105,6 +105,12 @@ Você cria materiais pedagógicos de alta qualidade, incluindo:
 - Rubricas de avaliação
 - Bilhetes para os pais
 
+REGRAS PARA PROVAS E ATIVIDADES:
+- NUNCA inclua "Nome:", "Data:", "Série:" ou campos do aluno no texto — o sistema de exportação adiciona automaticamente no cabeçalho: Nome:___ Data:__/__/__ Ano:
+- Logo após o título, adicione um bloco de Instruções com 3-4 itens (ex: Leia atentamente; Use caneta azul ou preta; Justifique as respostas discursivas)
+- Ao final, inclua o gabarito completo separado por uma linha (--- GABARITO ---)
+- Indique a pontuação de cada questão ou seção
+
 ADAPTAÇÕES PARA NEE (Necessidades Educacionais Especiais):
 Quando o professor pedir material adaptado, aplique as seguintes diretrizes:
 
@@ -2580,51 +2586,16 @@ def gerar_docx_pia(texto, meta=None, logo_path=None):
     _pia_hrule(doc, thick=True)
 
     # ── CAMPOS DO ALUNO ────────────────────────────────────────────────────
-    sf = doc.add_table(rows=2, cols=3)
-    _pia_no_borders(sf)
-
-    # Linha 1: Nome (largo), Série/Turma, Data
-    c_nome = sf.cell(0, 0)
-    p_nome = c_nome.paragraphs[0]
-    p_nome.paragraph_format.space_before = Pt(3)
-    p_nome.paragraph_format.space_after  = Pt(3)
-    _pr(p_nome, 'Nome: ', bold=True, size=9, color='0a0a0a')
-    _pr(p_nome, '_' * 44, size=9, color='555550')
-
-    c_serie = sf.cell(0, 1)
-    p_serie = c_serie.paragraphs[0]
-    p_serie.paragraph_format.space_before = Pt(3)
-    p_serie.paragraph_format.space_after  = Pt(3)
-    label_serie = f'Série/Turma: {serie}' if serie else 'Série/Turma: ___________'
-    _pr(p_serie, label_serie, size=9, color='0a0a0a')
-
-    c_data = sf.cell(0, 2)
-    p_data = c_data.paragraphs[0]
-    p_data.paragraph_format.space_before = Pt(3)
-    p_data.paragraph_format.space_after  = Pt(3)
-    _pr(p_data, 'Data: ', bold=True, size=9, color='0a0a0a')
-    _pr(p_data, '___/___/______', size=9, color='555550')
-
-    # Linha 2: Número, espaço, Nota
-    c_num = sf.cell(1, 0)
-    p_num = c_num.paragraphs[0]
-    p_num.paragraph_format.space_before = Pt(2)
-    p_num.paragraph_format.space_after  = Pt(3)
-    _pr(p_num, 'Nº: ', bold=True, size=9, color='0a0a0a')
-    _pr(p_num, '______', size=9, color='555550')
-
-    c_blank = sf.cell(1, 1)
-    p_blank = c_blank.paragraphs[0]
-    p_blank.paragraph_format.space_after = Pt(3)
-    if bimestre:
-        _pr(p_blank, f'{bimestre}º Bimestre', size=9, color='444444', italic=True)
-
-    c_nota = sf.cell(1, 2)
-    p_nota = c_nota.paragraphs[0]
-    p_nota.paragraph_format.space_before = Pt(2)
-    p_nota.paragraph_format.space_after  = Pt(3)
-    _pr(p_nota, 'Nota: ', bold=True, size=9, color='0a0a0a')
-    _pr(p_nota, '_________', size=9, color='555550')
+    # Formato: Nome:___ Data:__/__/__ Ano:
+    pn = doc.add_paragraph()
+    pn.paragraph_format.space_before = Pt(4)
+    pn.paragraph_format.space_after  = Pt(4)
+    _pr(pn, 'Nome:', bold=True, size=10, color='0a0a0a')
+    _pr(pn, '_' * 44, size=10, color='555550')
+    _pr(pn, '   Data:', bold=True, size=10, color='0a0a0a')
+    _pr(pn, '__/__/__', size=10, color='555550')
+    _pr(pn, '   Ano:', bold=True, size=10, color='0a0a0a')
+    _pr(pn, '_______________', size=10, color='555550')
 
     _pia_hrule(doc, thick=False, color='555555')
 
