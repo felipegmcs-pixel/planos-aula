@@ -932,7 +932,7 @@
           <button class="btn-anexo-remover" onclick="removerAnexo()" title="Remover">✕</button>
         </div>
         <div class="input-box">
-          <input type="file" id="fileInput" accept="image/*,.pdf,.docx,.txt,.csv,.md" style="display:none" onchange="selecionarArquivo(this)"/>
+          <input type="file" id="fileInput" accept="image/*,.png,.jpg,.jpeg,.gif,.webp,.pdf,.docx,.txt,.csv,.md" style="display:none" onchange="selecionarArquivo(this)"/>
           <button class="btn-attach" id="btnAttach" title="Anexar" onclick="document.getElementById('fileInput').click()" {% if limite_atingido %}disabled{% endif %}>
             <svg viewBox="0 0 24 24"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>
           </button>
@@ -1278,31 +1278,101 @@
     } catch(e){btn.textContent='▶ Ouvir';btn.classList.remove('playing');btn.dataset.playing='0';alert('Erro ao gerar áudio.');}
   }
 
-  // Mic
-  const btnMic=document.getElementById('btnMic');
-  let mediaRecorder=null,audioChunks=[],gravando=false;
-  if(btnMic){
-    btnMic.addEventListener('click',async()=>{
-      if(!gravando){
-        try{
-          const stream=await navigator.mediaDevices.getUserMedia({audio:true});
-          audioChunks=[];
-          const mime=MediaRecorder.isTypeSupported('audio/webm')?'audio/webm':'audio/ogg';
-          mediaRecorder=new MediaRecorder(stream,{mimeType:mime});
-          mediaRecorder.ondataavailable=e=>{if(e.data.size>0)audioChunks.push(e.data);};
-          mediaRecorder.onstop=async()=>{stream.getTracks().forEach(t=>t.stop());const blob=new Blob(audioChunks,{type:mediaRecorder.mimeType});await transcrever(blob,mediaRecorder.mimeType);};
-          mediaRecorder.start(); gravando=true; btnMic.classList.add('gravando'); btnMic.title='Clique para parar';
-        }catch(e){alert('Não foi possível acessar o microfone.');}
-      }else{mediaRecorder.stop();gravando=false;btnMic.classList.remove('gravando');btnMic.title='Gravar voz';}
+  // ── Mic / Gravação de Voz ─────────────────────────────────────────────────
+  const btnMic = document.getElementById('btnMic');
+  let mediaRecorder = null, audioChunks = [], gravando = false, recTimer = null, recSecs = 0;
+
+  function _getMimeType() {
+    const candidates = ['audio/webm;codecs=opus','audio/webm','audio/ogg;codecs=opus','audio/ogg','audio/mp4'];
+    for (const m of candidates) { if (MediaRecorder.isTypeSupported(m)) return m; }
+    return '';
+  }
+
+  function _startRecTimer() {
+    recSecs = 0;
+    recTimer = setInterval(() => {
+      recSecs++;
+      const mm = String(Math.floor(recSecs/60)).padStart(2,'0');
+      const ss = String(recSecs%60).padStart(2,'0');
+      if (btnMic) btnMic.title = `Gravando ${mm}:${ss} — clique para parar`;
+    }, 1000);
+  }
+
+  function _stopRecTimer() {
+    clearInterval(recTimer); recTimer = null;
+    if (btnMic) btnMic.title = 'Gravar voz';
+  }
+
+  if (btnMic) {
+    btnMic.addEventListener('click', async () => {
+      if (!gravando) {
+        try {
+          const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+          audioChunks = [];
+          const mime = _getMimeType();
+          const opts = mime ? { mimeType: mime } : {};
+          mediaRecorder = new MediaRecorder(stream, opts);
+          mediaRecorder.ondataavailable = e => { if (e.data && e.data.size > 0) audioChunks.push(e.data); };
+          mediaRecorder.onstop = async () => {
+            stream.getTracks().forEach(t => t.stop());
+            _stopRecTimer();
+            const finalMime = mediaRecorder.mimeType || mime || 'audio/webm';
+            const blob = new Blob(audioChunks, { type: finalMime });
+            if (blob.size < 100) { alert('Gravação muito curta ou vazia. Tente novamente.'); return; }
+            await transcrever(blob, finalMime);
+          };
+          mediaRecorder.onerror = e => {
+            _stopRecTimer();
+            gravando = false;
+            btnMic.classList.remove('gravando');
+            alert('Erro durante a gravação: ' + (e.error?.message || 'desconhecido'));
+          };
+          // timeslice de 250ms garante chunks contínuos e evita perda de dados
+          mediaRecorder.start(250);
+          gravando = true;
+          btnMic.classList.add('gravando');
+          _startRecTimer();
+        } catch (e) {
+          if (e.name === 'NotAllowedError' || e.name === 'PermissionDeniedError') {
+            alert('Permissão de microfone negada. Permita o acesso ao microfone nas configurações do navegador.');
+          } else if (e.name === 'NotFoundError') {
+            alert('Nenhum microfone encontrado. Conecte um microfone e tente novamente.');
+          } else {
+            alert('Não foi possível acessar o microfone: ' + e.message);
+          }
+        }
+      } else {
+        if (mediaRecorder && mediaRecorder.state !== 'inactive') mediaRecorder.stop();
+        gravando = false;
+        btnMic.classList.remove('gravando');
+      }
     });
   }
-  async function transcrever(blob,mimeType){
-    if(btnMic)btnMic.disabled=true;
-    const ext=mimeType.includes('ogg')?'ogg':'webm',form=new FormData();
-    form.append('audio',blob,`gravacao.${ext}`);
-    try{const r=await fetch('/api/transcribe',{method:'POST',body:form});const d=await r.json();if(d.texto){inputEl.value=d.texto;inputEl.dispatchEvent(new Event('input'));inputEl.focus();}else{alert('Não foi possível transcrever.');}}
-    catch(e){alert('Erro ao transcrever.');}
-    finally{if(btnMic)btnMic.disabled=false;}
+
+  async function transcrever(blob, mimeType) {
+    if (btnMic) { btnMic.disabled = true; btnMic.title = 'Transcrevendo...'; }
+    const ext = mimeType.includes('ogg') ? 'ogg' : mimeType.includes('mp4') ? 'mp4' : 'webm';
+    const form = new FormData();
+    form.append('audio', blob, `gravacao.${ext}`);
+    try {
+      const r = await fetch('/api/transcribe', { method: 'POST', body: form });
+      const d = await r.json();
+      if (d.texto && d.texto.trim()) {
+        // Preserva texto já digitado e acrescenta a transcrição
+        const atual = inputEl.value.trim();
+        inputEl.value = atual ? atual + ' ' + d.texto.trim() : d.texto.trim();
+        inputEl.dispatchEvent(new Event('input'));
+        inputEl.focus();
+      } else if (d.erro) {
+        alert('Erro na transcrição: ' + d.erro);
+      } else {
+        alert('Não foi possível transcrever. Tente falar mais alto ou por mais tempo.');
+      }
+    } catch (e) {
+      alert('Erro ao enviar áudio para transcrição. Verifique sua conexão.');
+    } finally {
+      if (btnMic) { btnMic.disabled = false; btnMic.title = 'Gravar voz'; }
+    }
   }
 
   function renderMD(text) {

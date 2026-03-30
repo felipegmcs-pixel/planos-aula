@@ -100,6 +100,86 @@
       transition:background .2s,border-color .2s,color .2s;
     }
     .btn-ghost-d:hover{background:rgba(255,255,255,.09);border-color:rgba(255,255,255,.35);color:#fff}
+    /* TYPING DEMO MOCKUP */
+    .hero-layout{display:grid;grid-template-columns:1fr 1fr;gap:48px;align-items:center;max-width:1200px;width:100%;padding:120px 48px 90px;position:relative;z-index:2}
+    .hero-copy{text-align:left}
+    .hero-copy .hero-pill{margin-bottom:28px}
+    .hero-copy h1{font-size:clamp(2.2rem,4.5vw,3.8rem);font-weight:900;line-height:1.1;letter-spacing:-2px;color:#fff;margin-bottom:20px}
+    .hero-copy .hero-sub{font-size:1rem;color:rgba(255,255,255,.5);line-height:1.8;max-width:460px;margin:0 0 36px}
+    .hero-copy .hero-btns{justify-content:flex-start}
+    .typing-demo{
+      background:rgba(10,12,28,.85);border:1px solid rgba(99,102,241,.28);
+      border-radius:16px;overflow:hidden;
+      box-shadow:0 32px 80px rgba(0,0,0,.55),0 0 0 1px rgba(99,102,241,.12),inset 0 1px 0 rgba(255,255,255,.06);
+      backdrop-filter:blur(12px);
+    }
+    .td-topbar{
+      display:flex;align-items:center;gap:8px;
+      padding:12px 16px;border-bottom:1px solid rgba(255,255,255,.07);
+      background:rgba(255,255,255,.03);
+    }
+    .td-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+    .td-dot-r{background:#ff5f57}.td-dot-y{background:#febc2e}.td-dot-g{background:#28c840}
+    .td-title{font-size:.7rem;font-weight:600;color:rgba(255,255,255,.3);margin-left:auto;margin-right:auto;letter-spacing:.5px}
+    .td-body{padding:20px 20px 16px}
+    .td-label{font-size:.6rem;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:rgba(99,102,241,.7);margin-bottom:10px}
+    .td-input-row{
+      display:flex;align-items:center;gap:10px;
+      background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);
+      border-radius:10px;padding:12px 14px;margin-bottom:14px;
+    }
+    .td-cursor{width:2px;height:16px;background:#818cf8;border-radius:2px;animation:tdBlink .9s step-end infinite;flex-shrink:0}
+    @keyframes tdBlink{0%,100%{opacity:1}50%{opacity:0}}
+    .td-typed{font-size:.82rem;color:rgba(255,255,255,.85);font-family:'Inter',monospace;flex:1;min-height:16px;line-height:1.4;white-space:pre-wrap;word-break:break-word}
+    .td-send{
+      width:30px;height:30px;border-radius:8px;flex-shrink:0;
+      background:linear-gradient(135deg,#4338ca,#7c3aed);
+      display:flex;align-items:center;justify-content:center;
+      box-shadow:0 4px 12px rgba(67,56,202,.4);
+    }
+    .td-send svg{width:13px;height:13px;fill:#fff}
+    .td-response{
+      background:rgba(99,102,241,.07);border:1px solid rgba(99,102,241,.18);
+      border-radius:10px;padding:14px;
+      font-size:.78rem;color:rgba(255,255,255,.72);line-height:1.7;
+      min-height:80px;
+    }
+    .td-response-head{
+      display:flex;align-items:center;gap:8px;margin-bottom:10px;
+    }
+    .td-avatar{
+      width:22px;height:22px;border-radius:6px;flex-shrink:0;
+      background:linear-gradient(135deg,#4338ca,#7c3aed);
+      display:flex;align-items:center;justify-content:center;
+    }
+    .td-avatar svg{width:11px;height:11px;fill:#fff}
+    .td-resp-name{font-size:.65rem;font-weight:700;color:#a5b4fc;letter-spacing:.5px}
+    .td-resp-text{font-size:.78rem;color:rgba(255,255,255,.65);line-height:1.7;}
+    .td-resp-line{height:7px;border-radius:4px;background:rgba(255,255,255,.1);margin-bottom:6px;}
+    .td-resp-line.w90{width:90%}.td-resp-line.w75{width:75%}.td-resp-line.w85{width:85%}.td-resp-line.w60{width:60%}
+    .td-resp-line.active{background:linear-gradient(90deg,rgba(99,102,241,.5),rgba(167,139,250,.3));animation:tdLineGrow .6s ease-out forwards}
+    @keyframes tdLineGrow{from{width:0}to{width:var(--w,90%)}}
+    .td-tags{display:flex;gap:6px;flex-wrap:wrap;margin-top:12px}
+    .td-tag{
+      font-size:.6rem;font-weight:600;letter-spacing:.5px;
+      padding:3px 9px;border-radius:100px;
+      background:rgba(99,102,241,.15);border:1px solid rgba(99,102,241,.3);color:#a5b4fc;
+    }
+    .td-footer{padding:10px 20px 14px;display:flex;align-items:center;justify-content:space-between;border-top:1px solid rgba(255,255,255,.05)}
+    .td-status{display:flex;align-items:center;gap:6px;font-size:.6rem;color:rgba(255,255,255,.3);font-weight:500}
+    .td-status-dot{width:5px;height:5px;border-radius:50%;background:#34d399;animation:pdot 2s ease-in-out infinite}
+    .td-actions{display:flex;gap:6px}
+    .td-action-btn{
+      font-size:.6rem;font-weight:600;padding:3px 10px;border-radius:6px;
+      background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);
+      color:rgba(255,255,255,.4);cursor:default;
+    }
+    @media(max-width:900px){
+      .hero-layout{grid-template-columns:1fr;padding:90px 24px 70px;gap:36px}
+      .hero-copy{text-align:center}
+      .hero-copy .hero-btns{justify-content:center}
+      .hero-copy .hero-sub{margin:0 auto 36px}
+    }
     .hero-foot{
       position:absolute;bottom:32px;left:50%;transform:translateX(-50%);
       z-index:2;display:flex;flex-direction:column;align-items:center;gap:10px;
@@ -404,24 +484,82 @@
 <section class="hero">
   <canvas id="scene3d"></canvas>
   <div class="hero-glow"></div>
-  <div class="hero-inner">
-    <div class="hero-pill"><span class="pill-dot"></span>Assistente pedagógico com IA · BNCC</div>
-    <h1>Planeje melhor,<br/><span class="grad-text">ensine com mais impacto.</span></h1>
-    <p class="hero-sub">Gere planos de aula, provas, caça-palavras, cruzadinhas e muito mais em segundos. Feito para professores brasileiros.</p>
-    <div class="hero-btns">
-      {% if current_user.is_authenticated %}
-        {% if current_user.assinatura_ativa or current_user.is_admin %}
-          <a href="/chat" class="btn-primary">Acessar sistema →</a>
+
+  <!-- Layout de duas colunas: copy + TypingDemo -->
+  <div class="hero-layout">
+
+    <!-- Coluna esquerda: copy -->
+    <div class="hero-copy">
+      <div class="hero-pill"><span class="pill-dot"></span>Assistente pedagógico com IA · BNCC</div>
+      <h1>Planeje melhor,<br/><span class="grad-text">ensine com mais impacto.</span></h1>
+      <p class="hero-sub">Gere planos de aula, provas, caça-palavras, cruzadinhas e muito mais em segundos. Feito para professores brasileiros.</p>
+      <div class="hero-btns">
+        {% if current_user.is_authenticated %}
+          {% if current_user.assinatura_ativa or current_user.is_admin %}
+            <a href="/chat" class="btn-primary">Acessar sistema →</a>
+          {% else %}
+            <a href="/planos" class="btn-primary">Ver planos →</a>
+            <a href="/chat" class="btn-ghost-d">Explorar grátis</a>
+          {% endif %}
         {% else %}
-          <a href="/planos" class="btn-primary">Ver planos →</a>
-          <a href="/chat" class="btn-ghost-d">Explorar grátis</a>
+          <a href="/cadastro" class="btn-primary">Começar grátis →</a>
+          <a href="/login" class="btn-ghost-d">Já tenho conta</a>
         {% endif %}
-      {% else %}
-        <a href="/cadastro" class="btn-primary">Começar grátis →</a>
-        <a href="/login" class="btn-ghost-d">Já tenho conta</a>
-      {% endif %}
+      </div>
     </div>
-  </div>
+
+    <!-- Coluna direita: TypingDemo mockup -->
+    <div class="typing-demo" id="typingDemo">
+      <div class="td-topbar">
+        <span class="td-dot td-dot-r"></span>
+        <span class="td-dot td-dot-y"></span>
+        <span class="td-dot td-dot-g"></span>
+        <span class="td-title">ProfessorIA — Chat</span>
+      </div>
+      <div class="td-body">
+        <div class="td-label">Sua solicitação</div>
+        <div class="td-input-row">
+          <span class="td-typed" id="tdTyped"></span>
+          <span class="td-cursor" id="tdCursor"></span>
+          <div class="td-send">
+            <svg viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
+          </div>
+        </div>
+        <div class="td-response" id="tdResponse" style="display:none">
+          <div class="td-response-head">
+            <div class="td-avatar">
+              <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 14H9V8h2v8zm4 0h-2V8h2v8z"/></svg>
+            </div>
+            <span class="td-resp-name">PROFESSOR IA</span>
+          </div>
+          <div id="tdRespLines">
+            <div class="td-resp-line w90"></div>
+            <div class="td-resp-line w75"></div>
+            <div class="td-resp-line w85"></div>
+            <div class="td-resp-line w60"></div>
+          </div>
+          <div class="td-tags" id="tdTags" style="display:none">
+            <span class="td-tag">✓ BNCC</span>
+            <span class="td-tag">✓ Objetivos</span>
+            <span class="td-tag">✓ Metodologia</span>
+            <span class="td-tag">✓ Avaliação</span>
+          </div>
+        </div>
+      </div>
+      <div class="td-footer">
+        <div class="td-status">
+          <span class="td-status-dot"></span>
+          <span id="tdStatusTxt">Pronto para gerar</span>
+        </div>
+        <div class="td-actions">
+          <span class="td-action-btn">Copiar</span>
+          <span class="td-action-btn">Baixar .docx</span>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /hero-layout -->
+
   <div class="hero-foot">
     <span class="hero-foot-txt">Explorar</span>
     <span class="hero-arrow"></span>
@@ -1035,6 +1173,82 @@ new IntersectionObserver(function(es){
     });
     requestAnimationFrame(loop);
   })();
+})();
+
+/* ── TypingDemo: animação de digitação cíclica ─────────────────────────────── */
+(function(){
+  var prompts = [
+    'Crie um plano de aula sobre frações para o 5º ano, alinhado à BNCC',
+    'Gere uma prova de Ciências com 10 questões para o 7º ano',
+    'Faça um caça-palavras sobre o Sistema Solar com 15 palavras',
+    'Crie uma cruzadinha sobre verbos no pretérito para o 6º ano',
+    'Adapte uma atividade de Matemática para aluno com TDAH',
+    'Gere um mapa mental sobre a Revolução Industrial',
+    'Crie um bilhete para os pais sobre a reunião de pais e mestres',
+  ];
+  var idx = 0, charIdx = 0, phase = 'typing'; // typing | waiting | deleting | respond | reset
+  var typedEl = document.getElementById('tdTyped');
+  var respEl  = document.getElementById('tdResponse');
+  var statusEl = document.getElementById('tdStatusTxt');
+  var tagsEl  = document.getElementById('tdTags');
+  var lines   = document.querySelectorAll('#tdRespLines .td-resp-line');
+  if (!typedEl) return;
+
+  function setStatus(txt) { if (statusEl) statusEl.textContent = txt; }
+
+  function animateLines(cb) {
+    lines.forEach(function(l){ l.classList.remove('active'); l.style.background=''; });
+    var i = 0;
+    function next() {
+      if (i >= lines.length) { if (cb) cb(); return; }
+      lines[i].classList.add('active');
+      lines[i].style.setProperty('--w', lines[i].classList.contains('w90')?'90%':lines[i].classList.contains('w75')?'75%':lines[i].classList.contains('w85')?'85%':'60%');
+      i++; setTimeout(next, 280);
+    }
+    next();
+  }
+
+  function tick() {
+    var prompt = prompts[idx];
+    if (phase === 'typing') {
+      if (charIdx <= prompt.length) {
+        typedEl.textContent = prompt.slice(0, charIdx);
+        charIdx++;
+        setTimeout(tick, charIdx === 1 ? 400 : 42 + Math.random()*28);
+      } else {
+        phase = 'waiting'; setStatus('Gerando...');
+        setTimeout(tick, 600);
+      }
+    } else if (phase === 'waiting') {
+      respEl.style.display = 'block';
+      lines.forEach(function(l){ l.classList.remove('active'); l.style.background='rgba(255,255,255,.1)'; });
+      tagsEl.style.display = 'none';
+      animateLines(function(){
+        tagsEl.style.display = 'flex';
+        setStatus('Pronto · ' + (1 + Math.floor(Math.random()*2)) + 's');
+        phase = 'deleting';
+        setTimeout(tick, 2800);
+      });
+    } else if (phase === 'deleting') {
+      if (charIdx > 0) {
+        charIdx--;
+        typedEl.textContent = prompt.slice(0, charIdx);
+        setTimeout(tick, 18);
+      } else {
+        phase = 'reset';
+        setTimeout(tick, 300);
+      }
+    } else if (phase === 'reset') {
+      respEl.style.display = 'none';
+      tagsEl.style.display = 'none';
+      setStatus('Pronto para gerar');
+      idx = (idx + 1) % prompts.length;
+      charIdx = 0;
+      phase = 'typing';
+      setTimeout(tick, 500);
+    }
+  }
+  setTimeout(tick, 1200);
 })();
 
 /* Pricing toggle */
