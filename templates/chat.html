@@ -151,10 +151,10 @@
     .logo { display: flex; align-items: center; text-decoration: none; gap: 9px; }
     .logo-p  { font-size: .88rem; font-weight: 800; letter-spacing: -.3px; color: var(--sb-fg); }
     .logo-ia {
-      font-size: .88rem; font-weight: 800; letter-spacing: -.3px;
-      background: linear-gradient(135deg, #818cf8, #a78bfa, #60a5fa);
-      -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
+      font-size: .88rem; font-weight: 600; letter-spacing: -.3px;
+      color: #818cf8;
     }
+    [data-theme="dark"] .logo-ia { color: #a5b4fc; }
 
     /* ─── ProfessorIA icon mark v10 (cúpula/olho/livro) ─── */
     .pia-mark {
@@ -163,7 +163,12 @@
       display: flex; align-items: center; justify-content: center;
       transition: filter .3s, transform .3s;
     }
-    [data-theme="dark"] .pia-mark { background: rgba(255,255,255,.1); }
+    /* No dark sidebar, use white container so logo is always visible */
+    [data-theme="dark"] .pia-mark {
+      background: #ffffff;
+      box-shadow: 0 1px 4px rgba(0,0,0,.35);
+    }
+    [data-theme="dark"] .pia-mark svg path { fill: #0f172a; }
     .pia-mark.typing {
       animation: iconTyping 1s ease-in-out infinite;
     }
@@ -243,11 +248,7 @@
     }
     .topbar-logo { font-size: .88rem; font-weight: 800; letter-spacing: -.3px; text-decoration: none; display: flex; align-items: center; }
     .topbar-logo .tp  { color: #fff; }
-    .topbar-logo .tia {
-      background: linear-gradient(135deg, #818cf8, #a78bfa, #60a5fa);
-      -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
-    }
-    .topbar-logo .tdot { width: 5px; height: 5px; border-radius: 50%; background: var(--amber); margin-left: 2px; flex-shrink: 0; }
+    .topbar-logo .tia { color: #818cf8; font-weight: 600; }
     .btn-hamburger { background: none; border: none; cursor: pointer; display: flex; flex-direction: column; gap: 4px; padding: 6px; }
     .btn-hamburger span { display: block; width: 18px; height: 1.5px; background: rgba(255,255,255,.7); border-radius: 2px; }
 

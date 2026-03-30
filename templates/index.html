@@ -31,17 +31,16 @@
     }
     nav.lit{background:rgba(255,255,255,.97);border-bottom-color:var(--line)}
     .logo{text-decoration:none;display:flex;align-items:center;gap:8px}
-    .logo-mark{display:flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:7px;background:#0f172a;flex-shrink:0;transition:opacity .3s}
-    nav.lit .logo-mark{background:#0f172a}
+    .logo-mark{display:flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:7px;background:#0f172a;flex-shrink:0;transition:background .35s,box-shadow .35s}
+    nav.lit .logo-mark{background:#0f172a;box-shadow:0 0 0 2px rgba(67,56,202,.15)}
     .logo-mark svg{color:white}
     .logo-p{font-size:1.08rem;font-weight:800;color:#fff;letter-spacing:-.3px;transition:color .35s}
-    nav.lit .logo-p{color:var(--text)}
+    nav.lit .logo-p{color:#0f172a}
     .logo-ia{
-      font-size:1.08rem;font-weight:800;letter-spacing:-.3px;
-      background:linear-gradient(135deg,#818cf8,#a78bfa,#60a5fa);
-      -webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;
+      font-size:1.08rem;font-weight:600;letter-spacing:-.3px;
+      color:#818cf8;transition:color .35s;
     }
-    .logo-pulse{width:7px;height:7px;border-radius:50%;background:var(--amber);margin-left:3px;flex-shrink:0;animation:pdot 2.2s ease-in-out infinite}
+    nav.lit .logo-ia{color:#4338ca}
     @keyframes pdot{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.45;transform:scale(.8)}}
     .nav-links{display:flex;align-items:center;gap:4px}
     .nav-a{font-size:.875rem;font-weight:500;color:rgba(255,255,255,.6);text-decoration:none;padding:7px 14px;border-radius:7px;transition:color .2s,background .2s}
@@ -187,7 +186,7 @@
       position:absolute;bottom:32px;left:50%;transform:translateX(-50%);
       z-index:2;display:flex;flex-direction:column;align-items:center;gap:10px;
     }
-    .hero-foot-txt{font-size:.65rem;font-weight:500;letter-spacing:2px;text-transform:uppercase;color:rgba(255,255,255,.22)}
+    .hero-foot-txt{font-size:.65rem;font-weight:500;letter-spacing:2px;text-transform:uppercase;color:rgba(255,255,255,.7)}
     .hero-arrow{width:18px;height:18px;border-right:2px solid rgba(255,255,255,.18);border-bottom:2px solid rgba(255,255,255,.18);transform:rotate(45deg);animation:bounce 2s ease-in-out infinite}
     @keyframes bounce{0%,100%{transform:rotate(45deg) translateY(0)}50%{transform:rotate(45deg) translateY(6px)}}
 
@@ -399,8 +398,8 @@
     /* FOOTER */
     footer{background:#06070e;padding:36px 48px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:20px;border-top:1px solid rgba(255,255,255,.05)}
     .f-logo{text-decoration:none;font-size:.95rem;font-weight:800;letter-spacing:-.3px;display:flex;align-items:center}
-    .f-logo-p{color:rgba(255,255,255,.22)}
-    .f-logo-ia{background:linear-gradient(135deg,#818cf8,#a78bfa);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+    .f-logo-p{color:rgba(255,255,255,.7)}
+    .f-logo-ia{color:#818cf8;font-weight:600}
     .f-links{display:flex;gap:24px}
     .f-link{font-size:.8rem;font-weight:500;color:rgba(255,255,255,.25);text-decoration:none;transition:color .2s}
     .f-link:hover{color:rgba(255,255,255,.6)}
@@ -450,7 +449,6 @@
       </svg>
     </span>
     <span class="logo-p">Professor</span><span class="logo-ia">IA</span>
-    <span class="logo-pulse"></span>
   </a>
   <div class="nav-links">
     <a class="nav-a" href="#planos">Planos</a>
