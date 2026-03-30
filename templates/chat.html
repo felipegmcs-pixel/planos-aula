@@ -156,23 +156,16 @@
       -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
     }
 
-    /* ─── ProfessorIA animated icon mark ─── */
+    /* ─── ProfessorIA icon mark v10 (cúpula/olho/livro) ─── */
     .pia-mark {
-      width: 30px; height: 30px; border-radius: 8px; flex-shrink: 0;
-      background: linear-gradient(135deg, #07101f, #030912);
-      box-shadow: 0 2px 12px rgba(249,115,22,.25);
-      transition: filter .3s, transform .3s, box-shadow .3s;
-      display: block;
+      width: 30px; height: 30px; border-radius: 7px; flex-shrink: 0;
+      background: #0f172a;
+      display: flex; align-items: center; justify-content: center;
+      transition: filter .3s, transform .3s;
     }
+    [data-theme="dark"] .pia-mark { background: rgba(255,255,255,.1); }
     .pia-mark.typing {
       animation: iconTyping 1s ease-in-out infinite;
-    }
-    .pia-mark svg line {
-      stroke-dasharray: 20;
-      stroke-dashoffset: 20;
-    }
-    .pia-mark.typing svg line {
-      animation: nodeFlow 0.7s linear infinite;
     }
 
     .sidebar-nav { padding: 16px 12px 10px; flex-shrink: 0; display: flex; flex-direction: column; gap: 3px; }
@@ -746,24 +739,9 @@
     <div class="sidebar-header">
       <a class="logo" href="/">
         <span class="pia-mark" id="piaMark">
-          <svg viewBox="0 0 30 30" fill="none" xmlns="http://www.w3.org/2000/svg" width="30" height="30">
-            <defs>
-              <radialGradient id="sg" cx="70%" cy="50%" r="32%">
-                <stop offset="0%" stop-color="#f97316" stop-opacity="0.5"/>
-                <stop offset="100%" stop-color="#f97316" stop-opacity="0"/>
-              </radialGradient>
-              <mask id="cm">
-                <rect width="30" height="30" fill="white"/>
-                <circle cx="17" cy="15" r="7.5" fill="black"/>
-              </mask>
-            </defs>
-            <!-- Luz do filho -->
-            <circle cx="20" cy="15" r="10" fill="url(#sg)"/>
-            <!-- Crescente (mãe) -->
-            <circle cx="12" cy="15" r="9.5" fill="#f97316" opacity="0.93" mask="url(#cm)"/>
-            <!-- Filho -->
-            <circle cx="20" cy="15" r="2.8" fill="#fef4e4"/>
-            <circle cx="20" cy="15" r="1.4" fill="white"/>
+          <!-- ProfessorIA Logo v10: cúpula · olho · livro -->
+          <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" width="28" height="28" aria-label="ProfessorIA">
+            <path fill-rule="evenodd" fill="white" d="M 10 50 A 40 40 0 0 1 90 50 L 90 74 L 50 90 L 10 74 Z M 16 54 Q 50 36 84 54 Q 50 66 16 54 Z M 12 65 L 50 90 L 50 82 L 20 68 Z M 88 65 L 50 90 L 50 82 L 80 68 Z"/>
           </svg>
         </span>
         <span class="logo-p">Professor</span><span class="logo-ia">IA</span>
@@ -811,8 +789,11 @@
       <button class="btn-hamburger" onclick="abrirSidebar()">
         <span></span><span></span><span></span>
       </button>
-      <a class="topbar-logo" href="/chat">
-        <span class="tp">Professor</span><span class="tia">IA</span><span class="tdot"></span>
+      <a class="topbar-logo" href="/chat" style="display:flex;align-items:center;gap:7px;">
+        <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" width="22" height="22" aria-hidden="true">
+          <path fill-rule="evenodd" fill="currentColor" d="M 10 50 A 40 40 0 0 1 90 50 L 90 74 L 50 90 L 10 74 Z M 16 54 Q 50 36 84 54 Q 50 66 16 54 Z M 12 65 L 50 90 L 50 82 L 20 68 Z M 88 65 L 50 90 L 50 82 L 80 68 Z"/>
+        </svg>
+        <span class="tp">Professor</span><span class="tia">IA</span>
       </a>
       <div style="width:30px"></div>
     </div>
