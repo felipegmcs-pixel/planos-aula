@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8"/>
+  <script>!function(){var t=localStorage.getItem("pia-theme")||"dark",a="system"===t?(window.matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light"):t;document.documentElement.setAttribute("data-theme",a)}();</script>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>ProfessorIA — Plano Escola</title>
+  <link rel="icon" type="image/svg+xml" href="/static/logo.svg"/>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet"/>
+  <style>
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    :root{--bg:#0b0d14;--text:#e5e7eb;--text2:#9ca3af;--indigo:#4338ca;--indigo-l:#818cf8}
+    [data-theme="light"]{--bg:#f8f9ff;--text:#111827;--text2:#6b7280}
+    html,body{min-height:100%;font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);display:flex;align-items:center;justify-content:center;padding:32px}
+    #bg3d{position:fixed;inset:0;z-index:0;pointer-events:none;opacity:.35}
+    .card{
+      position:relative;z-index:1;text-align:center;max-width:480px;
+      background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.1);
+      border-radius:24px;padding:48px 40px;
+    }
+    [data-theme="light"] .card{background:rgba(255,255,255,.9);border-color:rgba(17,24,39,.1)}
+    .icon{width:64px;height:64px;border-radius:18px;background:linear-gradient(135deg,rgba(67,56,202,.2),rgba(124,58,237,.2));display:flex;align-items:center;justify-content:center;margin:0 auto 24px}
+    .icon svg{width:30px;height:30px;stroke:var(--indigo-l);fill:none;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round}
+    h1{font-size:1.6rem;font-weight:900;letter-spacing:-.5px;margin-bottom:12px}
+    p{font-size:.88rem;color:var(--text2);line-height:1.7;margin-bottom:28px}
+    .btn{display:inline-block;padding:13px 28px;background:linear-gradient(135deg,#4338ca,#7c3aed);color:#fff;border-radius:12px;text-decoration:none;font-size:.85rem;font-weight:700;transition:opacity .2s,transform .15s}
+    .btn:hover{opacity:.9;transform:translateY(-1px)}
+    .btn-outline{display:inline-block;padding:13px 28px;border:1.5px solid rgba(255,255,255,.15);color:var(--text2);border-radius:12px;text-decoration:none;font-size:.85rem;font-weight:600;margin-left:8px;transition:all .2s}
+    [data-theme="light"] .btn-outline{border-color:rgba(17,24,39,.15)}
+    .btn-outline:hover{border-color:var(--indigo-l);color:var(--indigo-l)}
+  </style>
+</head>
+<body>
+<canvas id="bg3d"></canvas>
+<div class="card">
+  <div class="icon">
+    <svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+  </div>
+  <h1>Plano Escola</h1>
+  <p>O Painel da Escola está disponível para gestores com o plano B2B. Faça upgrade para gerenciar professores, acompanhar o uso e convidar sua equipe.</p>
+  <a href="/planos" class="btn">Ver planos</a>
+  <a href="/chat" class="btn-outline">Voltar ao chat</a>
+</div>
+<script src="/static/bg3d.js"></script>
+</body>
+</html>

@@ -10,6 +10,7 @@
     *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
     :root{--bg:#ffffff;--text:#111827;--text2:#6b7280;--text3:#9ca3af;--indigo:#4338ca;--violet:#7c3aed;--amber:#f59e0b;--line:rgba(17,24,39,.08);--line2:rgba(17,24,39,.14);--hero:#050811;--r:10px}
     body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;display:flex;flex-direction:column}
+    #bg3d{position:fixed;inset:0;z-index:0;pointer-events:none;opacity:.3}
     ::selection{background:#ede9fe;color:var(--indigo)}
     nav{height:60px;padding:0 40px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--line);flex-shrink:0}
     .logo{text-decoration:none;display:flex;align-items:center;gap:2px}
@@ -62,6 +63,7 @@
   </style>
 </head>
 <body>
+<canvas id="bg3d"></canvas>
 <nav>
   <a class="logo" href="/">
     <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" width="26" height="26" aria-hidden="true" style="flex-shrink:0;"><path fill-rule="evenodd" fill="currentColor" d="M 10 50 A 40 40 0 0 1 90 50 L 90 74 L 50 90 L 10 74 Z M 16 54 Q 50 36 84 54 Q 50 66 16 54 Z M 12 65 L 50 90 L 50 82 L 20 68 Z M 88 65 L 50 90 L 50 82 L 80 68 Z"/></svg>
@@ -128,5 +130,6 @@
     </div>
   </div>
 </div>
+<script src="/static/bg3d.js"></script>
 </body>
 </html>

@@ -419,6 +419,64 @@ def init_db():
     conn.execute("ALTER TABLE usuarios ADD COLUMN IF NOT EXISTS professor_nome TEXT DEFAULT ''")
     conn.execute("ALTER TABLE usuarios ADD COLUMN IF NOT EXISTS logo_path TEXT DEFAULT ''")
     conn.execute("ALTER TABLE usuarios ADD COLUMN IF NOT EXISTS logo_estado_path TEXT DEFAULT ''")
+    conn.execute("ALTER TABLE usuarios ADD COLUMN IF NOT EXISTS escola_id INTEGER DEFAULT NULL")
+    conn.execute("ALTER TABLE usuarios ADD COLUMN IF NOT EXISTS papel TEXT DEFAULT 'professor'")
+    conn.execute('''
+        CREATE TABLE IF NOT EXISTS questions_bank (
+            id           SERIAL PRIMARY KEY,
+            usuario_id   INTEGER NOT NULL,
+            disciplina   TEXT,
+            serie        TEXT,
+            tipo         TEXT DEFAULT 'multipla_escolha',
+            dificuldade  TEXT DEFAULT 'medio',
+            enunciado    TEXT NOT NULL,
+            alternativas TEXT,
+            resposta_correta TEXT,
+            bncc_codigo  TEXT,
+            criado_em    TEXT
+        )
+    ''')
+    conn.execute('''
+        CREATE TABLE IF NOT EXISTS referrals (
+            id         SERIAL PRIMARY KEY,
+            usuario_id INTEGER UNIQUE,
+            codigo     TEXT UNIQUE,
+            usos       INTEGER DEFAULT 0,
+            conversoes INTEGER DEFAULT 0,
+            creditos   INTEGER DEFAULT 0,
+            criado_em  TEXT
+        )
+    ''')
+    conn.execute('''
+        CREATE TABLE IF NOT EXISTS escolas (
+            id        SERIAL PRIMARY KEY,
+            nome      TEXT NOT NULL,
+            cnpj      TEXT,
+            plano     TEXT DEFAULT 'escola',
+            ativo     INTEGER DEFAULT 1,
+            criado_em TEXT
+        )
+    ''')
+    conn.execute('''
+        CREATE TABLE IF NOT EXISTS escola_membros (
+            id         SERIAL PRIMARY KEY,
+            escola_id  INTEGER NOT NULL,
+            usuario_id INTEGER NOT NULL,
+            papel      TEXT DEFAULT 'professor',
+            ativo      INTEGER DEFAULT 1,
+            criado_em  TEXT
+        )
+    ''')
+    conn.execute('''
+        CREATE TABLE IF NOT EXISTS escola_convites (
+            id        SERIAL PRIMARY KEY,
+            escola_id INTEGER NOT NULL,
+            email     TEXT NOT NULL,
+            token     TEXT UNIQUE,
+            usado     INTEGER DEFAULT 0,
+            criado_em TEXT
+        )
+    ''')
     conn.commit()
     conn.close()
 
@@ -440,6 +498,8 @@ class Usuario(UserMixin):
         self.professor_nome  = row.get('professor_nome', '') or ''
         self.logo_path       = row.get('logo_path', '') or ''
         self.logo_estado_path = row.get('logo_estado_path', '') or ''
+        self.escola_id       = row.get('escola_id', None)
+        self.papel           = row.get('papel', 'professor') or 'professor'
 
     @property
     def assinatura_ativa(self):
@@ -3183,6 +3243,407 @@ def criar_pix_mp(plano_id):
             return jsonify({'erro': res.get('message', 'Erro ao gerar PIX')}), 400
     except Exception as e:
         return jsonify({'erro': str(e)}), 500
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# BANCO DE QUESTÕES
+# ═══════════════════════════════════════════════════════════════════════════════
+
+@app.route('/banco-questoes')
+@login_required
+def banco_questoes():
+    return render_template('banco_questoes.html')
+
+@app.route('/api/questoes', methods=['GET'])
+@login_required
+def api_listar_questoes():
+    conn = get_db()
+    disciplina = request.args.get('disciplina', '')
+    ano_serie  = request.args.get('ano_serie', '')
+    busca      = request.args.get('busca', '')
+    sql = "SELECT * FROM questions_bank WHERE usuario_id = %s"
+    params = [current_user.id]
+    if disciplina:
+        sql += " AND disciplina = %s"; params.append(disciplina)
+    if ano_serie:
+        sql += " AND ano_serie = %s"; params.append(ano_serie)
+    if busca:
+        sql += " AND (enunciado ILIKE %s OR habilidade_bncc ILIKE %s)"
+        params += [f'%{busca}%', f'%{busca}%']
+    sql += " ORDER BY id DESC LIMIT 200"
+    rows = conn.execute(sql, params).fetchall()
+    conn.close()
+    return jsonify([dict(r) for r in rows])
+
+@app.route('/api/questoes', methods=['POST'])
+@login_required
+def api_salvar_questao():
+    d = request.get_json(force=True)
+    if not d.get('enunciado'):
+        return jsonify({'erro': 'Enunciado obrigatório'}), 400
+    conn = get_db()
+    conn.execute(
+        """INSERT INTO questions_bank
+           (usuario_id, enunciado, alternativas, gabarito, ano_serie, disciplina, habilidade_bncc, tipo, criado_em)
+           VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s)""",
+        (current_user.id,
+         d.get('enunciado',''),
+         json.dumps(d.get('alternativas', []), ensure_ascii=False),
+         d.get('gabarito',''),
+         d.get('ano_serie',''),
+         d.get('disciplina',''),
+         d.get('habilidade_bncc',''),
+         d.get('tipo','multipla_escolha'),
+         datetime.now().strftime('%d/%m/%Y %H:%M'))
+    )
+    conn.commit()
+    conn.close()
+    return jsonify({'ok': True})
+
+@app.route('/api/questoes/<int:qid>', methods=['DELETE'])
+@login_required
+def api_deletar_questao(qid):
+    conn = get_db()
+    conn.execute("DELETE FROM questions_bank WHERE id = %s AND usuario_id = %s", (qid, current_user.id))
+    conn.commit()
+    conn.close()
+    return jsonify({'ok': True})
+
+@app.route('/api/questoes/extrair-do-chat', methods=['POST'])
+@login_required
+def api_extrair_questoes():
+    """Extrai questões estruturadas de um texto gerado pela IA e salva no banco."""
+    d = request.get_json(force=True)
+    texto = d.get('texto', '')
+    disciplina = d.get('disciplina', '')
+    ano_serie  = d.get('ano_serie', '')
+    if not texto:
+        return jsonify({'erro': 'Texto vazio'}), 400
+    prompt = f"""Analise o texto abaixo e extraia TODAS as questões de múltipla escolha ou discursivas.
+Para cada questão, retorne um JSON array com objetos contendo:
+- enunciado: texto da questão
+- alternativas: array de strings ["A) ...", "B) ...", ...] (vazio se discursiva)
+- gabarito: letra ou resposta correta
+- tipo: "multipla_escolha" ou "discursiva"
+- habilidade_bncc: código BNCC se mencionado (ex: EF05MA01), senão ""
+
+Retorne APENAS o JSON array, sem texto adicional.
+
+TEXTO:
+{texto[:4000]}"""
+    try:
+        resp = client.messages.create(
+            model="claude-3-5-sonnet-20241022",
+            max_tokens=2000,
+            messages=[{"role": "user", "content": prompt}]
+        )
+        raw = resp.content[0].text.strip()
+        # Remove markdown code fences if present
+        raw = re.sub(r'^```[a-z]*\n?', '', raw)
+        raw = re.sub(r'\n?```$', '', raw)
+        questoes = json.loads(raw)
+        conn = get_db()
+        salvos = 0
+        for q in questoes:
+            if q.get('enunciado'):
+                conn.execute(
+                    """INSERT INTO questions_bank
+                       (usuario_id, enunciado, alternativas, gabarito, ano_serie, disciplina, habilidade_bncc, tipo, criado_em)
+                       VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s)""",
+                    (current_user.id,
+                     q.get('enunciado',''),
+                     json.dumps(q.get('alternativas',[]), ensure_ascii=False),
+                     q.get('gabarito',''),
+                     ano_serie,
+                     disciplina,
+                     q.get('habilidade_bncc',''),
+                     q.get('tipo','multipla_escolha'),
+                     datetime.now().strftime('%d/%m/%Y %H:%M'))
+                )
+                salvos += 1
+        conn.commit()
+        conn.close()
+        return jsonify({'ok': True, 'salvos': salvos})
+    except Exception as e:
+        return jsonify({'erro': str(e)}), 500
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# DASHBOARD DE ANALYTICS
+# ═══════════════════════════════════════════════════════════════════════════════
+
+@app.route('/dashboard')
+@login_required
+def dashboard():
+    conn = get_db()
+    # Stats gerais
+    total_materiais = conn.execute(
+        "SELECT COUNT(*) as c FROM historico WHERE usuario_id = %s", (current_user.id,)
+    ).fetchone()['c']
+    total_questoes = conn.execute(
+        "SELECT COUNT(*) as c FROM questions_bank WHERE usuario_id = %s", (current_user.id,)
+    ).fetchone()['c']
+    total_chat = conn.execute(
+        "SELECT COUNT(*) as c FROM chat_messages WHERE usuario_id = %s AND role = 'user'", (current_user.id,)
+    ).fetchone()['c']
+    # Materiais por disciplina (top 5)
+    por_disciplina = conn.execute(
+        """SELECT disciplina, COUNT(*) as total FROM historico
+           WHERE usuario_id = %s AND disciplina != ''
+           GROUP BY disciplina ORDER BY total DESC LIMIT 5""",
+        (current_user.id,)
+    ).fetchall()
+    # Materiais por mês (últimos 6 meses)
+    por_mes = conn.execute(
+        """SELECT SUBSTRING(data, 4, 7) as mes, COUNT(*) as total
+           FROM historico WHERE usuario_id = %s AND data != ''
+           GROUP BY mes ORDER BY mes DESC LIMIT 6""",
+        (current_user.id,)
+    ).fetchall()
+    # Últimas gerações
+    ultimas = conn.execute(
+        """SELECT id, data, disciplina, turma, num_aulas, nome_arquivo
+           FROM historico WHERE usuario_id = %s
+           ORDER BY id DESC LIMIT 5""",
+        (current_user.id,)
+    ).fetchall()
+    conn.close()
+    horas_economizadas = round(total_materiais * 2.5, 1)
+    return render_template('dashboard.html',
+        total_materiais=total_materiais,
+        total_questoes=total_questoes,
+        total_chat=total_chat,
+        horas_economizadas=horas_economizadas,
+        por_disciplina=[dict(r) for r in por_disciplina],
+        por_mes=[dict(r) for r in reversed(list(por_mes))],
+        ultimas=[dict(r) for r in ultimas]
+    )
+
+@app.route('/api/dashboard-stats')
+@login_required
+def api_dashboard_stats():
+    dias = int(request.args.get('dias', 30))
+    conn = get_db()
+    total_materiais = conn.execute(
+        "SELECT COUNT(*) as c FROM historico WHERE usuario_id = %s", (current_user.id,)
+    ).fetchone()['c']
+    total_aulas = conn.execute(
+        "SELECT COALESCE(SUM(num_aulas),0) as s FROM historico WHERE usuario_id = %s", (current_user.id,)
+    ).fetchone()['s']
+    total_questoes = conn.execute(
+        "SELECT COUNT(*) as c FROM questions_bank WHERE usuario_id = %s", (current_user.id,)
+    ).fetchone()['c']
+    # Materiais por semana (últimas 8 semanas)
+    por_semana_rows = conn.execute(
+        """SELECT TO_CHAR(TO_DATE(data,'DD/MM/YYYY'),'IYYY-IW') as semana, COUNT(*) as total
+           FROM historico WHERE usuario_id = %s AND data != ''
+           GROUP BY semana ORDER BY semana DESC LIMIT 8""",
+        (current_user.id,)
+    ).fetchall()
+    semanas = [r['semana'] or '' for r in reversed(list(por_semana_rows))]
+    por_semana_vals = [r['total'] for r in reversed(list(por_semana_rows))]
+    # Pad to 8
+    while len(semanas) < 8:
+        semanas.insert(0, '')
+        por_semana_vals.insert(0, 0)
+    # Tipo distribution
+    por_tipo = {'plano_aula': total_materiais, 'questao': int(total_questoes)}
+    # Recent
+    recentes = conn.execute(
+        """SELECT id, data, disciplina, turma, num_aulas FROM historico
+           WHERE usuario_id = %s ORDER BY id DESC LIMIT 8""",
+        (current_user.id,)
+    ).fetchall()
+    conn.close()
+    return jsonify({
+        'total_materiais': total_materiais,
+        'total_aulas': int(total_aulas or 0),
+        'total_questoes': int(total_questoes),
+        'delta_materiais': 0,
+        'delta_aulas': 0,
+        'semanas': [s[-2:] if s else 'S?' for s in semanas],
+        'por_semana': por_semana_vals,
+        'por_tipo': por_tipo,
+        'recentes': [{'titulo': f"{r['disciplina']} — {r['turma']}", 'data': r['data'], 'tipo': 'plano_aula'} for r in recentes]
+    })
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# PROGRAMA DE INDICAÇÃO (REFERRAL)
+# ═══════════════════════════════════════════════════════════════════════════════
+
+def _get_or_create_referral(usuario_id):
+    conn = get_db()
+    row = conn.execute(
+        "SELECT * FROM referrals WHERE usuario_id = %s", (usuario_id,)
+    ).fetchone()
+    if not row:
+        codigo = secrets.token_urlsafe(8).upper()[:10]
+        conn.execute(
+            "INSERT INTO referrals (usuario_id, codigo, usos, creditos, criado_em) VALUES (%s,%s,0,0,%s)",
+            (usuario_id, codigo, datetime.now().strftime('%d/%m/%Y'))
+        )
+        conn.commit()
+        row = conn.execute(
+            "SELECT * FROM referrals WHERE usuario_id = %s", (usuario_id,)
+        ).fetchone()
+    conn.close()
+    return dict(row)
+
+@app.route('/indicar')
+@login_required
+def indicar():
+    ref = _get_or_create_referral(current_user.id)
+    link = f"{SITE_URL}/cadastro?ref={ref['codigo']}"
+    return render_template('indicar.html', ref=ref, link=link)
+
+@app.route('/api/referral/stats')
+@login_required
+def api_referral_stats():
+    ref = _get_or_create_referral(current_user.id)
+    link = f"{SITE_URL}/cadastro?ref={ref['codigo']}"
+    return jsonify({'codigo': ref['codigo'], 'usos': ref['usos'], 'creditos': ref['creditos'], 'link': link})
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# B2B ESCOLA
+# ═══════════════════════════════════════════════════════════════════════════════
+
+@app.route('/escola')
+@login_required
+def escola_painel():
+    conn = get_db()
+    # Verifica se o usuário é gestor de alguma escola
+    if current_user.escola_id and current_user.papel == 'gestor':
+        membros = conn.execute(
+            """SELECT u.nome, u.email, em.papel, em.ativo,
+                      (SELECT COUNT(*) FROM historico h WHERE h.usuario_id = u.id) as materiais
+               FROM escola_membros em
+               LEFT JOIN usuarios u ON u.id = em.usuario_id
+               WHERE em.escola_id = %s ORDER BY em.criado_em DESC""",
+            (current_user.escola_id,)
+        ).fetchall()
+        stats = conn.execute(
+            """SELECT COUNT(DISTINCT em.usuario_id) as professores,
+                      COUNT(h.id) as materiais_total
+               FROM escola_membros em
+               LEFT JOIN historico h ON h.usuario_id = em.usuario_id
+               WHERE em.escola_id = %s""",
+            (current_user.escola_id,)
+        ).fetchone()
+        conn.close()
+        return render_template('escola_painel.html',
+            membros=[dict(m) for m in membros],
+            stats=dict(stats) if stats else {},
+            escola_nome=current_user.escola_nome
+        )
+    conn.close()
+    return render_template('escola_sem_acesso.html')
+
+@app.route('/api/escola/convidar', methods=['POST'])
+@login_required
+def api_escola_convidar():
+    if not (current_user.escola_id and current_user.papel == 'gestor'):
+        return jsonify({'erro': 'Sem permissão'}), 403
+    d = request.get_json(force=True)
+    email = d.get('email', '').strip().lower()
+    if not email:
+        return jsonify({'erro': 'Email obrigatório'}), 400
+    token = secrets.token_urlsafe(24)
+    conn = get_db()
+    conn.execute(
+        "INSERT INTO escola_convites (escola_id, email, token, usado, criado_em) VALUES (%s,%s,%s,0,%s)",
+        (current_user.escola_id, email, token, datetime.now().strftime('%d/%m/%Y'))
+    )
+    conn.commit()
+    conn.close()
+    link = f"{SITE_URL}/cadastro?convite={token}"
+    enviar_email(email, f"Convite para {current_user.escola_nome} no ProfessorIA",
+        f"""<p>Você foi convidado para fazer parte da escola <strong>{current_user.escola_nome}</strong> no ProfessorIA.</p>
+        <p><a href="{link}" style="background:#4338ca;color:#fff;padding:12px 24px;border-radius:8px;text-decoration:none;font-weight:600;">Aceitar convite</a></p>
+        <p style="color:#666;font-size:.85rem;">Ou acesse: {link}</p>""")
+    return jsonify({'ok': True, 'link': link})
+
+@app.route('/api/escola/relatorio')
+@login_required
+def api_escola_relatorio():
+    if not (current_user.escola_id and current_user.papel == 'gestor'):
+        return jsonify({'erro': 'Sem permissão'}), 403
+    conn = get_db()
+    rows = conn.execute(
+        """SELECT u.nome, u.email,
+                  COUNT(h.id) as materiais,
+                  COUNT(DISTINCT h.disciplina) as disciplinas,
+                  MAX(h.data) as ultimo_uso
+           FROM escola_membros em
+           JOIN usuarios u ON u.id = em.usuario_id
+           LEFT JOIN historico h ON h.usuario_id = u.id
+           WHERE em.escola_id = %s
+           GROUP BY u.id, u.nome, u.email
+           ORDER BY materiais DESC""",
+        (current_user.escola_id,)
+    ).fetchall()
+    conn.close()
+    return jsonify([dict(r) for r in rows])
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# GERAÇÃO DE IMAGENS EDUCACIONAIS
+# ═══════════════════════════════════════════════════════════════════════════════
+
+@app.route('/api/gerar-imagem', methods=['POST'])
+@login_required
+def api_gerar_imagem():
+    """Gera uma imagem educacional usando a API de imagens da Anthropic/DALL-E."""
+    d = request.get_json(force=True)
+    descricao = d.get('descricao', '').strip()
+    if not descricao:
+        return jsonify({'erro': 'Descrição obrigatória'}), 400
+    # Usa a API de imagens do OpenAI (DALL-E 3) se disponível, senão retorna placeholder
+    openai_key = os.environ.get('OPENAI_API_KEY', '')
+    if not openai_key:
+        return jsonify({
+            'erro': 'API de imagens não configurada. Adicione OPENAI_API_KEY nas variáveis de ambiente.',
+            'placeholder': True
+        }), 503
+    try:
+        import requests as req
+        prompt_educacional = (
+            f"Educational illustration for Brazilian teachers, clean and professional style, "
+            f"suitable for classroom use: {descricao}. "
+            f"Flat design, colorful but not distracting, white background, high quality."
+        )
+        resp = req.post(
+            "https://api.openai.com/v1/images/generations",
+            headers={"Authorization": f"Bearer {openai_key}", "Content-Type": "application/json"},
+            json={"model": "dall-e-3", "prompt": prompt_educacional, "n": 1, "size": "1024x1024", "quality": "standard"},
+            timeout=60
+        )
+        data = resp.json()
+        if resp.status_code == 200:
+            url = data['data'][0]['url']
+            return jsonify({'ok': True, 'url': url})
+        else:
+            return jsonify({'erro': data.get('error', {}).get('message', 'Erro ao gerar imagem')}), 400
+    except Exception as e:
+        return jsonify({'erro': str(e)}), 500
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# ONBOARDING MELHORADO — 3 passos
+# ═══════════════════════════════════════════════════════════════════════════════
+
+@app.route('/api/onboarding/completar', methods=['POST'])
+@login_required
+def api_onboarding_completar():
+    d = request.get_json(force=True)
+    disciplina = d.get('disciplina', '')
+    serie = d.get('serie', '')
+    template = d.get('template', '')
+    conn = get_db()
+    conn.execute(
+        """UPDATE usuarios SET onboarding_done = 1, escola_template = %s WHERE id = %s""",
+        (template, current_user.id)
+    )
+    conn.commit()
+    conn.close()
+    return jsonify({'ok': True, 'redirect': f'/chat?disciplina={disciplina}&serie={serie}'})
+
 
 # ESTE BLOCO ABAIXO DEVE SER O FINAL ABSOLUTO DO ARQUIVO
 if __name__ == '__main__':

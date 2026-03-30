@@ -2,201 +2,344 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8"/>
-  <script>!function(){var t=localStorage.getItem("pia-theme")||"light",a="system"===t?(window.matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light"):t;document.documentElement.setAttribute("data-theme",a),document.documentElement.style.colorScheme=a}();</script>
-  
+  <script>!function(){var t=localStorage.getItem("pia-theme")||"dark",a="system"===t?(window.matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light"):t;document.documentElement.setAttribute("data-theme",a)}();</script>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Histórico — ProfessorIA</title>
   <link rel="icon" type="image/svg+xml" href="/static/logo.svg"/>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet"/>
   <style>
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-    :root { --preto: #0a0a0a; --branco: #ffffff; --amarelo: #f0e000; --cinza: #666660; --cinza-escuro: #e8e7e2; --linha: rgba(0,0,0,0.09); }
-    body { font-family: 'Inter', sans-serif; background: var(--branco); color: var(--preto); min-height: 100vh; }
-    ::selection { background: var(--amarelo); color: var(--preto); }
-
-    nav {
-      padding: 0 40px; height: 56px;
-      display: flex; align-items: center; justify-content: space-between;
-      border-bottom: 1px solid var(--linha);
-      position: sticky; top: 0; z-index: 10;
-      background: rgba(255,255,255,0.97); backdrop-filter: blur(12px);
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    :root{
+      --bg:#0b0d14;--bg2:#0f1120;--bg3:#131526;
+      --text:#e5e7eb;--text2:#9ca3af;--text3:#4b5563;
+      --indigo:#4338ca;--violet:#7c3aed;--indigo-l:#818cf8;
+      --linha:rgba(255,255,255,.07);--linha-f:rgba(255,255,255,.12);
+      --card:rgba(255,255,255,.04);--card-h:rgba(255,255,255,.07);
+      --sb-bg:#0a0c18;--sidebar-w:240px;
+      --green:#10b981;--amber:#f59e0b;--red:#ef4444;
     }
-    .nav-logo { font-size: 0.72rem; font-weight: 900; letter-spacing: 3px; text-transform: uppercase; color: var(--preto); text-decoration: none; display: flex; align-items: center; gap: 10px; }
-    .nav-logo .tm { font-size: 0.5rem; vertical-align: super; opacity: 0.4; font-weight: 400; }
-    .nav-links { display: flex; gap: 32px; align-items: center; }
-    .nav-link { font-size: 0.62rem; font-weight: 600; letter-spacing: 2px; text-transform: uppercase; color: var(--cinza); text-decoration: none; transition: color .2s; }
-    .nav-link:hover, .nav-link.on { color: var(--preto); }
-
-    .page-header { padding: 60px 40px 48px; border-bottom: 1px solid var(--linha); max-width: 960px; margin: 0 auto; }
-    .page-tag { font-size: 0.55rem; font-weight: 700; letter-spacing: 3px; text-transform: uppercase; color: var(--amarelo); margin-bottom: 20px; display: flex; align-items: center; gap: 12px; }
-    .page-tag::before { content: ''; width: 24px; height: 1px; background: var(--amarelo); }
-    h1 { font-size: clamp(2.2rem, 5vw, 3.5rem); font-weight: 900; letter-spacing: -2.5px; text-transform: uppercase; line-height: 1; margin-bottom: 10px; }
-    .page-sub { font-size: 0.78rem; color: var(--cinza); }
-
-    .container { max-width: 960px; margin: 0 auto; padding: 0 40px 100px; }
-
-    .stats { display: grid; grid-template-columns: repeat(3, 1fr); border-bottom: 1px solid var(--linha); }
-    .stat-card { padding: 36px 0; border-right: 1px solid var(--linha); }
-    .stat-card:last-child { border-right: none; }
-    .stat-num { display: block; font-size: 3rem; font-weight: 900; letter-spacing: -2px; line-height: 1; margin-bottom: 8px; }
-    .stat-label { font-size: 0.55rem; font-weight: 700; letter-spacing: 3px; text-transform: uppercase; color: var(--cinza); }
-
-    .busca-wrap { padding: 20px 0; border-bottom: 1px solid var(--linha); display: flex; align-items: center; gap: 14px; }
-    .busca-wrap input { flex: 1; border: none; font-size: 0.85rem; font-family: 'Inter', sans-serif; color: var(--preto); background: transparent; outline: none; letter-spacing: .3px; }
-    .busca-wrap input::placeholder { color: rgba(136,136,128,0.5); }
-    .busca-arrow { font-size: 0.8rem; color: var(--cinza); flex-shrink: 0; }
-
-    .lista { display: flex; flex-direction: column; }
-    .item-card { display: grid; grid-template-columns: 1fr auto; gap: 20px; align-items: center; padding: 24px 0; border-bottom: 1px solid var(--linha); transition: background .15s; }
-    .item-card:hover { background: var(--hover-bg); padding-left: 12px; padding-right: 12px; margin: 0 -12px; }
-    .item-titulo { font-size: 0.9rem; font-weight: 700; letter-spacing: -.3px; margin-bottom: 6px; text-transform: uppercase; }
-    .item-meta { font-size: 0.68rem; color: var(--cinza); display: flex; flex-wrap: wrap; gap: 14px; margin-bottom: 10px; letter-spacing: .5px; text-transform: uppercase; }
-    .item-temas { display: flex; flex-wrap: wrap; gap: 6px; }
-    .tag { font-size: 0.58rem; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; background: var(--tag-bg); color: var(--cinza); padding: 3px 10px; border: 1px solid var(--linha); }
-
-    .item-acoes { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
-    .btn-baixar { display: inline-flex; align-items: center; gap: 7px; background: var(--preto); color: var(--branco); border: none; padding: 9px 18px; font-size: 0.62rem; font-weight: 900; font-family: 'Inter', sans-serif; letter-spacing: 2px; text-transform: uppercase; text-decoration: none; cursor: pointer; transition: background .2s; white-space: nowrap; }
-    .btn-baixar:hover { background: var(--amarelo); color: var(--preto); }
-    .btn-del { display: flex; align-items: center; justify-content: center; background: none; border: 1px solid var(--linha); width: 34px; height: 34px; cursor: pointer; font-size: 0.85rem; color: var(--cinza); transition: all .2s; font-family: 'Inter', sans-serif; }
-    .btn-del:hover { border-color: rgba(239,68,68,0.5); color: #dc2626; }
-
-    .vazio { padding: 80px 0; }
-    .vazio-label { font-size: 0.55rem; font-weight: 700; letter-spacing: 3px; text-transform: uppercase; color: var(--cinza); margin-bottom: 20px; }
-    .vazio h3 { font-size: 2rem; font-weight: 900; letter-spacing: -1.5px; text-transform: uppercase; margin-bottom: 8px; }
-    .vazio p { font-size: 0.82rem; color: var(--cinza); margin-bottom: 32px; }
-    .btn-novo { display: inline-flex; align-items: center; gap: 8px; background: var(--preto); color: var(--branco); border: none; padding: 13px 28px; font-size: 0.65rem; font-weight: 900; font-family: 'Inter', sans-serif; letter-spacing: 2.5px; text-transform: uppercase; text-decoration: none; cursor: pointer; transition: background .2s; }
-    .btn-novo:hover { background: var(--amarelo); color: var(--preto); }
-
-    .loading-estado { padding: 60px 0; font-size: 0.72rem; color: var(--cinza); letter-spacing: 2px; text-transform: uppercase; }
-
-    @media (max-width: 700px) {
-      nav { padding: 0 20px; } .nav-links { gap: 16px; }
-      .page-header { padding: 40px 20px 32px; }
-      .container { padding: 0 20px 80px; }
-      .stats { grid-template-columns: 1fr 1fr; }
-      .stat-card:nth-child(3) { grid-column: 1/-1; border-right: none; border-top: 1px solid var(--linha); }
-      .item-card { grid-template-columns: 1fr; }
+    [data-theme="light"]{
+      --bg:#f8f9ff;--bg2:#ffffff;--bg3:#f1f2f8;
+      --text:#111827;--text2:#6b7280;--text3:#9ca3af;
+      --linha:rgba(17,24,39,.07);--linha-f:rgba(17,24,39,.13);
+      --card:rgba(255,255,255,.9);--card-h:rgba(255,255,255,1);
+      --sb-bg:#f7f8ff;
     }
+    html,body{height:100%;font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);overflow:hidden}
+    #bg3d{position:fixed;inset:0;z-index:0;pointer-events:none;opacity:.4}
+    .app{display:flex;height:100%;position:relative;z-index:1}
+
+    /* Sidebar */
+    .sidebar{width:var(--sidebar-w);flex-shrink:0;background:var(--sb-bg);border-right:1px solid var(--linha);display:flex;flex-direction:column;height:100%;overflow-y:auto;transition:transform .3s cubic-bezier(.16,1,.3,1)}
+    .sidebar-header{padding:20px 16px 12px;border-bottom:1px solid var(--linha)}
+    .logo{display:flex;align-items:center;gap:8px;text-decoration:none}
+    .pia-mark{width:34px;height:34px;border-radius:9px;background:#fff;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 8px rgba(0,0,0,.18);flex-shrink:0}
+    .logo-p{font-size:.95rem;font-weight:800;letter-spacing:-.5px;color:var(--text)}
+    .logo-ia{font-size:.95rem;font-weight:500;color:var(--indigo-l)}
+    .sidebar-nav{padding:12px 8px;display:flex;flex-direction:column;gap:2px}
+    .nav-item{display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:10px;text-decoration:none;font-size:.8rem;font-weight:500;color:rgba(255,255,255,.5);transition:all .18s}
+    [data-theme="light"] .nav-item{color:rgba(17,24,39,.5)}
+    .nav-item:hover{background:rgba(255,255,255,.06);color:var(--text)}
+    [data-theme="light"] .nav-item:hover{background:rgba(17,24,39,.05);color:var(--text)}
+    .nav-item.active{background:rgba(99,102,241,.18);color:#818cf8;font-weight:600}
+    [data-theme="light"] .nav-item.active{background:rgba(67,56,202,.1);color:var(--indigo)}
+    .nav-icon{width:16px;height:16px;stroke:currentColor;fill:none;stroke-linecap:round;stroke-linejoin:round;flex-shrink:0}
+    .sidebar-spacer{flex:1}
+    .sidebar-footer{padding:12px 8px;border-top:1px solid var(--linha)}
+    .user-card{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:10px;text-decoration:none;transition:background .18s}
+    .user-card:hover{background:rgba(255,255,255,.06)}
+    [data-theme="light"] .user-card:hover{background:rgba(17,24,39,.05)}
+    .user-avatar{width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,#4338ca,#7c3aed);display:flex;align-items:center;justify-content:center;font-size:.75rem;font-weight:800;color:#fff;flex-shrink:0}
+    .user-name{font-size:.78rem;font-weight:600;color:var(--text)}
+    .user-plan{font-size:.65rem;color:var(--text2)}
+
+    /* Main */
+    .main{flex:1;overflow-y:auto;display:flex;flex-direction:column;min-width:0}
+    .topbar{display:none;padding:14px 16px;border-bottom:1px solid var(--linha);align-items:center;justify-content:space-between;background:var(--bg2);position:sticky;top:0;z-index:50}
+
+    /* Page */
+    .page-wrap{padding:32px;max-width:1000px}
+    .page-header{display:flex;align-items:flex-end;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:24px}
+    .page-title{font-size:1.5rem;font-weight:900;letter-spacing:-.5px}
+    .page-sub{font-size:.8rem;color:var(--text2);margin-top:4px}
+
+    /* Stats */
+    .stats-row{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:24px}
+    .stat-card{background:var(--card);border:1px solid var(--linha);border-radius:14px;padding:20px;transition:all .22s;position:relative;overflow:hidden}
+    .stat-card::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:linear-gradient(180deg,#4338ca,#7c3aed)}
+    .stat-card:hover{border-color:rgba(99,102,241,.3);transform:translateY(-2px)}
+    .stat-value{font-size:2rem;font-weight:900;letter-spacing:-1px;color:var(--indigo-l)}
+    .stat-label{font-size:.7rem;color:var(--text2);margin-top:4px;font-weight:500}
+
+    /* Toolbar */
+    .toolbar{display:flex;gap:10px;margin-bottom:20px;flex-wrap:wrap}
+    .search-box{flex:1;min-width:200px;display:flex;align-items:center;gap:8px;background:var(--card);border:1px solid var(--linha-f);border-radius:10px;padding:9px 14px;transition:border-color .2s}
+    .search-box:focus-within{border-color:rgba(99,102,241,.5)}
+    .search-box svg{width:15px;height:15px;stroke:var(--text3);fill:none;stroke-width:2;flex-shrink:0}
+    .search-box input{flex:1;background:none;border:none;outline:none;font-size:.82rem;color:var(--text);font-family:'Inter',sans-serif}
+    .search-box input::placeholder{color:var(--text3)}
+    .filter-select{padding:9px 12px;background:var(--card);border:1px solid var(--linha-f);border-radius:10px;font-size:.78rem;color:var(--text);font-family:'Inter',sans-serif;outline:none;cursor:pointer}
+    .filter-select option{background:var(--bg2)}
+
+    /* History list */
+    .hist-list{display:flex;flex-direction:column;gap:10px}
+    .hist-card{
+      background:var(--card);border:1px solid var(--linha);border-radius:14px;
+      padding:18px 20px;transition:all .22s;display:flex;align-items:center;gap:16px;
+      position:relative;overflow:hidden;
+    }
+    .hist-card::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:linear-gradient(180deg,#4338ca,#7c3aed);opacity:0;transition:opacity .2s}
+    .hist-card:hover{border-color:rgba(99,102,241,.25);background:var(--card-h);transform:translateX(3px)}
+    .hist-card:hover::before{opacity:1}
+    .hist-icon{
+      width:42px;height:42px;border-radius:11px;flex-shrink:0;
+      background:linear-gradient(135deg,rgba(67,56,202,.2),rgba(124,58,237,.2));
+      display:flex;align-items:center;justify-content:center;
+    }
+    .hist-icon svg{width:20px;height:20px;stroke:var(--indigo-l);fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+    .hist-body{flex:1;min-width:0}
+    .hist-title{font-size:.88rem;font-weight:700;letter-spacing:-.2px;margin-bottom:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .hist-meta{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:6px}
+    .hist-meta-item{font-size:.68rem;color:var(--text2);display:flex;align-items:center;gap:4px}
+    .hist-meta-item svg{width:11px;height:11px;stroke:currentColor;fill:none;stroke-width:2}
+    .hist-tags{display:flex;gap:5px;flex-wrap:wrap}
+    .hist-tag{padding:2px 8px;border-radius:20px;font-size:.58rem;font-weight:700;letter-spacing:.5px;text-transform:uppercase;background:rgba(67,56,202,.12);color:#818cf8;border:1px solid rgba(99,102,241,.15)}
+    .hist-actions{display:flex;gap:6px;flex-shrink:0}
+    .btn-download{
+      padding:8px 14px;background:linear-gradient(135deg,#4338ca,#7c3aed);
+      color:#fff;border:none;border-radius:9px;font-size:.72rem;font-weight:700;
+      cursor:pointer;transition:opacity .2s,transform .15s;font-family:'Inter',sans-serif;
+      display:flex;align-items:center;gap:5px;text-decoration:none;white-space:nowrap;
+    }
+    .btn-download:hover{opacity:.9;transform:translateY(-1px)}
+    .btn-delete{
+      width:34px;height:34px;border-radius:9px;border:1px solid var(--linha-f);
+      background:transparent;cursor:pointer;display:flex;align-items:center;justify-content:center;
+      color:var(--text3);transition:all .18s;
+    }
+    .btn-delete:hover{border-color:rgba(239,68,68,.4);color:var(--red);background:rgba(239,68,68,.08)}
+    .btn-delete svg{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+
+    /* Empty */
+    .empty-state{text-align:center;padding:80px 32px;display:flex;flex-direction:column;align-items:center;gap:16px}
+    .empty-icon{width:72px;height:72px;border-radius:20px;background:linear-gradient(135deg,rgba(67,56,202,.15),rgba(124,58,237,.15));display:flex;align-items:center;justify-content:center}
+    .empty-icon svg{width:32px;height:32px;stroke:var(--indigo-l);fill:none;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round}
+    .empty-title{font-size:1.1rem;font-weight:800;letter-spacing:-.3px}
+    .empty-sub{font-size:.82rem;color:var(--text2);max-width:360px;line-height:1.6}
+    .btn-primary{padding:10px 22px;background:linear-gradient(135deg,#4338ca,#7c3aed);color:#fff;border:none;border-radius:10px;font-size:.8rem;font-weight:700;cursor:pointer;font-family:'Inter',sans-serif;text-decoration:none;display:inline-flex;align-items:center;gap:6px}
+
+    /* Loading */
+    .loading{text-align:center;padding:60px;color:var(--text2);font-size:.82rem}
+    @keyframes spin{to{transform:rotate(360deg)}}
+    .spinner{width:24px;height:24px;border:2px solid var(--linha-f);border-top-color:var(--indigo-l);border-radius:50%;animation:spin .8s linear infinite;margin:0 auto 12px}
+
+    @media(max-width:640px){
+      .sidebar{position:fixed;left:0;top:0;bottom:0;z-index:200;transform:translateX(-100%)}
+      .sidebar.open{transform:translateX(0)}
+      .topbar{display:flex}
+      .page-wrap{padding:16px}
+      .stats-row{grid-template-columns:repeat(3,1fr);gap:8px}
+      .stat-value{font-size:1.4rem}
+      .hist-card{flex-wrap:wrap}
+      .hist-actions{width:100%;justify-content:flex-end}
+    }
+    @keyframes fadeUp{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:translateY(0)}}
+    .hist-card{animation:fadeUp .35s cubic-bezier(.16,1,.3,1) both}
   </style>
   <link rel="stylesheet" href="/static/theme.css"/>
 </head>
 <body>
 
-<nav>
-  <a class="nav-logo" href="/" style="gap:8px;">
-    <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" width="22" height="22" aria-hidden="true" style="flex-shrink:0;"><path fill-rule="evenodd" fill="currentColor" d="M 10 50 A 40 40 0 0 1 90 50 L 90 74 L 50 90 L 10 74 Z M 16 54 Q 50 36 84 54 Q 50 66 16 54 Z M 12 65 L 50 90 L 50 82 L 20 68 Z M 88 65 L 50 90 L 50 82 L 80 68 Z"/></svg>
-    PROFESSOR<span class="tm">IA™</span>
-  </a>
-  <div class="nav-links">
-    <a class="nav-link on" href="/historico">HISTÓRICO</a>
-    <a class="nav-link" href="/chat">CHAT</a>
-    <a class="nav-link" href="/conta">{{ current_user.nome.split()[0].upper() }} →</a>
-  </div>
-</nav>
+<canvas id="bg3d"></canvas>
 
-<div class="page-header">
-  <div class="page-tag">SEUS MATERIAIS</div>
-  <h1>HISTÓRICO</h1>
-  <p class="page-sub">Todos os materiais gerados — baixe novamente a qualquer momento.</p>
+<div class="app">
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+      <a class="logo" href="/">
+        <span class="pia-mark">
+          <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" width="22" height="22">
+            <path fill-rule="evenodd" fill="#111827" d="M 10 50 A 40 40 0 0 1 90 50 L 90 74 L 50 90 L 10 74 Z M 16 54 Q 50 36 84 54 Q 50 66 16 54 Z M 12 65 L 50 90 L 50 82 L 20 68 Z M 88 65 L 50 90 L 50 82 L 80 68 Z"/>
+          </svg>
+        </span>
+        <span class="logo-p">Professor</span><span class="logo-ia">IA</span>
+      </a>
+    </div>
+    <nav class="sidebar-nav">
+      <a class="nav-item" href="/chat">
+        <svg class="nav-icon" viewBox="0 0 24 24" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>Chat</a>
+      <a class="nav-item" href="/dashboard">
+        <svg class="nav-icon" viewBox="0 0 24 24" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>Dashboard</a>
+      <a class="nav-item" href="/banco-questoes">
+        <svg class="nav-icon" viewBox="0 0 24 24" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>Banco de Questões</a>
+      <a class="nav-item active" href="/historico">
+        <svg class="nav-icon" viewBox="0 0 24 24" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>Histórico</a>
+      <a class="nav-item" href="/indicar">
+        <svg class="nav-icon" viewBox="0 0 24 24" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>Indicar Amigos</a>
+      <a class="nav-item" href="/planos">
+        <svg class="nav-icon" viewBox="0 0 24 24" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>Planos</a>
+    </nav>
+    <div class="sidebar-spacer"></div>
+    <div class="sidebar-footer">
+      <a class="user-card" href="/conta">
+        <div class="user-avatar">{{ current_user.nome[0].upper() }}</div>
+        <div>
+          <div class="user-name">{{ current_user.nome.split()[0] }}</div>
+          <div class="user-plan">Minha conta</div>
+        </div>
+      </a>
+    </div>
+  </aside>
+
+  <div class="main">
+    <div class="topbar">
+      <button onclick="document.getElementById('sidebar').classList.toggle('open')" style="background:none;border:none;cursor:pointer;color:var(--text)">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+      </button>
+      <span style="font-size:.85rem;font-weight:700">Histórico</span>
+      <div style="width:22px"></div>
+    </div>
+
+    <div class="page-wrap">
+      <div class="page-header">
+        <div>
+          <div class="page-title">Histórico</div>
+          <div class="page-sub">Todos os materiais gerados — baixe novamente a qualquer momento</div>
+        </div>
+      </div>
+
+      <div class="stats-row">
+        <div class="stat-card">
+          <div class="stat-value" id="stat-total">—</div>
+          <div class="stat-label">Materiais gerados</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value" id="stat-disc">—</div>
+          <div class="stat-label">Disciplinas</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value" id="stat-aulas">—</div>
+          <div class="stat-label">Aulas planejadas</div>
+        </div>
+      </div>
+
+      <div class="toolbar">
+        <div class="search-box">
+          <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          <input id="busca" placeholder="Buscar por disciplina, turma, professor..." oninput="renderLista(filtrar())"/>
+        </div>
+        <select class="filter-select" id="filterDisc" onchange="renderLista(filtrar())">
+          <option value="">Todas as disciplinas</option>
+        </select>
+      </div>
+
+      <div id="conteudo">
+        <div class="loading">
+          <div class="spinner"></div>
+          Carregando histórico...
+        </div>
+      </div>
+    </div>
+  </div>
 </div>
 
-<div class="container">
-  <div class="stats">
-    <div class="stat-card">
-      <span class="stat-num" id="stat-total">—</span>
-      <div class="stat-label">MATERIAIS GERADOS</div>
-    </div>
-    <div class="stat-card" style="padding-left:32px">
-      <span class="stat-num" id="stat-disc">—</span>
-      <div class="stat-label">DISCIPLINAS</div>
-    </div>
-    <div class="stat-card" style="padding-left:32px">
-      <span class="stat-num" id="stat-aulas">—</span>
-      <div class="stat-label">AULAS PLANEJADAS</div>
-    </div>
-  </div>
-
-  <div class="busca-wrap">
-    <span class="busca-arrow">→</span>
-    <input type="text" id="busca" placeholder="Buscar por disciplina, turma..."/>
-  </div>
-
-  <div id="conteudo" class="loading-estado">CARREGANDO...</div>
-</div>
-
+<script src="/static/bg3d.js"></script>
 <script>
-  let todos = [];
+let todos = [];
 
-  async function carregar() {
-    try {
-      const res = await fetch('/api/historico');
-      todos = await res.json();
-      renderStats();
-      renderLista(todos);
-    } catch(e) {
-      document.getElementById('conteudo').innerHTML = '<p style="padding:40px 0; color:var(--cinza);">Erro ao carregar histórico.</p>';
-    }
-  }
-
-  function renderStats() {
-    document.getElementById('stat-total').textContent = todos.length;
-    const discs = new Set(todos.map(i => i.disciplina).filter(Boolean));
-    document.getElementById('stat-disc').textContent = discs.size;
-    const totalAulas = todos.reduce((s, i) => s + (parseInt(i.num_aulas) || 0), 0);
-    document.getElementById('stat-aulas').textContent = totalAulas;
-  }
-
-  function renderLista(lista) {
-    const el = document.getElementById('conteudo');
-    if (!lista.length) {
-      el.innerHTML = `<div class="vazio">
-        <div class="vazio-label">SEM RESULTADOS</div>
-        <h3>NENHUM MATERIAL<br>ENCONTRADO.</h3>
-        <p>Os materiais gerados aparecerão aqui.</p>
-        <a class="btn-novo" href="/chat">GERAR MATERIAL →</a>
-      </div>`;
-      return;
-    }
-    el.innerHTML = '<div class="lista">' + lista.map(item => `
-      <div class="item-card" id="item-${item.id}">
-        <div class="item-body">
-          <div class="item-titulo">${item.disciplina || '—'} — ${item.turma || '—'}</div>
-          <div class="item-meta">
-            ${item.professor ? `<span>${item.professor}</span>` : ''}
-            ${item.escola ? `<span>${item.escola}</span>` : ''}
-            <span>${item.data || '—'}</span>
-            <span>${item.num_aulas} AULA${item.num_aulas != 1 ? 'S' : ''}</span>
-          </div>
-          ${item.temas && item.temas.length ? `<div class="item-temas">${item.temas.slice(0,4).map(t=>`<span class="tag">${t}</span>`).join('')}${item.temas.length > 4 ? `<span class="tag">+${item.temas.length-4}</span>` : ''}</div>` : ''}
-        </div>
-        <div class="item-acoes">
-          <a class="btn-baixar" href="/download/${item.id}">↓ BAIXAR</a>
-          <button class="btn-del" onclick="deletar(${item.id})" title="Excluir">×</button>
-        </div>
-      </div>`).join('') + '</div>';
-  }
-
-  async function deletar(id) {
-    if (!confirm('Excluir este material?')) return;
-    await fetch(`/deletar/${id}`, { method: 'DELETE' });
-    todos = todos.filter(i => i.id !== id);
+async function carregar() {
+  try {
+    const res = await fetch('/api/historico');
+    todos = await res.json();
     renderStats();
-    renderLista(filtrar());
+    populateFilter();
+    renderLista(todos);
+  } catch(e) {
+    document.getElementById('conteudo').innerHTML = '<div class="empty-state"><div class="empty-title">Erro ao carregar</div><div class="empty-sub">Tente recarregar a página.</div></div>';
+  }
+}
+
+function renderStats() {
+  document.getElementById('stat-total').textContent = todos.length;
+  const discs = new Set(todos.map(i => i.disciplina).filter(Boolean));
+  document.getElementById('stat-disc').textContent = discs.size;
+  const totalAulas = todos.reduce((s, i) => s + (parseInt(i.num_aulas) || 0), 0);
+  document.getElementById('stat-aulas').textContent = totalAulas;
+}
+
+function populateFilter() {
+  const sel = document.getElementById('filterDisc');
+  const discs = [...new Set(todos.map(i => i.disciplina).filter(Boolean))].sort();
+  sel.innerHTML = '<option value="">Todas as disciplinas</option>' +
+    discs.map(d => `<option value="${d}">${d}</option>`).join('');
+}
+
+function filtrar() {
+  const q = document.getElementById('busca').value.toLowerCase();
+  const disc = document.getElementById('filterDisc').value;
+  return todos.filter(i =>
+    (!q || (i.disciplina||'').toLowerCase().includes(q) || (i.turma||'').toLowerCase().includes(q) || (i.professor||'').toLowerCase().includes(q)) &&
+    (!disc || i.disciplina === disc)
+  );
+}
+
+function renderLista(lista) {
+  const el = document.getElementById('conteudo');
+  if (!lista.length) {
+    el.innerHTML = `
+      <div class="empty-state">
+        <div class="empty-icon">
+          <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+        </div>
+        <div class="empty-title">Nenhum material encontrado</div>
+        <div class="empty-sub">Os materiais gerados no chat aparecerão aqui para download.</div>
+        <a class="btn-primary" href="/chat">Gerar material →</a>
+      </div>`;
+    return;
   }
 
-  function filtrar() {
-    const q = document.getElementById('busca').value.toLowerCase();
-    if (!q) return todos;
-    return todos.filter(i =>
-      (i.disciplina||'').toLowerCase().includes(q) ||
-      (i.turma||'').toLowerCase().includes(q) ||
-      (i.professor||'').toLowerCase().includes(q)
-    );
-  }
+  const temas = (item) => {
+    if (!item.temas) return '';
+    const arr = Array.isArray(item.temas) ? item.temas : (typeof item.temas === 'string' ? item.temas.split(',').map(t=>t.trim()).filter(Boolean) : []);
+    return arr.slice(0,3).map(t => `<span class="hist-tag">${t}</span>`).join('') +
+      (arr.length > 3 ? `<span class="hist-tag">+${arr.length-3}</span>` : '');
+  };
 
-  document.getElementById('busca').addEventListener('input', () => renderLista(filtrar()));
-  carregar();
+  el.innerHTML = '<div class="hist-list">' + lista.map((item, i) => `
+    <div class="hist-card" id="item-${item.id}" style="animation-delay:${i*0.04}s">
+      <div class="hist-icon">
+        <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+      </div>
+      <div class="hist-body">
+        <div class="hist-title">${item.disciplina || '—'} — ${item.turma || '—'}</div>
+        <div class="hist-meta">
+          ${item.professor ? `<span class="hist-meta-item"><svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>${item.professor}</span>` : ''}
+          ${item.escola ? `<span class="hist-meta-item"><svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>${item.escola}</span>` : ''}
+          <span class="hist-meta-item"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>${item.data || '—'}</span>
+          <span class="hist-meta-item">${item.num_aulas || 0} aula${item.num_aulas != 1 ? 's' : ''}</span>
+        </div>
+        <div class="hist-tags">${temas(item)}</div>
+      </div>
+      <div class="hist-actions">
+        <a class="btn-download" href="/download/${item.id}">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          Baixar
+        </a>
+        <button class="btn-delete" onclick="deletar(${item.id})" title="Excluir">
+          <svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/></svg>
+        </button>
+      </div>
+    </div>`).join('') + '</div>';
+}
+
+async function deletar(id) {
+  if (!confirm('Excluir este material?')) return;
+  await fetch(`/deletar/${id}`, { method: 'DELETE' });
+  todos = todos.filter(i => i.id !== id);
+  renderStats();
+  renderLista(filtrar());
+}
+
+carregar();
 </script>
-<script src="/static/theme.js"></script>
 </body>
 </html>
