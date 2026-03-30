@@ -4,7 +4,7 @@
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>ProfessorIA — Assistente Pedagógico com IA</title>
-  <link rel="icon" type="image/svg+xml" href="/static/logo.svg"/>
+  <link rel="icon" type="image/svg+xml" href="/static/favicon.svg"/>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet"/>
   <style>
     *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
@@ -20,6 +20,62 @@
     body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);overflow-x:hidden}
     ::selection{background:#ede9fe;color:var(--indigo)}
 
+
+
+    /* STICKY CTA */
+    .sticky-cta{
+      position:fixed;bottom:28px;right:28px;z-index:800;
+      display:flex;align-items:center;gap:10px;
+      background:linear-gradient(135deg,#4338ca,#7c3aed);
+      color:#fff;font-size:.875rem;font-weight:700;
+      text-decoration:none;padding:13px 22px;border-radius:50px;
+      box-shadow:0 8px 32px rgba(67,56,202,.45);
+      opacity:0;transform:translateY(16px) scale(.95);
+      transition:opacity .4s ease,transform .4s ease;
+      pointer-events:none;
+    }
+    .sticky-cta.visible{opacity:1;transform:translateY(0) scale(1);pointer-events:auto}
+    .sticky-cta:hover{box-shadow:0 12px 44px rgba(67,56,202,.6);transform:translateY(-2px) scale(1.02)}
+    .sticky-cta svg{width:16px;height:16px;fill:#fff;flex-shrink:0}
+    @media(max-width:600px){.sticky-cta{bottom:16px;right:16px;padding:11px 18px;font-size:.8rem}}
+
+    /* DARK MODE LANDING */
+    body.dark-land{--bg:#0d0f1c;--bg2:#111327;--bg3:#161830;--text:#f1f5f9;--text2:#94a3b8;--text3:#64748b;--line:rgba(255,255,255,.07);--line2:rgba(255,255,255,.12)}
+    body.dark-land .stats{background:var(--bg)}
+    body.dark-land .features{background:var(--bg2)}
+    body.dark-land .feat-card{background:var(--bg3);border-color:var(--line)}
+    body.dark-land .tests{background:var(--bg)}
+    body.dark-land .test-card{background:var(--bg2);border-color:var(--line)}
+    body.dark-land .pricing{background:var(--bg2)}
+    body.dark-land .plan-card:not(.hot){background:var(--bg3);border-color:var(--line)}
+    body.dark-land .quote-sec{background:var(--bg);border-color:var(--line)}
+    body.dark-land .how{background:var(--bg)}
+    body.dark-land footer{background:var(--dark)}
+    body.dark-land nav.lit{background:rgba(13,15,28,.97);border-bottom-color:rgba(255,255,255,.08)}
+    body.dark-land nav.lit .logo-p{color:#f1f5f9}
+    body.dark-land nav.lit .nav-a{color:rgba(255,255,255,.5)}
+    body.dark-land nav.lit .nav-a:hover{color:#fff;background:rgba(255,255,255,.06)}
+    body.dark-land nav.lit .nav-user{color:rgba(255,255,255,.8)}
+    /* Dark mode toggle button */
+    .dm-toggle{
+      width:34px;height:34px;border-radius:8px;border:1px solid rgba(255,255,255,.15);
+      background:rgba(255,255,255,.06);cursor:pointer;
+      display:flex;align-items:center;justify-content:center;
+      transition:background .2s,border-color .2s;flex-shrink:0;margin-left:4px;
+    }
+    .dm-toggle:hover{background:rgba(255,255,255,.12);border-color:rgba(255,255,255,.28)}
+    nav.lit .dm-toggle{border-color:rgba(0,0,0,.12);background:rgba(0,0,0,.04)}
+    nav.lit .dm-toggle:hover{background:rgba(0,0,0,.08)}
+    body.dark-land nav.lit .dm-toggle{border-color:rgba(255,255,255,.15);background:rgba(255,255,255,.06)}
+    .dm-toggle svg{width:16px;height:16px;fill:rgba(255,255,255,.7);transition:fill .2s}
+    nav.lit .dm-toggle svg{fill:rgba(0,0,0,.5)}
+    body.dark-land nav.lit .dm-toggle svg{fill:rgba(255,255,255,.7)}
+    .dm-toggle .icon-moon{display:block}
+    .dm-toggle .icon-sun{display:none}
+    body.dark-land .dm-toggle .icon-moon{display:none}
+    body.dark-land .dm-toggle .icon-sun{display:block}
+    /* PROGRESS BAR */
+    #read-progress{position:fixed;top:0;left:0;height:3px;width:0%;z-index:9999;background:linear-gradient(90deg,#4338ca,#7c3aed,#c084fc);transition:width .1s linear;border-radius:0 2px 2px 0}
     /* NAV */
     nav{
       position:fixed;top:0;left:0;right:0;z-index:900;
@@ -32,7 +88,7 @@
     nav.lit{background:rgba(255,255,255,.97);border-bottom-color:var(--line)}
     .logo{text-decoration:none;display:flex;align-items:center;gap:8px}
     .logo-mark{display:flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:7px;background:#0f172a;flex-shrink:0;transition:background .35s,box-shadow .35s}
-    nav.lit .logo-mark{background:#0f172a;box-shadow:0 0 0 2px rgba(67,56,202,.15)}
+    nav.lit .logo-mark{background:#4338ca;box-shadow:0 0 0 3px rgba(67,56,202,.25),0 4px 14px rgba(67,56,202,.35)}
     .logo-mark svg{color:white}
     .logo-p{font-size:1.08rem;font-weight:800;color:#fff;letter-spacing:-.3px;transition:color .35s}
     nav.lit .logo-p{color:#0f172a}
@@ -55,6 +111,21 @@
     .btn-nav{font-size:.875rem;font-weight:700;text-decoration:none;padding:8px 20px;border-radius:8px;background:var(--amber);color:var(--text);transition:opacity .2s,transform .2s}
     .btn-nav:hover{opacity:.88;transform:translateY(-1px)}
 
+
+    /* SOCIAL PROOF STRIP */
+    .social-strip{
+      position:fixed;top:64px;left:0;right:0;z-index:899;
+      height:0;overflow:hidden;
+      background:linear-gradient(90deg,#1e1b4b,#1a1840);
+      border-bottom:1px solid rgba(99,102,241,.22);
+      display:flex;align-items:center;justify-content:center;gap:24px;
+      font-size:.7rem;font-weight:600;letter-spacing:.5px;
+      color:rgba(165,180,252,.75);
+      transition:height .35s ease,opacity .35s ease;opacity:0;
+    }
+    .social-strip.lit-strip{height:32px;opacity:1}
+    .social-strip-sep{color:rgba(99,102,241,.35);font-size:.5rem}
+    .social-strip-star{color:#f59e0b;letter-spacing:1px}
     /* TICKER */
     .ticker{margin-top:64px;height:40px;background:linear-gradient(90deg,#1e1b4b,#1a1840);border-bottom:1px solid rgba(99,102,241,.22);overflow:hidden;display:flex;align-items:center}
     .tick-track{display:flex;white-space:nowrap;animation:tick 32s linear infinite}
@@ -102,6 +173,16 @@
       transition:background .2s,border-color .2s,color .2s;
     }
     .btn-ghost-d:hover{background:rgba(255,255,255,.09);border-color:rgba(255,255,255,.35);color:#fff}
+
+    /* HERO ENTRANCE ANIMATIONS */
+    @keyframes fadeUp{from{opacity:0;transform:translateY(28px)}to{opacity:1;transform:translateY(0)}}
+    @keyframes fadeIn{from{opacity:0}to{opacity:1}}
+    .hero-copy .hero-pill{animation:fadeUp .6s ease both;animation-delay:.1s}
+    .hero-copy h1{animation:fadeUp .65s ease both;animation-delay:.22s}
+    .hero-copy .hero-sub{animation:fadeUp .65s ease both;animation-delay:.36s}
+    .hero-copy .hero-btns{animation:fadeUp .65s ease both;animation-delay:.48s}
+    #typingDemo{animation:fadeIn .9s ease both;animation-delay:.55s}
+    .hero-foot{animation:fadeIn 1.2s ease both;animation-delay:.9s}
     /* TYPING DEMO MOCKUP */
     .hero-layout{display:grid;grid-template-columns:1fr 1fr;gap:48px;align-items:center;max-width:1200px;width:100%;padding:120px 48px 90px;position:relative;z-index:2}
     .hero-copy{text-align:left}
@@ -214,12 +295,38 @@
     .feat-card::after{content:'';position:absolute;inset:0;background:linear-gradient(135deg,rgba(67,56,202,.04),transparent);opacity:0;transition:opacity .3s}
     .feat-card:hover{transform:translateY(-4px);box-shadow:0 16px 48px rgba(0,0,0,.07);border-color:rgba(67,56,202,.24)}
     .feat-card:hover::after{opacity:1}
-    .feat-icon{width:42px;height:42px;border-radius:9px;background:linear-gradient(135deg,#ede9fe,#ddd6fe);display:flex;align-items:center;justify-content:center;margin-bottom:18px;flex-shrink:0}
+    .feat-icon{width:42px;height:42px;border-radius:9px;background:linear-gradient(135deg,#ede9fe,#ddd6fe);display:flex;align-items:center;justify-content:center;margin-bottom:18px;flex-shrink:0;transition:transform .3s ease,background .3s ease}
+    .feat-card:hover .feat-icon{transform:rotate(10deg) scale(1.08);background:linear-gradient(135deg,#ddd6fe,#c4b5fd)}
     .feat-icon svg{width:20px;height:20px;stroke:var(--indigo);fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
     .feat-tag{font-size:.68rem;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--indigo);margin-bottom:6px}
     .feat-title{font-size:1.05rem;font-weight:800;color:var(--text);margin-bottom:8px;letter-spacing:-.2px}
     .feat-desc{font-size:.875rem;color:var(--text2);line-height:1.7}
 
+
+    /* HOW IT WORKS */
+    .how{padding:96px 48px;background:var(--bg);position:relative;overflow:hidden}
+    .how-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:0;position:relative;margin-top:56px}
+    .how-grid::before{content:'';position:absolute;top:36px;left:calc(16.66% + 20px);right:calc(16.66% + 20px);height:2px;background:linear-gradient(90deg,#4338ca,#7c3aed,#4338ca);z-index:0;opacity:.3}
+    .how-step{display:flex;flex-direction:column;align-items:center;text-align:center;padding:0 28px;position:relative;z-index:1}
+    .how-num{
+      width:72px;height:72px;border-radius:50%;
+      background:linear-gradient(135deg,#4338ca,#7c3aed);
+      display:flex;align-items:center;justify-content:center;
+      font-size:1.5rem;font-weight:900;color:#fff;
+      box-shadow:0 8px 28px rgba(67,56,202,.35);
+      margin-bottom:24px;flex-shrink:0;
+      transition:transform .3s ease,box-shadow .3s ease;
+    }
+    .how-step:hover .how-num{transform:scale(1.1);box-shadow:0 12px 36px rgba(67,56,202,.5)}
+    .how-step-icon{width:28px;height:28px;margin-bottom:4px}
+    .how-step-icon svg{width:28px;height:28px;stroke:#fff;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+    .how-title{font-size:1.1rem;font-weight:800;color:var(--text);margin-bottom:10px;letter-spacing:-.2px}
+    .how-desc{font-size:.875rem;color:var(--text2);line-height:1.7;max-width:240px}
+    .how-arrow{position:absolute;top:22px;right:-18px;font-size:1.4rem;color:rgba(67,56,202,.35);z-index:2;display:none}
+    @media(max-width:768px){
+      .how-grid{grid-template-columns:1fr;gap:40px}
+      .how-grid::before{display:none}
+    }
     /* 3D scroll-driven cube in features bg */
     .feat-cube-wrap{position:absolute;right:3%;top:50%;transform:translateY(-50%);pointer-events:none;perspective:900px;opacity:.06;z-index:0}
 
@@ -440,6 +547,7 @@
 </head>
 <body>
 
+<div id="read-progress"></div>
 <nav id="nav">
   <a class="logo" href="/">
     <span class="logo-mark">
@@ -458,8 +566,23 @@
     <a class="nav-a" href="/login">Entrar</a>
     <a class="btn-nav" href="/cadastro">Começar grátis</a>
     {% endif %}
+    <button class="dm-toggle" id="dmToggle" aria-label="Alternar modo escuro" title="Modo escuro">
+      <svg class="icon-moon" viewBox="0 0 24 24"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/></svg>
+      <svg class="icon-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+    </button>
   </div>
 </nav>
+
+<!-- SOCIAL PROOF STRIP -->
+<div class="social-strip" id="socialStrip">
+  <span><span class="social-strip-star">★★★★★</span> Avaliação 4.9/5</span>
+  <span class="social-strip-sep">◆</span>
+  <span>+12.000 professores ativos</span>
+  <span class="social-strip-sep">◆</span>
+  <span>100% alinhado à BNCC</span>
+  <span class="social-strip-sep">◆</span>
+  <span>Grátis para começar</span>
+</div>
 
 <!-- TICKER -->
 <div class="ticker">
@@ -658,6 +781,36 @@
       <div class="feat-tag">06 — Inclusão</div>
       <div class="feat-title">Adaptações NEE</div>
       <p class="feat-desc">Material adaptado automaticamente para DI, TEA, TDAH, Dislexia, Baixa Visão e CAA.</p>
+    </div>
+  </div>
+</section>
+
+<!-- HOW IT WORKS -->
+<section class="how reveal">
+  <div class="sec-label">Como funciona</div>
+  <h2 class="sec-head">Três passos.<br/>Material pronto.</h2>
+  <p class="sec-sub">Do upload ao download em menos de 60 segundos. Sem complicação.</p>
+  <div class="how-grid">
+    <div class="how-step">
+      <div class="how-num">
+        <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+      </div>
+      <div class="how-title">1. Descreva ou envie</div>
+      <p class="how-desc">Digite o tema, série e tipo de material. Ou envie um PDF/DOC como base para a IA trabalhar.</p>
+    </div>
+    <div class="how-step">
+      <div class="how-num">
+        <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M12 1v4M12 19v4M4.22 4.22l2.83 2.83M16.95 16.95l2.83 2.83M1 12h4M19 12h4M4.22 19.78l2.83-2.83M16.95 7.05l2.83-2.83"/></svg>
+      </div>
+      <div class="how-title">2. IA processa</div>
+      <p class="how-desc">O motor de IA gera o material completo, alinhado à BNCC, com objetivos, metodologia e avaliação.</p>
+    </div>
+    <div class="how-step">
+      <div class="how-num">
+        <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+      </div>
+      <div class="how-title">3. Baixe e use</div>
+      <p class="how-desc">Copie, edite ou baixe em .docx. Pronto para imprimir ou compartilhar com seus alunos.</p>
     </div>
   </div>
 </section>
@@ -893,6 +1046,14 @@
   </div>
   <span class="f-copy">© 2026 ProfessorIA</span>
 </footer>
+
+<!-- STICKY CTA -->
+{% if not current_user.is_authenticated %}
+<a class="sticky-cta" id="stickyCta" href="/cadastro">
+  <svg viewBox="0 0 24 24"><path d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+  Começar grátis
+</a>
+{% endif %}
 
 <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js"></script>
 <script>
@@ -1261,6 +1422,41 @@ new IntersectionObserver(function(es){
     }
   }
   setTimeout(tick, 1200);
+})();
+
+/* ── Progress bar + Sticky CTA + Social Strip + Dark Mode ─────────────────── */
+(function(){
+  var prog = document.getElementById('read-progress');
+  var sticky = document.getElementById('stickyCta');
+  var strip = document.getElementById('socialStrip');
+  var dmBtn = document.getElementById('dmToggle');
+
+  /* Dark mode persistence */
+  if(localStorage.getItem('pia-land-dark')==='1') document.body.classList.add('dark-land');
+  if(dmBtn){
+    dmBtn.addEventListener('click',function(){
+      var isDark = document.body.classList.toggle('dark-land');
+      localStorage.setItem('pia-land-dark', isDark?'1':'0');
+    });
+  }
+
+  /* Scroll-driven: progress + sticky + social strip */
+  function onScroll(){
+    var scrollTop = window.scrollY||0;
+    var docH = document.documentElement.scrollHeight - window.innerHeight;
+    var pct = docH > 0 ? (scrollTop/docH)*100 : 0;
+    if(prog) prog.style.width = pct + '%';
+    if(sticky){
+      if(scrollTop > 400) sticky.classList.add('visible');
+      else sticky.classList.remove('visible');
+    }
+    if(strip){
+      if(scrollTop > 80) strip.classList.add('lit-strip');
+      else strip.classList.remove('lit-strip');
+    }
+  }
+  window.addEventListener('scroll', onScroll, {passive:true});
+  onScroll();
 })();
 
 /* Pricing toggle */
