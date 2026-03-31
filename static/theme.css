@@ -77,6 +77,13 @@ textarea {
   border-bottom-color: var(--input-border) !important;
 }
 
+/* ── Sidebar escura no dark mode (força override) ── */
+[data-theme="dark"] .sidebar,
+[data-theme="dark"] nav.sidebar-nav {
+  background: #0a0c18 !important;
+  color: #e5e7eb !important;
+}
+
 /* ── Left panels (login/cadastro) stay dark in dark mode ── */
 [data-theme="dark"] .left {
   background: #0a0a0a !important;

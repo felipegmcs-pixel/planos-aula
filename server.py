@@ -1971,9 +1971,10 @@ def api_chat():
                         yield f"data: {json.dumps({'chunk': text})}\n\n"
                 claude_ok = True
             except Exception as ce:
-                if 'credit' not in str(ce).lower():
+                err = str(ce).lower()
+                if not any(x in err for x in ['credit', 'balance', 'payment', '400', 'billing']):
                     raise
-                print(f'Claude sem créditos no streaming, tentando OpenAI: {ce}')
+                print(f'Claude indisponível no streaming, tentando OpenAI: {ce}')
                 chunks = []
 
             if not claude_ok:
@@ -3303,24 +3304,28 @@ def api_chat_download():
             logo_estado_abs = candidate_e
     meta['logo_estado_path'] = logo_estado_abs
 
-    # Mapa mental → PDF visual
-    if _detect_doc_type(texto) == 'mapa_mental':
-        pdf_bytes = gerar_mapa_mental_pdf(texto, meta=meta)
-        return send_file(
-            io.BytesIO(pdf_bytes), as_attachment=True,
-            download_name='mapa-mental-ProfessorIA.pdf',
-            mimetype='application/pdf'
-        )
+    try:
+        # Mapa mental → PDF visual
+        if _detect_doc_type(texto) == 'mapa_mental':
+            pdf_bytes = gerar_mapa_mental_pdf(texto, meta=meta)
+            return send_file(
+                io.BytesIO(pdf_bytes), as_attachment=True,
+                download_name='mapa-mental-ProfessorIA.pdf',
+                mimetype='application/pdf'
+            )
 
-    doc = gerar_docx_pia(texto, meta=meta, logo_path=logo_abs)
-    buf = io.BytesIO()
-    doc.save(buf)
-    buf.seek(0)
-    return send_file(
-        buf, as_attachment=True,
-        download_name='material-ProfessorIA.docx',
-        mimetype='application/vnd.openxmlformats-officedocument.wordprocessingml.document'
-    )
+        doc = gerar_docx_pia(texto, meta=meta, logo_path=logo_abs)
+        buf = io.BytesIO()
+        doc.save(buf)
+        buf.seek(0)
+        return send_file(
+            buf, as_attachment=True,
+            download_name='material-ProfessorIA.docx',
+            mimetype='application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+        )
+    except Exception as e:
+        print(f'ERRO DOWNLOAD: {traceback.format_exc()}')
+        return jsonify({'erro': f'Falha ao gerar arquivo: {str(e)[:200]}'}), 500
 
 
 @app.route('/api/config-escola', methods=['GET', 'POST'])

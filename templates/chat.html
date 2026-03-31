@@ -97,6 +97,18 @@
       0%,100% { filter: brightness(1) drop-shadow(0 0 0px transparent); transform: scale(1); }
       50%     { filter: brightness(1.35) drop-shadow(0 0 12px rgba(249,115,22,.9)); transform: scale(1.1); }
     }
+    @keyframes infFlow {
+      from { stroke-dashoffset: 0; }
+      to   { stroke-dashoffset: -62; }
+    }
+    .inf-path {
+      stroke-dasharray: 62;
+      stroke-dashoffset: 0;
+    }
+    .msg-avatar.typing .inf-path {
+      stroke-dasharray: 18 44;
+      animation: infFlow 1.1s linear infinite;
+    }
     @keyframes nodeFlow {
       0%   { stroke-dashoffset: 20; }
       100% { stroke-dashoffset: 0; }
@@ -1038,7 +1050,12 @@
     content.appendChild(role);
     content.appendChild(bubble);
 
-    div.innerHTML = '<div class="msg-avatar" id="currentAvatar">IA</div>';
+    div.innerHTML = `<div class="msg-avatar" id="currentAvatar" title="ProfessorIA">
+      <svg viewBox="0 0 32 32" width="18" height="18" fill="none" style="display:block">
+        <path class="inf-path" d="M16,16 C13,10 4,10 4,16 C4,22 13,22 16,16 C19,10 28,10 28,16 C28,22 19,22 16,16"
+              stroke="rgba(255,255,255,0.95)" stroke-width="2.5" stroke-linecap="round"/>
+      </svg>
+    </div>`;
     div.appendChild(content);
     messagesInner.appendChild(div);
     scroll();
@@ -1063,12 +1080,14 @@
         btnCopy.onclick = () => { navigator.clipboard.writeText(texto); btnCopy.textContent = 'Copiado ✓'; setTimeout(() => btnCopy.textContent = 'Copiar', 2000); };
         actions.appendChild(btnCopy);
 
-        const btnDocx = document.createElement('button');
-        btnDocx.className = 'msg-btn baixar';
-        const isMapaMental = /##\s*🧠\s*TEMA CENTRAL/i.test(texto);
-        btnDocx.textContent = isMapaMental ? '↓ Baixar .PDF' : '↓ Baixar .DOCX';
-        btnDocx.onclick = () => baixarDocx(texto);
-        actions.appendChild(btnDocx);
+        if (texto.trim().length > 50) {
+          const btnDocx = document.createElement('button');
+          btnDocx.className = 'msg-btn baixar';
+          const isMapaMental = /##\s*🧠\s*TEMA CENTRAL/i.test(texto);
+          btnDocx.textContent = isMapaMental ? '↓ Baixar .PDF' : '↓ Baixar .DOCX';
+          btnDocx.onclick = () => baixarDocx(texto);
+          actions.appendChild(btnDocx);
+        }
 
         const btnOuvir = document.createElement('button');
         btnOuvir.className = 'msg-btn ouvir';
