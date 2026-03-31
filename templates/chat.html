@@ -1006,7 +1006,7 @@
     content.className = 'msg-content';
     const role = document.createElement('div');
     role.className = 'msg-role';
-    role.textContent = 'Professor IA';
+    role.textContent = 'ProfessorIA';
     content.appendChild(role);
     content.appendChild(bubble);
 
@@ -1129,7 +1129,7 @@
       const url  = URL.createObjectURL(blob);
       const a    = document.createElement('a');
       a.href = url;
-      a.download = disciplina ? `avaliacao-${disciplina.toLowerCase().replace(/\s+/g,'-')}.docx` : 'material-professorIA.docx';
+      a.download = disciplina ? `avaliacao-${disciplina.toLowerCase().replace(/\s+/g,'-')}.docx` : 'material-ProfessorIA.docx';
       a.click(); URL.revokeObjectURL(url);
       fecharDownloadModal();
     } catch(e) { alert('Erro ao baixar. Tente novamente.'); }
@@ -1256,7 +1256,7 @@
   document.getElementById('neeModal').addEventListener('click',function(e){if(e.target===this)fecharNEE();});
 
   // TTS
-  let vozAtual=localStorage.getItem('professorIA_voz')||'nova', audioAtual=null;
+  let vozAtual=localStorage.getItem('ProfessorIA_voz')||'nova', audioAtual=null;
   async function ouvirTexto(texto,btn) {
     if (audioAtual) { audioAtual.pause(); audioAtual=null; document.querySelectorAll('.msg-btn.ouvir').forEach(b=>{b.textContent='▶ Ouvir';b.classList.remove('playing');b.dataset.playing='0';}); if(btn.dataset.playing==='1')return; }
     btn.textContent='⏳ Gerando...'; btn.classList.add('playing'); btn.dataset.playing='1';

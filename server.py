@@ -3066,7 +3066,7 @@ def api_chat_download():
     buf.seek(0)
     return send_file(
         buf, as_attachment=True,
-        download_name='material-professorIA.docx',
+        download_name='material-ProfessorIA.docx',
         mimetype='application/vnd.openxmlformats-officedocument.wordprocessingml.document'
     )
 
