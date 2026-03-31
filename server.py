@@ -1942,18 +1942,20 @@ def api_chat():
                         if text:
                             chunks.append(text)
                             yield f"data: {json.dumps({'chunk': text})}\n\n"
-                    yield "data: [DONE]\n\n"
-                    resposta = ''.join(chunks)
-                    conn2 = get_db()
-                    conn2.execute(
-                        "INSERT INTO chat_messages (usuario_id, role, content, criado_em) VALUES (?, ?, ?, ?)",
-                        (usuario_id, 'assistant', resposta, datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
-                    )
-                    conn2.commit(); conn2.close()
-                    return
+                    if chunks:  # só retorna se Gemini respondeu algo de fato
+                        yield "data: [DONE]\n\n"
+                        resposta = ''.join(chunks)
+                        conn2 = get_db()
+                        conn2.execute(
+                            "INSERT INTO chat_messages (usuario_id, role, content, criado_em) VALUES (?, ?, ?, ?)",
+                            (usuario_id, 'assistant', resposta, datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
+                        )
+                        conn2.commit(); conn2.close()
+                        return
+                    print('Gemini retornou resposta vazia, tentando próximo motor...')
                 except Exception as e:
                     print(f'Gemini streaming falhou, usando Claude: {e}')
-                    chunks = []  # reset
+                chunks = []  # reset
 
             # Claude streaming
             claude_ok = False

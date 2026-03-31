@@ -47,19 +47,19 @@ html:not([data-theme="dark"]) body {
   color: #0a0a0a !important;
 }
 
-/* ── NAV ── */
-nav {
+/* ── NAV (apenas o topo do index.html) ── */
+nav#nav {
   background: #ffffff !important;
   border-bottom: 1px solid rgba(0,0,0,0.08) !important;
 }
-nav, nav * { color: #1E40AF !important; }
-nav a, nav span, nav button, nav .nav-name, nav .nav-logo { color: #1E40AF !important; }
-[data-theme="dark"] nav {
+nav#nav, nav#nav * { color: #1E40AF !important; }
+nav#nav a, nav#nav span, nav#nav button { color: #1E40AF !important; }
+[data-theme="dark"] nav#nav {
   background: #ffffff !important;
   border-bottom-color: rgba(0,0,0,0.08) !important;
 }
-[data-theme="dark"] nav, [data-theme="dark"] nav * { color: #1E40AF !important; }
-[data-theme="dark"] nav a, [data-theme="dark"] nav span, [data-theme="dark"] nav button, [data-theme="dark"] nav .nav-name {
+[data-theme="dark"] nav#nav, [data-theme="dark"] nav#nav * { color: #1E40AF !important; }
+[data-theme="dark"] nav#nav a, [data-theme="dark"] nav#nav span, [data-theme="dark"] nav#nav button {
   color: #1E40AF !important;
 }
 

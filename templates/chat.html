@@ -423,9 +423,15 @@
       display: flex; align-items: center; justify-content: center;
       font-size: .6rem; font-weight: 800; margin-top: 2px; color: #fff;
       background: linear-gradient(135deg, #1E40AF, #1E3A8A);
+      transition: box-shadow .3s, transform .3s;
     }
     .msg.assistant .msg-avatar { box-shadow: 0 0 0 3px rgba(30,64,175,.2), 0 4px 12px rgba(30,64,175,.3); }
     .msg.user      .msg-avatar { box-shadow: 0 4px 12px rgba(30,64,175,.25); }
+    @keyframes avatarPulse {
+      0%,100% { box-shadow: 0 0 0 3px rgba(30,64,175,.3), 0 0 0 6px rgba(30,64,175,.1); transform: scale(1); }
+      50%     { box-shadow: 0 0 0 4px rgba(30,64,175,.5), 0 0 18px rgba(30,64,175,.4); transform: scale(1.08); }
+    }
+    .msg-avatar.typing { animation: avatarPulse 1.2s ease-in-out infinite; }
 
     .msg-content { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 6px; }
     .msg.user .msg-content { align-items: flex-end; }
@@ -1032,7 +1038,7 @@
     content.appendChild(role);
     content.appendChild(bubble);
 
-    div.innerHTML = '<div class="msg-avatar">IA</div>';
+    div.innerHTML = '<div class="msg-avatar" id="currentAvatar">IA</div>';
     div.appendChild(content);
     messagesInner.appendChild(div);
     scroll();
@@ -1059,7 +1065,8 @@
 
         const btnDocx = document.createElement('button');
         btnDocx.className = 'msg-btn baixar';
-        btnDocx.textContent = '↓ Baixar .DOCX';
+        const isMapaMental = /##\s*🧠\s*TEMA CENTRAL/i.test(texto);
+        btnDocx.textContent = isMapaMental ? '↓ Baixar .PDF' : '↓ Baixar .DOCX';
         btnDocx.onclick = () => baixarDocx(texto);
         actions.appendChild(btnDocx);
 
@@ -1078,8 +1085,26 @@
   // ── DOWNLOAD DOCX MODAL ──
   let _dlTexto = '';
 
+  async function _baixarDireto(nome) {
+    try {
+      const resp = await fetch('/api/chat-download', {
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({ texto: _dlTexto })
+      });
+      if (!resp.ok) { alert('Erro ao gerar arquivo.'); return; }
+      const blob = await resp.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a'); a.href = url; a.download = nome; a.click();
+      URL.revokeObjectURL(url);
+    } catch(e) { alert('Erro ao baixar. Tente novamente.'); }
+  }
+
   function baixarDocx(texto) {
     _dlTexto = texto;
+    if (/##\s*🧠\s*TEMA CENTRAL/i.test(texto)) {
+      _baixarDireto('mapa-mental-ProfessorIA.pdf');
+      return;
+    }
     const saved = JSON.parse(localStorage.getItem('pia-escola-cfg') || '{}');
     document.getElementById('dl-escola').value     = saved.escola     || '';
     document.getElementById('dl-professor').value  = saved.professor  || '';
@@ -1214,7 +1239,9 @@
     const anexoEnvio = anexoAtual; removerAnexo();
     const stream = addMsgIA();
     const piaMark = document.getElementById('piaMark');
+    const curAvatar = document.getElementById('currentAvatar');
     if (piaMark) piaMark.classList.add('typing');
+    if (curAvatar) curAvatar.classList.add('typing');
     try {
       const resp = await fetch('/api/chat',{ method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({messages:historico,anexo:anexoEnvio}) });
       if (resp.status===403) { stream.done(); location.reload(); return; }
@@ -1250,6 +1277,8 @@
     finally {
       const pm = document.getElementById('piaMark');
       if (pm) pm.classList.remove('typing');
+      const ca = document.getElementById('currentAvatar');
+      if (ca) { ca.classList.remove('typing'); ca.removeAttribute('id'); }
       enviando=false; btnEnviar.disabled=false; inputEl.disabled=false; inputEl.focus();
     }
   }
