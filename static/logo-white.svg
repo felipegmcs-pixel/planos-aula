@@ -1,13 +1,20 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
-  <g fill="none" stroke="#ffffff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
-    <circle cx="35" cy="28" r="10" />
-    <path d="M 35 38 L 35 55" />
-    <path d="M 35 42 Q 20 45 18 55" />
-    <path d="M 35 42 Q 50 45 52 55" />
-    <circle cx="60" cy="50" r="7" />
-    <path d="M 60 57 L 60 70" />
-    <path d="M 60 60 Q 48 58 42 52" />
-    <path d="M 45 48 Q 50 45 55 48" />
-    <circle cx="50" cy="50" r="2" fill="#ffffff" />
-  </g>
+  <!-- Logo Circular Geométrica do ProfessorIA (Branca) -->
+  <!-- Círculo externo (Branco) -->
+  <circle cx="50" cy="50" r="48" fill="none" stroke="#ffffff" stroke-width="2"/>
+  
+  <!-- Círculos internos (Geometria Sagrada - Vesica Piscis) -->
+  <circle cx="35" cy="50" r="20" fill="none" stroke="#ffffff" stroke-width="1.5" opacity="0.8"/>
+  <circle cx="65" cy="50" r="20" fill="none" stroke="#ffffff" stroke-width="1.5" opacity="0.8"/>
+  
+  <!-- Ponto central (Intuição/Conexão) -->
+  <circle cx="50" cy="50" r="3" fill="#ffffff"/>
+  
+  <!-- Linhas de energia (Triângulo sagrado) -->
+  <path d="M 50 25 L 35 65 L 65 65 Z" fill="none" stroke="#ffffff" stroke-width="1.5" opacity="0.6"/>
+  
+  <!-- Pequenos pontos nos vértices -->
+  <circle cx="50" cy="25" r="2" fill="#ffffff" opacity="0.7"/>
+  <circle cx="35" cy="65" r="2" fill="#ffffff" opacity="0.7"/>
+  <circle cx="65" cy="65" r="2" fill="#ffffff" opacity="0.7"/>
 </svg>
