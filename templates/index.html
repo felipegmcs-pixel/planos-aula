@@ -93,8 +93,13 @@
       height:58px;width:auto;object-fit:contain;flex-shrink:0;
     }
     .nav-name{
-      font-size:2.4rem;font-weight:800;color:#1E40AF;letter-spacing:-.4px;
+      font-size:2.4rem;font-weight:800;color:#1E40AF;letter-spacing:-.6px;
       font-family:Inter,sans-serif;white-space:nowrap;
+      background:linear-gradient(135deg,#1E40AF 0%,#1E3A8A 100%);
+      -webkit-background-clip:text;
+      -webkit-text-fill-color:transparent;
+      background-clip:text;
+      font-variation-settings:"wght" 800;
     }
     .logo{display:flex;align-items:center;text-decoration:none;gap:12px;transition:color .35s;vertical-align:middle}
     .logo-mark{display:flex;align-items:center;justify-content:center;width:44px;height:44px;border-radius:8px;background:#0f172a;flex-shrink:0;transition:background .35s,box-shadow .35s}
@@ -563,7 +568,7 @@
 <nav id="nav">
   <div class="nav-brand">
     <img src="{{ url_for('static', filename='logo-oficial.png') }}" alt="ProfessorIA" class="nav-logo">
-    <span class="nav-name">ProfessorIA</span>
+    <span class="nav-name"><span style="font-weight:600">Professor</span><span style="font-weight:900">IA</span></span>
   </div>
   <div class="nav-links">
     <a class="nav-a" href="#planos">Planos</a>
