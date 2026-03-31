@@ -57,10 +57,10 @@
     /* ── Connecting lines (icosahedron wireframe) ── */
     var icoGeo = new THREE.IcosahedronGeometry(38, 2);
     var icoMat = new THREE.MeshBasicMaterial({
-      color: isDark() ? 0x4338ca : 0x818cf8,
+      color: isDark() ? 0x4338ca : 0x1E40AF,
       wireframe: true,
       transparent: true,
-      opacity: isDark() ? 0.12 : 0.07
+      opacity: isDark() ? 0.12 : 0.1
     });
     var ico = new THREE.Mesh(icoGeo, icoMat);
     scene.add(ico);
@@ -68,9 +68,9 @@
     /* ── Torus ring ── */
     var torusGeo = new THREE.TorusGeometry(55, 0.4, 8, 80);
     var torusMat = new THREE.MeshBasicMaterial({
-      color: isDark() ? 0x7c3aed : 0x6366f1,
+      color: isDark() ? 0x7c3aed : 0x1E40AF,
       transparent: true,
-      opacity: isDark() ? 0.09 : 0.05
+      opacity: isDark() ? 0.09 : 0.08
     });
     var torus = new THREE.Mesh(torusGeo, torusMat);
     torus.rotation.x = Math.PI / 3;
@@ -78,10 +78,10 @@
 
     /* ── Particle material ── */
     var ptMat = new THREE.PointsMaterial({
-      color: isDark() ? 0x818cf8 : 0x4338ca,
+      color: isDark() ? 0x818cf8 : 0x1E40AF,
       size: 1.1,
       transparent: true,
-      opacity: isDark() ? 0.55 : 0.35,
+      opacity: isDark() ? 0.55 : 0.3,
       sizeAttenuation: true
     });
     var pts = new THREE.Points(geo, ptMat);
@@ -105,12 +105,12 @@
     /* ── Theme change ── */
     var observer = new MutationObserver(function () {
       var dark = isDark();
-      icoMat.color.set(dark ? 0x4338ca : 0x818cf8);
-      icoMat.opacity = dark ? 0.12 : 0.07;
-      torusMat.color.set(dark ? 0x7c3aed : 0x6366f1);
-      torusMat.opacity = dark ? 0.09 : 0.05;
-      ptMat.color.set(dark ? 0x818cf8 : 0x4338ca);
-      ptMat.opacity = dark ? 0.55 : 0.35;
+      icoMat.color.set(dark ? 0x4338ca : 0x1E40AF);
+      icoMat.opacity = dark ? 0.12 : 0.1;
+      torusMat.color.set(dark ? 0x7c3aed : 0x1E40AF);
+      torusMat.opacity = dark ? 0.09 : 0.08;
+      ptMat.color.set(dark ? 0x818cf8 : 0x1E40AF);
+      ptMat.opacity = dark ? 0.55 : 0.3;
     });
     observer.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
 
