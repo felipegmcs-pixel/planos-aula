@@ -1,49 +1,17 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
   <style>
-    /* Modo claro (padrão): Azul Acadêmico */
-    .icon-path {
-      fill: #1E40AF;
-      stroke: #1E40AF;
-    }
-    
-    /* Modo escuro: Branco puro para máxima visibilidade */
-    @media (prefers-color-scheme: dark) {
-      .icon-path {
-        fill: #FFFFFF;
-        stroke: #FFFFFF;
-      }
-    }
+    .icon-path { fill: #1E40AF; stroke: #1E40AF; }
+    @media (prefers-color-scheme: dark) { .icon-path { fill: #FFFFFF; stroke: #FFFFFF; } }
   </style>
-  
-  <!-- Fundo transparente (sem rect) -->
-  
-  <!-- Logo Ancestral: Mãe e Filho Conectados (traços bold para 16x16) -->
   <g transform="translate(32, 32) scale(0.5)">
-    <!-- Cabeça da mãe (círculo maior, superior esquerdo) -->
     <circle class="icon-path" cx="20" cy="12" r="8" stroke-width="0" />
-    
-    <!-- Corpo da mãe (linha vertical grossa) -->
-    <line class="icon-path" x1="20" y1="20" x2="20" y2="36" stroke-width="3" stroke-linecap="round" />
-    
-    <!-- Braço esquerdo da mãe (abraço) -->
-    <path class="icon-path" d="M 20 24 Q 8 28 6 38" stroke-width="3" stroke-linecap="round" fill="none" />
-    
-    <!-- Braço direito da mãe (abraço) -->
-    <path class="icon-path" d="M 20 24 Q 32 28 34 38" stroke-width="3" stroke-linecap="round" fill="none" />
-    
-    <!-- Cabeça do filho (círculo menor, inferior direito) -->
+    <line class="icon-path" x1="20" y1="20" x2="20" y2="36" stroke-width="4" stroke-linecap="round" />
+    <path class="icon-path" d="M 20 24 Q 8 28 6 38" stroke-width="4" stroke-linecap="round" fill="none" />
+    <path class="icon-path" d="M 20 24 Q 32 28 34 38" stroke-width="4" stroke-linecap="round" fill="none" />
     <circle class="icon-path" cx="42" cy="32" r="6" stroke-width="0" />
-    
-    <!-- Corpo do filho (linha vertical grossa) -->
-    <line class="icon-path" x1="42" y1="38" x2="42" y2="50" stroke-width="3" stroke-linecap="round" />
-    
-    <!-- Braço do filho (conexão com mãe) -->
-    <path class="icon-path" d="M 42 40 Q 32 38 26 32" stroke-width="3" stroke-linecap="round" fill="none" />
-    
-    <!-- Linha de conexão/energia (nó celta minimalista) -->
-    <path class="icon-path" d="M 28 30 Q 32 27 36 30" stroke-width="2.5" stroke-linecap="round" fill="none" />
-    
-    <!-- Ponto central de intuição (coração/conexão) -->
-    <circle class="icon-path" cx="32" cy="32" r="1.5" stroke-width="0" />
+    <line class="icon-path" x1="42" y1="38" x2="42" y2="50" stroke-width="4" stroke-linecap="round" />
+    <path class="icon-path" d="M 42 40 Q 32 38 26 32" stroke-width="4" stroke-linecap="round" fill="none" />
+    <path class="icon-path" d="M 28 30 Q 32 27 36 30" stroke-width="3" stroke-linecap="round" fill="none" />
+    <circle class="icon-path" cx="32" cy="32" r="2" stroke-width="0" />
   </g>
 </svg>

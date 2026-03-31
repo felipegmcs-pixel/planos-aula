@@ -58,8 +58,8 @@
     [data-theme="light"] .nav-item{color:rgba(17,24,39,.5)}
     .nav-item:hover{background:rgba(255,255,255,.06);color:var(--text)}
     [data-theme="light"] .nav-item:hover{background:rgba(17,24,39,.05);color:var(--text)}
-    .nav-item.active{background:rgba(99,102,241,.18);color:#818cf8;font-weight:600}
-    [data-theme="light"] .nav-item.active{background:rgba(67,56,202,.1);color:var(--indigo)}
+    .nav-item.active{background:rgba(30,64,175,.18);color:#818cf8;font-weight:600}
+    [data-theme="light"] .nav-item.active{background:rgba(30,64,175,.1);color:var(--indigo)}
     .nav-icon{width:16px;height:16px;stroke:currentColor;fill:none;stroke-linecap:round;stroke-linejoin:round;flex-shrink:0}
     .sidebar-spacer{flex:1}
     .sidebar-footer{padding:12px 8px;border-top:1px solid var(--linha)}
@@ -95,15 +95,15 @@
     }
     .stat-card::before{
       content:'';position:absolute;inset:0;
-      background:linear-gradient(135deg,rgba(67,56,202,.08),transparent);
+      background:linear-gradient(135deg,rgba(30,64,175,.08),transparent);
       opacity:0;transition:opacity .25s;
     }
-    .stat-card:hover{border-color:rgba(99,102,241,.3);transform:translateY(-2px);box-shadow:0 8px 32px rgba(67,56,202,.15)}
+    .stat-card:hover{border-color:rgba(30,64,175,.3);transform:translateY(-2px);box-shadow:0 8px 32px rgba(30,64,175,.15)}
     .stat-card:hover::before{opacity:1}
     .stat-icon{
       width:40px;height:40px;border-radius:10px;
       display:flex;align-items:center;justify-content:center;margin-bottom:14px;
-      background:linear-gradient(135deg,rgba(67,56,202,.2),rgba(124,58,237,.2));
+      background:linear-gradient(135deg,rgba(30,64,175,.2),rgba(30,64,175,.2));
     }
     .stat-icon svg{width:20px;height:20px;stroke:var(--indigo-l);fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
     .stat-value{font-size:2rem;font-weight:900;letter-spacing:-1.5px;line-height:1}
@@ -131,7 +131,7 @@
       background:var(--card);border:1px solid var(--linha);border-radius:12px;
       transition:all .18s;
     }
-    .activity-item:hover{border-color:rgba(99,102,241,.25);background:var(--card-h)}
+    .activity-item:hover{border-color:rgba(30,64,175,.25);background:var(--card-h)}
     .activity-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
     .activity-dot.plano{background:var(--indigo-l)}
     .activity-dot.prova{background:var(--violet)}
@@ -142,8 +142,8 @@
       padding:3px 9px;border-radius:20px;font-size:.6rem;font-weight:700;
       letter-spacing:.5px;text-transform:uppercase;
     }
-    .badge-plano{background:rgba(67,56,202,.15);color:#818cf8}
-    .badge-prova{background:rgba(124,58,237,.15);color:#a78bfa}
+    .badge-plano{background:rgba(30,64,175,.15);color:#818cf8}
+    .badge-prova{background:rgba(30,64,175,.15);color:#a78bfa}
     .badge-questao{background:rgba(16,185,129,.15);color:#34d399}
 
     /* Responsive */
@@ -370,7 +370,7 @@ function renderCharts(d) {
         label: 'Materiais',
         data: vals,
         borderColor: '#818cf8',
-        backgroundColor: 'rgba(99,102,241,.12)',
+        backgroundColor: 'rgba(30,64,175,.12)',
         borderWidth: 2.5,
         pointBackgroundColor: '#818cf8',
         pointRadius: 4,
