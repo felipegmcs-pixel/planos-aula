@@ -1,24 +1,49 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
-  <defs>
-    <linearGradient id="bg-grad" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#1E40AF"/>
-      <stop offset="100%" stop-color="#1E3A8A"/>
-    </linearGradient>
-  </defs>
-  <!-- Fundo quadrado arredondado com gradiente azul -->
-  <rect x="2" y="2" width="60" height="60" rx="14" ry="14" fill="url(#bg-grad)"/>
-  <!-- Borda sutil -->
-  <rect x="2" y="2" width="60" height="60" rx="14" ry="14" fill="none" stroke="rgba(255,255,255,0.18)" stroke-width="1.5"/>
-  <!-- Logo Ancestral em branco, centralizada -->
-  <g transform="translate(8, 8) scale(0.4)" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-    <circle cx="35" cy="28" r="10" />
-    <path d="M 35 38 L 35 55" />
-    <path d="M 35 42 Q 20 45 18 55" />
-    <path d="M 35 42 Q 50 45 52 55" />
-    <circle cx="60" cy="50" r="7" />
-    <path d="M 60 57 L 60 70" />
-    <path d="M 60 60 Q 48 58 42 52" />
-    <path d="M 45 48 Q 50 45 55 48" />
-    <circle cx="50" cy="50" r="2" fill="white" />
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <style>
+    /* Modo claro (padrão): Azul Acadêmico */
+    .icon-path {
+      fill: #1E40AF;
+      stroke: #1E40AF;
+    }
+    
+    /* Modo escuro: Branco puro para máxima visibilidade */
+    @media (prefers-color-scheme: dark) {
+      .icon-path {
+        fill: #FFFFFF;
+        stroke: #FFFFFF;
+      }
+    }
+  </style>
+  
+  <!-- Fundo transparente (sem rect) -->
+  
+  <!-- Logo Ancestral: Mãe e Filho Conectados (traços bold para 16x16) -->
+  <g transform="translate(32, 32) scale(0.5)">
+    <!-- Cabeça da mãe (círculo maior, superior esquerdo) -->
+    <circle class="icon-path" cx="20" cy="12" r="8" stroke-width="0" />
+    
+    <!-- Corpo da mãe (linha vertical grossa) -->
+    <line class="icon-path" x1="20" y1="20" x2="20" y2="36" stroke-width="3" stroke-linecap="round" />
+    
+    <!-- Braço esquerdo da mãe (abraço) -->
+    <path class="icon-path" d="M 20 24 Q 8 28 6 38" stroke-width="3" stroke-linecap="round" fill="none" />
+    
+    <!-- Braço direito da mãe (abraço) -->
+    <path class="icon-path" d="M 20 24 Q 32 28 34 38" stroke-width="3" stroke-linecap="round" fill="none" />
+    
+    <!-- Cabeça do filho (círculo menor, inferior direito) -->
+    <circle class="icon-path" cx="42" cy="32" r="6" stroke-width="0" />
+    
+    <!-- Corpo do filho (linha vertical grossa) -->
+    <line class="icon-path" x1="42" y1="38" x2="42" y2="50" stroke-width="3" stroke-linecap="round" />
+    
+    <!-- Braço do filho (conexão com mãe) -->
+    <path class="icon-path" d="M 42 40 Q 32 38 26 32" stroke-width="3" stroke-linecap="round" fill="none" />
+    
+    <!-- Linha de conexão/energia (nó celta minimalista) -->
+    <path class="icon-path" d="M 28 30 Q 32 27 36 30" stroke-width="2.5" stroke-linecap="round" fill="none" />
+    
+    <!-- Ponto central de intuição (coração/conexão) -->
+    <circle class="icon-path" cx="32" cy="32" r="1.5" stroke-width="0" />
   </g>
 </svg>
