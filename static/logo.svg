@@ -1,20 +1,15 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
-  <!-- Logo Circular Geométrica do ProfessorIA -->
-  <!-- Círculo externo (Azul Acadêmico) -->
-  <circle cx="50" cy="50" r="48" fill="none" stroke="#1E40AF" stroke-width="2"/>
-  
-  <!-- Círculos internos (Geometria Sagrada - Vesica Piscis) -->
-  <circle cx="35" cy="50" r="20" fill="none" stroke="#1E40AF" stroke-width="1.5" opacity="0.8"/>
-  <circle cx="65" cy="50" r="20" fill="none" stroke="#1E40AF" stroke-width="1.5" opacity="0.8"/>
-  
-  <!-- Ponto central (Intuição/Conexão) -->
-  <circle cx="50" cy="50" r="3" fill="#1E40AF"/>
-  
-  <!-- Linhas de energia (Triângulo sagrado) -->
-  <path d="M 50 25 L 35 65 L 65 65 Z" fill="none" stroke="#1E40AF" stroke-width="1.5" opacity="0.6"/>
-  
-  <!-- Pequenos pontos nos vértices -->
-  <circle cx="50" cy="25" r="2" fill="#1E40AF" opacity="0.7"/>
-  <circle cx="35" cy="65" r="2" fill="#1E40AF" opacity="0.7"/>
-  <circle cx="65" cy="65" r="2" fill="#1E40AF" opacity="0.7"/>
+  <style>
+    .logo-circle { stroke: #1E40AF; stroke-width: 4; stroke-linecap: round; stroke-linejoin: round; fill: none; }
+    .logo-point { fill: #1E40AF; }
+    @media (prefers-color-scheme: dark) {
+      .logo-circle { stroke: #FFFFFF; }
+      .logo-point { fill: #FFFFFF; }
+    }
+  </style>
+  <!-- Dois círculos entrelaçados (Vesica Piscis) -->
+  <circle class="logo-circle" cx="35" cy="50" r="20" />
+  <circle class="logo-circle" cx="65" cy="50" r="20" />
+  <!-- Ponto central sólido na intersecção -->
+  <circle class="logo-point" cx="50" cy="50" r="3" />
 </svg>
