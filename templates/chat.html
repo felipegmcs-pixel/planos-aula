@@ -209,6 +209,21 @@
     }
     .user-name { font-size: .78rem; font-weight: 600; color: var(--sb-fg); }
     .user-plan { font-size: .65rem; color: var(--sb-text); margin-top: 1px; }
+    .user-card-dropdown { position: relative; }
+    .user-card { background: none; border: none; cursor: pointer; width: 100%; text-align: left; }
+    .dropdown-menu {
+      display: none; position: absolute; bottom: 100%; left: 0; right: 0;
+      background: var(--card-bg); border: 1px solid var(--line); border-radius: 8px;
+      box-shadow: 0 4px 12px rgba(0,0,0,.15); z-index: 1000; margin-bottom: 8px;
+    }
+    .dropdown-menu.active { display: flex; flex-direction: column; }
+    .dropdown-item {
+      padding: 10px 12px; font-size: .8rem; color: var(--sb-fg);
+      text-decoration: none; transition: background .15s; border: none;
+    }
+    .dropdown-item:hover { background: var(--hover-bg); }
+    .dropdown-item.logout { color: #dc2626; }
+    [data-theme="dark"] .dropdown-menu { background: rgba(17,17,16,.95); border-color: rgba(255,255,255,.1); }
 
     /* ════════════════════════════════════════
        MAIN AREA + ANIMATED ORBS
@@ -777,13 +792,20 @@
     </nav>
     <div class="sidebar-spacer"></div>
     <div class="sidebar-footer">
-      <a class="user-card" href="/conta">
-        <div class="user-avatar">{{ current_user.nome[0].upper() }}</div>
-        <div>
-          <div class="user-name">{{ current_user.nome.split()[0] }}</div>
-          <div class="user-plan">Minha conta</div>
+      <div class="user-card-dropdown">
+        <button class="user-card" id="userMenuBtn">
+          <div class="user-avatar">{{ current_user.nome[0].upper() }}</div>
+          <div>
+            <div class="user-name">{{ current_user.nome.split()[0] }}</div>
+            <div class="user-plan">Minha conta</div>
+          </div>
+        </button>
+        <div class="dropdown-menu" id="userDropdown">
+          <a href="/perfil" class="dropdown-item">Meu Perfil</a>
+          <a href="/planos" class="dropdown-item">Plano</a>
+          <a href="/logout" class="dropdown-item logout">Sair</a>
         </div>
-      </a>
+      </div>
     </div>
   </aside>
 
@@ -1427,5 +1449,25 @@
 
 <script src="/static/theme.js"></script>
 <script src="/static/bg3d.js"></script>
+<script>
+  // User menu dropdown
+  const userMenuBtn = document.getElementById('userMenuBtn');
+  const userDropdown = document.getElementById('userDropdown');
+  
+  if (userMenuBtn && userDropdown) {
+    userMenuBtn.addEventListener('click', function(e) {
+      e.stopPropagation();
+      userDropdown.classList.toggle('active');
+    });
+    
+    document.addEventListener('click', function() {
+      userDropdown.classList.remove('active');
+    });
+    
+    userDropdown.addEventListener('click', function(e) {
+      e.stopPropagation();
+    });
+  }
+</script>
 </body>
 </html>

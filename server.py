@@ -1590,7 +1590,7 @@ def admin_update():
 
 # ─── Conta / Perfil ───────────────────────────────────────────────────────────
 
-@app.route('/conta')
+@app.route('/perfil')
 @login_required
 def conta():
     conn = get_db()
@@ -1606,7 +1606,7 @@ def conta():
     }
     return render_template('conta.html', stats=stats)
 
-@app.route('/conta/senha', methods=['POST'])
+@app.route('/perfil/senha', methods=['POST'])
 @login_required
 def conta_senha():
     senha_atual = request.form.get('senha_atual', '')
