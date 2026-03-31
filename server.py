@@ -48,7 +48,7 @@ client = Anthropic(api_key=os.environ.get('ANTHROPIC_API_KEY'), timeout=120.0)
 
 # ── OpenAI (Motor Duplo) ──────────────────────────────────────────────────────
 OPENAI_API_KEY = os.environ.get('OPENAI_API_KEY', '')
-client_openai = OpenAI(api_key=OPENAI_API_KEY) if OPENAI_API_KEY else None
+client_openai = OpenAI(api_key=os.environ.get('OPENAI_API_KEY')) if os.environ.get('OPENAI_API_KEY') else None
 MOTOR_IA = os.environ.get('MOTOR_IA', 'claude').lower()  # 'claude' ou 'openai'
 print(f'✓ Motor IA configurado: {MOTOR_IA}')
 
