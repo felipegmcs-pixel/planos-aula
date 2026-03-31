@@ -287,19 +287,43 @@ def chamar_ia_chat(sistema, messages):
     # Fallback: Claude via HTTP direto (suporta conteúdo multimodal nativamente)
     import requests as req_lib
     api_key = os.environ.get('ANTHROPIC_API_KEY', '').strip()
-    if not api_key:
-        raise RuntimeError('Nenhuma API de IA configurada (GEMINI_API_KEY ou ANTHROPIC_API_KEY)')
-    r = req_lib.post(
-        'https://api.anthropic.com/v1/messages',
-        json={'model': 'claude-sonnet-4-6', 'max_tokens': 4000,
-              'system': sistema, 'messages': messages},
-        headers={'x-api-key': api_key, 'anthropic-version': '2023-06-01',
-                 'content-type': 'application/json'},
+    claude_sem_credito = False
+    if api_key:
+        r = req_lib.post(
+            'https://api.anthropic.com/v1/messages',
+            json={'model': 'claude-sonnet-4-6', 'max_tokens': 4000,
+                  'system': sistema, 'messages': messages},
+            headers={'x-api-key': api_key, 'anthropic-version': '2023-06-01',
+                     'content-type': 'application/json'},
+            timeout=120
+        )
+        if r.status_code == 200:
+            return r.json()['content'][0]['text']
+        if r.status_code == 400 and 'credit' in r.text.lower():
+            claude_sem_credito = True
+            print('Claude sem créditos, tentando OpenAI...')
+        else:
+            raise RuntimeError(f'Claude API {r.status_code}: {r.text[:300]}')
+
+    # Fallback final: OpenAI (GPT-4o-mini)
+    openai_key = os.environ.get('OPENAI_API_KEY', '').strip()
+    if not openai_key:
+        if claude_sem_credito:
+            raise RuntimeError('Créditos da API esgotados. Por favor, tente novamente mais tarde.')
+        raise RuntimeError('Nenhuma API de IA configurada (GEMINI_API_KEY, ANTHROPIC_API_KEY ou OPENAI_API_KEY)')
+    openai_msgs = [{'role': 'system', 'content': sistema}] + [
+        {'role': m['role'], 'content': m['content'] if isinstance(m['content'], str) else str(m['content'])}
+        for m in messages
+    ]
+    ro = req_lib.post(
+        'https://api.openai.com/v1/chat/completions',
+        json={'model': 'gpt-4o-mini', 'max_tokens': 4000, 'messages': openai_msgs},
+        headers={'Authorization': f'Bearer {openai_key}', 'content-type': 'application/json'},
         timeout=120
     )
-    if r.status_code != 200:
-        raise RuntimeError(f'Claude API {r.status_code}: {r.text[:300]}')
-    return r.json()['content'][0]['text']
+    if ro.status_code != 200:
+        raise RuntimeError(f'OpenAI API {ro.status_code}: {ro.text[:300]}')
+    return ro.json()['choices'][0]['message']['content']
 
 
 def chamar_ia_simples(prompt):
@@ -314,12 +338,33 @@ def chamar_ia_simples(prompt):
             print(f'Gemini falhou, usando Claude: {e}')
 
     # Fallback: Claude SDK
-    resposta = client.messages.create(
-        model='claude-sonnet-4-6',
-        max_tokens=4000,
-        messages=[{'role': 'user', 'content': prompt}]
+    try:
+        resposta = client.messages.create(
+            model='claude-sonnet-4-6',
+            max_tokens=4000,
+            messages=[{'role': 'user', 'content': prompt}]
+        )
+        return resposta.content[0].text
+    except Exception as e:
+        if 'credit' not in str(e).lower():
+            raise
+        print(f'Claude sem créditos em chamar_ia_simples, tentando OpenAI: {e}')
+
+    # Fallback final: OpenAI
+    import requests as req_lib
+    openai_key = os.environ.get('OPENAI_API_KEY', '').strip()
+    if not openai_key:
+        raise RuntimeError('Créditos da API esgotados. Por favor, tente novamente mais tarde.')
+    ro = req_lib.post(
+        'https://api.openai.com/v1/chat/completions',
+        json={'model': 'gpt-4o-mini', 'max_tokens': 4000,
+              'messages': [{'role': 'user', 'content': prompt}]},
+        headers={'Authorization': f'Bearer {openai_key}', 'content-type': 'application/json'},
+        timeout=120
     )
-    return resposta.content[0].text
+    if ro.status_code != 200:
+        raise RuntimeError(f'OpenAI API {ro.status_code}: {ro.text[:300]}')
+    return ro.json()['choices'][0]['message']['content']
 
 # ─── Banco de dados ───────────────────────────────────────────────────────────
 
@@ -1853,15 +1898,56 @@ def api_chat():
                     chunks = []  # reset
 
             # Claude streaming
-            with client.messages.stream(
-                model='claude-sonnet-4-6',
-                max_tokens=8000,
-                system=sistema,
-                messages=messages
-            ) as stream:
-                for text in stream.text_stream:
-                    chunks.append(text)
-                    yield f"data: {json.dumps({'chunk': text})}\n\n"
+            claude_ok = False
+            try:
+                with client.messages.stream(
+                    model='claude-sonnet-4-6',
+                    max_tokens=8000,
+                    system=sistema,
+                    messages=messages
+                ) as stream:
+                    for text in stream.text_stream:
+                        chunks.append(text)
+                        yield f"data: {json.dumps({'chunk': text})}\n\n"
+                claude_ok = True
+            except Exception as ce:
+                if 'credit' not in str(ce).lower():
+                    raise
+                print(f'Claude sem créditos no streaming, tentando OpenAI: {ce}')
+                chunks = []
+
+            if not claude_ok:
+                # Fallback OpenAI streaming
+                import requests as req_lib
+                openai_key = os.environ.get('OPENAI_API_KEY', '').strip()
+                if not openai_key:
+                    yield f"data: {json.dumps({'erro': 'Créditos da API esgotados. Tente novamente mais tarde.'})}\n\n"
+                    return
+                openai_msgs = [{'role': 'system', 'content': sistema}] + [
+                    {'role': m['role'], 'content': m['content'] if isinstance(m['content'], str) else str(m['content'])}
+                    for m in messages
+                ]
+                ro = req_lib.post(
+                    'https://api.openai.com/v1/chat/completions',
+                    json={'model': 'gpt-4o-mini', 'max_tokens': 8000, 'messages': openai_msgs, 'stream': True},
+                    headers={'Authorization': f'Bearer {openai_key}', 'content-type': 'application/json'},
+                    stream=True, timeout=120
+                )
+                for line in ro.iter_lines():
+                    if not line:
+                        continue
+                    line = line.decode('utf-8')
+                    if line.startswith('data: '):
+                        line = line[6:]
+                    if line == '[DONE]':
+                        break
+                    try:
+                        delta = json.loads(line)['choices'][0]['delta'].get('content', '')
+                        if delta:
+                            chunks.append(delta)
+                            yield f"data: {json.dumps({'chunk': delta})}\n\n"
+                    except Exception:
+                        pass
 
             yield "data: [DONE]\n\n"
             resposta = ''.join(chunks)
@@ -3094,7 +3180,7 @@ Gere um planejamento bimestral detalhado seguindo a BNCC com:
 Formato: texto estruturado e claro, pronto para entregar à coordenação."""
 
     resposta = client.messages.create(
-        model="claude-opus-4-6",
+        model="claude-sonnet-4-6",
         max_tokens=6000,
         messages=[{"role": "user", "content": prompt}]
     )

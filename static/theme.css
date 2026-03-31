@@ -48,7 +48,7 @@ html:not([data-theme="dark"]) body {
 }
 
 /* ── NAV ── */
-nav { background: var(--nav-bg) !important; }
+nav.lit { background: var(--nav-bg) !important; }
 [data-theme="dark"] nav { border-bottom-color: var(--linha) !important; }
 
 /* ── Ticker always dark ── */
