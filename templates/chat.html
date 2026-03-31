@@ -5,7 +5,7 @@
   <script>!function(){var t=localStorage.getItem("pia-theme")||"light",a="system"===t?(window.matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light"):t;document.documentElement.setAttribute("data-theme",a),document.documentElement.style.colorScheme=a}();</script>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>ProfessorIA — Chat</title>
-  <link rel="icon" type="image/svg+xml" href="/static/logo.svg"/>
+  <link rel="icon" href="{{ url_for('static', filename='favicon.svg') }}" type="image/svg+xml">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet"/>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -14,8 +14,8 @@
       --text: #111827;
       --text2: #6b7280;
       --text3: #9ca3af;
-      --indigo: #4338ca;
-      --violet: #7c3aed;
+      --indigo: #1E40AF;
+      --violet: #1E3A8A;
       --amber: #f59e0b;
       --linha: rgba(17,24,39,.08);
       --linha-f: rgba(17,24,39,.14);
@@ -24,7 +24,7 @@
       --sb-bg: #f7f8ff;
       --sb-fg: #111827;
       --sb-text: rgba(17,24,39,.45);
-      --sb-active: rgba(67,56,202,.09);
+      --sb-active: rgba(30,64,175,.09);
       --sb-line: rgba(17,24,39,.07);
       --sidebar-w: 240px;
     }
@@ -40,7 +40,7 @@
       --sb-bg: #0a0c18;
       --sb-fg: #ffffff;
       --sb-text: rgba(255,255,255,.5);
-      --sb-active: rgba(99,102,241,.2);
+      --sb-active: rgba(30,64,175,.2);
       --sb-line: rgba(255,255,255,.07);
     }
     html, body { height: 100%; font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); overflow: hidden; }
@@ -86,12 +86,12 @@
       50%     { background-position: 100% 50%; }
     }
     @keyframes sendPulse {
-      0%,100% { box-shadow: 0 2px 10px rgba(67,56,202,.4); }
-      50%     { box-shadow: 0 4px 22px rgba(67,56,202,.65); }
+      0%,100% { box-shadow: 0 2px 10px rgba(30,64,175,.4); }
+      50%     { box-shadow: 0 4px 22px rgba(30,64,175,.65); }
     }
     @keyframes inputGlow {
-      0%,100% { box-shadow: 0 0 0 3px rgba(67,56,202,.1), 0 0 28px rgba(67,56,202,.06); }
-      50%     { box-shadow: 0 0 0 3px rgba(67,56,202,.2), 0 0 40px rgba(67,56,202,.12); }
+      0%,100% { box-shadow: 0 0 0 3px rgba(30,64,175,.1), 0 0 28px rgba(30,64,175,.06); }
+      50%     { box-shadow: 0 0 0 3px rgba(30,64,175,.2), 0 0 40px rgba(30,64,175,.12); }
     }
     @keyframes iconTyping {
       0%,100% { filter: brightness(1) drop-shadow(0 0 0px transparent); transform: scale(1); }
@@ -102,8 +102,8 @@
       100% { stroke-dashoffset: 0; }
     }
     @keyframes pulseDot {
-      0%,100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(67,56,202,.5); }
-      50%     { transform: scale(1.2); box-shadow: 0 0 0 10px rgba(67,56,202,0); }
+      0%,100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(30,64,175,.5); }
+      50%     { transform: scale(1.2); box-shadow: 0 0 0 10px rgba(30,64,175,0); }
     }
     @keyframes welcomeIn {
       from { opacity: 0; transform: translateY(16px); }
@@ -138,8 +138,8 @@
     }
     [data-theme="dark"] .sidebar::before {
       background:
-        radial-gradient(ellipse 160% 50% at 50% 0%,  rgba(99,102,241,.22) 0%, transparent 60%),
-        radial-gradient(ellipse 100% 40% at 100% 100%, rgba(124,58,237,.14) 0%, transparent 55%);
+        radial-gradient(ellipse 160% 50% at 50% 0%,  rgba(30,64,175,.22) 0%, transparent 60%),
+        radial-gradient(ellipse 100% 40% at 100% 100%, rgba(30,64,175,.14) 0%, transparent 55%);
     }
     .sidebar > * { position: relative; z-index: 1; }
 
@@ -149,9 +149,9 @@
       border-bottom: 1px solid var(--sb-line); flex-shrink: 0;
     }
     .logo { display: flex; align-items: center; text-decoration: none; gap: 9px; }
-    .logo-p  { font-size: .88rem; font-weight: 800; letter-spacing: -.3px; color: var(--sb-fg); }
+    .logo-p  { font-size: 1.25rem; font-weight: 800; letter-spacing: -.3px; color: var(--sb-fg); }
     .logo-ia {
-      font-size: .88rem; font-weight: 600; letter-spacing: -.3px;
+      font-size: 1rem; font-weight: 600; letter-spacing: -.3px;
       color: #818cf8;
     }
     [data-theme="dark"] .logo-ia { color: #a5b4fc; }
@@ -201,10 +201,10 @@
     [data-theme="dark"] .user-card:hover { background: rgba(255,255,255,.07); }
     .user-avatar {
       width: 30px; height: 30px; border-radius: 50%;
-      background: linear-gradient(135deg, #4338ca, #7c3aed);
+      background: linear-gradient(135deg, #1E40AF, #1E3A8A);
       display: flex; align-items: center; justify-content: center;
       font-size: .65rem; font-weight: 800; color: #fff; flex-shrink: 0;
-      box-shadow: 0 0 0 2px rgba(99,102,241,.3);
+      box-shadow: 0 0 0 2px rgba(30,64,175,.3);
     }
     .user-name { font-size: .78rem; font-weight: 600; color: var(--sb-fg); }
     .user-plan { font-size: .65rem; color: var(--sb-text); margin-top: 1px; }
@@ -218,13 +218,13 @@
     .orb { position: absolute; border-radius: 50%; will-change: transform; }
     .orb-1 {
       width: 55vw; height: 55vw; top: -20%; right: -12%;
-      background: radial-gradient(circle, rgba(99,102,241,.055) 0%, transparent 70%);
+      background: radial-gradient(circle, rgba(30,64,175,.055) 0%, transparent 70%);
       filter: blur(90px);
       animation: orbDrift1 24s ease-in-out infinite alternate;
     }
     .orb-2 {
       width: 38vw; height: 38vw; bottom: -8%; left: -5%;
-      background: radial-gradient(circle, rgba(124,58,237,.045) 0%, transparent 70%);
+      background: radial-gradient(circle, rgba(30,64,175,.045) 0%, transparent 70%);
       filter: blur(75px);
       animation: orbDrift2 30s ease-in-out infinite alternate;
     }
@@ -234,8 +234,8 @@
       filter: blur(65px);
       animation: orbDrift3 20s ease-in-out infinite alternate;
     }
-    [data-theme="dark"] .orb-1 { background: radial-gradient(circle, rgba(99,102,241,.13)  0%, transparent 70%); }
-    [data-theme="dark"] .orb-2 { background: radial-gradient(circle, rgba(124,58,237,.11)  0%, transparent 70%); }
+    [data-theme="dark"] .orb-1 { background: radial-gradient(circle, rgba(30,64,175,.13)  0%, transparent 70%); }
+    [data-theme="dark"] .orb-2 { background: radial-gradient(circle, rgba(30,64,175,.11)  0%, transparent 70%); }
     [data-theme="dark"] .orb-3 { background: radial-gradient(circle, rgba(14,165,233,.07)  0%, transparent 70%); }
 
     /* ════════════════════════════════════════
@@ -304,7 +304,7 @@
     }
     .w3d-face {
       position: absolute; width: 240px; height: 240px;
-      border: 2px solid #4338ca;
+      border: 2px solid #1E40AF;
     }
     .w3d-face:nth-child(1) { transform: translateZ(120px); }
     .w3d-face:nth-child(2) { transform: rotateY(180deg) translateZ(120px); }
@@ -337,7 +337,7 @@
       animation: welcomeIn .55s .15s both;
     }
     .welcome h1 .wname {
-      background: linear-gradient(135deg, #4338ca, #7c3aed, #60a5fa, #4338ca);
+      background: linear-gradient(135deg, #1E40AF, #1E3A8A, #60a5fa, #1E40AF);
       background-size: 300% 300%;
       -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
       animation: gradShift 5s ease infinite;
@@ -367,7 +367,7 @@
     .feature-card::before {
       content: '';
       position: absolute; inset: 0;
-      background: linear-gradient(105deg, transparent 40%, rgba(99,102,241,.07) 50%, transparent 60%);
+      background: linear-gradient(105deg, transparent 40%, rgba(30,64,175,.07) 50%, transparent 60%);
       background-size: 200% 100%;
       background-position: 200% 0;
       transition: background-position .55s ease;
@@ -376,16 +376,16 @@
     .feature-card::after {
       content: '';
       position: absolute; bottom: 0; left: 0; right: 0; height: 2px;
-      background: linear-gradient(90deg, #4338ca, #7c3aed);
+      background: linear-gradient(90deg, #1E40AF, #1E3A8A);
       transform: scaleX(0); transform-origin: left;
       transition: transform .28s ease;
       border-radius: 0 0 12px 12px;
     }
-    .feature-card:hover { transform: translateY(-3px); box-shadow: 0 10px 28px rgba(67,56,202,.13); border-color: rgba(99,102,241,.35); }
+    .feature-card:hover { transform: translateY(-3px); box-shadow: 0 10px 28px rgba(30,64,175,.13); border-color: rgba(30,64,175,.35); }
     .feature-card:hover::before { background-position: -100% 0; }
     .feature-card:hover::after  { transform: scaleX(1); }
     [data-theme="dark"] .feature-card { background: rgba(255,255,255,.03); border-color: rgba(255,255,255,.08); }
-    [data-theme="dark"] .feature-card:hover { background: rgba(99,102,241,.07); border-color: rgba(99,102,241,.32); box-shadow: 0 10px 28px rgba(67,56,202,.22); }
+    [data-theme="dark"] .feature-card:hover { background: rgba(30,64,175,.07); border-color: rgba(30,64,175,.32); box-shadow: 0 10px 28px rgba(30,64,175,.22); }
 
     .feature-icon { font-size: 1.1rem; margin-bottom: 8px; line-height: 1; }
     .feature-card-num   { font-size: .58rem; font-weight: 700; letter-spacing: 1px; color: var(--indigo); margin-bottom: 5px; opacity: .65; }
@@ -406,10 +406,10 @@
       width: 32px; height: 32px; border-radius: 50%; flex-shrink: 0;
       display: flex; align-items: center; justify-content: center;
       font-size: .6rem; font-weight: 800; margin-top: 2px; color: #fff;
-      background: linear-gradient(135deg, #4338ca, #7c3aed);
+      background: linear-gradient(135deg, #1E40AF, #1E3A8A);
     }
-    .msg.assistant .msg-avatar { box-shadow: 0 0 0 3px rgba(99,102,241,.2), 0 4px 12px rgba(67,56,202,.3); }
-    .msg.user      .msg-avatar { box-shadow: 0 4px 12px rgba(67,56,202,.25); }
+    .msg.assistant .msg-avatar { box-shadow: 0 0 0 3px rgba(30,64,175,.2), 0 4px 12px rgba(30,64,175,.3); }
+    .msg.user      .msg-avatar { box-shadow: 0 4px 12px rgba(30,64,175,.25); }
 
     .msg-content { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 6px; }
     .msg.user .msg-content { align-items: flex-end; }
@@ -417,11 +417,11 @@
 
     .msg-bubble { font-size: .9rem; line-height: 1.8; color: var(--text); padding: 14px 18px; }
     .msg.user .msg-bubble {
-      background: linear-gradient(135deg, #4338ca, #7c3aed);
+      background: linear-gradient(135deg, #1E40AF, #1E3A8A);
       background-size: 200% 200%;
       color: #fff; max-width: 80%;
       border-radius: 18px 4px 18px 18px;
-      box-shadow: 0 4px 20px rgba(67,56,202,.32);
+      box-shadow: 0 4px 20px rgba(30,64,175,.32);
       animation: gradShift 6s ease infinite;
     }
     .msg.assistant .msg-bubble {
@@ -478,7 +478,7 @@
       font-size: .65rem; font-weight: 600; color: var(--text2);
       cursor: pointer; transition: all .15s; font-family: 'Inter', sans-serif; border-radius: 6px;
     }
-    .msg-btn:hover { border-color: var(--indigo); color: var(--indigo); background: rgba(67,56,202,.06); }
+    .msg-btn:hover { border-color: var(--indigo); color: var(--indigo); background: rgba(30,64,175,.06); }
     .msg-btn.ouvir.playing { border-color: var(--amber); color: #92400e; }
 
     /* ════════════════════════════════════════
@@ -512,7 +512,7 @@
 
     .btn-send {
       width: 36px; height: 36px;
-      background: linear-gradient(135deg, #4338ca, #7c3aed, #4338ca);
+      background: linear-gradient(135deg, #1E40AF, #1E3A8A, #1E40AF);
       background-size: 200% 200%;
       border: none; cursor: pointer; border-radius: 10px;
       display: flex; align-items: center; justify-content: center;
@@ -523,8 +523,8 @@
     .btn-send:hover:not(:disabled) {
       animation: none;
       transform: translateY(-2px) scale(1.08);
-      background: linear-gradient(135deg, #4338ca, #7c3aed);
-      box-shadow: 0 8px 28px rgba(67,56,202,.55);
+      background: linear-gradient(135deg, #1E40AF, #1E3A8A);
+      box-shadow: 0 8px 28px rgba(30,64,175,.55);
     }
     .btn-send:disabled { background: var(--linha-f); animation: none; box-shadow: none; cursor: not-allowed; }
     .btn-send svg { width: 14px; height: 14px; fill: #fff; }
@@ -537,8 +537,8 @@
       cursor: pointer; display: flex; align-items: center; justify-content: center;
       flex-shrink: 0; transition: all .2s;
     }
-    .btn-attach:hover, .btn-mic:hover { border-color: var(--indigo); background: rgba(67,56,202,.06); }
-    .btn-attach.ativo { border-color: var(--indigo); background: rgba(67,56,202,.08); }
+    .btn-attach:hover, .btn-mic:hover { border-color: var(--indigo); background: rgba(30,64,175,.06); }
+    .btn-attach.ativo { border-color: var(--indigo); background: rgba(30,64,175,.08); }
     .btn-attach svg, .btn-mic svg { width: 14px; height: 14px; fill: var(--text2); transition: fill .2s; }
     .btn-attach:hover svg, .btn-mic:hover svg { fill: var(--indigo); }
     .btn-mic.gravando { background: #dc2626; border-color: #dc2626; animation: sendPulse 1s ease-in-out infinite; }
@@ -555,7 +555,7 @@
     .anexo-thumb { width: 40px; height: 40px; object-fit: cover; border-radius: 6px; border: 1px solid var(--linha); flex-shrink: 0; }
     .anexo-thumb-doc {
       width: 40px; height: 40px; border-radius: 6px; flex-shrink: 0;
-      background: linear-gradient(135deg, #4338ca, #7c3aed);
+      background: linear-gradient(135deg, #1E40AF, #1E3A8A);
       color: #fff; display: flex; align-items: center; justify-content: center;
       font-size: .55rem; font-weight: 800; letter-spacing: 1px;
     }
@@ -581,7 +581,7 @@
     .nee-modal {
       background: #0f1120; border: 1px solid rgba(255,255,255,.1);
       padding: 32px 28px; max-width: 440px; width: 90%; border-radius: 16px;
-      box-shadow: 0 24px 80px rgba(0,0,0,.6), 0 0 60px rgba(67,56,202,.14);
+      box-shadow: 0 24px 80px rgba(0,0,0,.6), 0 0 60px rgba(30,64,175,.14);
     }
     .nee-modal-tag {
       font-size: .6rem; font-weight: 700; letter-spacing: 2px; text-transform: uppercase;
@@ -596,8 +596,8 @@
       padding: 14px 12px; border-radius: 10px;
       cursor: pointer; text-align: left; transition: all .15s; font-family: 'Inter', sans-serif;
     }
-    .nee-opt:hover { background: rgba(99,102,241,.1); border-color: rgba(99,102,241,.3); }
-    .nee-opt.sel  { background: rgba(67,56,202,.18); border-color: rgba(99,102,241,.5); }
+    .nee-opt:hover { background: rgba(30,64,175,.1); border-color: rgba(30,64,175,.3); }
+    .nee-opt.sel  { background: rgba(30,64,175,.18); border-color: rgba(30,64,175,.5); }
     .nee-opt-title { font-size: .72rem; font-weight: 700; color: #f0f0ec; }
     .nee-opt.sel .nee-opt-title { color: #a5b4fc; }
     .nee-opt-desc { font-size: .62rem; color: rgba(255,255,255,.35); margin-top: 3px; }
@@ -605,7 +605,7 @@
     .nee-btn { padding: 10px 20px; border-radius: 8px; font-size: .72rem; font-weight: 700; cursor: pointer; font-family: 'Inter', sans-serif; transition: all .15s; border: none; }
     .nee-btn.cancel  { background: rgba(255,255,255,.06); color: rgba(255,255,255,.5); }
     .nee-btn.cancel:hover { background: rgba(255,255,255,.1); color: #fff; }
-    .nee-btn.confirm { background: linear-gradient(135deg, #4338ca, #7c3aed); color: #fff; box-shadow: 0 4px 14px rgba(67,56,202,.4); }
+    .nee-btn.confirm { background: linear-gradient(135deg, #1E40AF, #1E3A8A); color: #fff; box-shadow: 0 4px 14px rgba(30,64,175,.4); }
     .nee-btn.confirm:hover { opacity: .9; }
 
     /* ════════════════════════════════════════
@@ -643,27 +643,27 @@
     background:#0f1120; border:1px solid rgba(255,255,255,.1);
     width:100%; max-width:480px; padding:36px;
     font-family:'Inter',sans-serif; border-radius:18px;
-    box-shadow:0 24px 80px rgba(0,0,0,.7),0 0 60px rgba(67,56,202,.15);
+    box-shadow:0 24px 80px rgba(0,0,0,.7),0 0 60px rgba(30,64,175,.15);
   ">
     <div style="font-size:.55rem;font-weight:700;letter-spacing:2.5px;text-transform:uppercase;color:#818cf8;margin-bottom:16px;display:flex;align-items:center;gap:8px;">
-      <span style="display:inline-block;width:16px;height:2px;background:#4338ca;border-radius:2px;"></span>
+      <span style="display:inline-block;width:16px;height:2px;background:#1E40AF;border-radius:2px;"></span>
       Baixar como DOCX
     </div>
     <h2 style="font-size:1.3rem;font-weight:900;letter-spacing:-1px;color:#fff;line-height:1.1;margin-bottom:20px;">Dados da avaliação</h2>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;">
       <div>
         <label style="font-size:.55rem;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:rgba(255,255,255,.35);display:block;margin-bottom:6px;">Nome da escola</label>
-        <input id="dl-escola" type="text" placeholder="E.E. Nome da Escola" style="width:100%;padding:9px 12px;background:rgba(255,255,255,.05);border:1.5px solid rgba(255,255,255,.1);color:#fff;font-family:'Inter',sans-serif;font-size:.82rem;border-radius:8px;outline:none;transition:border-color .2s;" onfocus="this.style.borderColor='rgba(99,102,241,.5)'" onblur="this.style.borderColor='rgba(255,255,255,.1)'"/>
+        <input id="dl-escola" type="text" placeholder="E.E. Nome da Escola" style="width:100%;padding:9px 12px;background:rgba(255,255,255,.05);border:1.5px solid rgba(255,255,255,.1);color:#fff;font-family:'Inter',sans-serif;font-size:.82rem;border-radius:8px;outline:none;transition:border-color .2s;" onfocus="this.style.borderColor='rgba(30,64,175,.5)'" onblur="this.style.borderColor='rgba(255,255,255,.1)'"/>
       </div>
       <div>
         <label style="font-size:.55rem;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:rgba(255,255,255,.35);display:block;margin-bottom:6px;">Nome do professor(a)</label>
-        <input id="dl-professor" type="text" placeholder="Profa. Ana Silva" style="width:100%;padding:9px 12px;background:rgba(255,255,255,.05);border:1.5px solid rgba(255,255,255,.1);color:#fff;font-family:'Inter',sans-serif;font-size:.82rem;border-radius:8px;outline:none;transition:border-color .2s;" onfocus="this.style.borderColor='rgba(99,102,241,.5)'" onblur="this.style.borderColor='rgba(255,255,255,.1)'"/>
+        <input id="dl-professor" type="text" placeholder="Profa. Ana Silva" style="width:100%;padding:9px 12px;background:rgba(255,255,255,.05);border:1.5px solid rgba(255,255,255,.1);color:#fff;font-family:'Inter',sans-serif;font-size:.82rem;border-radius:8px;outline:none;transition:border-color .2s;" onfocus="this.style.borderColor='rgba(30,64,175,.5)'" onblur="this.style.borderColor='rgba(255,255,255,.1)'"/>
       </div>
     </div>
     <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:10px;">
       <div>
         <label style="font-size:.55rem;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:rgba(255,255,255,.35);display:block;margin-bottom:6px;">Disciplina</label>
-        <input id="dl-disciplina" type="text" placeholder="História" style="width:100%;padding:9px 12px;background:rgba(255,255,255,.05);border:1.5px solid rgba(255,255,255,.1);color:#fff;font-family:'Inter',sans-serif;font-size:.82rem;border-radius:8px;outline:none;transition:border-color .2s;" onfocus="this.style.borderColor='rgba(99,102,241,.5)'" onblur="this.style.borderColor='rgba(255,255,255,.1)'"/>
+        <input id="dl-disciplina" type="text" placeholder="História" style="width:100%;padding:9px 12px;background:rgba(255,255,255,.05);border:1.5px solid rgba(255,255,255,.1);color:#fff;font-family:'Inter',sans-serif;font-size:.82rem;border-radius:8px;outline:none;transition:border-color .2s;" onfocus="this.style.borderColor='rgba(30,64,175,.5)'" onblur="this.style.borderColor='rgba(255,255,255,.1)'"/>
       </div>
       <div>
         <label style="font-size:.55rem;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:rgba(255,255,255,.35);display:block;margin-bottom:6px;">Bimestre</label>
@@ -677,17 +677,17 @@
       </div>
       <div>
         <label style="font-size:.55rem;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:rgba(255,255,255,.35);display:block;margin-bottom:6px;">Série / Ano</label>
-        <input id="dl-serie" type="text" placeholder="8º Ano" style="width:100%;padding:9px 12px;background:rgba(255,255,255,.05);border:1.5px solid rgba(255,255,255,.1);color:#fff;font-family:'Inter',sans-serif;font-size:.82rem;border-radius:8px;outline:none;transition:border-color .2s;" onfocus="this.style.borderColor='rgba(99,102,241,.5)'" onblur="this.style.borderColor='rgba(255,255,255,.1)'"/>
+        <input id="dl-serie" type="text" placeholder="8º Ano" style="width:100%;padding:9px 12px;background:rgba(255,255,255,.05);border:1.5px solid rgba(255,255,255,.1);color:#fff;font-family:'Inter',sans-serif;font-size:.82rem;border-radius:8px;outline:none;transition:border-color .2s;" onfocus="this.style.borderColor='rgba(30,64,175,.5)'" onblur="this.style.borderColor='rgba(255,255,255,.1)'"/>
       </div>
     </div>
     <div style="margin-bottom:16px;">
       <label style="font-size:.55rem;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:rgba(255,255,255,.35);display:block;margin-bottom:6px;">Estado (para plano de aula oficial)</label>
-      <input id="dl-estado" type="text" placeholder="São Paulo" style="width:100%;padding:9px 12px;background:rgba(255,255,255,.05);border:1.5px solid rgba(255,255,255,.1);color:#fff;font-family:'Inter',sans-serif;font-size:.82rem;border-radius:8px;outline:none;transition:border-color .2s;" onfocus="this.style.borderColor='rgba(99,102,241,.5)'" onblur="this.style.borderColor='rgba(255,255,255,.1)'"/>
+      <input id="dl-estado" type="text" placeholder="São Paulo" style="width:100%;padding:9px 12px;background:rgba(255,255,255,.05);border:1.5px solid rgba(255,255,255,.1);color:#fff;font-family:'Inter',sans-serif;font-size:.82rem;border-radius:8px;outline:none;transition:border-color .2s;" onfocus="this.style.borderColor='rgba(30,64,175,.5)'" onblur="this.style.borderColor='rgba(255,255,255,.1)'"/>
     </div>
     <div style="margin-bottom:12px;">
       <label style="font-size:.55rem;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:rgba(255,255,255,.35);display:block;margin-bottom:6px;">Logo da escola (PNG/JPG)</label>
       <div style="display:flex;align-items:center;gap:10px;">
-        <label for="dl-logo" style="padding:8px 14px;background:rgba(255,255,255,.06);border:1.5px solid rgba(255,255,255,.1);border-radius:8px;font-size:.72rem;font-weight:600;color:rgba(255,255,255,.5);cursor:pointer;transition:all .2s;" onmouseover="this.style.borderColor='rgba(99,102,241,.4)';this.style.color='#fff'" onmouseout="this.style.borderColor='rgba(255,255,255,.1)';this.style.color='rgba(255,255,255,.5)'">Escolher arquivo</label>
+        <label for="dl-logo" style="padding:8px 14px;background:rgba(255,255,255,.06);border:1.5px solid rgba(255,255,255,.1);border-radius:8px;font-size:.72rem;font-weight:600;color:rgba(255,255,255,.5);cursor:pointer;transition:all .2s;" onmouseover="this.style.borderColor='rgba(30,64,175,.4)';this.style.color='#fff'" onmouseout="this.style.borderColor='rgba(255,255,255,.1)';this.style.color='rgba(255,255,255,.5)'">Escolher arquivo</label>
         <input type="file" id="dl-logo" accept=".png,.jpg,.jpeg,.svg,.webp" style="display:none" onchange="previewLogo(this)"/>
         <span id="dl-logo-nome" style="font-size:.72rem;color:rgba(255,255,255,.35);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">Nenhuma logo carregada</span>
         <img id="dl-logo-preview" src="" alt="" style="display:none;width:36px;height:36px;object-fit:contain;border-radius:4px;background:rgba(255,255,255,.08);padding:2px;"/>
@@ -696,18 +696,18 @@
     <div style="margin-bottom:20px;">
       <label style="font-size:.55rem;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:rgba(255,255,255,.35);display:block;margin-bottom:6px;">Brasão do Governo / Secretaria (PNG/JPG)</label>
       <div style="display:flex;align-items:center;gap:10px;">
-        <label for="dl-logo-estado" style="padding:8px 14px;background:rgba(255,255,255,.06);border:1.5px solid rgba(255,255,255,.1);border-radius:8px;font-size:.72rem;font-weight:600;color:rgba(255,255,255,.5);cursor:pointer;transition:all .2s;" onmouseover="this.style.borderColor='rgba(99,102,241,.4)';this.style.color='#fff'" onmouseout="this.style.borderColor='rgba(255,255,255,.1)';this.style.color='rgba(255,255,255,.5)'">Escolher arquivo</label>
+        <label for="dl-logo-estado" style="padding:8px 14px;background:rgba(255,255,255,.06);border:1.5px solid rgba(255,255,255,.1);border-radius:8px;font-size:.72rem;font-weight:600;color:rgba(255,255,255,.5);cursor:pointer;transition:all .2s;" onmouseover="this.style.borderColor='rgba(30,64,175,.4)';this.style.color='#fff'" onmouseout="this.style.borderColor='rgba(255,255,255,.1)';this.style.color='rgba(255,255,255,.5)'">Escolher arquivo</label>
         <input type="file" id="dl-logo-estado" accept=".png,.jpg,.jpeg,.svg,.webp" style="display:none" onchange="previewLogoEstado(this)"/>
         <span id="dl-logo-estado-nome" style="font-size:.72rem;color:rgba(255,255,255,.35);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">Nenhum brasão carregado</span>
         <img id="dl-logo-estado-preview" src="" alt="" style="display:none;width:36px;height:36px;object-fit:contain;border-radius:4px;background:rgba(255,255,255,.08);padding:2px;"/>
       </div>
     </div>
     <div style="display:flex;align-items:center;gap:8px;margin-bottom:16px;">
-      <input type="checkbox" id="dl-salvar" checked style="accent-color:#4338ca;width:14px;height:14px;"/>
+      <input type="checkbox" id="dl-salvar" checked style="accent-color:#1E40AF;width:14px;height:14px;"/>
       <label for="dl-salvar" style="font-size:.7rem;color:rgba(255,255,255,.4);cursor:pointer;">Lembrar escola e professor para próximos downloads</label>
     </div>
     <div style="display:flex;gap:10px;">
-      <button id="dl-btn-baixar" onclick="confirmarDownload()" style="flex:1;padding:13px;background:linear-gradient(135deg,#4338ca,#7c3aed);color:#fff;border:none;font-size:.78rem;font-weight:700;font-family:'Inter',sans-serif;border-radius:10px;cursor:pointer;transition:opacity .2s;box-shadow:0 4px 18px rgba(67,56,202,.4);" onmouseover="this.style.opacity='.9'" onmouseout="this.style.opacity='1'">↓ Baixar .DOCX</button>
+      <button id="dl-btn-baixar" onclick="confirmarDownload()" style="flex:1;padding:13px;background:linear-gradient(135deg,#1E40AF,#1E3A8A);color:#fff;border:none;font-size:.78rem;font-weight:700;font-family:'Inter',sans-serif;border-radius:10px;cursor:pointer;transition:opacity .2s;box-shadow:0 4px 18px rgba(30,64,175,.4);" onmouseover="this.style.opacity='.9'" onmouseout="this.style.opacity='1'">↓ Baixar .DOCX</button>
       <button onclick="fecharDownloadModal()" style="padding:13px 18px;background:transparent;color:rgba(255,255,255,.4);border:1.5px solid rgba(255,255,255,.1);font-size:.78rem;font-weight:600;font-family:'Inter',sans-serif;border-radius:10px;cursor:pointer;transition:all .2s;" onmouseover="this.style.borderColor='rgba(255,255,255,.3)';this.style.color='rgba(255,255,255,.7)'" onmouseout="this.style.borderColor='rgba(255,255,255,.1)';this.style.color='rgba(255,255,255,.4)'">Cancelar</button>
     </div>
   </div>
@@ -1406,17 +1406,17 @@
 {% if not onboarding_done %}
 <!-- ONBOARDING MODAL -->
 <div id="onboarding-overlay" style="position:fixed;inset:0;z-index:9999;background:rgba(5,8,17,.9);backdrop-filter:blur(10px);display:flex;align-items:center;justify-content:center;padding:20px;">
-  <div style="background:#0f1120;border:1px solid rgba(255,255,255,.1);width:100%;max-width:560px;padding:48px;font-family:'Inter',sans-serif;border-radius:20px;box-shadow:0 32px 100px rgba(0,0,0,.7),0 0 80px rgba(67,56,202,.14);">
+  <div style="background:#0f1120;border:1px solid rgba(255,255,255,.1);width:100%;max-width:560px;padding:48px;font-family:'Inter',sans-serif;border-radius:20px;box-shadow:0 32px 100px rgba(0,0,0,.7),0 0 80px rgba(30,64,175,.14);">
     <div style="font-size:.55rem;font-weight:700;letter-spacing:2.5px;text-transform:uppercase;color:#818cf8;margin-bottom:20px;display:flex;align-items:center;gap:8px;">
-      <span style="display:inline-block;width:16px;height:2px;background:#4338ca;border-radius:2px;"></span>
+      <span style="display:inline-block;width:16px;height:2px;background:#1E40AF;border-radius:2px;"></span>
       Configuração inicial
     </div>
     <h2 style="font-size:1.6rem;font-weight:900;letter-spacing:-1px;color:#fff;line-height:1.1;margin-bottom:12px;">Modelo de plano<br/>da sua escola</h2>
     <p style="font-size:.78rem;color:rgba(255,255,255,.45);line-height:1.75;margin-bottom:28px;">Cole abaixo o esqueleto ou modelo padrão de plano de aula da sua escola. O ProfessorIA usará essa estrutura sempre que gerar planos de aula para você.</p>
     <label style="font-size:.6rem;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:rgba(255,255,255,.35);display:block;margin-bottom:10px;">Esqueleto do plano de aula</label>
-    <textarea id="onboarding-template" placeholder="Ex: Escola: ___ / Professor: ___ / Disciplina: ___ / Objetivo: ___ / Desenvolvimento: ___ / Avaliação: ___" style="width:100%;min-height:140px;padding:14px;background:rgba(255,255,255,.04);border:1.5px solid rgba(255,255,255,.1);color:#fff;font-family:'Inter',sans-serif;font-size:.82rem;line-height:1.6;resize:vertical;outline:none;border-radius:10px;transition:border-color .2s;" onfocus="this.style.borderColor='rgba(99,102,241,.5)'" onblur="this.style.borderColor='rgba(255,255,255,.1)'"></textarea>
+    <textarea id="onboarding-template" placeholder="Ex: Escola: ___ / Professor: ___ / Disciplina: ___ / Objetivo: ___ / Desenvolvimento: ___ / Avaliação: ___" style="width:100%;min-height:140px;padding:14px;background:rgba(255,255,255,.04);border:1.5px solid rgba(255,255,255,.1);color:#fff;font-family:'Inter',sans-serif;font-size:.82rem;line-height:1.6;resize:vertical;outline:none;border-radius:10px;transition:border-color .2s;" onfocus="this.style.borderColor='rgba(30,64,175,.5)'" onblur="this.style.borderColor='rgba(255,255,255,.1)'"></textarea>
     <div style="display:flex;gap:10px;margin-top:20px;">
-      <button onclick="salvarOnboarding()" style="flex:1;padding:14px;background:linear-gradient(135deg,#4338ca,#7c3aed);color:#fff;border:none;font-size:.72rem;font-weight:700;font-family:'Inter',sans-serif;border-radius:10px;cursor:pointer;transition:opacity .2s;box-shadow:0 4px 18px rgba(67,56,202,.4);" onmouseover="this.style.opacity='.9'" onmouseout="this.style.opacity='1'">Salvar e continuar →</button>
+      <button onclick="salvarOnboarding()" style="flex:1;padding:14px;background:linear-gradient(135deg,#1E40AF,#1E3A8A);color:#fff;border:none;font-size:.72rem;font-weight:700;font-family:'Inter',sans-serif;border-radius:10px;cursor:pointer;transition:opacity .2s;box-shadow:0 4px 18px rgba(30,64,175,.4);" onmouseover="this.style.opacity='.9'" onmouseout="this.style.opacity='1'">Salvar e continuar →</button>
       <button onclick="pularOnboarding()" style="flex:1;padding:14px;background:transparent;color:rgba(255,255,255,.4);border:1.5px solid rgba(255,255,255,.1);font-size:.72rem;font-weight:600;font-family:'Inter',sans-serif;border-radius:10px;cursor:pointer;transition:all .2s;" onmouseover="this.style.borderColor='rgba(255,255,255,.3)';this.style.color='rgba(255,255,255,.7)'" onmouseout="this.style.borderColor='rgba(255,255,255,.1)';this.style.color='rgba(255,255,255,.4)'">Pular por agora</button>
     </div>
   </div>

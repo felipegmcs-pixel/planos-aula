@@ -1,11 +1,11 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
   <defs>
     <linearGradient id="bg-grad" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#4338ca"/>
-      <stop offset="100%" stop-color="#7c3aed"/>
+      <stop offset="0%" stop-color="#1E40AF"/>
+      <stop offset="100%" stop-color="#1E3A8A"/>
     </linearGradient>
   </defs>
-  <!-- Fundo quadrado arredondado com gradiente índigo/violeta -->
+  <!-- Fundo quadrado arredondado com gradiente azul -->
   <rect x="2" y="2" width="60" height="60" rx="14" ry="14" fill="url(#bg-grad)"/>
   <!-- Borda sutil -->
   <rect x="2" y="2" width="60" height="60" rx="14" ry="14" fill="none" stroke="rgba(255,255,255,0.18)" stroke-width="1.5"/>

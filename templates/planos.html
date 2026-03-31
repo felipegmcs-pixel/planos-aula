@@ -2,9 +2,9 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Planos — ProfessorIA</title>
-  <link rel="icon" type="image/svg+xml" href="/static/favicon.svg"/>
+  <link rel="icon" href="{{ url_for('static', filename='favicon.svg') }}" type="image/svg+xml">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet"/>
   <style>
     *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
@@ -12,7 +12,7 @@
       --bg:#ffffff;--bg2:#f7f8fc;--bg3:#f1f2f8;
       --hero:#050811;--dark:#0d0f1c;
       --text:#111827;--text2:#6b7280;--text3:#9ca3af;
-      --indigo:#4338ca;--violet:#7c3aed;--amber:#f59e0b;--cyan:#0ea5e9;
+      --indigo:#1E40AF;--violet:#1E3A8A;--amber:#f59e0b;--cyan:#0ea5e9;
       --line:rgba(17,24,39,.08);--line2:rgba(17,24,39,.14);
       --r:12px;--r-sm:8px;
     }
@@ -39,15 +39,15 @@
     }
     nav.lit{background:rgba(255,255,255,.97);border-bottom-color:var(--line)}
     .logo{text-decoration:none;display:flex;align-items:center;gap:8px}
-    .logo-mark{display:flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:7px;background:#0f172a;flex-shrink:0;transition:background .35s,box-shadow .35s}
-    nav.lit .logo-mark{background:#4338ca;box-shadow:0 0 0 3px rgba(67,56,202,.25),0 4px 14px rgba(67,56,202,.35)}
-    .logo-mark svg{color:white}
-    .logo-p{font-size:1.08rem;font-weight:800;color:#fff;letter-spacing:-.3px;transition:color .35s}
+    .logo-mark{display:flex;align-items:center;justify-content:center;width:40px;height:40px;border-radius:8px;background:#0f172a;flex-shrink:0;transition:background .35s,box-shadow .35s}
+    nav.lit .logo-mark{background:#1E40AF;box-shadow:0 0 0 3px rgba(30,64,175,.25),0 4px 14px rgba(30,64,175,.35)}
+    .logo-mark svg{color:white;width:32px;height:32px}
+    .logo-p{font-size:1.5rem;font-weight:800;letter-spacing:-.3px;color:#fff;transition:color .35s}
     nav.lit .logo-p{color:#0f172a}
     nav.lit .logo-mark svg g { stroke: #0f172a; }
     nav.lit .logo-mark svg g circle { fill: #0f172a; }
     .logo-ia{font-size:1.08rem;font-weight:600;letter-spacing:-.3px;color:#818cf8;transition:color .35s}
-    nav.lit .logo-ia{color:#4338ca}
+    nav.lit .logo-ia{color:#1E40AF}
     .nav-links{display:flex;align-items:center;gap:4px}
     .nav-a{font-size:.875rem;font-weight:500;color:rgba(255,255,255,.6);text-decoration:none;padding:7px 14px;border-radius:7px;transition:color .2s,background .2s}
     .nav-a:hover{color:#fff;background:rgba(255,255,255,.08)}
@@ -75,8 +75,8 @@
 
     .pricing-grid{max-width:1200px;margin:0 auto;padding:0 48px;display:grid;grid-template-columns:repeat(3,1fr);gap:24px;align-items:start}
     .plan-card{padding:40px 32px;border:1px solid var(--line);border-radius:12px;background:var(--bg);transition:all .3s}
-    .plan-card:hover{border-color:var(--indigo);box-shadow:0 8px 32px rgba(67,56,202,.1)}
-    .plan-card.hot{border-color:var(--indigo);background:linear-gradient(135deg,rgba(67,56,202,.05),rgba(124,58,237,.05))}
+    .plan-card:hover{border-color:var(--indigo);box-shadow:0 8px 32px rgba(30,64,175,.1)}
+    .plan-card.hot{border-color:var(--indigo);background:linear-gradient(135deg,rgba(30,64,175,.05),rgba(124,58,237,.05))}
     .plan-badge{font-size:.65rem;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--indigo);margin-bottom:12px}
     .plan-lbl{font-size:.75rem;font-weight:600;letter-spacing:1px;text-transform:uppercase;color:var(--text2);margin-bottom:12px}
     .plan-name{font-size:1.5rem;font-weight:900;letter-spacing:-.5px;color:var(--text);margin-bottom:12px}
@@ -96,7 +96,7 @@
     .btn-plan.o{color:var(--text);border-color:var(--line)}
     .btn-plan.o:hover{background:var(--bg2);border-color:var(--indigo)}
     .btn-plan.am{background:linear-gradient(135deg,var(--indigo),var(--violet));color:#fff;border-color:var(--indigo)}
-    .btn-plan.am:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(67,56,202,.3)}
+    .btn-plan.am:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(30,64,175,.3)}
     .btn-plan:disabled{opacity:.5;cursor:not-allowed}
 
     @media(max-width:1024px){.pricing-grid{grid-template-columns:1fr;max-width:420px;margin:0 auto;padding:0 24px}}
