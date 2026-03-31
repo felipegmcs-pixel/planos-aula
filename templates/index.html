@@ -86,28 +86,29 @@
       transition:background .35s,border-color .35s;
     }
     nav.lit{background:rgba(255,255,255,.97);border-bottom-color:var(--line)}
-    .logo{display:flex;align-items:center;text-decoration:none;gap:12px}
+    .logo{display:flex;align-items:center;text-decoration:none;gap:12px;transition:color .35s}
     .logo-mark{display:flex;align-items:center;justify-content:center;width:40px;height:40px;border-radius:8px;background:#0f172a;flex-shrink:0;transition:background .35s,box-shadow .35s}
     nav.lit .logo-mark{background:#1E40AF;box-shadow:0 0 0 3px rgba(30,64,175,.25),0 4px 14px rgba(30,64,175,.35)}
-    .logo-mark svg{color:white;width:32px;height:32px}
+    .logo-mark svg{color:white;width:32px;height:32px;transition:color .35s,stroke .35s}
+    nav.lit .logo-mark svg{color:#111827}
+    nav.lit .logo-mark svg g { stroke: #111827 !important; }
+    nav.lit .logo-mark svg g circle { fill: #111827 !important; }
     .logo-p{font-size:1.5rem;font-weight:800;color:#fff;letter-spacing:-.3px;transition:color .35s}
-    nav.lit .logo-p{color:#0f172a}
-    nav.lit .logo-mark svg g { stroke: #0f172a; }
-    nav.lit .logo-mark svg g circle { fill: #0f172a; }
+    nav.lit .logo-p{color:#111827}
     .logo-ia{
       font-size:1.08rem;font-weight:600;letter-spacing:-.3px;
       color:#818cf8;transition:color .35s;
     }
-    nav.lit .logo-ia{color:#1E40AF}
+    nav.lit .logo-ia{color:#111827}
     @keyframes pdot{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.45;transform:scale(.8)}}
     .nav-links{display:flex;align-items:center;gap:4px}
     .nav-a{font-size:.875rem;font-weight:500;color:rgba(255,255,255,.6);text-decoration:none;padding:7px 14px;border-radius:7px;transition:color .2s,background .2s}
     .nav-a:hover{color:#fff;background:rgba(255,255,255,.08)}
-    nav.lit .nav-a{color:var(--text2)}
-    nav.lit .nav-a:hover{color:var(--text);background:rgba(0,0,0,.04)}
-    .nav-user{font-size:.875rem;font-weight:600;color:rgba(255,255,255,.8);text-decoration:none;padding:7px 14px;border-radius:7px;display:flex;align-items:center;gap:8px;transition:background .2s}
+    nav.lit .nav-a{color:#111827}
+    nav.lit .nav-a:hover{color:#111827;background:rgba(0,0,0,.04)}
+    .nav-user{font-size:.875rem;font-weight:600;color:rgba(255,255,255,.8);text-decoration:none;padding:7px 14px;border-radius:7px;display:flex;align-items:center;gap:8px;transition:background .2s,color .35s}
     .nav-user:hover{background:rgba(255,255,255,.08)}
-    nav.lit .nav-user{color:var(--text)}
+    nav.lit .nav-user{color:#111827}
     nav.lit .nav-user:hover{background:rgba(0,0,0,.04)}
     .nav-udot{width:7px;height:7px;border-radius:50%;background:#34d399;flex-shrink:0}
     .btn-nav{font-size:.875rem;font-weight:700;text-decoration:none;padding:8px 20px;border-radius:8px;background:var(--amber);color:var(--text);transition:opacity .2s,transform .2s}
@@ -903,7 +904,7 @@
   <div class="pricing-top">
     <div>
       <h2 class="sec-head" style="margin-bottom:8px">Escolha seu plano.</h2>
-      <p style="font-size:.95rem;color:var(--text2)">Sem fidelidade. Cancele quando quiser.</p>
+      <p style="font-size:.95rem;color:var(--text2)">Transforme sua rotina pedagógica hoje e recupere até 10 horas da sua semana.</p>
     </div>
     <div class="toggle-wrap">
       <span class="t-l on" id="lbl-m">Mensal</span>
@@ -922,7 +923,7 @@
       <div class="plan-price zero">R$ 0</div>
       <div class="plan-period">Para sempre</div>
       <ul class="plan-feats">
-        <li class="on">5 gerações / mês <span class="chk">✓</span></li>
+        <li class="on">3 gerações / mês <span class="chk">✓</span></li>
         <li class="on">Chat com IA <span class="chk">✓</span></li>
         <li class="on">Planos de aula <span class="chk">✓</span></li>
         <li>Provas e avaliações <span class="xck">—</span></li>
@@ -934,37 +935,38 @@
       <div class="plan-sc"></div>
     </div>
     <div class="plan-card hot">
-      <div class="plan-badge">Mais popular</div>
-      <div class="plan-lbl">Recomendado</div>
-      <div class="plan-name">Basic</div>
-      <div class="plan-price" id="preco-basic"><sup>R$</sup>39<sub>/mês</sub></div>
-      <div class="plan-period" id="per-basic">Acesso individual ilimitado</div>
+      <div class="plan-badge">Recomendado</div>
+      <div class="plan-lbl">Melhor custo-benefício</div>
+      <div class="plan-name">Pro</div>
+      <div class="plan-price" id="preco-pro"><sup>R$</sup>59<sub>/mês</sub></div>
+      <div class="plan-period" id="per-pro">Gerações ilimitadas</div>
       <ul class="plan-feats">
         <li class="on">Gerações ilimitadas <span class="chk">✓</span></li>
+        <li class="on">Modelos RAG de alta precisão <span class="chk">✓</span></li>
+        <li class="on">Planejamento anual BNCC <span class="chk">✓</span></li>
+        <li class="on">Mapas Mentais e Infográficos <span class="chk">✓</span></li>
+        <li class="on">Exportar DOCX com Logo da Escola <span class="chk">✓</span></li>
+        <li class="on">Entrada e saída de áudio <span class="chk">✓</span></li>
+        <li class="on">Suporte prioritário <span class="chk">✓</span></li>
+      </ul>
+      <a href="/stripe/checkout/pro" class="btn-plan w" id="btn-pro">Assinar Pro →</a>
+      <div class="plan-sc" id="sc-pro">⚡ A escolha dos professores</div>
+    </div>
+    <div class="plan-card">
+      <div class="plan-lbl">Essencial</div>
+      <div class="plan-name">Basic</div>
+      <div class="plan-price" id="preco-basic"><sup>R$</sup>39<sub>/mês</sub></div>
+      <div class="plan-period" id="per-basic">Até 50 materiais/mês</div>
+      <ul class="plan-feats">
+        <li class="on">50 materiais / mês <span class="chk">✓</span></li>
         <li class="on">Modelos RAG de alta precisão <span class="chk">✓</span></li>
         <li class="on">Planos de aula BNCC <span class="chk">✓</span></li>
         <li class="on">Provas e avaliações <span class="chk">✓</span></li>
         <li class="on">Caça-palavras e Cruzadinhas <span class="chk">✓</span></li>
         <li class="on">Adaptações NEE <span class="chk">✓</span></li>
-        <li class="on">Download em DOCX profissional <span class="chk">✓</span></li>
+        <li>Exportar DOCX com Logo <span class="xck">—</span></li>
       </ul>
-      <a href="/stripe/checkout/basic" class="btn-plan am" id="btn-basic">Assinar Basic →</a>
-      <div class="plan-sc" id="sc-basic">⚡ Oferta por tempo limitado</div>
-    </div>
-    <div class="plan-card">
-      <div class="plan-lbl">Completo</div>
-      <div class="plan-name">Pro</div>
-      <div class="plan-price" id="preco-pro"><sup>R$</sup>59<sub>/mês</sub></div>
-      <div class="plan-period" id="per-pro">Tudo do Basic + mais</div>
-      <ul class="plan-feats">
-        <li class="on">Tudo do Basic <span class="chk">✓</span></li>
-        <li class="on">Planejamento anual BNCC <span class="chk">✓</span></li>
-        <li class="on">Mapas Mentais e Infográficos <span class="chk">✓</span></li>
-        <li class="on">Entrada e saída de áudio <span class="chk">✓</span></li>
-        <li class="on">Sem sistema de créditos <span class="chk">✓</span></li>
-        <li class="on">Suporte prioritário <span class="chk">✓</span></li>
-      </ul>
-      <a href="/stripe/checkout/pro" class="btn-plan o" id="btn-pro">Assinar Pro →</a>
+      <a href="/stripe/checkout/basic" class="btn-plan o" id="btn-basic">Assinar Basic →</a>
       <div class="plan-sc"></div>
     </div>
   </div>
