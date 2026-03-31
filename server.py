@@ -2613,6 +2613,206 @@ def _set_cell_bg_plano(cell, hex_color):
     tcPr.append(shd)
 
 
+def gerar_mapa_mental_pdf(texto, meta=None):
+    """Gera PDF visual de mapa mental estilo infográfico com ReportLab."""
+    from reportlab.pdfgen import canvas as rl_canvas
+    from reportlab.lib.pagesizes import A4, landscape
+    from reportlab.lib.colors import HexColor, white
+    import io, math
+
+    if meta is None:
+        meta = {}
+
+    titulo, categorias = _parse_mapa_mental(texto)
+    W, H = landscape(A4)   # 841.89 x 595.28 pts
+    cx, cy = W / 2, H / 2  # 420.94, 297.64
+
+    C_NAVY  = HexColor('#1E3A5F')
+    C_BLUE  = HexColor('#1E40AF')
+    C_LBLUE = HexColor('#BFDBFE')
+    C_GRAY  = HexColor('#374151')
+    C_LGRAY = HexColor('#F0F7FF')
+    C_LINE  = HexColor('#93C5FD')
+
+    buf = io.BytesIO()
+    c = rl_canvas.Canvas(buf, pagesize=(W, H))
+
+    # Fundo branco
+    c.setFillColor(white)
+    c.rect(0, 0, W, H, fill=1, stroke=0)
+
+    # Blocos de cor nos cantos
+    c.setFillColor(C_LGRAY)
+    for rx, ry in [(0, H * 0.72), (W * 0.78, H * 0.72), (0, 0), (W * 0.78, 0)]:
+        c.rect(rx, ry, W * 0.22, H * 0.28, fill=1, stroke=0)
+
+    # Borda superior
+    c.setFillColor(C_NAVY)
+    c.rect(0, H - 7, W, 7, fill=1, stroke=0)
+    c.setFillColor(C_BLUE)
+    c.rect(0, H - 9, W, 2, fill=1, stroke=0)
+
+    ORX, ORY   = 128, 60
+    BOX_W      = 188
+    HEADER_H   = 26
+    ITEM_H     = 20
+    MAX_ITEMS  = 6
+
+    # Posições [bottom-left x, y] dos 4 quadrantes
+    POS = [
+        (22,             H * 0.60),   # topo-esquerda
+        (W - BOX_W - 22, H * 0.60),   # topo-direita
+        (22,             H * 0.13),   # baixo-esquerda
+        (W - BOX_W - 22, H * 0.13),   # baixo-direita
+    ]
+
+    n = min(len(categorias), 4)
+
+    # ── Linhas de conexão (desenhadas antes das caixas) ──
+    for i in range(n):
+        cat = categorias[i]
+        bx, by = POS[i]
+        n_items = min(len(cat['itens']), MAX_ITEMS)
+        box_h   = HEADER_H + n_items * ITEM_H + 6
+        bcx     = bx + BOX_W / 2
+        bcy     = by + box_h / 2
+        angle   = math.atan2(bcy - cy, bcx - cx)
+        ox      = cx + math.cos(angle) * ORX
+        oy      = cy + math.sin(angle) * ORY
+        mid_y   = (oy + bcy) / 2
+
+        c.saveState()
+        c.setStrokeColor(C_LINE)
+        c.setLineWidth(2.2)
+        p = c.beginPath()
+        p.moveTo(ox, oy)
+        p.curveTo(ox, mid_y, bcx, mid_y, bcx, bcy)
+        c.drawPath(p, stroke=1, fill=0)
+        c.setFillColor(C_LINE)
+        c.circle(bcx, bcy, 4, fill=1, stroke=0)
+        c.restoreState()
+
+    # ── Caixas de categoria ──
+    for i in range(n):
+        cat    = categorias[i]
+        bx, by = POS[i]
+        items  = cat['itens'][:MAX_ITEMS]
+        items_h = len(items) * ITEM_H + 6
+
+        # Fundo dos itens
+        c.saveState()
+        c.setFillColor(HexColor('#F8FAFF'))
+        c.setStrokeColor(C_LBLUE)
+        c.setLineWidth(0.8)
+        c.roundRect(bx, by, BOX_W, items_h, 5, fill=1, stroke=1)
+        c.restoreState()
+
+        # Cabeçalho
+        c.saveState()
+        c.setFillColor(C_NAVY)
+        c.roundRect(bx, by + items_h, BOX_W, HEADER_H, 6, fill=1, stroke=0)
+        c.setFillColor(white)
+        title_str = cat['titulo']
+        fs = 8.5
+        c.setFont('Helvetica-Bold', fs)
+        if c.stringWidth(title_str, 'Helvetica-Bold', fs) > BOX_W - 10:
+            fs = 7
+            c.setFont('Helvetica-Bold', fs)
+        tw = c.stringWidth(title_str, 'Helvetica-Bold', fs)
+        c.drawString(bx + (BOX_W - tw) / 2, by + items_h + 9, title_str)
+        c.restoreState()
+
+        # Itens com quebra de linha
+        iy = by + items_h - 4
+        for item in items:
+            c.saveState()
+            c.setFillColor(C_BLUE)
+            c.setFont('Helvetica-Bold', 9)
+            c.drawString(bx + 7, iy - ITEM_H + 6, '›')
+            c.setFillColor(C_GRAY)
+            c.setFont('Helvetica', 7.5)
+            max_w = BOX_W - 22
+            words  = item.split()
+            l1, l2 = '', ''
+            for w in words:
+                test = l1 + (' ' if l1 else '') + w
+                if c.stringWidth(test, 'Helvetica', 7.5) <= max_w:
+                    l1 = test
+                else:
+                    test2 = l2 + (' ' if l2 else '') + w
+                    if c.stringWidth(test2, 'Helvetica', 7.5) <= max_w:
+                        l2 = test2
+                    else:
+                        l2 = (l2[:-1] + '…') if l2 else w
+                        break
+            base = iy - ITEM_H + 7 + (4 if not l2 else 0)
+            if l1:
+                c.drawString(bx + 19, base, l1)
+            if l2:
+                c.drawString(bx + 19, base - 9, l2)
+            c.restoreState()
+            iy -= ITEM_H
+
+    # ── Oval central — sombra ──
+    c.saveState()
+    c.setFillColor(HexColor('#C8D5E8'))
+    c.ellipse(cx - ORX + 5, cy - ORY - 5, cx + ORX + 5, cy + ORY - 5, fill=1, stroke=0)
+    c.restoreState()
+
+    # Oval principal
+    c.saveState()
+    c.setFillColor(C_NAVY)
+    c.setStrokeColor(C_BLUE)
+    c.setLineWidth(3)
+    c.ellipse(cx - ORX, cy - ORY, cx + ORX, cy + ORY, fill=1, stroke=1)
+    c.restoreState()
+
+    # Texto do título no oval
+    c.saveState()
+    c.setFillColor(white)
+    words = titulo.split() or ['MAPA MENTAL']
+    fs = 16
+    c.setFont('Helvetica-Bold', fs)
+    tw = c.stringWidth(titulo, 'Helvetica-Bold', fs)
+    if tw <= ORX * 2 - 24:
+        c.drawString(cx - tw / 2, cy - fs * 0.35, titulo)
+    else:
+        mid = len(words) // 2
+        l1, l2 = ' '.join(words[:mid]), ' '.join(words[mid:])
+        fs = 13
+        c.setFont('Helvetica-Bold', fs)
+        while max(c.stringWidth(l1, 'Helvetica-Bold', fs),
+                  c.stringWidth(l2, 'Helvetica-Bold', fs)) > ORX * 2 - 20 and fs > 8:
+            fs -= 1
+            c.setFont('Helvetica-Bold', fs)
+        c.drawString(cx - c.stringWidth(l1, 'Helvetica-Bold', fs) / 2, cy + 5, l1)
+        c.drawString(cx - c.stringWidth(l2, 'Helvetica-Bold', fs) / 2, cy - fs - 3, l2)
+    c.restoreState()
+
+    # ── Cabeçalho escola/professor ──
+    parts = []
+    if meta.get('escola'): parts.append(meta['escola'].strip())
+    if meta.get('professor'): parts.append(f"Prof(a). {meta['professor'].strip()}")
+    if parts:
+        c.saveState()
+        c.setFillColor(HexColor('#6B7280'))
+        c.setFont('Helvetica', 7)
+        c.drawString(22, H - 20, '  ·  '.join(parts))
+        c.restoreState()
+
+    # ── Marca ProfessorIA ──
+    c.saveState()
+    c.setFillColor(C_NAVY)
+    c.setFont('Helvetica-Bold', 8.5)
+    brand = 'ProfessorIA™'
+    c.drawString(W - c.stringWidth(brand, 'Helvetica-Bold', 8.5) - 18, 16, brand)
+    c.restoreState()
+
+    c.save()
+    buf.seek(0)
+    return buf.read()
+
+
 def gerar_plano_aula_docx(texto, meta=None, logo_estado_path=None):
     """
     Gera DOCX no formato oficial da Secretaria de Educação Estadual.
@@ -3100,6 +3300,15 @@ def api_chat_download():
         if os.path.isfile(candidate_e):
             logo_estado_abs = candidate_e
     meta['logo_estado_path'] = logo_estado_abs
+
+    # Mapa mental → PDF visual
+    if _detect_doc_type(texto) == 'mapa_mental':
+        pdf_bytes = gerar_mapa_mental_pdf(texto, meta=meta)
+        return send_file(
+            io.BytesIO(pdf_bytes), as_attachment=True,
+            download_name='mapa-mental-ProfessorIA.pdf',
+            mimetype='application/pdf'
+        )
 
     doc = gerar_docx_pia(texto, meta=meta, logo_path=logo_abs)
     buf = io.BytesIO()
