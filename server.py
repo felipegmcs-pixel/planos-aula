@@ -308,8 +308,7 @@ def chamar_ia_chat(sistema, messages):
                 resp = client_openai.chat.completions.create(
                     model='gpt-4o-mini',
                     max_tokens=4000,
-                    system_prompt=sistema,
-                    messages=messages
+                    messages=[{'role': 'system', 'content': sistema}] + messages
                 )
                 print(f'✓ Resposta gerada com OpenAI (gpt-4o-mini)')
                 return resp.choices[0].message.content
@@ -1994,6 +1993,12 @@ def api_chat():
                     headers={'Authorization': f'Bearer {openai_key}', 'content-type': 'application/json'},
                     stream=True, timeout=120
                 )
+                print(f'OpenAI streaming status: {ro.status_code}')
+                if ro.status_code != 200:
+                    err_body = ro.text[:300]
+                    print(f'OpenAI erro: {err_body}')
+                    yield f"data: {json.dumps({'erro': f'Serviço de IA indisponível ({ro.status_code}). Tente novamente mais tarde.'})}\n\n"
+                    return
                 for line in ro.iter_lines():
                     if not line:
                         continue
@@ -2003,7 +2008,12 @@ def api_chat():
                     if line == '[DONE]':
                         break
                     try:
-                        delta = json.loads(line)['choices'][0]['delta'].get('content', '')
+                        parsed = json.loads(line)
+                        if 'error' in parsed:
+                            print(f'OpenAI stream erro: {parsed["error"]}')
+                            yield f"data: {json.dumps({'erro': parsed['error'].get('message', 'Erro OpenAI')[:200]})}\n\n"
+                            return
+                        delta = parsed['choices'][0]['delta'].get('content', '')
                         if delta:
                             chunks.append(delta)
                             yield f"data: {json.dumps({'chunk': delta})}\n\n"
