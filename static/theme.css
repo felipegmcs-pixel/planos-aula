@@ -5,18 +5,18 @@
 /* ── LIGHT ── */
 :root {
   color-scheme: only light;
-  --preto:   #0a0a0a;
+  --preto:   #0f172a;
   --branco:  #ffffff;
   --cinza:   #666660;
-  --amarelo: #f0e000;
+  --amarelo: #1E40AF;
   --linha:   rgba(0,0,0,0.08);
   --linha-f: rgba(0,0,0,0.14);
   --nav-bg:  rgba(255,255,255,0.97);
   --input-border: rgba(0,0,0,0.14);
   --tag-bg:  rgba(0,0,0,0.04);
   --hover-bg: rgba(0,0,0,0.02);
-  --card-hl: rgba(240,224,0,0.06);
-  --card-hl-h: rgba(240,224,0,0.11);
+  --card-hl: rgba(30,64,175,0.06);
+  --card-hl-h: rgba(30,64,175,0.11);
   --pre-bg:  #f5f5f5;
   --grad-hero: rgba(255,255,255,0.72);
 }
@@ -27,15 +27,15 @@
   --preto:   #f0f0ec;
   --branco:  #111110;
   --cinza:   #888882;
-  --amarelo: #f0e000;
+  --amarelo: #1E40AF;
   --linha:   rgba(255,255,255,0.08);
   --linha-f: rgba(255,255,255,0.14);
   --nav-bg:  rgba(17,17,16,0.97);
   --input-border: rgba(255,255,255,0.18);
   --tag-bg:  rgba(255,255,255,0.05);
   --hover-bg: rgba(255,255,255,0.03);
-  --card-hl: rgba(240,224,0,0.07);
-  --card-hl-h: rgba(240,224,0,0.13);
+  --card-hl: rgba(30,64,175,0.07);
+  --card-hl-h: rgba(30,64,175,0.13);
   --pre-bg:  rgba(255,255,255,0.06);
   --grad-hero: rgba(17,17,16,0.72);
 }

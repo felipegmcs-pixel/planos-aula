@@ -5,7 +5,7 @@
   <script>!function(){var t=localStorage.getItem("pia-theme")||"light",a="system"===t?(window.matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light"):t;document.documentElement.setAttribute("data-theme",a),document.documentElement.style.colorScheme=a}();</script>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>ProfessorIA — Chat</title>
-  <link rel="icon" href="{{ url_for('static', filename='favicon.svg') }}" type="image/svg+xml">
+  <link rel="icon" href="{{ url_for('static', filename='favicon.ico') }}" type="image/svg+xml">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet"/>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -816,7 +816,7 @@
         <span></span><span></span><span></span>
       </button>
       <a class="topbar-logo" href="/chat" style="display:flex;align-items:center;gap:7px;">
-        <img src="{{ url_for('static', filename='logo.svg') }}" alt="ProfessorIA" width="24" height="24" style="flex-shrink:0; color: currentColor;">
+        <img src="{{ url_for('static', filename='logo-oficial.png') }}" alt="ProfessorIA" style="height: 32px; width: auto; flex-shrink: 0;">
         <span class="tp">Professor</span><span class="tia">IA</span>
       </a>
       <div style="width:30px"></div>
