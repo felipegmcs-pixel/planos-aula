@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8"/>
+  <script>!function(){var t=localStorage.getItem("pia-theme")||"dark",a="system"===t?(window.matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light"):t;document.documentElement.setAttribute("data-theme",a)}();</script>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>ProfessorIA — Indicar Amigos</title>
+  <link rel="icon" type="image/svg+xml" href="/static/logo-oficial.png"/>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet"/>
+  <style>
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    :root{
+      --bg:#0b0d14;--bg2:#0f1120;--bg3:#131526;
+      --text:#e5e7eb;--text2:#9ca3af;--text3:#4b5563;
+      --indigo:#1E40AF;--violet:#1E3A8A;--indigo-l:#818cf8;
+      --linha:rgba(255,255,255,.07);--linha-f:rgba(255,255,255,.12);
+      --card:rgba(255,255,255,.04);--card-h:rgba(255,255,255,.07);
+      --sb-bg:#0a0c18;--sidebar-w:240px;
+      --green:#10b981;--amber:#f59e0b;
+    }
+    [data-theme="light"]{
+      --bg:#f8f9ff;--bg2:#ffffff;--bg3:#f1f2f8;
+      --text:#111827;--text2:#6b7280;--text3:#9ca3af;
+      --linha:rgba(17,24,39,.07);--linha-f:rgba(17,24,39,.13);
+      --card:rgba(255,255,255,.9);--card-h:rgba(255,255,255,1);
+      --sb-bg:#f7f8ff;
+    }
+    html,body{height:100%;font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);overflow:hidden}
+    #bg3d{position:fixed;inset:0;z-index:0;pointer-events:none;opacity:.4}
+    .app{display:flex;height:100%;position:relative;z-index:1}
+
+    /* Sidebar */
+    .sidebar{width:var(--sidebar-w);flex-shrink:0;background:var(--sb-bg);border-right:1px solid var(--linha);display:flex;flex-direction:column;height:100%;overflow-y:auto;transition:transform .3s cubic-bezier(.16,1,.3,1)}
+    .sidebar-header{padding:20px 16px 12px;border-bottom:1px solid var(--linha)}
+    .logo{display:flex;align-items:center;gap:8px;text-decoration:none}
+    .pia-mark{width:34px;height:34px;border-radius:9px;background:#fff;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+    .logo-p{font-size:.95rem;font-weight:800;letter-spacing:-.5px;color:var(--text)}
+    .logo-ia{font-size:.95rem;font-weight:500;color:var(--indigo-l)}
+    .sidebar-nav{padding:12px 8px;display:flex;flex-direction:column;gap:2px}
+    .nav-item{display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:10px;text-decoration:none;font-size:.8rem;font-weight:500;color:rgba(255,255,255,.5);transition:all .18s}
+    [data-theme="light"] .nav-item{color:rgba(17,24,39,.5)}
+    .nav-item:hover{background:rgba(255,255,255,.06);color:var(--text)}
+    [data-theme="light"] .nav-item:hover{background:rgba(17,24,39,.05);color:var(--text)}
+    .nav-item.active{background:rgba(30,64,175,.18);color:#818cf8;font-weight:600}
+    [data-theme="light"] .nav-item.active{background:rgba(30,64,175,.1);color:var(--indigo)}
+    .nav-icon{width:16px;height:16px;stroke:currentColor;fill:none;stroke-linecap:round;stroke-linejoin:round;flex-shrink:0}
+    .sidebar-spacer{flex:1}
+    .sidebar-footer{padding:12px 8px;border-top:1px solid var(--linha)}
+    .user-card{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:10px;text-decoration:none;transition:background .18s}
+    .user-card:hover{background:rgba(255,255,255,.06)}
+    [data-theme="light"] .user-card:hover{background:rgba(17,24,39,.05)}
+    .user-avatar{width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,#1E40AF,#1E3A8A);display:flex;align-items:center;justify-content:center;font-size:.75rem;font-weight:800;color:#fff;flex-shrink:0}
+    .user-name{font-size:.78rem;font-weight:600;color:var(--text)}
+    .user-plan{font-size:.65rem;color:var(--text2)}
+
+    /* Main */
+    .main{flex:1;overflow-y:auto;display:flex;flex-direction:column;min-width:0}
+    .topbar{display:none;padding:14px 16px;border-bottom:1px solid var(--linha);align-items:center;justify-content:space-between;background:var(--bg2);position:sticky;top:0;z-index:50}
+
+    /* Hero */
+    .hero{
+      padding:48px 32px 0;max-width:700px;margin:0 auto;text-align:center;
+    }
+    .hero-badge{
+      display:inline-flex;align-items:center;gap:6px;
+      padding:6px 14px;border-radius:20px;
+      background:rgba(30,64,175,.15);border:1px solid rgba(30,64,175,.25);
+      font-size:.65rem;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;
+      color:var(--indigo-l);margin-bottom:20px;
+    }
+    .hero-title{font-size:2.2rem;font-weight:900;letter-spacing:-1.5px;line-height:1.1;margin-bottom:14px}
+    .hero-title span{background:linear-gradient(135deg,#818cf8,#a78bfa);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+    .hero-sub{font-size:.9rem;color:var(--text2);line-height:1.7;max-width:480px;margin:0 auto 32px}
+
+    /* Link box */
+    .link-box{
+      max-width:560px;margin:0 auto 40px;
+      background:var(--card);border:1px solid var(--linha-f);border-radius:16px;
+      padding:24px;
+    }
+    .link-label{font-size:.6rem;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--text2);margin-bottom:10px}
+    .link-row{display:flex;gap:8px;align-items:center}
+    .link-input{
+      flex:1;padding:12px 16px;background:rgba(255,255,255,.05);
+      border:1.5px solid var(--linha-f);border-radius:10px;
+      font-size:.82rem;color:var(--text);font-family:'Inter',sans-serif;
+      outline:none;
+    }
+    [data-theme="light"] .link-input{background:rgba(0,0,0,.03)}
+    .btn-copy{
+      padding:12px 18px;background:linear-gradient(135deg,#1E40AF,#1E3A8A);
+      color:#fff;border:none;border-radius:10px;font-size:.78rem;font-weight:700;
+      cursor:pointer;transition:opacity .2s,transform .15s;font-family:'Inter',sans-serif;
+      display:flex;align-items:center;gap:6px;white-space:nowrap;
+    }
+    .btn-copy:hover{opacity:.9;transform:translateY(-1px)}
+    .btn-copy.copied{background:linear-gradient(135deg,#059669,#10b981)}
+    .share-btns{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap}
+    .share-btn{
+      flex:1;min-width:100px;padding:9px 14px;border-radius:9px;
+      font-size:.72rem;font-weight:600;cursor:pointer;border:1px solid var(--linha-f);
+      background:var(--card);color:var(--text2);transition:all .18s;
+      display:flex;align-items:center;justify-content:center;gap:6px;
+      font-family:'Inter',sans-serif;
+    }
+    .share-btn:hover{border-color:rgba(30,64,175,.4);color:var(--indigo-l)}
+    .share-btn.whatsapp:hover{border-color:rgba(37,211,102,.4);color:#25d366}
+    .share-btn.email:hover{border-color:rgba(245,158,11,.4);color:var(--amber)}
+
+    /* Stats */
+    .stats-row{display:flex;gap:16px;max-width:560px;margin:0 auto 40px;flex-wrap:wrap}
+    .ref-stat{
+      flex:1;min-width:120px;background:var(--card);border:1px solid var(--linha);
+      border-radius:14px;padding:20px;text-align:center;
+    }
+    .ref-stat-val{font-size:2rem;font-weight:900;letter-spacing:-1px;color:var(--indigo-l)}
+    .ref-stat-label{font-size:.7rem;color:var(--text2);margin-top:4px}
+
+    /* How it works */
+    .how-section{max-width:560px;margin:0 auto 48px;padding:0 32px}
+    .how-title{font-size:.8rem;font-weight:700;margin-bottom:16px;color:var(--text);display:flex;align-items:center;gap:8px}
+    .how-title::after{content:'';flex:1;height:1px;background:var(--linha)}
+    .how-steps{display:flex;flex-direction:column;gap:12px}
+    .how-step{
+      display:flex;align-items:flex-start;gap:14px;padding:16px;
+      background:var(--card);border:1px solid var(--linha);border-radius:12px;
+    }
+    .how-num{
+      width:28px;height:28px;border-radius:50%;flex-shrink:0;
+      background:linear-gradient(135deg,#1E40AF,#1E3A8A);
+      display:flex;align-items:center;justify-content:center;
+      font-size:.7rem;font-weight:900;color:#fff;
+    }
+    .how-text{font-size:.8rem;line-height:1.6;color:var(--text)}
+    .how-text strong{color:var(--indigo-l)}
+
+    /* Toast */
+    .toast{position:fixed;bottom:24px;right:24px;z-index:500;padding:12px 20px;background:#111827;border:1px solid rgba(255,255,255,.1);border-radius:12px;font-size:.78rem;font-weight:600;color:#fff;box-shadow:0 8px 32px rgba(0,0,0,.4);transform:translateY(20px);opacity:0;transition:all .3s cubic-bezier(.16,1,.3,1);pointer-events:none}
+    .toast.show{transform:translateY(0);opacity:1}
+    .toast.success{border-color:rgba(16,185,129,.3);color:#34d399}
+
+    @media(max-width:640px){
+      .sidebar{position:fixed;left:0;top:0;bottom:0;z-index:200;transform:translateX(-100%)}
+      .sidebar.open{transform:translateX(0)}
+      .topbar{display:flex}
+      .hero{padding:24px 16px 0}
+      .hero-title{font-size:1.6rem}
+      .link-box,.stats-row,.how-section{padding:0 16px;margin-left:0;margin-right:0;max-width:100%}
+    }
+    @keyframes fadeUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+    .hero{animation:fadeUp .5s cubic-bezier(.16,1,.3,1) both}
+    .link-box{animation:fadeUp .5s cubic-bezier(.16,1,.3,1) .1s both}
+    .stats-row{animation:fadeUp .5s cubic-bezier(.16,1,.3,1) .2s both}
+  </style>
+  <link rel="stylesheet" href="/static/theme.css"/>
+</head>
+<body>
+
+<canvas id="bg3d"></canvas>
+<div class="toast" id="toast"></div>
+
+<div class="app">
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+      <a class="logo" href="/">
+        <span class="pia-mark">
+          <img src="{{ url_for('static', filename='logo-oficial.png') }}" alt="ProfessorIA" style="height: 32px; width: auto; flex-shrink: 0;">
+        </span>
+        <span class="logo-p">Professor</span><span class="logo-ia">IA</span>
+      </a>
+    </div>
+    <nav class="sidebar-nav">
+      <a class="nav-item" href="/chat">
+        <svg class="nav-icon" viewBox="0 0 24 24" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>Chat</a>
+      <a class="nav-item" href="/dashboard">
+        <svg class="nav-icon" viewBox="0 0 24 24" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>Dashboard</a>
+      <a class="nav-item" href="/banco-questoes">
+        <svg class="nav-icon" viewBox="0 0 24 24" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>Banco de Questões</a>
+      <a class="nav-item" href="/historico">
+        <svg class="nav-icon" viewBox="0 0 24 24" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>Histórico</a>
+      <a class="nav-item active" href="/indicar">
+        <svg class="nav-icon" viewBox="0 0 24 24" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>Indicar Amigos</a>
+      <a class="nav-item" href="/planos">
+        <svg class="nav-icon" viewBox="0 0 24 24" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>Planos</a>
+    </nav>
+    <div class="sidebar-spacer"></div>
+    <div class="sidebar-footer">
+      <a class="user-card" href="/perfil">
+        <div class="user-avatar">{{ current_user.nome[0].upper() }}</div>
+        <div>
+          <div class="user-name">{{ current_user.nome.split()[0] }}</div>
+          <div class="user-plan">Minha conta</div>
+        </div>
+      </a>
+    </div>
+  </aside>
+
+  <div class="main">
+    <div class="topbar">
+      <button onclick="document.getElementById('sidebar').classList.toggle('open')" style="background:none;border:none;cursor:pointer;color:var(--text)">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+      </button>
+      <span style="font-size:.85rem;font-weight:700">Indicar Amigos</span>
+      <div style="width:22px"></div>
+    </div>
+
+    <div class="hero">
+      <div class="hero-badge">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+        Programa de indicação
+      </div>
+      <h1 class="hero-title">Indique e ganhe<br/><span>1 mês grátis</span></h1>
+      <p class="hero-sub">Para cada amigo que assinar o plano Pro usando seu link, você ganha <strong>1 mês gratuito</strong> no ProfessorIA. Sem limite de indicações.</p>
+    </div>
+
+    <div class="link-box">
+      <div class="link-label">Seu link de indicação</div>
+      <div class="link-row">
+        <input class="link-input" id="linkInput" value="{{ link }}" readonly/>
+        <button class="btn-copy" id="copyBtn" onclick="copiarLink()">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+          Copiar
+        </button>
+      </div>
+      <div class="share-btns">
+        <button class="share-btn whatsapp" onclick="compartilharWhatsApp()">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+          WhatsApp
+        </button>
+        <button class="share-btn email" onclick="compartilharEmail()">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+          E-mail
+        </button>
+        <button class="share-btn" onclick="compartilharNativo()">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+          Compartilhar
+        </button>
+      </div>
+    </div>
+
+    <div class="stats-row">
+      <div class="ref-stat">
+        <div class="ref-stat-val" id="statUsos">{{ ref.usos or 0 }}</div>
+        <div class="ref-stat-label">Indicações feitas</div>
+      </div>
+      <div class="ref-stat">
+        <div class="ref-stat-val" id="statConversoes">0</div>
+        <div class="ref-stat-label">Assinantes convertidos</div>
+      </div>
+      <div class="ref-stat">
+        <div class="ref-stat-val" id="statCreditos">{{ ref.creditos or 0 }}</div>
+        <div class="ref-stat-label">Meses ganhos</div>
+      </div>
+    </div>
+
+    <div class="how-section">
+      <div class="how-title">Como funciona</div>
+      <div class="how-steps">
+        <div class="how-step">
+          <div class="how-num">1</div>
+          <div class="how-text"><strong>Compartilhe seu link</strong> com colegas professores pelo WhatsApp, e-mail ou redes sociais.</div>
+        </div>
+        <div class="how-step">
+          <div class="how-num">2</div>
+          <div class="how-text">Seu amigo se cadastra e <strong>assina o plano Pro</strong> usando seu link de indicação.</div>
+        </div>
+        <div class="how-step">
+          <div class="how-num">3</div>
+          <div class="how-text">Você ganha <strong>1 mês gratuito</strong> automaticamente. Sem limite — quanto mais indicar, mais ganha!</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="/static/bg3d.js"></script>
+<script>
+const LINK = document.getElementById('linkInput').value;
+
+function copiarLink() {
+  navigator.clipboard.writeText(LINK).then(() => {
+    const btn = document.getElementById('copyBtn');
+    btn.textContent = '✓ Copiado!';
+    btn.classList.add('copied');
+    showToast('Link copiado!', 'success');
+    setTimeout(() => {
+      btn.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg> Copiar`;
+      btn.classList.remove('copied');
+    }, 2500);
+  });
+}
+
+function compartilharWhatsApp() {
+  const msg = encodeURIComponent(`Oi! Estou usando o ProfessorIA para criar planos de aula e provas alinhados à BNCC com IA. Você vai adorar! Use meu link para se cadastrar: ${LINK}`);
+  window.open(`https://wa.me/?text=${msg}`, '_blank');
+}
+
+function compartilharEmail() {
+  const subject = encodeURIComponent('Conheça o ProfessorIA — IA para professores');
+  const body = encodeURIComponent(`Olá!\n\nEstou usando o ProfessorIA para criar planos de aula e provas alinhados à BNCC em segundos com IA. Acho que você vai adorar!\n\nUse meu link para se cadastrar e ganhar acesso especial:\n${LINK}\n\nAbraços!`);
+  window.location.href = `mailto:?subject=${subject}&body=${body}`;
+}
+
+function compartilharNativo() {
+  if (navigator.share) {
+    navigator.share({
+      title: 'ProfessorIA — IA para professores',
+      text: 'Crie planos de aula e provas alinhados à BNCC com IA em segundos!',
+      url: LINK
+    });
+  } else {
+    copiarLink();
+  }
+}
+
+function showToast(msg, type) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast show ' + (type || '');
+  setTimeout(() => t.className = 'toast', 3000);
+}
+
+// Load stats
+fetch('/api/referral/stats').then(r => r.json()).then(d => {
+  if (d.usos !== undefined) document.getElementById('statUsos').textContent = d.usos;
+  if (d.conversoes !== undefined) document.getElementById('statConversoes').textContent = d.conversoes;
+  if (d.creditos !== undefined) document.getElementById('statCreditos').textContent = d.creditos;
+}).catch(() => {});
+</script>
+</body>
+</html>

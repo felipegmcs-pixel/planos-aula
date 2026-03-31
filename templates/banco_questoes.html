@@ -1,0 +1,584 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8"/>
+  <script>!function(){var t=localStorage.getItem("pia-theme")||"dark",a="system"===t?(window.matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light"):t;document.documentElement.setAttribute("data-theme",a)}();</script>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>ProfessorIA — Banco de Questões</title>
+  <link rel="icon" type="image/svg+xml" href="/static/logo-oficial.png"/>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet"/>
+  <style>
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    :root{
+      --bg:#0b0d14;--bg2:#0f1120;--bg3:#131526;
+      --text:#e5e7eb;--text2:#9ca3af;--text3:#4b5563;
+      --indigo:#1E40AF;--violet:#1E3A8A;--indigo-l:#818cf8;
+      --linha:rgba(255,255,255,.07);--linha-f:rgba(255,255,255,.12);
+      --card:rgba(255,255,255,.04);--card-h:rgba(255,255,255,.07);
+      --sb-bg:#0a0c18;--sidebar-w:240px;
+      --green:#10b981;--amber:#f59e0b;--red:#ef4444;
+    }
+    [data-theme="light"]{
+      --bg:#f8f9ff;--bg2:#ffffff;--bg3:#f1f2f8;
+      --text:#111827;--text2:#6b7280;--text3:#9ca3af;
+      --linha:rgba(17,24,39,.07);--linha-f:rgba(17,24,39,.13);
+      --card:rgba(255,255,255,.9);--card-h:rgba(255,255,255,1);
+      --sb-bg:#f7f8ff;
+    }
+    html,body{height:100%;font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);overflow:hidden}
+    #bg3d{position:fixed;inset:0;z-index:0;pointer-events:none;opacity:.4}
+    .app{display:flex;height:100%;position:relative;z-index:1}
+
+    /* Sidebar */
+    .sidebar{width:var(--sidebar-w);flex-shrink:0;background:var(--sb-bg);border-right:1px solid var(--linha);display:flex;flex-direction:column;height:100%;overflow-y:auto;transition:transform .3s cubic-bezier(.16,1,.3,1)}
+    .sidebar-header{padding:20px 16px 12px;border-bottom:1px solid var(--linha)}
+    .logo{display:flex;align-items:center;gap:8px;text-decoration:none}
+    .pia-mark{width:34px;height:34px;border-radius:9px;background:#fff;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+    .logo-p{font-size:.95rem;font-weight:800;letter-spacing:-.5px;color:var(--text)}
+    .logo-ia{font-size:.95rem;font-weight:500;color:var(--indigo-l)}
+    .sidebar-nav{padding:12px 8px;display:flex;flex-direction:column;gap:2px}
+    .nav-item{display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:10px;text-decoration:none;font-size:.8rem;font-weight:500;color:rgba(255,255,255,.5);transition:all .18s}
+    [data-theme="light"] .nav-item{color:rgba(17,24,39,.5)}
+    .nav-item:hover{background:rgba(255,255,255,.06);color:var(--text)}
+    [data-theme="light"] .nav-item:hover{background:rgba(17,24,39,.05);color:var(--text)}
+    .nav-item.active{background:rgba(30,64,175,.18);color:#818cf8;font-weight:600}
+    [data-theme="light"] .nav-item.active{background:rgba(30,64,175,.1);color:var(--indigo)}
+    .nav-icon{width:16px;height:16px;stroke:currentColor;fill:none;stroke-linecap:round;stroke-linejoin:round;flex-shrink:0}
+    .sidebar-spacer{flex:1}
+    .sidebar-footer{padding:12px 8px;border-top:1px solid var(--linha)}
+    .user-card{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:10px;text-decoration:none;transition:background .18s}
+    .user-card:hover{background:rgba(255,255,255,.06)}
+    [data-theme="light"] .user-card:hover{background:rgba(17,24,39,.05)}
+    .user-avatar{width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,#1E40AF,#1E3A8A);display:flex;align-items:center;justify-content:center;font-size:.75rem;font-weight:800;color:#fff;flex-shrink:0}
+    .user-name{font-size:.78rem;font-weight:600;color:var(--text)}
+    .user-plan{font-size:.65rem;color:var(--text2)}
+
+    /* Main */
+    .main{flex:1;overflow-y:auto;display:flex;flex-direction:column;min-width:0}
+    .topbar{display:none;padding:14px 16px;border-bottom:1px solid var(--linha);align-items:center;justify-content:space-between;background:var(--bg2);position:sticky;top:0;z-index:50}
+
+    /* Page content */
+    .page-wrap{padding:32px;max-width:1100px}
+    .page-header{display:flex;align-items:flex-end;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:24px}
+    .page-title{font-size:1.5rem;font-weight:900;letter-spacing:-.5px}
+    .page-sub{font-size:.8rem;color:var(--text2);margin-top:4px}
+
+    /* Toolbar */
+    .toolbar{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:20px;align-items:center}
+    .search-box{
+      flex:1;min-width:200px;display:flex;align-items:center;gap:8px;
+      background:var(--card);border:1px solid var(--linha-f);border-radius:10px;
+      padding:9px 14px;transition:border-color .2s;
+    }
+    .search-box:focus-within{border-color:rgba(30,64,175,.5)}
+    .search-box svg{width:15px;height:15px;stroke:var(--text3);fill:none;stroke-width:2;flex-shrink:0}
+    .search-box input{flex:1;background:none;border:none;outline:none;font-size:.82rem;color:var(--text);font-family:'Inter',sans-serif}
+    .search-box input::placeholder{color:var(--text3)}
+    .filter-select{
+      padding:9px 12px;background:var(--card);border:1px solid var(--linha-f);
+      border-radius:10px;font-size:.78rem;color:var(--text);font-family:'Inter',sans-serif;
+      outline:none;cursor:pointer;
+    }
+    .btn-primary{
+      padding:9px 18px;background:linear-gradient(135deg,#1E40AF,#1E3A8A);
+      color:#fff;border:none;border-radius:10px;font-size:.78rem;font-weight:700;
+      cursor:pointer;transition:opacity .2s,transform .15s;font-family:'Inter',sans-serif;
+      display:flex;align-items:center;gap:6px;white-space:nowrap;
+    }
+    .btn-primary:hover{opacity:.9;transform:translateY(-1px)}
+    .btn-secondary{
+      padding:9px 14px;background:var(--card);border:1px solid var(--linha-f);
+      color:var(--text2);border-radius:10px;font-size:.78rem;font-weight:600;
+      cursor:pointer;transition:all .18s;font-family:'Inter',sans-serif;
+      display:flex;align-items:center;gap:6px;
+    }
+    .btn-secondary:hover{border-color:rgba(30,64,175,.4);color:var(--indigo-l)}
+
+    /* Stats bar */
+    .stats-bar{display:flex;gap:16px;margin-bottom:20px;flex-wrap:wrap}
+    .stat-pill{
+      padding:8px 16px;background:var(--card);border:1px solid var(--linha);
+      border-radius:20px;font-size:.72rem;font-weight:600;display:flex;align-items:center;gap:6px;
+    }
+    .stat-pill span{font-size:1rem;font-weight:900;color:var(--indigo-l)}
+
+    /* Questions grid */
+    .q-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:14px}
+    .q-card{
+      background:var(--card);border:1px solid var(--linha);border-radius:14px;
+      padding:18px;transition:all .22s;position:relative;overflow:hidden;
+    }
+    .q-card::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:linear-gradient(180deg,#1E40AF,#1E3A8A)}
+    .q-card:hover{border-color:rgba(30,64,175,.3);transform:translateY(-2px);box-shadow:0 8px 28px rgba(30,64,175,.15)}
+    .q-header{display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-bottom:10px}
+    .q-tags{display:flex;gap:6px;flex-wrap:wrap}
+    .q-tag{
+      padding:3px 9px;border-radius:20px;font-size:.58rem;font-weight:700;
+      letter-spacing:.5px;text-transform:uppercase;
+    }
+    .tag-disc{background:rgba(30,64,175,.15);color:#818cf8}
+    .tag-serie{background:rgba(30,64,175,.15);color:#a78bfa}
+    .tag-tipo{background:rgba(16,185,129,.15);color:#34d399}
+    .q-actions{display:flex;gap:4px;opacity:0;transition:opacity .18s}
+    .q-card:hover .q-actions{opacity:1}
+    .q-action-btn{
+      width:28px;height:28px;border-radius:7px;border:none;background:var(--card-h);
+      cursor:pointer;display:flex;align-items:center;justify-content:center;
+      color:var(--text2);transition:all .15s;
+    }
+    .q-action-btn:hover{background:rgba(239,68,68,.15);color:var(--red)}
+    .q-action-btn.copy:hover{background:rgba(30,64,175,.15);color:var(--indigo-l)}
+    .q-action-btn svg{width:13px;height:13px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+    .q-text{font-size:.82rem;line-height:1.7;color:var(--text);margin-bottom:10px}
+    .q-alternativas{display:flex;flex-direction:column;gap:4px;margin-bottom:10px}
+    .q-alt{
+      display:flex;align-items:flex-start;gap:8px;padding:6px 10px;
+      border-radius:7px;font-size:.75rem;line-height:1.5;
+      background:rgba(255,255,255,.03);border:1px solid var(--linha);
+    }
+    .q-alt.correta{background:rgba(16,185,129,.08);border-color:rgba(16,185,129,.2);color:#34d399}
+    .q-alt-letra{font-weight:800;flex-shrink:0;width:16px}
+    .q-footer{display:flex;align-items:center;justify-content:space-between;margin-top:8px}
+    .q-bncc{font-size:.6rem;color:var(--text3);font-style:italic}
+    .q-date{font-size:.6rem;color:var(--text3)}
+
+    /* Empty state */
+    .empty-state{
+      text-align:center;padding:80px 32px;
+      display:flex;flex-direction:column;align-items:center;gap:16px;
+    }
+    .empty-icon{
+      width:72px;height:72px;border-radius:20px;
+      background:linear-gradient(135deg,rgba(30,64,175,.15),rgba(30,64,175,.15));
+      display:flex;align-items:center;justify-content:center;
+    }
+    .empty-icon svg{width:32px;height:32px;stroke:var(--indigo-l);fill:none;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round}
+    .empty-title{font-size:1.1rem;font-weight:800;letter-spacing:-.3px}
+    .empty-sub{font-size:.82rem;color:var(--text2);max-width:360px;line-height:1.6}
+
+    /* Modal */
+    .modal-bg{
+      display:none;position:fixed;inset:0;z-index:300;
+      background:rgba(5,8,17,.88);backdrop-filter:blur(10px);
+      align-items:center;justify-content:center;padding:20px;
+    }
+    .modal-bg.open{display:flex}
+    .modal{
+      background:var(--bg2);border:1px solid var(--linha-f);
+      width:100%;max-width:560px;padding:32px;border-radius:18px;
+      box-shadow:0 24px 80px rgba(0,0,0,.6),0 0 60px rgba(30,64,175,.1);
+      max-height:90vh;overflow-y:auto;
+    }
+    .modal-title{font-size:1.1rem;font-weight:900;letter-spacing:-.3px;margin-bottom:20px}
+    .form-group{margin-bottom:14px}
+    .form-label{font-size:.6rem;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--text2);display:block;margin-bottom:6px}
+    .form-input,.form-textarea,.form-select{
+      width:100%;padding:10px 13px;background:rgba(255,255,255,.05);
+      border:1.5px solid var(--linha-f);color:var(--text);
+      font-family:'Inter',sans-serif;font-size:.82rem;border-radius:9px;outline:none;
+      transition:border-color .2s;
+    }
+    [data-theme="light"] .form-input,[data-theme="light"] .form-textarea,[data-theme="light"] .form-select{background:rgba(0,0,0,.03)}
+    .form-input:focus,.form-textarea:focus,.form-select:focus{border-color:rgba(30,64,175,.5)}
+    .form-textarea{resize:vertical;min-height:80px;line-height:1.6}
+    .form-select option{background:var(--bg2)}
+    .form-row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+    .alts-wrap{display:flex;flex-direction:column;gap:6px}
+    .alt-row{display:flex;align-items:center;gap:8px}
+    .alt-letra{font-size:.78rem;font-weight:800;color:var(--text2);width:16px;flex-shrink:0}
+    .alt-input{flex:1;padding:8px 12px;background:rgba(255,255,255,.05);border:1.5px solid var(--linha-f);color:var(--text);font-family:'Inter',sans-serif;font-size:.78rem;border-radius:8px;outline:none;transition:border-color .2s}
+    [data-theme="light"] .alt-input{background:rgba(0,0,0,.03)}
+    .alt-input:focus{border-color:rgba(30,64,175,.5)}
+    .alt-correct{width:18px;height:18px;accent-color:#1E40AF;cursor:pointer}
+    .modal-footer{display:flex;gap:10px;margin-top:20px}
+    .btn-cancel{flex:0 0 auto;padding:11px 18px;background:transparent;border:1.5px solid var(--linha-f);color:var(--text2);border-radius:10px;font-size:.78rem;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif;transition:all .18s}
+    .btn-cancel:hover{border-color:rgba(255,255,255,.25);color:var(--text)}
+
+    /* Toast */
+    .toast{
+      position:fixed;bottom:24px;right:24px;z-index:500;
+      padding:12px 20px;background:#111827;border:1px solid rgba(255,255,255,.1);
+      border-radius:12px;font-size:.78rem;font-weight:600;color:#fff;
+      box-shadow:0 8px 32px rgba(0,0,0,.4);
+      transform:translateY(20px);opacity:0;transition:all .3s cubic-bezier(.16,1,.3,1);
+      pointer-events:none;
+    }
+    .toast.show{transform:translateY(0);opacity:1}
+    .toast.success{border-color:rgba(16,185,129,.3);color:#34d399}
+    .toast.error{border-color:rgba(239,68,68,.3);color:#f87171}
+
+    @media(max-width:640px){
+      .sidebar{position:fixed;left:0;top:0;bottom:0;z-index:200;transform:translateX(-100%)}
+      .sidebar.open{transform:translateX(0)}
+      .topbar{display:flex}
+      .page-wrap{padding:16px}
+      .q-grid{grid-template-columns:1fr}
+      .form-row{grid-template-columns:1fr}
+    }
+    @keyframes fadeUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
+    .q-card{animation:fadeUp .35s cubic-bezier(.16,1,.3,1) both}
+  </style>
+  <link rel="stylesheet" href="/static/theme.css"/>
+</head>
+<body>
+
+<canvas id="bg3d"></canvas>
+<div class="toast" id="toast"></div>
+
+<!-- Add Question Modal -->
+<div class="modal-bg" id="modalAdd" onclick="if(event.target===this)closeModal()">
+  <div class="modal">
+    <div class="modal-title">Adicionar questão</div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Disciplina</label>
+        <input class="form-input" id="q-disciplina" placeholder="Ex: Matemática"/>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Série / Ano</label>
+        <input class="form-input" id="q-serie" placeholder="Ex: 8º Ano"/>
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Tipo</label>
+        <select class="form-select" id="q-tipo">
+          <option value="multipla_escolha">Múltipla escolha</option>
+          <option value="dissertativa">Dissertativa</option>
+          <option value="verdadeiro_falso">Verdadeiro ou Falso</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Dificuldade</label>
+        <select class="form-select" id="q-dificuldade">
+          <option value="facil">Fácil</option>
+          <option value="medio" selected>Médio</option>
+          <option value="dificil">Difícil</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Enunciado da questão</label>
+      <textarea class="form-textarea" id="q-enunciado" placeholder="Digite o enunciado completo da questão..." rows="4"></textarea>
+    </div>
+    <div class="form-group" id="altsGroup">
+      <label class="form-label">Alternativas (marque a correta)</label>
+      <div class="alts-wrap" id="altsWrap">
+        <div class="alt-row"><span class="alt-letra">A</span><input class="alt-input" placeholder="Alternativa A"/><input type="radio" name="correta" value="A" class="alt-correct" checked/></div>
+        <div class="alt-row"><span class="alt-letra">B</span><input class="alt-input" placeholder="Alternativa B"/><input type="radio" name="correta" value="B" class="alt-correct"/></div>
+        <div class="alt-row"><span class="alt-letra">C</span><input class="alt-input" placeholder="Alternativa C"/><input type="radio" name="correta" value="C" class="alt-correct"/></div>
+        <div class="alt-row"><span class="alt-letra">D</span><input class="alt-input" placeholder="Alternativa D"/><input type="radio" name="correta" value="D" class="alt-correct"/></div>
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Código BNCC (opcional)</label>
+      <input class="form-input" id="q-bncc" placeholder="Ex: EF08MA01"/>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-primary" onclick="salvarQuestao()" style="flex:1">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+        Salvar questão
+      </button>
+      <button class="btn-cancel" onclick="closeModal()">Cancelar</button>
+    </div>
+  </div>
+</div>
+
+<div class="app">
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+      <a class="logo" href="/">
+        <span class="pia-mark">
+          <img src="{{ url_for('static', filename='logo-oficial.png') }}" alt="ProfessorIA" style="height: 32px; width: auto; flex-shrink: 0;">
+        </span>
+        <span class="logo-p">Professor</span><span class="logo-ia">IA</span>
+      </a>
+    </div>
+    <nav class="sidebar-nav">
+      <a class="nav-item" href="/chat">
+        <svg class="nav-icon" viewBox="0 0 24 24" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>Chat</a>
+      <a class="nav-item" href="/dashboard">
+        <svg class="nav-icon" viewBox="0 0 24 24" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>Dashboard</a>
+      <a class="nav-item active" href="/banco-questoes">
+        <svg class="nav-icon" viewBox="0 0 24 24" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>Banco de Questões</a>
+      <a class="nav-item" href="/historico">
+        <svg class="nav-icon" viewBox="0 0 24 24" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>Histórico</a>
+      <a class="nav-item" href="/indicar">
+        <svg class="nav-icon" viewBox="0 0 24 24" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>Indicar Amigos</a>
+      <a class="nav-item" href="/planos">
+        <svg class="nav-icon" viewBox="0 0 24 24" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>Planos</a>
+    </nav>
+    <div class="sidebar-spacer"></div>
+    <div class="sidebar-footer">
+      <a class="user-card" href="/perfil">
+        <div class="user-avatar">{{ current_user.nome[0].upper() }}</div>
+        <div>
+          <div class="user-name">{{ current_user.nome.split()[0] }}</div>
+          <div class="user-plan">Minha conta</div>
+        </div>
+      </a>
+    </div>
+  </aside>
+
+  <div class="main">
+    <div class="topbar">
+      <button onclick="document.getElementById('sidebar').classList.toggle('open')" style="background:none;border:none;cursor:pointer;color:var(--text)">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+      </button>
+      <span style="font-size:.85rem;font-weight:700">Banco de Questões</span>
+      <div style="width:22px"></div>
+    </div>
+
+    <div class="page-wrap">
+      <div class="page-header">
+        <div>
+          <div class="page-title">Banco de Questões</div>
+          <div class="page-sub">Salve, organize e reutilize questões em suas provas</div>
+        </div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <button class="btn-secondary" onclick="extrairDoChat()">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+            Extrair do chat
+          </button>
+          <button class="btn-primary" onclick="openModal()">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            Nova questão
+          </button>
+        </div>
+      </div>
+
+      <div class="stats-bar" id="statsBar">
+        <div class="stat-pill"><span id="totalQ">0</span> questões</div>
+        <div class="stat-pill"><span id="totalDisc">0</span> disciplinas</div>
+        <div class="stat-pill"><span id="totalME">0</span> múltipla escolha</div>
+      </div>
+
+      <div class="toolbar">
+        <div class="search-box">
+          <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          <input id="searchInput" placeholder="Buscar questões..." oninput="filtrar()"/>
+        </div>
+        <select class="filter-select" id="filterDisc" onchange="filtrar()">
+          <option value="">Todas as disciplinas</option>
+        </select>
+        <select class="filter-select" id="filterTipo" onchange="filtrar()">
+          <option value="">Todos os tipos</option>
+          <option value="multipla_escolha">Múltipla escolha</option>
+          <option value="dissertativa">Dissertativa</option>
+          <option value="verdadeiro_falso">V ou F</option>
+        </select>
+        <select class="filter-select" id="filterDif" onchange="filtrar()">
+          <option value="">Todas as dificuldades</option>
+          <option value="facil">Fácil</option>
+          <option value="medio">Médio</option>
+          <option value="dificil">Difícil</option>
+        </select>
+      </div>
+
+      <div class="q-grid" id="qGrid"></div>
+    </div>
+  </div>
+</div>
+
+<script src="/static/bg3d.js"></script>
+<script>
+let allQuestoes = [];
+
+async function loadQuestoes() {
+  try {
+    const r = await fetch('/api/questoes');
+    const d = await r.json();
+    allQuestoes = d.questoes || [];
+    updateStats();
+    populateFilters();
+    renderQuestoes(allQuestoes);
+  } catch(e) {
+    renderEmpty('Erro ao carregar questões.');
+  }
+}
+
+function updateStats() {
+  document.getElementById('totalQ').textContent = allQuestoes.length;
+  const discs = new Set(allQuestoes.map(q => q.disciplina).filter(Boolean));
+  document.getElementById('totalDisc').textContent = discs.size;
+  const me = allQuestoes.filter(q => q.tipo === 'multipla_escolha').length;
+  document.getElementById('totalME').textContent = me;
+}
+
+function populateFilters() {
+  const sel = document.getElementById('filterDisc');
+  const discs = [...new Set(allQuestoes.map(q => q.disciplina).filter(Boolean))].sort();
+  sel.innerHTML = '<option value="">Todas as disciplinas</option>' +
+    discs.map(d => `<option value="${d}">${d}</option>`).join('');
+}
+
+function filtrar() {
+  const q = document.getElementById('searchInput').value.toLowerCase();
+  const disc = document.getElementById('filterDisc').value;
+  const tipo = document.getElementById('filterTipo').value;
+  const dif  = document.getElementById('filterDif').value;
+  const filtered = allQuestoes.filter(item => {
+    const text = (item.enunciado + ' ' + (item.disciplina||'')).toLowerCase();
+    return (!q || text.includes(q)) &&
+           (!disc || item.disciplina === disc) &&
+           (!tipo || item.tipo === tipo) &&
+           (!dif  || item.dificuldade === dif);
+  });
+  renderQuestoes(filtered);
+}
+
+function renderQuestoes(list) {
+  const grid = document.getElementById('qGrid');
+  if (!list.length) {
+    grid.innerHTML = `
+      <div class="empty-state" style="grid-column:1/-1">
+        <div class="empty-icon"><svg viewBox="0 0 24 24"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg></div>
+        <div class="empty-title">Nenhuma questão encontrada</div>
+        <div class="empty-sub">Adicione questões manualmente ou extraia automaticamente de uma conversa no chat.</div>
+        <button class="btn-primary" onclick="openModal()">+ Adicionar questão</button>
+      </div>`;
+    return;
+  }
+  const tipoLabel = {multipla_escolha:'Múltipla Escolha',dissertativa:'Dissertativa',verdadeiro_falso:'V ou F'};
+  const difLabel  = {facil:'Fácil',medio:'Médio',dificil:'Difícil'};
+  grid.innerHTML = list.map((q, i) => {
+    let altsHtml = '';
+    if (q.tipo === 'multipla_escolha' && q.alternativas) {
+      const alts = typeof q.alternativas === 'string' ? JSON.parse(q.alternativas) : q.alternativas;
+      altsHtml = '<div class="q-alternativas">' +
+        Object.entries(alts).map(([letra, txt]) =>
+          `<div class="q-alt ${letra === q.resposta_correta ? 'correta' : ''}">
+            <span class="q-alt-letra">${letra}</span>
+            <span>${txt}</span>
+          </div>`
+        ).join('') + '</div>';
+    }
+    return `
+      <div class="q-card" style="animation-delay:${i*0.04}s">
+        <div class="q-header">
+          <div class="q-tags">
+            ${q.disciplina ? `<span class="q-tag tag-disc">${q.disciplina}</span>` : ''}
+            ${q.serie ? `<span class="q-tag tag-serie">${q.serie}</span>` : ''}
+            <span class="q-tag tag-tipo">${tipoLabel[q.tipo]||q.tipo}</span>
+            ${q.dificuldade ? `<span class="q-tag" style="background:rgba(245,158,11,.12);color:#fbbf24">${difLabel[q.dificuldade]||q.dificuldade}</span>` : ''}
+          </div>
+          <div class="q-actions">
+            <button class="q-action-btn copy" onclick="copiarQuestao(${q.id})" title="Copiar">
+              <svg viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+            </button>
+            <button class="q-action-btn" onclick="deletarQuestao(${q.id})" title="Excluir">
+              <svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg>
+            </button>
+          </div>
+        </div>
+        <div class="q-text">${q.enunciado}</div>
+        ${altsHtml}
+        <div class="q-footer">
+          <span class="q-bncc">${q.bncc_codigo ? 'BNCC: ' + q.bncc_codigo : ''}</span>
+          <span class="q-date">${q.criado_em || ''}</span>
+        </div>
+      </div>`;
+  }).join('');
+}
+
+function openModal() {
+  document.getElementById('modalAdd').classList.add('open');
+}
+function closeModal() {
+  document.getElementById('modalAdd').classList.remove('open');
+}
+
+async function salvarQuestao() {
+  const tipo = document.getElementById('q-tipo').value;
+  const alts = {};
+  if (tipo === 'multipla_escolha') {
+    const inputs = document.querySelectorAll('#altsWrap .alt-input');
+    const letras = ['A','B','C','D'];
+    inputs.forEach((inp, i) => { if (inp.value.trim()) alts[letras[i]] = inp.value.trim(); });
+  }
+  const correta = document.querySelector('input[name="correta"]:checked')?.value || 'A';
+  const body = {
+    disciplina: document.getElementById('q-disciplina').value.trim(),
+    serie: document.getElementById('q-serie').value.trim(),
+    tipo,
+    dificuldade: document.getElementById('q-dificuldade').value,
+    enunciado: document.getElementById('q-enunciado').value.trim(),
+    alternativas: tipo === 'multipla_escolha' ? alts : null,
+    resposta_correta: tipo === 'multipla_escolha' ? correta : null,
+    bncc_codigo: document.getElementById('q-bncc').value.trim(),
+  };
+  if (!body.enunciado) { showToast('Enunciado obrigatório', 'error'); return; }
+  try {
+    const r = await fetch('/api/questoes', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify(body)
+    });
+    const d = await r.json();
+    if (d.ok) {
+      closeModal();
+      showToast('Questão salva!', 'success');
+      loadQuestoes();
+    } else {
+      showToast(d.erro || 'Erro ao salvar', 'error');
+    }
+  } catch(e) {
+    showToast('Erro de conexão', 'error');
+  }
+}
+
+async function deletarQuestao(id) {
+  if (!confirm('Excluir esta questão?')) return;
+  try {
+    await fetch(`/api/questoes/${id}`, { method: 'DELETE' });
+    showToast('Questão excluída', 'success');
+    loadQuestoes();
+  } catch(e) {
+    showToast('Erro ao excluir', 'error');
+  }
+}
+
+function copiarQuestao(id) {
+  const q = allQuestoes.find(x => x.id === id);
+  if (!q) return;
+  let txt = q.enunciado;
+  if (q.alternativas) {
+    const alts = typeof q.alternativas === 'string' ? JSON.parse(q.alternativas) : q.alternativas;
+    txt += '\n' + Object.entries(alts).map(([l,v]) => `${l}) ${v}`).join('\n');
+    if (q.resposta_correta) txt += `\nResposta: ${q.resposta_correta}`;
+  }
+  navigator.clipboard.writeText(txt).then(() => showToast('Copiado!', 'success'));
+}
+
+async function extrairDoChat() {
+  showToast('Extraindo questões do histórico do chat...', '');
+  try {
+    const r = await fetch('/api/questoes/extrair-do-chat', { method: 'POST', headers: {'Content-Type':'application/json'}, body: '{}' });
+    const d = await r.json();
+    if (d.ok) {
+      showToast(`${d.total} questões extraídas!`, 'success');
+      loadQuestoes();
+    } else {
+      showToast(d.erro || 'Nenhuma questão encontrada', 'error');
+    }
+  } catch(e) {
+    showToast('Erro ao extrair', 'error');
+  }
+}
+
+function showToast(msg, type) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast show ' + (type || '');
+  setTimeout(() => t.className = 'toast', 3000);
+}
+
+// Toggle alternativas based on tipo
+document.getElementById('q-tipo').addEventListener('change', function() {
+  document.getElementById('altsGroup').style.display = this.value === 'multipla_escolha' ? '' : 'none';
+});
+
+loadQuestoes();
+</script>
+</body>
+</html>

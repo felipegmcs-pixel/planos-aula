@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8"/>
+  <script>!function(){var t=localStorage.getItem("pia-theme")||"dark",a="system"===t?(window.matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light"):t;document.documentElement.setAttribute("data-theme",a)}();</script>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>ProfessorIA — Dashboard</title>
+  <link rel="icon" type="image/svg+xml" href="/static/logo-oficial.png"/>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet"/>
+  <style>
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    :root{
+      --bg:#0b0d14;--bg2:#0f1120;--bg3:#131526;
+      --text:#e5e7eb;--text2:#9ca3af;--text3:#4b5563;
+      --indigo:#1E40AF;--violet:#1E3A8A;--indigo-l:#818cf8;
+      --linha:rgba(255,255,255,.07);--linha-f:rgba(255,255,255,.12);
+      --card:rgba(255,255,255,.04);--card-h:rgba(255,255,255,.07);
+      --sb-bg:#0a0c18;--sidebar-w:240px;
+      --green:#10b981;--amber:#f59e0b;--red:#ef4444;
+    }
+    [data-theme="light"]{
+      --bg:#f8f9ff;--bg2:#ffffff;--bg3:#f1f2f8;
+      --text:#111827;--text2:#6b7280;--text3:#9ca3af;
+      --linha:rgba(17,24,39,.07);--linha-f:rgba(17,24,39,.13);
+      --card:rgba(255,255,255,.9);--card-h:rgba(255,255,255,1);
+      --sb-bg:#f7f8ff;
+    }
+    html,body{height:100%;font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);overflow:hidden}
+
+    /* 3D canvas */
+    #bg3d{position:fixed;inset:0;z-index:0;pointer-events:none;opacity:.45}
+
+    /* Layout */
+    .app{display:flex;height:100%;position:relative;z-index:1}
+
+    /* Sidebar (same as chat.html) */
+    .sidebar{
+      width:var(--sidebar-w);flex-shrink:0;
+      background:var(--sb-bg);border-right:1px solid var(--linha);
+      display:flex;flex-direction:column;height:100%;overflow-y:auto;
+      transition:transform .3s cubic-bezier(.16,1,.3,1);
+    }
+    .sidebar-header{padding:20px 16px 12px;border-bottom:1px solid var(--linha)}
+    .logo{display:flex;align-items:center;gap:8px;text-decoration:none}
+    .pia-mark{
+      width:34px;height:34px;border-radius:9px;
+      background:#fff;display:flex;align-items:center;justify-content:center;
+      flex-shrink:0;
+    }
+    .logo-p{font-size:.95rem;font-weight:800;letter-spacing:-.5px;color:var(--text)}
+    .logo-ia{font-size:.95rem;font-weight:500;color:var(--indigo-l)}
+    .sidebar-nav{padding:12px 8px;display:flex;flex-direction:column;gap:2px}
+    .nav-item{
+      display:flex;align-items:center;gap:10px;padding:9px 12px;
+      border-radius:10px;text-decoration:none;font-size:.8rem;font-weight:500;
+      color:rgba(255,255,255,.5);transition:all .18s;position:relative;
+    }
+    [data-theme="light"] .nav-item{color:rgba(17,24,39,.5)}
+    .nav-item:hover{background:rgba(255,255,255,.06);color:var(--text)}
+    [data-theme="light"] .nav-item:hover{background:rgba(17,24,39,.05);color:var(--text)}
+    .nav-item.active{background:rgba(30,64,175,.18);color:#818cf8;font-weight:600}
+    [data-theme="light"] .nav-item.active{background:rgba(30,64,175,.1);color:var(--indigo)}
+    .nav-icon{width:16px;height:16px;stroke:currentColor;fill:none;stroke-linecap:round;stroke-linejoin:round;flex-shrink:0}
+    .sidebar-spacer{flex:1}
+    .sidebar-footer{padding:12px 8px;border-top:1px solid var(--linha)}
+    .user-card{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:10px;text-decoration:none;transition:background .18s}
+    .user-card:hover{background:rgba(255,255,255,.06)}
+    [data-theme="light"] .user-card:hover{background:rgba(17,24,39,.05)}
+    .user-avatar{width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,#1E40AF,#1E3A8A);display:flex;align-items:center;justify-content:center;font-size:.75rem;font-weight:800;color:#fff;flex-shrink:0}
+    .user-name{font-size:.78rem;font-weight:600;color:var(--text)}
+    .user-plan{font-size:.65rem;color:var(--text2)}
+
+    /* Main */
+    .main{flex:1;overflow-y:auto;display:flex;flex-direction:column;min-width:0}
+    .topbar{
+      display:none;padding:14px 16px;border-bottom:1px solid var(--linha);
+      align-items:center;justify-content:space-between;background:var(--bg2);
+      position:sticky;top:0;z-index:50;
+    }
+    .page-header{
+      padding:32px 32px 0;
+      display:flex;align-items:flex-end;justify-content:space-between;flex-wrap:wrap;gap:12px;
+    }
+    .page-title{font-size:1.5rem;font-weight:900;letter-spacing:-.5px}
+    .page-sub{font-size:.8rem;color:var(--text2);margin-top:4px}
+    .period-tabs{display:flex;gap:4px;background:var(--card);border:1px solid var(--linha);border-radius:10px;padding:3px}
+    .period-tab{padding:5px 14px;border-radius:7px;font-size:.72rem;font-weight:600;cursor:pointer;border:none;background:transparent;color:var(--text2);transition:all .18s}
+    .period-tab.active{background:linear-gradient(135deg,#1E40AF,#1E3A8A);color:#fff}
+
+    /* Stats grid */
+    .stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;padding:24px 32px 0}
+    .stat-card{
+      background:var(--card);border:1px solid var(--linha);border-radius:16px;
+      padding:20px;transition:all .25s;cursor:default;position:relative;overflow:hidden;
+    }
+    .stat-card::before{
+      content:'';position:absolute;inset:0;
+      background:linear-gradient(135deg,rgba(30,64,175,.08),transparent);
+      opacity:0;transition:opacity .25s;
+    }
+    .stat-card:hover{border-color:rgba(30,64,175,.3);transform:translateY(-2px);box-shadow:0 8px 32px rgba(30,64,175,.15)}
+    .stat-card:hover::before{opacity:1}
+    .stat-icon{
+      width:40px;height:40px;border-radius:10px;
+      display:flex;align-items:center;justify-content:center;margin-bottom:14px;
+      background:linear-gradient(135deg,rgba(30,64,175,.2),rgba(30,64,175,.2));
+    }
+    .stat-icon svg{width:20px;height:20px;stroke:var(--indigo-l);fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+    .stat-value{font-size:2rem;font-weight:900;letter-spacing:-1.5px;line-height:1}
+    .stat-label{font-size:.72rem;color:var(--text2);margin-top:6px;font-weight:500}
+    .stat-delta{font-size:.65rem;font-weight:700;margin-top:8px;display:flex;align-items:center;gap:4px}
+    .stat-delta.up{color:var(--green)}
+    .stat-delta.down{color:var(--red)}
+
+    /* Charts row */
+    .charts-row{display:grid;grid-template-columns:2fr 1fr;gap:16px;padding:20px 32px 0}
+    .chart-card{
+      background:var(--card);border:1px solid var(--linha);border-radius:16px;padding:22px;
+    }
+    .chart-title{font-size:.8rem;font-weight:700;margin-bottom:16px;color:var(--text)}
+    .chart-sub{font-size:.65rem;color:var(--text2);margin-top:2px;font-weight:400}
+    canvas.chart{width:100%!important;max-height:220px}
+
+    /* Recent activity */
+    .activity-section{padding:20px 32px 32px}
+    .section-title{font-size:.8rem;font-weight:700;margin-bottom:14px;color:var(--text);display:flex;align-items:center;gap:8px}
+    .section-title::after{content:'';flex:1;height:1px;background:var(--linha)}
+    .activity-list{display:flex;flex-direction:column;gap:8px}
+    .activity-item{
+      display:flex;align-items:center;gap:14px;padding:12px 16px;
+      background:var(--card);border:1px solid var(--linha);border-radius:12px;
+      transition:all .18s;
+    }
+    .activity-item:hover{border-color:rgba(30,64,175,.25);background:var(--card-h)}
+    .activity-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+    .activity-dot.plano{background:var(--indigo-l)}
+    .activity-dot.prova{background:var(--violet)}
+    .activity-dot.questao{background:var(--green)}
+    .activity-text{flex:1;font-size:.78rem;color:var(--text)}
+    .activity-meta{font-size:.65rem;color:var(--text2)}
+    .activity-badge{
+      padding:3px 9px;border-radius:20px;font-size:.6rem;font-weight:700;
+      letter-spacing:.5px;text-transform:uppercase;
+    }
+    .badge-plano{background:rgba(30,64,175,.15);color:#818cf8}
+    .badge-prova{background:rgba(30,64,175,.15);color:#a78bfa}
+    .badge-questao{background:rgba(16,185,129,.15);color:#34d399}
+
+    /* Responsive */
+    @media(max-width:900px){
+      .stats-grid{grid-template-columns:repeat(2,1fr)}
+      .charts-row{grid-template-columns:1fr}
+    }
+    @media(max-width:640px){
+      .sidebar{position:fixed;left:0;top:0;bottom:0;z-index:200;transform:translateX(-100%)}
+      .sidebar.open{transform:translateX(0)}
+      .topbar{display:flex}
+      .stats-grid{padding:16px;gap:10px}
+      .charts-row{padding:0 16px}
+      .activity-section{padding:16px}
+      .page-header{padding:16px 16px 0}
+    }
+
+    @keyframes fadeUp{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:translateY(0)}}
+    .stat-card{animation:fadeUp .4s cubic-bezier(.16,1,.3,1) both}
+    .stat-card:nth-child(1){animation-delay:.05s}
+    .stat-card:nth-child(2){animation-delay:.1s}
+    .stat-card:nth-child(3){animation-delay:.15s}
+    .stat-card:nth-child(4){animation-delay:.2s}
+  </style>
+  <link rel="stylesheet" href="/static/theme.css"/>
+</head>
+<body>
+
+<canvas id="bg3d"></canvas>
+
+<div class="app">
+  <!-- Sidebar -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+      <a class="logo" href="/">
+        <span class="pia-mark">
+          <img src="{{ url_for('static', filename='logo-oficial.png') }}" alt="ProfessorIA" style="height: 32px; width: auto; flex-shrink: 0;">
+        </span>
+        <span class="logo-p">Professor</span><span class="logo-ia">IA</span>
+      </a>
+    </div>
+    <nav class="sidebar-nav">
+      <a class="nav-item" href="/chat">
+        <svg class="nav-icon" viewBox="0 0 24 24" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+        Chat
+      </a>
+      <a class="nav-item active" href="/dashboard">
+        <svg class="nav-icon" viewBox="0 0 24 24" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+        Dashboard
+      </a>
+      <a class="nav-item" href="/banco-questoes">
+        <svg class="nav-icon" viewBox="0 0 24 24" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+        Banco de Questões
+      </a>
+      <a class="nav-item" href="/historico">
+        <svg class="nav-icon" viewBox="0 0 24 24" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+        Histórico
+      </a>
+      <a class="nav-item" href="/indicar">
+        <svg class="nav-icon" viewBox="0 0 24 24" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+        Indicar Amigos
+      </a>
+      <a class="nav-item" href="/planos">
+        <svg class="nav-icon" viewBox="0 0 24 24" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+        Planos
+      </a>
+    </nav>
+    <div class="sidebar-spacer"></div>
+    <div class="sidebar-footer">
+      <a class="user-card" href="/perfil">
+        <div class="user-avatar">{{ current_user.nome[0].upper() }}</div>
+        <div>
+          <div class="user-name">{{ current_user.nome.split()[0] }}</div>
+          <div class="user-plan">Minha conta</div>
+        </div>
+      </a>
+    </div>
+  </aside>
+
+  <!-- Main -->
+  <div class="main">
+    <div class="topbar">
+      <button onclick="document.getElementById('sidebar').classList.toggle('open')" style="background:none;border:none;cursor:pointer;color:var(--text)">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+      </button>
+      <span style="font-size:.85rem;font-weight:700">Dashboard</span>
+      <div style="width:22px"></div>
+    </div>
+
+    <div class="page-header">
+      <div>
+        <div class="page-title">Dashboard</div>
+        <div class="page-sub">Acompanhe sua produtividade e uso da plataforma</div>
+      </div>
+      <div class="period-tabs">
+        <button class="period-tab" onclick="setPeriod(7,this)">7d</button>
+        <button class="period-tab active" onclick="setPeriod(30,this)">30d</button>
+        <button class="period-tab" onclick="setPeriod(90,this)">90d</button>
+      </div>
+    </div>
+
+    <!-- Stats -->
+    <div class="stats-grid" id="statsGrid">
+      <div class="stat-card">
+        <div class="stat-icon"><svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></div>
+        <div class="stat-value" id="statMateriais">—</div>
+        <div class="stat-label">Materiais gerados</div>
+        <div class="stat-delta up" id="deltaMateriais">↑ carregando...</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon"><svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg></div>
+        <div class="stat-value" id="statAulas">—</div>
+        <div class="stat-label">Aulas planejadas</div>
+        <div class="stat-delta up" id="deltaAulas">↑ carregando...</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon"><svg viewBox="0 0 24 24"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg></div>
+        <div class="stat-value" id="statQuestoes">—</div>
+        <div class="stat-label">Questões no banco</div>
+        <div class="stat-delta up" id="deltaQuestoes">↑ carregando...</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div>
+        <div class="stat-value" id="statHoras">—</div>
+        <div class="stat-label">Horas economizadas</div>
+        <div class="stat-delta up" id="deltaHoras">↑ estimativa</div>
+      </div>
+    </div>
+
+    <!-- Charts -->
+    <div class="charts-row">
+      <div class="chart-card">
+        <div class="chart-title">Materiais por semana <span class="chart-sub">últimas 8 semanas</span></div>
+        <canvas class="chart" id="chartLine" height="200"></canvas>
+      </div>
+      <div class="chart-card">
+        <div class="chart-title">Por tipo <span class="chart-sub">distribuição</span></div>
+        <canvas class="chart" id="chartDoughnut" height="200"></canvas>
+      </div>
+    </div>
+
+    <!-- Recent activity -->
+    <div class="activity-section">
+      <div class="section-title">Atividade recente</div>
+      <div class="activity-list" id="activityList">
+        <div style="text-align:center;padding:32px;color:var(--text2);font-size:.8rem">Carregando...</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="/static/bg3d.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script>
+let currentPeriod = 30;
+let lineChart, doughnutChart;
+
+function setPeriod(days, btn) {
+  currentPeriod = days;
+  document.querySelectorAll('.period-tab').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  loadDashboard();
+}
+
+function isDark() {
+  return document.documentElement.getAttribute('data-theme') === 'dark';
+}
+
+function chartColors() {
+  return {
+    grid: isDark() ? 'rgba(255,255,255,.06)' : 'rgba(0,0,0,.06)',
+    text: isDark() ? 'rgba(255,255,255,.4)' : 'rgba(0,0,0,.4)',
+  };
+}
+
+async function loadDashboard() {
+  try {
+    const r = await fetch(`/api/dashboard-stats?dias=${currentPeriod}`);
+    const d = await r.json();
+
+    document.getElementById('statMateriais').textContent = d.total_materiais ?? 0;
+    document.getElementById('statAulas').textContent = d.total_aulas ?? 0;
+    document.getElementById('statQuestoes').textContent = d.total_questoes ?? 0;
+    const horas = Math.round((d.total_materiais ?? 0) * 1.5);
+    document.getElementById('statHoras').textContent = horas + 'h';
+    document.getElementById('deltaMateriais').textContent = `↑ ${d.delta_materiais ?? 0}% vs período anterior`;
+    document.getElementById('deltaAulas').textContent = `↑ ${d.delta_aulas ?? 0}% vs período anterior`;
+    document.getElementById('deltaQuestoes').textContent = `${d.total_questoes ?? 0} questões salvas`;
+    document.getElementById('deltaHoras').textContent = `≈ ${horas}h economizadas`;
+
+    renderCharts(d);
+    renderActivity(d.recentes || []);
+  } catch(e) {
+    // Fallback demo data
+    renderCharts({
+      semanas: ['S1','S2','S3','S4','S5','S6','S7','S8'],
+      por_semana: [2,4,3,6,5,8,7,9],
+      por_tipo: {plano_aula: 12, prova: 8, questao: 5}
+    });
+    document.getElementById('statMateriais').textContent = '—';
+    document.getElementById('statAulas').textContent = '—';
+    document.getElementById('statQuestoes').textContent = '—';
+    document.getElementById('statHoras').textContent = '—';
+  }
+}
+
+function renderCharts(d) {
+  const c = chartColors();
+  const weeks = d.semanas || ['S1','S2','S3','S4','S5','S6','S7','S8'];
+  const vals  = d.por_semana || [0,0,0,0,0,0,0,0];
+  const tipos = d.por_tipo || {};
+
+  Chart.defaults.color = c.text;
+  Chart.defaults.borderColor = c.grid;
+
+  if (lineChart) lineChart.destroy();
+  lineChart = new Chart(document.getElementById('chartLine'), {
+    type: 'line',
+    data: {
+      labels: weeks,
+      datasets: [{
+        label: 'Materiais',
+        data: vals,
+        borderColor: '#818cf8',
+        backgroundColor: 'rgba(30,64,175,.12)',
+        borderWidth: 2.5,
+        pointBackgroundColor: '#818cf8',
+        pointRadius: 4,
+        tension: 0.45,
+        fill: true,
+      }]
+    },
+    options: {
+      responsive: true,
+      plugins: { legend: { display: false } },
+      scales: {
+        x: { grid: { color: c.grid }, ticks: { color: c.text, font: { size: 10 } } },
+        y: { grid: { color: c.grid }, ticks: { color: c.text, font: { size: 10 }, stepSize: 1 }, beginAtZero: true }
+      }
+    }
+  });
+
+  if (doughnutChart) doughnutChart.destroy();
+  const labels = Object.keys(tipos).map(k => ({plano_aula:'Plano de Aula',prova:'Prova',questao:'Questão'}[k]||k));
+  const values = Object.values(tipos);
+  doughnutChart = new Chart(document.getElementById('chartDoughnut'), {
+    type: 'doughnut',
+    data: {
+      labels: labels.length ? labels : ['Nenhum dado'],
+      datasets: [{
+        data: values.length ? values : [1],
+        backgroundColor: ['#1E40AF','#1E3A8A','#10b981','#f59e0b'],
+        borderWidth: 0,
+        hoverOffset: 6,
+      }]
+    },
+    options: {
+      responsive: true,
+      cutout: '68%',
+      plugins: {
+        legend: { position: 'bottom', labels: { padding: 14, font: { size: 11 }, color: c.text } }
+      }
+    }
+  });
+}
+
+function renderActivity(items) {
+  const el = document.getElementById('activityList');
+  if (!items.length) {
+    el.innerHTML = '<div style="text-align:center;padding:32px;color:var(--text2);font-size:.8rem">Nenhuma atividade ainda. <a href="/chat" style="color:#818cf8">Gere seu primeiro material →</a></div>';
+    return;
+  }
+  el.innerHTML = items.slice(0,8).map(item => {
+    const tipo = item.tipo || 'plano_aula';
+    const label = {plano_aula:'Plano de Aula',prova:'Prova',questao:'Questão'}[tipo] || tipo;
+    const badgeCls = {plano_aula:'badge-plano',prova:'badge-prova',questao:'badge-questao'}[tipo] || 'badge-plano';
+    const dotCls = {plano_aula:'plano',prova:'prova',questao:'questao'}[tipo] || 'plano';
+    return `
+      <div class="activity-item">
+        <div class="activity-dot ${dotCls}"></div>
+        <div class="activity-text">${item.titulo || item.disciplina || 'Material gerado'}</div>
+        <div class="activity-meta">${item.data || ''}</div>
+        <span class="activity-badge ${badgeCls}">${label}</span>
+      </div>`;
+  }).join('');
+}
+
+loadDashboard();
+
+// Re-render charts on theme change
+new MutationObserver(() => {
+  if (lineChart || doughnutChart) loadDashboard();
+}).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+</script>
+</body>
+</html>

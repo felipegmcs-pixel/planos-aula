@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8"/>
+  <script>!function(){var t=localStorage.getItem("pia-theme")||"dark",a="system"===t?(window.matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light"):t;document.documentElement.setAttribute("data-theme",a)}();</script>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>ProfessorIA — Painel da Escola</title>
+  <link rel="icon" type="image/svg+xml" href="/static/logo-oficial.png"/>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet"/>
+  <style>
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    :root{
+      --bg:#0b0d14;--bg2:#0f1120;--bg3:#131526;
+      --text:#e5e7eb;--text2:#9ca3af;--text3:#4b5563;
+      --indigo:#1E40AF;--violet:#1E3A8A;--indigo-l:#818cf8;
+      --linha:rgba(255,255,255,.07);--linha-f:rgba(255,255,255,.12);
+      --card:rgba(255,255,255,.04);--card-h:rgba(255,255,255,.07);
+      --sb-bg:#0a0c18;--sidebar-w:240px;
+      --green:#10b981;--amber:#f59e0b;--red:#ef4444;
+    }
+    [data-theme="light"]{
+      --bg:#f8f9ff;--bg2:#ffffff;--bg3:#f1f2f8;
+      --text:#111827;--text2:#6b7280;--text3:#9ca3af;
+      --linha:rgba(17,24,39,.07);--linha-f:rgba(17,24,39,.13);
+      --card:rgba(255,255,255,.9);--card-h:rgba(255,255,255,1);
+      --sb-bg:#f7f8ff;
+    }
+    html,body{height:100%;font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);overflow:hidden}
+    #bg3d{position:fixed;inset:0;z-index:0;pointer-events:none;opacity:.35}
+    .app{display:flex;height:100%;position:relative;z-index:1}
+
+    /* Sidebar */
+    .sidebar{width:var(--sidebar-w);flex-shrink:0;background:var(--sb-bg);border-right:1px solid var(--linha);display:flex;flex-direction:column;height:100%;overflow-y:auto;transition:transform .3s cubic-bezier(.16,1,.3,1)}
+    .sidebar-header{padding:20px 16px 12px;border-bottom:1px solid var(--linha)}
+    .logo{display:flex;align-items:center;gap:8px;text-decoration:none}
+    .pia-mark{width:34px;height:34px;border-radius:9px;background:#fff;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+    .logo-p{font-size:.95rem;font-weight:800;letter-spacing:-.5px;color:var(--text)}
+    .logo-ia{font-size:.95rem;font-weight:500;color:var(--indigo-l)}
+    .sidebar-nav{padding:12px 8px;display:flex;flex-direction:column;gap:2px}
+    .nav-item{display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:10px;text-decoration:none;font-size:.8rem;font-weight:500;color:rgba(255,255,255,.5);transition:all .18s}
+    [data-theme="light"] .nav-item{color:rgba(17,24,39,.5)}
+    .nav-item:hover{background:rgba(255,255,255,.06);color:var(--text)}
+    [data-theme="light"] .nav-item:hover{background:rgba(17,24,39,.05);color:var(--text)}
+    .nav-item.active{background:rgba(30,64,175,.18);color:#818cf8;font-weight:600}
+    [data-theme="light"] .nav-item.active{background:rgba(30,64,175,.1);color:var(--indigo)}
+    .nav-icon{width:16px;height:16px;stroke:currentColor;fill:none;stroke-linecap:round;stroke-linejoin:round;flex-shrink:0}
+    .sidebar-spacer{flex:1}
+    .sidebar-footer{padding:12px 8px;border-top:1px solid var(--linha)}
+    .user-card{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:10px;text-decoration:none;transition:background .18s}
+    .user-card:hover{background:rgba(255,255,255,.06)}
+    [data-theme="light"] .user-card:hover{background:rgba(17,24,39,.05)}
+    .user-avatar{width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,#1E40AF,#1E3A8A);display:flex;align-items:center;justify-content:center;font-size:.75rem;font-weight:800;color:#fff;flex-shrink:0}
+    .user-name{font-size:.78rem;font-weight:600;color:var(--text)}
+    .user-plan{font-size:.65rem;color:var(--text2)}
+
+    /* Main */
+    .main{flex:1;overflow-y:auto;display:flex;flex-direction:column;min-width:0}
+    .topbar{display:none;padding:14px 16px;border-bottom:1px solid var(--linha);align-items:center;justify-content:space-between;background:var(--bg2);position:sticky;top:0;z-index:50}
+    .page-wrap{padding:32px;max-width:1100px}
+    .page-header{display:flex;align-items:flex-end;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:24px}
+    .page-title{font-size:1.5rem;font-weight:900;letter-spacing:-.5px}
+    .page-sub{font-size:.8rem;color:var(--text2);margin-top:4px}
+
+    /* School badge */
+    .escola-badge{
+      display:flex;align-items:center;gap:12px;padding:16px 20px;
+      background:linear-gradient(135deg,rgba(30,64,175,.15),rgba(30,64,175,.1));
+      border:1px solid rgba(30,64,175,.2);border-radius:14px;margin-bottom:24px;
+    }
+    .escola-icon{
+      width:44px;height:44px;border-radius:12px;
+      background:linear-gradient(135deg,#1E40AF,#1E3A8A);
+      display:flex;align-items:center;justify-content:center;flex-shrink:0;
+    }
+    .escola-icon svg{width:22px;height:22px;stroke:#fff;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+    .escola-nome{font-size:1rem;font-weight:800;letter-spacing:-.3px}
+    .escola-meta{font-size:.72rem;color:var(--text2);margin-top:2px}
+
+    /* Stats */
+    .stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:24px}
+    .stat-card{background:var(--card);border:1px solid var(--linha);border-radius:14px;padding:18px;transition:all .22s}
+    .stat-card:hover{border-color:rgba(30,64,175,.3);transform:translateY(-2px)}
+    .stat-icon{width:36px;height:36px;border-radius:9px;background:linear-gradient(135deg,rgba(30,64,175,.2),rgba(30,64,175,.2));display:flex;align-items:center;justify-content:center;margin-bottom:12px}
+    .stat-icon svg{width:18px;height:18px;stroke:var(--indigo-l);fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+    .stat-value{font-size:1.8rem;font-weight:900;letter-spacing:-1px}
+    .stat-label{font-size:.7rem;color:var(--text2);margin-top:4px}
+
+    /* Invite section */
+    .invite-section{background:var(--card);border:1px solid var(--linha);border-radius:14px;padding:22px;margin-bottom:20px}
+    .section-title{font-size:.8rem;font-weight:700;margin-bottom:14px;color:var(--text);display:flex;align-items:center;gap:8px}
+    .section-title::after{content:'';flex:1;height:1px;background:var(--linha)}
+    .invite-row{display:flex;gap:8px}
+    .invite-input{flex:1;padding:10px 14px;background:rgba(255,255,255,.05);border:1.5px solid var(--linha-f);border-radius:10px;font-size:.82rem;color:var(--text);font-family:'Inter',sans-serif;outline:none;transition:border-color .2s}
+    [data-theme="light"] .invite-input{background:rgba(0,0,0,.03)}
+    .invite-input:focus{border-color:rgba(30,64,175,.5)}
+    .btn-primary{padding:10px 18px;background:linear-gradient(135deg,#1E40AF,#1E3A8A);color:#fff;border:none;border-radius:10px;font-size:.78rem;font-weight:700;cursor:pointer;transition:opacity .2s;font-family:'Inter',sans-serif;white-space:nowrap}
+    .btn-primary:hover{opacity:.9}
+
+    /* Teachers table */
+    .table-section{background:var(--card);border:1px solid var(--linha);border-radius:14px;overflow:hidden;margin-bottom:20px}
+    .table-header{padding:16px 20px;border-bottom:1px solid var(--linha);display:flex;align-items:center;justify-content:space-between}
+    .table-title{font-size:.82rem;font-weight:700}
+    .table-search{display:flex;align-items:center;gap:6px;padding:7px 12px;background:rgba(255,255,255,.05);border:1px solid var(--linha-f);border-radius:8px}
+    .table-search input{background:none;border:none;outline:none;font-size:.75rem;color:var(--text);font-family:'Inter',sans-serif;width:160px}
+    .table-search input::placeholder{color:var(--text3)}
+    table{width:100%;border-collapse:collapse}
+    thead th{padding:10px 16px;font-size:.65rem;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--text2);text-align:left;border-bottom:1px solid var(--linha)}
+    tbody tr{border-bottom:1px solid var(--linha);transition:background .15s}
+    tbody tr:last-child{border-bottom:none}
+    tbody tr:hover{background:var(--card-h)}
+    td{padding:12px 16px;font-size:.78rem;color:var(--text)}
+    .td-name{font-weight:600}
+    .td-email{color:var(--text2)}
+    .td-badge{padding:3px 9px;border-radius:20px;font-size:.6rem;font-weight:700;letter-spacing:.5px;text-transform:uppercase}
+    .badge-ativo{background:rgba(16,185,129,.12);color:#34d399}
+    .badge-inativo{background:rgba(239,68,68,.1);color:#f87171}
+    .td-num{font-weight:700;color:var(--indigo-l)}
+    .td-date{color:var(--text3)}
+
+    /* Toast */
+    .toast{position:fixed;bottom:24px;right:24px;z-index:500;padding:12px 20px;background:#111827;border:1px solid rgba(255,255,255,.1);border-radius:12px;font-size:.78rem;font-weight:600;color:#fff;box-shadow:0 8px 32px rgba(0,0,0,.4);transform:translateY(20px);opacity:0;transition:all .3s cubic-bezier(.16,1,.3,1);pointer-events:none}
+    .toast.show{transform:translateY(0);opacity:1}
+    .toast.success{border-color:rgba(16,185,129,.3);color:#34d399}
+    .toast.error{border-color:rgba(239,68,68,.3);color:#f87171}
+
+    @media(max-width:900px){.stats-grid{grid-template-columns:repeat(2,1fr)}}
+    @media(max-width:640px){
+      .sidebar{position:fixed;left:0;top:0;bottom:0;z-index:200;transform:translateX(-100%)}
+      .sidebar.open{transform:translateX(0)}
+      .topbar{display:flex}
+      .page-wrap{padding:16px}
+      .stats-grid{grid-template-columns:repeat(2,1fr)}
+      table{font-size:.72rem}
+    }
+    @keyframes fadeUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
+    .stat-card{animation:fadeUp .4s cubic-bezier(.16,1,.3,1) both}
+    .stat-card:nth-child(1){animation-delay:.05s}
+    .stat-card:nth-child(2){animation-delay:.1s}
+    .stat-card:nth-child(3){animation-delay:.15s}
+    .stat-card:nth-child(4){animation-delay:.2s}
+  </style>
+  <link rel="stylesheet" href="/static/theme.css"/>
+</head>
+<body>
+
+<canvas id="bg3d"></canvas>
+<div class="toast" id="toast"></div>
+
+<div class="app">
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+      <a class="logo" href="/">
+        <span class="pia-mark">
+          <img src="{{ url_for('static', filename='logo-oficial.png') }}" alt="ProfessorIA" style="height: 32px; width: auto; flex-shrink: 0;">
+        </span>
+        <span class="logo-p">Professor</span><span class="logo-ia">IA</span>
+      </a>
+    </div>
+    <nav class="sidebar-nav">
+      <a class="nav-item" href="/chat">
+        <svg class="nav-icon" viewBox="0 0 24 24" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>Chat</a>
+      <a class="nav-item" href="/dashboard">
+        <svg class="nav-icon" viewBox="0 0 24 24" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>Dashboard</a>
+      <a class="nav-item" href="/banco-questoes">
+        <svg class="nav-icon" viewBox="0 0 24 24" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>Banco de Questões</a>
+      <a class="nav-item" href="/historico">
+        <svg class="nav-icon" viewBox="0 0 24 24" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>Histórico</a>
+      <a class="nav-item" href="/indicar">
+        <svg class="nav-icon" viewBox="0 0 24 24" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>Indicar Amigos</a>
+      <a class="nav-item active" href="/escola-painel">
+        <svg class="nav-icon" viewBox="0 0 24 24" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>Painel da Escola</a>
+      <a class="nav-item" href="/planos">
+        <svg class="nav-icon" viewBox="0 0 24 24" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>Planos</a>
+    </nav>
+    <div class="sidebar-spacer"></div>
+    <div class="sidebar-footer">
+      <a class="user-card" href="/perfil">
+        <div class="user-avatar">{{ current_user.nome[0].upper() }}</div>
+        <div>
+          <div class="user-name">{{ current_user.nome.split()[0] }}</div>
+          <div class="user-plan">Gestor</div>
+        </div>
+      </a>
+    </div>
+  </aside>
+
+  <div class="main">
+    <div class="topbar">
+      <button onclick="document.getElementById('sidebar').classList.toggle('open')" style="background:none;border:none;cursor:pointer;color:var(--text)">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+      </button>
+      <span style="font-size:.85rem;font-weight:700">Painel da Escola</span>
+      <div style="width:22px"></div>
+    </div>
+
+    <div class="page-wrap">
+      <div class="page-header">
+        <div>
+          <div class="page-title">Painel da Escola</div>
+          <div class="page-sub">Gerencie professores e acompanhe o uso da plataforma</div>
+        </div>
+      </div>
+
+      <!-- School badge -->
+      <div class="escola-badge">
+        <div class="escola-icon">
+          <svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+        </div>
+        <div>
+          <div class="escola-nome">{{ escola_nome or 'Minha Escola' }}</div>
+          <div class="escola-meta">Plano Escola · Gestor: {{ current_user.nome }}</div>
+        </div>
+      </div>
+
+      <!-- Stats -->
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-icon"><svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></div>
+          <div class="stat-value" id="statProfs">{{ total_professores or 0 }}</div>
+          <div class="stat-label">Professores ativos</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon"><svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></div>
+          <div class="stat-value" id="statMat">{{ total_materiais or 0 }}</div>
+          <div class="stat-label">Materiais gerados</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon"><svg viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg></div>
+          <div class="stat-value" id="statDisc">{{ total_disciplinas or 0 }}</div>
+          <div class="stat-label">Disciplinas cobertas</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div>
+          <div class="stat-value" id="statHoras">{{ total_horas or 0 }}h</div>
+          <div class="stat-label">Horas economizadas</div>
+        </div>
+      </div>
+
+      <!-- Invite -->
+      <div class="invite-section">
+        <div class="section-title">Convidar professor</div>
+        <div class="invite-row">
+          <input class="invite-input" id="inviteEmail" type="email" placeholder="email@escola.edu.br"/>
+          <button class="btn-primary" onclick="convidar()">Enviar convite</button>
+        </div>
+        <p style="font-size:.7rem;color:var(--text2);margin-top:10px">O professor receberá um e-mail com link de acesso à plataforma já vinculado à sua escola.</p>
+      </div>
+
+      <!-- Teachers table -->
+      <div class="table-section">
+        <div class="table-header">
+          <div class="table-title">Professores</div>
+          <div class="table-search">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            <input id="searchProf" placeholder="Buscar professor..." oninput="filtrarProfs()"/>
+          </div>
+        </div>
+        <div style="overflow-x:auto">
+          <table id="profsTable">
+            <thead>
+              <tr>
+                <th>Professor</th>
+                <th>E-mail</th>
+                <th>Status</th>
+                <th>Materiais</th>
+                <th>Disciplinas</th>
+                <th>Último uso</th>
+              </tr>
+            </thead>
+            <tbody id="profsBody">
+              <tr><td colspan="6" style="text-align:center;padding:32px;color:var(--text2)">Carregando...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="/static/bg3d.js"></script>
+<script>
+let allProfs = [];
+
+async function loadRelatorio() {
+  try {
+    const r = await fetch('/api/escola/relatorio');
+    const d = await r.json();
+    allProfs = Array.isArray(d) ? d : [];
+    renderProfs(allProfs);
+    // Update stats
+    document.getElementById('statProfs').textContent = allProfs.length;
+    const totalMat = allProfs.reduce((s, p) => s + (p.materiais || 0), 0);
+    document.getElementById('statMat').textContent = totalMat;
+    const discs = new Set(allProfs.flatMap(p => (p.disciplinas || '').split(',').map(x => x.trim()).filter(Boolean)));
+    document.getElementById('statDisc').textContent = discs.size;
+    document.getElementById('statHoras').textContent = Math.round(totalMat * 1.5) + 'h';
+  } catch(e) {
+    document.getElementById('profsBody').innerHTML = '<tr><td colspan="6" style="text-align:center;padding:32px;color:var(--text2)">Erro ao carregar dados.</td></tr>';
+  }
+}
+
+function renderProfs(list) {
+  const body = document.getElementById('profsBody');
+  if (!list.length) {
+    body.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:32px;color:var(--text2)">Nenhum professor cadastrado ainda. Envie convites acima.</td></tr>';
+    return;
+  }
+  body.innerHTML = list.map(p => `
+    <tr>
+      <td class="td-name">${p.nome || '—'}</td>
+      <td class="td-email">${p.email || '—'}</td>
+      <td><span class="td-badge ${p.ativo ? 'badge-ativo' : 'badge-inativo'}">${p.ativo ? 'Ativo' : 'Inativo'}</span></td>
+      <td class="td-num">${p.materiais || 0}</td>
+      <td>${p.disciplinas || '—'}</td>
+      <td class="td-date">${p.ultimo_uso || '—'}</td>
+    </tr>`).join('');
+}
+
+function filtrarProfs() {
+  const q = document.getElementById('searchProf').value.toLowerCase();
+  renderProfs(allProfs.filter(p =>
+    (p.nome || '').toLowerCase().includes(q) ||
+    (p.email || '').toLowerCase().includes(q)
+  ));
+}
+
+async function convidar() {
+  const email = document.getElementById('inviteEmail').value.trim();
+  if (!email) { showToast('Digite um e-mail', 'error'); return; }
+  try {
+    const r = await fetch('/api/escola/convidar', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ email })
+    });
+    const d = await r.json();
+    if (d.ok) {
+      showToast('Convite enviado para ' + email, 'success');
+      document.getElementById('inviteEmail').value = '';
+    } else {
+      showToast(d.erro || 'Erro ao enviar', 'error');
+    }
+  } catch(e) {
+    showToast('Erro de conexão', 'error');
+  }
+}
+
+function showToast(msg, type) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast show ' + (type || '');
+  setTimeout(() => t.className = 'toast', 3000);
+}
+
+loadRelatorio();
+</script>
+</body>
+</html>

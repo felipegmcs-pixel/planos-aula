@@ -13,6 +13,7 @@ from flask_login import (LoginManager, UserMixin, login_user,
                          logout_user, login_required, current_user)
 from werkzeug.security import generate_password_hash, check_password_hash
 from anthropic import Anthropic
+from openai import OpenAI
 from docx import Document
 from docx.shared import Pt, RGBColor, Cm, Inches
 from docx.enum.text import WD_ALIGN_PARAGRAPH
@@ -31,6 +32,9 @@ try:
 except ImportError:
     _mp_SDK = None
 
+# ─── Configuração de Estilo de Imagem (Frente 4) ──────────────────────────────
+IMAGE_STYLE_MODIFIER = "Estilo: Traço Acadêmico-Inclusivo. Ilustração digital moderna, textura sutil de aquarela, linhas limpas, visual minimalista. PROIBIDO inserir textos, palavras ou letras dentro da imagem. Apenas a arte temática."
+
 # ─── App ──────────────────────────────────────────────────────────────────────
 
 app = Flask(__name__)
@@ -41,6 +45,12 @@ login_manager.login_view = 'login'
 login_manager.login_message = None
 
 client = Anthropic(api_key=os.environ.get('ANTHROPIC_API_KEY'), timeout=120.0)
+
+# ── OpenAI (Motor Duplo) ──────────────────────────────────────────────────────
+OPENAI_API_KEY = os.environ.get('OPENAI_API_KEY', '')
+client_openai = OpenAI(api_key=os.environ.get('OPENAI_API_KEY')) if os.environ.get('OPENAI_API_KEY') else None
+MOTOR_IA = os.environ.get('MOTOR_IA', 'claude').lower()  # 'claude' ou 'openai'
+print(f'✓ Motor IA configurado: {MOTOR_IA}')
 
 # ── Gemini (Google) — usado se GEMINI_API_KEY estiver configurada ──────────────
 GEMINI_API_KEY = os.environ.get('GEMINI_API_KEY', '')
@@ -91,35 +101,34 @@ STRIPE_PRICES = {
 
 LIMITE_GRATIS = 5  # gerações gratuitas por mês no plano grátis
 
-SYSTEM_PROMPT = """Você é o ProfessorIA, assistente especializado em ajudar professores brasileiros.
+SYSTEM_PROMPT = """Você é o ProfessorIA, Especialista Sênior em Pedagogia Brasileira.
+Sua missão é automatizar a criação de materiais pedagógicos de alta qualidade, garantindo 100% de alinhamento à BNCC.
 
-Você cria materiais pedagógicos de alta qualidade, incluindo:
+DIRETRIZES DE RAG E PRECISÃO:
+- Baseie-se ESTRITAMENTE nos documentos anexados pelo usuário. Se a informação não estiver no texto, não invente.
+- Zero alucinação: se não souber ou não houver base no anexo, informe que a informação não consta no material fornecido.
+
+VOCÊ CRIA:
 - Planos de aula completos (objetivos, conteúdo, metodologia, avaliação)
 - Provas e avaliações (questões abertas e múltipla escolha, com gabarito)
-- Caça-palavras (lista de palavras + grade de letras formatada)
-- Cruzadinhas (grade com pistas horizontal e vertical, gabarito)
-- Mapas mentais (estrutura em árvore com ramos e sub-ramos)
-- Atividades e exercícios lúdicos
+- Caça-palavras e Cruzadinhas (formatados para impressão)
+- Mapas mentais e Estruturas para Infográficos
 - Planejamento anual (distribuição por bimestre)
-- Resumos de conteúdo para alunos
-- Rubricas de avaliação
-- Bilhetes para os pais
+- Adaptações para Educação Inclusiva (NEE)
 
 REGRAS PARA PROVAS E ATIVIDADES:
-- NUNCA inclua "Nome:", "Data:", "Série:" ou campos do aluno no texto — o sistema de exportação adiciona automaticamente no cabeçalho: Nome:___ Data:__/__/__ Ano:
-- Logo após o título, adicione um bloco de Instruções com 3-4 itens (ex: Leia atentamente; Use caneta azul ou preta; Justifique as respostas discursivas)
-- Ao final, inclua o gabarito completo separado por uma linha (--- GABARITO ---)
-- Indique a pontuação de cada questão ou seção
+- NUNCA inclua "Nome:", "Data:", "Série:" ou campos do aluno no texto — o sistema de exportação adiciona automaticamente no cabeçalho.
+- Logo após o título, adicione um bloco de Instruções com 3-4 itens.
+- Ao final, inclua o gabarito completo separado por uma linha (--- GABARITO ---).
 
 ADAPTAÇÕES PARA NEE (Necessidades Educacionais Especiais):
 Quando o professor pedir material adaptado, aplique as seguintes diretrizes:
-
-- Deficiência Intelectual (DI): linguagem extremamente simples (nível de 6-8 anos), frases curtas (máx 10 palavras), instruções passo a passo numeradas, repetição dos conceitos principais, sem abstração. Avaliação com critérios diferenciados.
-- TEA (Transtorno do Espectro Autista): rotina clara e previsível, instruções objetivas sem duplo sentido, evitar linguagem figurada, estrutura visual definida, antecipação das etapas, tópicos específicos e delimitados.
-- TDAH: atividades curtas (máx 15 min cada), muita variação de formato, uso de negrito para pontos principais, pausas explícitas, recompensas e gamificação, tarefas com checkboxes.
-- Dislexia: abordagem multissensorial (visual + auditivo), fonética explícita, fontes espaçadas, frases curtas, evitar paredes de texto, sugestão de leitura em voz alta.
-- Baixa Visão: descrições detalhadas de tudo que seria visual, alto contraste nas instruções, evitar referências como "veja a figura", descrever imagens por extenso.
-- CAA (Comunicação Alternativa): usar palavras-chave simples, estrutura de prancha de comunicação, símbolos descritos por texto, frases no formato sujeito+verbo+objeto.
+- Deficiência Intelectual (DI): linguagem extremamente simples, frases curtas, instruções passo a passo.
+- TEA (Transtorno do Espectro Autista): rotina clara, instruções objetivas, estrutura visual definida.
+- TDAH: atividades curtas, variação de formato, uso de negrito, checkboxes.
+- Dislexia: abordagem multissensorial, fontes espaçadas, evitar paredes de texto.
+- Baixa Visão: descrições detalhadas, alto contraste.
+- CAA (Comunicação Alternativa): palavras-chave simples, estrutura de prancha.
 
 CAÇA-PALAVRAS — geração direta:
 Quando pedirem um caça-palavras, gere imediatamente com a seguinte estrutura:
@@ -266,105 +275,94 @@ def _to_gemini_parts(content):
     return parts
 
 def chamar_ia_chat(sistema, messages):
-    """Chama Gemini se disponível, senão usa Claude. Suporta mensagens multimodais."""
-    if _gemini_disponivel():
+    """Motor Duplo: Claude (primário) + OpenAI (fallback). Suporta mensagens multimodais."""
+    motor_principal = MOTOR_IA
+    motores = [motor_principal, 'openai' if motor_principal == 'claude' else 'claude']
+    
+    for motor in motores:
         try:
-            import google.generativeai as genai
-            historico = []
-            for m in messages[:-1]:
-                role = 'user' if m['role'] == 'user' else 'model'
-                historico.append({'role': role, 'parts': _to_gemini_parts(m['content'])})
-            gm = genai.GenerativeModel(
-                model_name='gemini-1.5-pro',
-                system_instruction=sistema
-            )
-            chat = gm.start_chat(history=historico)
-            resp = chat.send_message(_to_gemini_parts(messages[-1]['content']))
-            return resp.text
+            if motor == 'claude':
+                import requests as req_lib
+                api_key = os.environ.get('ANTHROPIC_API_KEY', '').strip()
+                if not api_key:
+                    print('⚠ ANTHROPIC_API_KEY não configurada, pulando Claude')
+                    continue
+                r = req_lib.post(
+                    'https://api.anthropic.com/v1/messages',
+                    json={'model': 'claude-sonnet-4-6', 'max_tokens': 4000,
+                          'system': sistema, 'messages': messages},
+                    headers={'x-api-key': api_key, 'anthropic-version': '2023-06-01',
+                             'content-type': 'application/json'},
+                    timeout=120
+                )
+                if r.status_code != 200:
+                    print(f'⚠ Claude API {r.status_code}, tentando fallback...')
+                    continue
+                print(f'✓ Resposta gerada com Claude')
+                return r.json()['content'][0]['text']
+            
+            elif motor == 'openai':
+                if not client_openai:
+                    print('⚠ OPENAI_API_KEY não configurada, pulando OpenAI')
+                    continue
+                resp = client_openai.chat.completions.create(
+                    model='gpt-4o-mini',
+                    max_tokens=4000,
+                    system_prompt=sistema,
+                    messages=messages
+                )
+                print(f'✓ Resposta gerada com OpenAI (gpt-4o-mini)')
+                return resp.choices[0].message.content
+        
         except Exception as e:
-            print(f'Gemini falhou, usando Claude: {e}')
+            print(f'⚠ Erro com {motor}: {str(e)[:100]}')
+            if motor == motores[-1]:
+                raise RuntimeError(f'Todos os motores falharam. Último erro: {str(e)}')
+            continue
 
-    # Fallback: Claude via HTTP direto (suporta conteúdo multimodal nativamente)
-    import requests as req_lib
-    api_key = os.environ.get('ANTHROPIC_API_KEY', '').strip()
-    claude_sem_credito = False
-    if api_key:
-        r = req_lib.post(
-            'https://api.anthropic.com/v1/messages',
-            json={'model': 'claude-sonnet-4-6', 'max_tokens': 4000,
-                  'system': sistema, 'messages': messages},
-            headers={'x-api-key': api_key, 'anthropic-version': '2023-06-01',
-                     'content-type': 'application/json'},
-            timeout=120
-        )
-        if r.status_code == 200:
-            return r.json()['content'][0]['text']
-        if r.status_code == 400 and 'credit' in r.text.lower():
-            claude_sem_credito = True
-            print('Claude sem créditos, tentando OpenAI...')
-        else:
-            raise RuntimeError(f'Claude API {r.status_code}: {r.text[:300]}')
-
-    # Fallback final: OpenAI (GPT-4o-mini)
-    openai_key = os.environ.get('OPENAI_API_KEY', '').strip()
-    if not openai_key:
-        if claude_sem_credito:
-            raise RuntimeError('Créditos da API esgotados. Por favor, tente novamente mais tarde.')
-        raise RuntimeError('Nenhuma API de IA configurada (GEMINI_API_KEY, ANTHROPIC_API_KEY ou OPENAI_API_KEY)')
-    openai_msgs = [{'role': 'system', 'content': sistema}] + [
-        {'role': m['role'], 'content': m['content'] if isinstance(m['content'], str) else str(m['content'])}
-        for m in messages
-    ]
-    ro = req_lib.post(
-        'https://api.openai.com/v1/chat/completions',
-        json={'model': 'gpt-4o-mini', 'max_tokens': 4000, 'messages': openai_msgs},
-        headers={'Authorization': f'Bearer {openai_key}', 'content-type': 'application/json'},
-        timeout=120
-    )
-    if ro.status_code != 200:
-        raise RuntimeError(f'OpenAI API {ro.status_code}: {ro.text[:300]}')
-    return ro.json()['choices'][0]['message']['content']
+    raise RuntimeError('Nenhum motor de IA disponível (configure ANTHROPIC_API_KEY ou OPENAI_API_KEY)')
 
 
 def chamar_ia_simples(prompt):
-    """Chama Gemini se disponível, senão usa Claude. Para prompts únicos (sem histórico)."""
-    if _gemini_disponivel():
+    """Motor Duplo: Claude (primário) + OpenAI (fallback). Para prompts únicos (sem histórico)."""
+    motor_principal = MOTOR_IA
+    motores = [motor_principal, 'openai' if motor_principal == 'claude' else 'claude']
+    
+    for motor in motores:
         try:
-            import google.generativeai as genai
-            gm = genai.GenerativeModel('gemini-1.5-pro')
-            resp = gm.generate_content(prompt)
-            return resp.text
+            if motor == 'claude':
+                api_key = os.environ.get('ANTHROPIC_API_KEY', '').strip()
+                if not api_key:
+                    print('⚠ ANTHROPIC_API_KEY não configurada, pulando Claude')
+                    continue
+                resposta = client.messages.create(
+                    model='claude-sonnet-4-6',
+                    max_tokens=4000,
+                    messages=[{'role': 'user', 'content': prompt}]
+                )
+                print(f'✓ Resposta gerada com Claude')
+                return resposta.content[0].text
+            
+            elif motor == 'openai':
+                if not client_openai:
+                    print('⚠ OPENAI_API_KEY não configurada, pulando OpenAI')
+                    continue
+                resp = client_openai.chat.completions.create(
+                    model='gpt-4o-mini',
+                    max_tokens=4000,
+                    messages=[{'role': 'user', 'content': prompt}]
+                )
+                print(f'✓ Resposta gerada com OpenAI (gpt-4o-mini)')
+                return resp.choices[0].message.content
+        
         except Exception as e:
-            print(f'Gemini falhou, usando Claude: {e}')
+            print(f'⚠ Erro com {motor}: {str(e)[:100]}')
+            if motor == motores[-1]:
+                raise RuntimeError(f'Todos os motores falharam. Último erro: {str(e)}')
+            continue
+    
+    raise RuntimeError('Nenhum motor de IA disponível (configure ANTHROPIC_API_KEY ou OPENAI_API_KEY)')
 
-    # Fallback: Claude SDK
-    try:
-        resposta = client.messages.create(
-            model='claude-sonnet-4-6',
-            max_tokens=4000,
-            messages=[{'role': 'user', 'content': prompt}]
-        )
-        return resposta.content[0].text
-    except Exception as e:
-        if 'credit' not in str(e).lower():
-            raise
-        print(f'Claude sem créditos em chamar_ia_simples, tentando OpenAI: {e}')
-
-    # Fallback final: OpenAI
-    import requests as req_lib
-    openai_key = os.environ.get('OPENAI_API_KEY', '').strip()
-    if not openai_key:
-        raise RuntimeError('Créditos da API esgotados. Por favor, tente novamente mais tarde.')
-    ro = req_lib.post(
-        'https://api.openai.com/v1/chat/completions',
-        json={'model': 'gpt-4o-mini', 'max_tokens': 4000,
-              'messages': [{'role': 'user', 'content': prompt}]},
-        headers={'Authorization': f'Bearer {openai_key}', 'content-type': 'application/json'},
-        timeout=120
-    )
-    if ro.status_code != 200:
-        raise RuntimeError(f'OpenAI API {ro.status_code}: {ro.text[:300]}')
-    return ro.json()['choices'][0]['message']['content']
 
 # ─── Banco de dados ───────────────────────────────────────────────────────────
 
@@ -464,6 +462,64 @@ def init_db():
     conn.execute("ALTER TABLE usuarios ADD COLUMN IF NOT EXISTS professor_nome TEXT DEFAULT ''")
     conn.execute("ALTER TABLE usuarios ADD COLUMN IF NOT EXISTS logo_path TEXT DEFAULT ''")
     conn.execute("ALTER TABLE usuarios ADD COLUMN IF NOT EXISTS logo_estado_path TEXT DEFAULT ''")
+    conn.execute("ALTER TABLE usuarios ADD COLUMN IF NOT EXISTS escola_id INTEGER DEFAULT NULL")
+    conn.execute("ALTER TABLE usuarios ADD COLUMN IF NOT EXISTS papel TEXT DEFAULT 'professor'")
+    conn.execute('''
+        CREATE TABLE IF NOT EXISTS questions_bank (
+            id           SERIAL PRIMARY KEY,
+            usuario_id   INTEGER NOT NULL,
+            disciplina   TEXT,
+            serie        TEXT,
+            tipo         TEXT DEFAULT 'multipla_escolha',
+            dificuldade  TEXT DEFAULT 'medio',
+            enunciado    TEXT NOT NULL,
+            alternativas TEXT,
+            resposta_correta TEXT,
+            bncc_codigo  TEXT,
+            criado_em    TEXT
+        )
+    ''')
+    conn.execute('''
+        CREATE TABLE IF NOT EXISTS referrals (
+            id         SERIAL PRIMARY KEY,
+            usuario_id INTEGER UNIQUE,
+            codigo     TEXT UNIQUE,
+            usos       INTEGER DEFAULT 0,
+            conversoes INTEGER DEFAULT 0,
+            creditos   INTEGER DEFAULT 0,
+            criado_em  TEXT
+        )
+    ''')
+    conn.execute('''
+        CREATE TABLE IF NOT EXISTS escolas (
+            id        SERIAL PRIMARY KEY,
+            nome      TEXT NOT NULL,
+            cnpj      TEXT,
+            plano     TEXT DEFAULT 'escola',
+            ativo     INTEGER DEFAULT 1,
+            criado_em TEXT
+        )
+    ''')
+    conn.execute('''
+        CREATE TABLE IF NOT EXISTS escola_membros (
+            id         SERIAL PRIMARY KEY,
+            escola_id  INTEGER NOT NULL,
+            usuario_id INTEGER NOT NULL,
+            papel      TEXT DEFAULT 'professor',
+            ativo      INTEGER DEFAULT 1,
+            criado_em  TEXT
+        )
+    ''')
+    conn.execute('''
+        CREATE TABLE IF NOT EXISTS escola_convites (
+            id        SERIAL PRIMARY KEY,
+            escola_id INTEGER NOT NULL,
+            email     TEXT NOT NULL,
+            token     TEXT UNIQUE,
+            usado     INTEGER DEFAULT 0,
+            criado_em TEXT
+        )
+    ''')
     conn.commit()
     conn.close()
 
@@ -485,6 +541,8 @@ class Usuario(UserMixin):
         self.professor_nome  = row.get('professor_nome', '') or ''
         self.logo_path       = row.get('logo_path', '') or ''
         self.logo_estado_path = row.get('logo_estado_path', '') or ''
+        self.escola_id       = row.get('escola_id', None)
+        self.papel           = row.get('papel', 'professor') or 'professor'
 
     @property
     def assinatura_ativa(self):
@@ -1532,7 +1590,7 @@ def admin_update():
 
 # ─── Conta / Perfil ───────────────────────────────────────────────────────────
 
-@app.route('/conta')
+@app.route('/perfil')
 @login_required
 def conta():
     conn = get_db()
@@ -1548,7 +1606,7 @@ def conta():
     }
     return render_template('conta.html', stats=stats)
 
-@app.route('/conta/senha', methods=['POST'])
+@app.route('/perfil/senha', methods=['POST'])
 @login_required
 def conta_senha():
     senha_atual = request.form.get('senha_atual', '')
@@ -3049,7 +3107,7 @@ def api_chat_download():
     buf.seek(0)
     return send_file(
         buf, as_attachment=True,
-        download_name='material-professorIA.docx',
+        download_name='material-ProfessorIA.docx',
         mimetype='application/vnd.openxmlformats-officedocument.wordprocessingml.document'
     )
 
@@ -3218,6 +3276,471 @@ def nao_encontrado(e):
 def erro_interno(e):
     return render_template('500.html'), 500
 
+if __name__ == '__main__':
+    port = int(os.environ.get("PORT", 5001))
+    app.run(debug=False, host='0.0.0.0', port=port)
+@app.route('/api/pagamento/pix/<plano_id>', methods=['POST'])
+@login_required
+def criar_pix_mp(plano_id):
+    if plano_id not in PLANOS:
+        return jsonify({'erro': 'Plano inválido'}), 400
+    
+    plano = PLANOS[plano_id]
+    import uuid
+    import requests as req
+
+    idempotency_key = str(uuid.uuid4())
+
+    payment_data = {
+        "transaction_amount": float(plano['preco']),
+        "description": f"Plano {plano['nome']} - ProfessorIA",
+        "payment_method_id": "pix",
+        "payer": {
+            "email": current_user.email,
+            "first_name": current_user.nome.split()[0],
+        },
+        "external_reference": f"{current_user.id}|{plano_id}",
+        "notification_url": f"{SITE_URL}/pagamento/webhook"
+    }
+
+    headers = {
+        "Authorization": f"Bearer {MP_ACCESS_TOKEN}",
+        "X-Idempotency-Key": idempotency_key
+    }
+
+    try:
+        response = req.post(
+            "https://api.mercadopago.com/v1/payments",
+            json=payment_data,
+            headers=headers
+        )
+        res = response.json()
+
+        if response.status_code == 201:
+            pix_info = res['point_of_interaction']['transaction_data']
+            return jsonify({
+                'status': 'pending',
+                'qr_code_base64': pix_info['qr_code_base_64'],
+                'copy_paste': pix_info['qr_code']
+            })
+        else:
+            return jsonify({'erro': res.get('message', 'Erro ao gerar PIX')}), 400
+    except Exception as e:
+        return jsonify({'erro': str(e)}), 500
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# BANCO DE QUESTÕES
+# ═══════════════════════════════════════════════════════════════════════════════
+
+@app.route('/banco-questoes')
+@login_required
+def banco_questoes():
+    return render_template('banco_questoes.html')
+
+@app.route('/api/questoes', methods=['GET'])
+@login_required
+def api_listar_questoes():
+    conn = get_db()
+    disciplina = request.args.get('disciplina', '')
+    ano_serie  = request.args.get('ano_serie', '')
+    busca      = request.args.get('busca', '')
+    sql = "SELECT * FROM questions_bank WHERE usuario_id = %s"
+    params = [current_user.id]
+    if disciplina:
+        sql += " AND disciplina = %s"; params.append(disciplina)
+    if ano_serie:
+        sql += " AND ano_serie = %s"; params.append(ano_serie)
+    if busca:
+        sql += " AND (enunciado ILIKE %s OR habilidade_bncc ILIKE %s)"
+        params += [f'%{busca}%', f'%{busca}%']
+    sql += " ORDER BY id DESC LIMIT 200"
+    rows = conn.execute(sql, params).fetchall()
+    conn.close()
+    return jsonify([dict(r) for r in rows])
+
+@app.route('/api/questoes', methods=['POST'])
+@app.route('/api/questions/save', methods=['POST']) # Alias solicitado no Super Prompt
+@login_required
+def api_salvar_questao():
+    d = request.get_json(force=True)
+    if not d.get('enunciado'):
+        return jsonify({'erro': 'Enunciado obrigatório'}), 400
+    
+    # Mapeamento de campos para suportar o novo Super Prompt
+    enunciado = d.get('enunciado', '')
+    alternativas = d.get('alternativas', [])
+    gabarito = d.get('gabarito', d.get('resposta_correta', ''))
+    bncc = d.get('bncc_skill', d.get('habilidade_bncc', ''))
+    disciplina = d.get('disciplina', '')
+    serie = d.get('serie', d.get('ano_serie', ''))
+    tipo = d.get('tipo', 'multipla_escolha')
+
+    conn = get_db()
+    conn.execute(
+        """INSERT INTO questions_bank
+           (usuario_id, enunciado, alternativas, gabarito, ano_serie, disciplina, habilidade_bncc, tipo, criado_em)
+           VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s)""",
+        (current_user.id,
+         enunciado,
+         json.dumps(alternativas, ensure_ascii=False),
+         gabarito,
+         serie,
+         disciplina,
+         bncc,
+         tipo,
+         datetime.now().strftime('%d/%m/%Y %H:%M'))
+    )
+    conn.commit()
+    conn.close()
+    return jsonify({'ok': True})
+
+@app.route('/api/questoes/<int:qid>', methods=['DELETE'])
+@login_required
+def api_deletar_questao(qid):
+    conn = get_db()
+    conn.execute("DELETE FROM questions_bank WHERE id = %s AND usuario_id = %s", (qid, current_user.id))
+    conn.commit()
+    conn.close()
+    return jsonify({'ok': True})
+
+@app.route('/api/questoes/extrair-do-chat', methods=['POST'])
+@login_required
+def api_extrair_questoes():
+    """Extrai questões estruturadas de um texto gerado pela IA e salva no banco."""
+    d = request.get_json(force=True)
+    texto = d.get('texto', '')
+    disciplina = d.get('disciplina', '')
+    ano_serie  = d.get('ano_serie', '')
+    if not texto:
+        return jsonify({'erro': 'Texto vazio'}), 400
+    prompt = f"""Analise o texto abaixo e extraia TODAS as questões de múltipla escolha ou discursivas.
+Para cada questão, retorne um JSON array com objetos contendo:
+- enunciado: texto da questão
+- alternativas: array de strings ["A) ...", "B) ...", ...] (vazio se discursiva)
+- gabarito: letra ou resposta correta
+- tipo: "multipla_escolha" ou "discursiva"
+- habilidade_bncc: código BNCC se mencionado (ex: EF05MA01), senão ""
+
+Retorne APENAS o JSON array, sem texto adicional.
+
+TEXTO:
+{texto[:4000]}"""
+    try:
+        resp = client.messages.create(
+            model="claude-3-5-sonnet-20241022",
+            max_tokens=2000,
+            messages=[{"role": "user", "content": prompt}]
+        )
+        raw = resp.content[0].text.strip()
+        # Remove markdown code fences if present
+        raw = re.sub(r'^```[a-z]*\n?', '', raw)
+        raw = re.sub(r'\n?```$', '', raw)
+        questoes = json.loads(raw)
+        conn = get_db()
+        salvos = 0
+        for q in questoes:
+            if q.get('enunciado'):
+                conn.execute(
+                    """INSERT INTO questions_bank
+                       (usuario_id, enunciado, alternativas, gabarito, ano_serie, disciplina, habilidade_bncc, tipo, criado_em)
+                       VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s)""",
+                    (current_user.id,
+                     q.get('enunciado',''),
+                     json.dumps(q.get('alternativas',[]), ensure_ascii=False),
+                     q.get('gabarito',''),
+                     ano_serie,
+                     disciplina,
+                     q.get('habilidade_bncc',''),
+                     q.get('tipo','multipla_escolha'),
+                     datetime.now().strftime('%d/%m/%Y %H:%M'))
+                )
+                salvos += 1
+        conn.commit()
+        conn.close()
+        return jsonify({'ok': True, 'salvos': salvos})
+    except Exception as e:
+        return jsonify({'erro': str(e)}), 500
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# DASHBOARD DE ANALYTICS
+# ═══════════════════════════════════════════════════════════════════════════════
+
+@app.route('/dashboard')
+@login_required
+def dashboard():
+    conn = get_db()
+    # Stats gerais
+    total_materiais = conn.execute(
+        "SELECT COUNT(*) as c FROM historico WHERE usuario_id = %s", (current_user.id,)
+    ).fetchone()['c']
+    total_questoes = conn.execute(
+        "SELECT COUNT(*) as c FROM questions_bank WHERE usuario_id = %s", (current_user.id,)
+    ).fetchone()['c']
+    total_chat = conn.execute(
+        "SELECT COUNT(*) as c FROM chat_messages WHERE usuario_id = %s AND role = 'user'", (current_user.id,)
+    ).fetchone()['c']
+    # Materiais por disciplina (top 5)
+    por_disciplina = conn.execute(
+        """SELECT disciplina, COUNT(*) as total FROM historico
+           WHERE usuario_id = %s AND disciplina != ''
+           GROUP BY disciplina ORDER BY total DESC LIMIT 5""",
+        (current_user.id,)
+    ).fetchall()
+    # Materiais por mês (últimos 6 meses)
+    por_mes = conn.execute(
+        """SELECT SUBSTRING(data, 4, 7) as mes, COUNT(*) as total
+           FROM historico WHERE usuario_id = %s AND data != ''
+           GROUP BY mes ORDER BY mes DESC LIMIT 6""",
+        (current_user.id,)
+    ).fetchall()
+    # Últimas gerações
+    ultimas = conn.execute(
+        """SELECT id, data, disciplina, turma, num_aulas, nome_arquivo
+           FROM historico WHERE usuario_id = %s
+           ORDER BY id DESC LIMIT 5""",
+        (current_user.id,)
+    ).fetchall()
+    conn.close()
+    horas_economizadas = round(total_materiais * 2.5, 1)
+    return render_template('dashboard.html',
+        total_materiais=total_materiais,
+        total_questoes=total_questoes,
+        total_chat=total_chat,
+        horas_economizadas=horas_economizadas,
+        por_disciplina=[dict(r) for r in por_disciplina],
+        por_mes=[dict(r) for r in reversed(list(por_mes))],
+        ultimas=[dict(r) for r in ultimas]
+    )
+
+@app.route('/api/dashboard-stats')
+@login_required
+def api_dashboard_stats():
+    dias = int(request.args.get('dias', 30))
+    conn = get_db()
+    total_materiais = conn.execute(
+        "SELECT COUNT(*) as c FROM historico WHERE usuario_id = %s", (current_user.id,)
+    ).fetchone()['c']
+    total_aulas = conn.execute(
+        "SELECT COALESCE(SUM(num_aulas),0) as s FROM historico WHERE usuario_id = %s", (current_user.id,)
+    ).fetchone()['s']
+    total_questoes = conn.execute(
+        "SELECT COUNT(*) as c FROM questions_bank WHERE usuario_id = %s", (current_user.id,)
+    ).fetchone()['c']
+    # Materiais por semana (últimas 8 semanas)
+    por_semana_rows = conn.execute(
+        """SELECT TO_CHAR(TO_DATE(data,'DD/MM/YYYY'),'IYYY-IW') as semana, COUNT(*) as total
+           FROM historico WHERE usuario_id = %s AND data != ''
+           GROUP BY semana ORDER BY semana DESC LIMIT 8""",
+        (current_user.id,)
+    ).fetchall()
+    semanas = [r['semana'] or '' for r in reversed(list(por_semana_rows))]
+    por_semana_vals = [r['total'] for r in reversed(list(por_semana_rows))]
+    # Pad to 8
+    while len(semanas) < 8:
+        semanas.insert(0, '')
+        por_semana_vals.insert(0, 0)
+    # Tipo distribution
+    por_tipo = {'plano_aula': total_materiais, 'questao': int(total_questoes)}
+    # Recent
+    recentes = conn.execute(
+        """SELECT id, data, disciplina, turma, num_aulas FROM historico
+           WHERE usuario_id = %s ORDER BY id DESC LIMIT 8""",
+        (current_user.id,)
+    ).fetchall()
+    conn.close()
+    return jsonify({
+        'total_materiais': total_materiais,
+        'total_aulas': int(total_aulas or 0),
+        'total_questoes': int(total_questoes),
+        'delta_materiais': 0,
+        'delta_aulas': 0,
+        'semanas': [s[-2:] if s else 'S?' for s in semanas],
+        'por_semana': por_semana_vals,
+        'por_tipo': por_tipo,
+        'recentes': [{'titulo': f"{r['disciplina']} — {r['turma']}", 'data': r['data'], 'tipo': 'plano_aula'} for r in recentes]
+    })
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# PROGRAMA DE INDICAÇÃO (REFERRAL)
+# ═══════════════════════════════════════════════════════════════════════════════
+
+def _get_or_create_referral(usuario_id):
+    conn = get_db()
+    row = conn.execute(
+        "SELECT * FROM referrals WHERE usuario_id = %s", (usuario_id,)
+    ).fetchone()
+    if not row:
+        codigo = secrets.token_urlsafe(8).upper()[:10]
+        conn.execute(
+            "INSERT INTO referrals (usuario_id, codigo, usos, creditos, criado_em) VALUES (%s,%s,0,0,%s)",
+            (usuario_id, codigo, datetime.now().strftime('%d/%m/%Y'))
+        )
+        conn.commit()
+        row = conn.execute(
+            "SELECT * FROM referrals WHERE usuario_id = %s", (usuario_id,)
+        ).fetchone()
+    conn.close()
+    return dict(row)
+
+@app.route('/indicar')
+@login_required
+def indicar():
+    ref = _get_or_create_referral(current_user.id)
+    link = f"{SITE_URL}/cadastro?ref={ref['codigo']}"
+    return render_template('indicar.html', ref=ref, link=link)
+
+@app.route('/api/referral/stats')
+@login_required
+def api_referral_stats():
+    ref = _get_or_create_referral(current_user.id)
+    link = f"{SITE_URL}/cadastro?ref={ref['codigo']}"
+    return jsonify({'codigo': ref['codigo'], 'usos': ref['usos'], 'creditos': ref['creditos'], 'link': link})
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# B2B ESCOLA
+# ═══════════════════════════════════════════════════════════════════════════════
+
+@app.route('/escola')
+@login_required
+def escola_painel():
+    conn = get_db()
+    # Verifica se o usuário é gestor de alguma escola
+    if current_user.escola_id and current_user.papel == 'gestor':
+        membros = conn.execute(
+            """SELECT u.nome, u.email, em.papel, em.ativo,
+                      (SELECT COUNT(*) FROM historico h WHERE h.usuario_id = u.id) as materiais
+               FROM escola_membros em
+               LEFT JOIN usuarios u ON u.id = em.usuario_id
+               WHERE em.escola_id = %s ORDER BY em.criado_em DESC""",
+            (current_user.escola_id,)
+        ).fetchall()
+        stats = conn.execute(
+            """SELECT COUNT(DISTINCT em.usuario_id) as professores,
+                      COUNT(h.id) as materiais_total
+               FROM escola_membros em
+               LEFT JOIN historico h ON h.usuario_id = em.usuario_id
+               WHERE em.escola_id = %s""",
+            (current_user.escola_id,)
+        ).fetchone()
+        conn.close()
+        return render_template('escola_painel.html',
+            membros=[dict(m) for m in membros],
+            stats=dict(stats) if stats else {},
+            escola_nome=current_user.escola_nome
+        )
+    conn.close()
+    return render_template('escola_sem_acesso.html')
+
+@app.route('/api/escola/convidar', methods=['POST'])
+@login_required
+def api_escola_convidar():
+    if not (current_user.escola_id and current_user.papel == 'gestor'):
+        return jsonify({'erro': 'Sem permissão'}), 403
+    d = request.get_json(force=True)
+    email = d.get('email', '').strip().lower()
+    if not email:
+        return jsonify({'erro': 'Email obrigatório'}), 400
+    token = secrets.token_urlsafe(24)
+    conn = get_db()
+    conn.execute(
+        "INSERT INTO escola_convites (escola_id, email, token, usado, criado_em) VALUES (%s,%s,%s,0,%s)",
+        (current_user.escola_id, email, token, datetime.now().strftime('%d/%m/%Y'))
+    )
+    conn.commit()
+    conn.close()
+    link = f"{SITE_URL}/cadastro?convite={token}"
+    enviar_email(email, f"Convite para {current_user.escola_nome} no ProfessorIA",
+        f"""<p>Você foi convidado para fazer parte da escola <strong>{current_user.escola_nome}</strong> no ProfessorIA.</p>
+        <p><a href="{link}" style="background:#4338ca;color:#fff;padding:12px 24px;border-radius:8px;text-decoration:none;font-weight:600;">Aceitar convite</a></p>
+        <p style="color:#666;font-size:.85rem;">Ou acesse: {link}</p>""")
+    return jsonify({'ok': True, 'link': link})
+
+@app.route('/api/escola/relatorio')
+@login_required
+def api_escola_relatorio():
+    if not (current_user.escola_id and current_user.papel == 'gestor'):
+        return jsonify({'erro': 'Sem permissão'}), 403
+    conn = get_db()
+    rows = conn.execute(
+        """SELECT u.nome, u.email,
+                  COUNT(h.id) as materiais,
+                  COUNT(DISTINCT h.disciplina) as disciplinas,
+                  MAX(h.data) as ultimo_uso
+           FROM escola_membros em
+           JOIN usuarios u ON u.id = em.usuario_id
+           LEFT JOIN historico h ON h.usuario_id = u.id
+           WHERE em.escola_id = %s
+           GROUP BY u.id, u.nome, u.email
+           ORDER BY materiais DESC""",
+        (current_user.escola_id,)
+    ).fetchall()
+    conn.close()
+    return jsonify([dict(r) for r in rows])
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# GERAÇÃO DE IMAGENS EDUCACIONAIS
+# ═══════════════════════════════════════════════════════════════════════════════
+
+@app.route('/api/gerar-imagem', methods=['POST'])
+@login_required
+def api_gerar_imagem():
+    """Gera uma imagem educacional usando a API de imagens da Anthropic/DALL-E."""
+    d = request.get_json(force=True)
+    descricao = d.get('descricao', '').strip()
+    if not descricao:
+        return jsonify({'erro': 'Descrição obrigatória'}), 400
+    # Usa a API de imagens do OpenAI (DALL-E 3) se disponível, senão retorna placeholder
+    openai_key = os.environ.get('OPENAI_API_KEY', '')
+    if not openai_key:
+        return jsonify({
+            'erro': 'API de imagens não configurada. Adicione OPENAI_API_KEY nas variáveis de ambiente.',
+            'placeholder': True
+        }), 503
+    try:
+        import requests as req
+        prompt_educacional = (
+            f"Educational illustration for Brazilian teachers, clean and professional style, "
+            f"suitable for classroom use: {descricao}. "
+            f"Flat design, colorful but not distracting, white background, high quality."
+        )
+        resp = req.post(
+            "https://api.openai.com/v1/images/generations",
+            headers={"Authorization": f"Bearer {openai_key}", "Content-Type": "application/json"},
+            json={"model": "dall-e-3", "prompt": prompt_educacional, "n": 1, "size": "1024x1024", "quality": "standard"},
+            timeout=60
+        )
+        data = resp.json()
+        if resp.status_code == 200:
+            url = data['data'][0]['url']
+            return jsonify({'ok': True, 'url': url})
+        else:
+            return jsonify({'erro': data.get('error', {}).get('message', 'Erro ao gerar imagem')}), 400
+    except Exception as e:
+        return jsonify({'erro': str(e)}), 500
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# ONBOARDING MELHORADO — 3 passos
+# ═══════════════════════════════════════════════════════════════════════════════
+
+@app.route('/api/onboarding/completar', methods=['POST'])
+@login_required
+def api_onboarding_completar():
+    d = request.get_json(force=True)
+    disciplina = d.get('disciplina', '')
+    serie = d.get('serie', '')
+    template = d.get('template', '')
+    conn = get_db()
+    conn.execute(
+        """UPDATE usuarios SET onboarding_done = 1, escola_template = %s WHERE id = %s""",
+        (template, current_user.id)
+    )
+    conn.commit()
+    conn.close()
+    return jsonify({'ok': True, 'redirect': f'/chat?disciplina={disciplina}&serie={serie}'})
+
+
+# ESTE BLOCO ABAIXO DEVE SER O FINAL ABSOLUTO DO ARQUIVO
 if __name__ == '__main__':
     port = int(os.environ.get("PORT", 5001))
     app.run(debug=False, host='0.0.0.0', port=port)

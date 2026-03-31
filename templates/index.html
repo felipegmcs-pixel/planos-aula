@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>ProfessorIA — Assistente Pedagógico com IA</title>
-  <link rel="icon" type="image/svg+xml" href="/static/logo.svg"/>
+  <title>ProfessorIA</title>
+  <link rel="icon" href="{{ url_for('static', filename='favicon.ico') }}" type="image/svg+xml">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet"/>
   <style>
     *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
@@ -12,7 +12,7 @@
       --bg:#ffffff;--bg2:#f7f8fc;--bg3:#f1f2f8;
       --hero:#050811;--dark:#0d0f1c;
       --text:#111827;--text2:#6b7280;--text3:#9ca3af;
-      --indigo:#4338ca;--violet:#7c3aed;--amber:#f59e0b;--cyan:#0ea5e9;
+      --indigo:#1E40AF;--violet:#1E3A8A;--amber:#f59e0b;--cyan:#0ea5e9;
       --line:rgba(17,24,39,.08);--line2:rgba(17,24,39,.14);
       --r:12px;--r-sm:8px;
     }
@@ -20,41 +20,131 @@
     body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);overflow-x:hidden}
     ::selection{background:#ede9fe;color:var(--indigo)}
 
+
+
+    /* STICKY CTA */
+    .sticky-cta{
+      position:fixed;bottom:28px;right:28px;z-index:800;
+      display:flex;align-items:center;gap:10px;
+      background:linear-gradient(135deg,#1E40AF,#1E3A8A);
+      color:#fff;font-size:.875rem;font-weight:700;
+      text-decoration:none;padding:13px 22px;border-radius:50px;
+      box-shadow:0 8px 32px rgba(30,64,175,.45);
+      opacity:0;transform:translateY(16px) scale(.95);
+      transition:opacity .4s ease,transform .4s ease;
+      pointer-events:none;
+    }
+    .sticky-cta.visible{opacity:1;transform:translateY(0) scale(1);pointer-events:auto}
+    .sticky-cta:hover{box-shadow:0 12px 44px rgba(30,64,175,.6);transform:translateY(-2px) scale(1.02)}
+    .sticky-cta svg{width:16px;height:16px;fill:#fff;flex-shrink:0}
+    @media(max-width:600px){.sticky-cta{bottom:16px;right:16px;padding:11px 18px;font-size:.8rem}}
+
+    /* DARK MODE LANDING */
+    body.dark-land{--bg:#0d0f1c;--bg2:#111327;--bg3:#161830;--text:#f1f5f9;--text2:#94a3b8;--text3:#64748b;--line:rgba(255,255,255,.07);--line2:rgba(255,255,255,.12)}
+    body.dark-land .stats{background:var(--bg)}
+    body.dark-land .features{background:var(--bg2)}
+    body.dark-land .feat-card{background:var(--bg3);border-color:var(--line)}
+    body.dark-land .tests{background:var(--bg)}
+    body.dark-land .test-card{background:var(--bg2);border-color:var(--line)}
+    body.dark-land .pricing{background:var(--bg2)}
+    body.dark-land .plan-card:not(.hot){background:var(--bg3);border-color:var(--line)}
+    body.dark-land .quote-sec{background:var(--bg);border-color:var(--line)}
+    body.dark-land .how{background:var(--bg)}
+    body.dark-land footer{background:var(--dark)}
+    body.dark-land nav.lit{background:rgba(13,15,28,.97);border-bottom-color:rgba(255,255,255,.08)}
+    body.dark-land nav.lit .logo-p{color:#f1f5f9}
+    body.dark-land nav.lit .nav-a{color:rgba(255,255,255,.5)}
+    body.dark-land nav.lit .nav-a:hover{color:#fff;background:rgba(255,255,255,.06)}
+    body.dark-land nav.lit .nav-user{color:rgba(255,255,255,.8)}
+    /* Dark mode toggle button */
+    .dm-toggle{
+      width:34px;height:34px;border-radius:8px;border:1px solid rgba(255,255,255,.15);
+      background:rgba(255,255,255,.06);cursor:pointer;
+      display:flex;align-items:center;justify-content:center;
+      transition:background .2s,border-color .2s;flex-shrink:0;margin-left:4px;
+    }
+    .dm-toggle:hover{background:rgba(255,255,255,.12);border-color:rgba(255,255,255,.28)}
+    nav.lit .dm-toggle{border-color:rgba(0,0,0,.12);background:rgba(0,0,0,.04)}
+    nav.lit .dm-toggle:hover{background:rgba(0,0,0,.08)}
+    body.dark-land nav.lit .dm-toggle{border-color:rgba(255,255,255,.15);background:rgba(255,255,255,.06)}
+    .dm-toggle svg{width:16px;height:16px;fill:rgba(255,255,255,.7);transition:fill .2s}
+    nav.lit .dm-toggle svg{fill:rgba(0,0,0,.5)}
+    body.dark-land nav.lit .dm-toggle svg{fill:rgba(255,255,255,.7)}
+    .dm-toggle .icon-moon{display:block}
+    .dm-toggle .icon-sun{display:none}
+    body.dark-land .dm-toggle .icon-moon{display:none}
+    body.dark-land .dm-toggle .icon-sun{display:block}
+    /* PROGRESS BAR */
+    #read-progress{position:fixed;top:0;left:0;height:3px;width:0%;z-index:9999;background:linear-gradient(90deg,#1E40AF,#1E3A8A,#3B82F6);transition:width .1s linear;border-radius:0 2px 2px 0}
     /* NAV */
     nav{
       position:fixed;top:0;left:0;right:0;z-index:900;
       height:64px;padding:0 48px;
       display:flex;align-items:center;justify-content:space-between;
-      background:rgba(5,8,17,.92);backdrop-filter:blur(20px);
-      border-bottom:1px solid rgba(255,255,255,.06);
+      background:#ffffff;backdrop-filter:blur(20px);
+      border-bottom:1px solid rgba(0,0,0,.08);
       transition:background .35s,border-color .35s;
     }
-    nav.lit{background:rgba(255,255,255,.97);border-bottom-color:var(--line)}
-    .logo{text-decoration:none;display:flex;align-items:center;gap:2px}
-    .logo-p{font-size:1.08rem;font-weight:800;color:#fff;letter-spacing:-.3px;transition:color .35s}
-    nav.lit .logo-p{color:var(--text)}
-    .logo-ia{
-      font-size:1.08rem;font-weight:800;letter-spacing:-.3px;
-      background:linear-gradient(135deg,#818cf8,#a78bfa,#60a5fa);
-      -webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;
+    nav.lit{background:#ffffff;border-bottom-color:rgba(0,0,0,.08)}
+    .nav-brand{
+      display:flex;align-items:center;gap:12px;flex:1;justify-content:center;
     }
-    .logo-pulse{width:7px;height:7px;border-radius:50%;background:var(--amber);margin-left:3px;flex-shrink:0;animation:pdot 2.2s ease-in-out infinite}
+    .nav-logo{
+      height:58px;width:auto;object-fit:contain;flex-shrink:0;
+    }
+    .nav-name{
+      font-size:2.4rem;font-weight:800;color:#1E40AF;letter-spacing:-.6px;
+      font-family:Inter,sans-serif;white-space:nowrap;
+      background:linear-gradient(135deg,#1E40AF 0%,#1E3A8A 100%);
+      -webkit-background-clip:text;
+      -webkit-text-fill-color:transparent;
+      background-clip:text;
+      font-variation-settings:"wght" 800;
+    }
+    .logo{display:flex;align-items:center;text-decoration:none;gap:12px;transition:color .35s;vertical-align:middle}
+    .logo-mark{display:flex;align-items:center;justify-content:center;width:44px;height:44px;border-radius:8px;background:#0f172a;flex-shrink:0;transition:background .35s,box-shadow .35s}
+    nav.lit .logo-mark{background:#1E40AF;width:32px;height:32px;transition:color .35s,stroke .35s}
+    nav.lit .logo-mark svg{color:#111827}
+    nav.lit .logo-mark svg g { stroke: #111827 !important; }
+    nav.lit .logo-mark svg g circle { fill: #111827 !important; }
+    .logo-p{font-size:1.5rem;font-weight:800;color:#fff;letter-spacing:-.3px;transition:color .35s}
+    nav.lit .logo-p{color:#111827}
+    .logo-ia{
+      font-size:1.08rem;font-weight:600;letter-spacing:-.3px;
+      color:#818cf8;transition:color .35s;
+    }
+    nav.lit .logo-ia{color:#111827}
     @keyframes pdot{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.45;transform:scale(.8)}}
     .nav-links{display:flex;align-items:center;gap:4px}
     .nav-a{font-size:.875rem;font-weight:500;color:rgba(255,255,255,.6);text-decoration:none;padding:7px 14px;border-radius:7px;transition:color .2s,background .2s}
     .nav-a:hover{color:#fff;background:rgba(255,255,255,.08)}
-    nav.lit .nav-a{color:var(--text2)}
-    nav.lit .nav-a:hover{color:var(--text);background:rgba(0,0,0,.04)}
-    .nav-user{font-size:.875rem;font-weight:600;color:rgba(255,255,255,.8);text-decoration:none;padding:7px 14px;border-radius:7px;display:flex;align-items:center;gap:8px;transition:background .2s}
+    nav.lit .nav-a{color:#111827}
+    nav.lit .nav-a:hover{color:#111827;background:rgba(0,0,0,.04)}
+    .nav-user{font-size:.875rem;font-weight:600;color:rgba(255,255,255,.8);text-decoration:none;padding:7px 14px;border-radius:7px;display:flex;align-items:center;gap:8px;transition:background .2s,color .35s}
     .nav-user:hover{background:rgba(255,255,255,.08)}
-    nav.lit .nav-user{color:var(--text)}
+    nav.lit .nav-user{color:#111827}
     nav.lit .nav-user:hover{background:rgba(0,0,0,.04)}
     .nav-udot{width:7px;height:7px;border-radius:50%;background:#34d399;flex-shrink:0}
     .btn-nav{font-size:.875rem;font-weight:700;text-decoration:none;padding:8px 20px;border-radius:8px;background:var(--amber);color:var(--text);transition:opacity .2s,transform .2s}
     .btn-nav:hover{opacity:.88;transform:translateY(-1px)}
 
+
+    /* SOCIAL PROOF STRIP */
+    .social-strip{
+      position:fixed;top:64px;left:0;right:0;z-index:899;
+      height:0;overflow:hidden;
+      background:linear-gradient(90deg,#1e1b4b,#1a1840);
+      border-bottom:1px solid rgba(30,64,175,.22);
+      display:flex;align-items:center;justify-content:center;gap:24px;
+      font-size:.7rem;font-weight:600;letter-spacing:.5px;
+      color:rgba(165,180,252,.75);
+      transition:height .35s ease,opacity .35s ease;opacity:0;
+    }
+    .social-strip.lit-strip{height:32px;opacity:1}
+    .social-strip-sep{color:rgba(30,64,175,.35);font-size:.5rem}
+    .social-strip-star{color:#f59e0b;letter-spacing:1px}
     /* TICKER */
-    .ticker{margin-top:64px;height:40px;background:linear-gradient(90deg,#1e1b4b,#1a1840);border-bottom:1px solid rgba(99,102,241,.22);overflow:hidden;display:flex;align-items:center}
+    .ticker{margin-top:64px;height:40px;background:linear-gradient(90deg,#1e1b4b,#1a1840);border-bottom:1px solid rgba(30,64,175,.22);overflow:hidden;display:flex;align-items:center}
     .tick-track{display:flex;white-space:nowrap;animation:tick 32s linear infinite}
     .tick-i{font-size:.68rem;font-weight:600;letter-spacing:2px;text-transform:uppercase;color:rgba(165,180,252,.6);padding:0 20px}
     .tick-d{color:var(--amber);font-size:.4rem}
@@ -66,14 +156,14 @@
     .hero-glow{
       position:absolute;inset:0;z-index:1;pointer-events:none;
       background:
-        radial-gradient(ellipse 60% 60% at 65% 50%,rgba(67,56,202,.2) 0%,transparent 60%),
-        radial-gradient(ellipse 40% 50% at 12% 75%,rgba(124,58,237,.13) 0%,transparent 55%),
+        radial-gradient(ellipse 60% 60% at 65% 50%,rgba(30,64,175,.2) 0%,transparent 60%),
+        radial-gradient(ellipse 40% 50% at 12% 75%,rgba(30,64,175,.13) 0%,transparent 55%),
         radial-gradient(ellipse 35% 45% at 88% 18%,rgba(14,165,233,.1) 0%,transparent 50%);
     }
     .hero-inner{position:relative;z-index:2;max-width:900px;width:100%;padding:120px 48px 90px;text-align:center}
     .hero-pill{
       display:inline-flex;align-items:center;gap:9px;
-      background:rgba(99,102,241,.15);border:1px solid rgba(99,102,241,.38);
+      background:rgba(30,64,175,.15);border:1px solid rgba(30,64,175,.38);
       padding:7px 18px;border-radius:100px;
       font-size:.8rem;font-weight:600;color:#a5b4fc;margin-bottom:36px;
     }
@@ -85,12 +175,12 @@
     .btn-primary{
       display:inline-flex;align-items:center;gap:8px;
       padding:15px 30px;border-radius:10px;
-      background:linear-gradient(135deg,#4338ca,#7c3aed);
+      background:linear-gradient(135deg,#1E40AF,#1E3A8A);
       color:#fff;font-size:.975rem;font-weight:700;text-decoration:none;
-      box-shadow:0 8px 32px rgba(67,56,202,.42);
+      box-shadow:0 8px 32px rgba(30,64,175,.42);
       transition:transform .2s,box-shadow .2s;
     }
-    .btn-primary:hover{transform:translateY(-2px);box-shadow:0 14px 44px rgba(67,56,202,.52)}
+    .btn-primary:hover{transform:translateY(-2px);box-shadow:0 14px 44px rgba(30,64,175,.52)}
     .btn-ghost-d{
       display:inline-flex;align-items:center;gap:8px;
       padding:15px 30px;border-radius:10px;
@@ -100,11 +190,101 @@
       transition:background .2s,border-color .2s,color .2s;
     }
     .btn-ghost-d:hover{background:rgba(255,255,255,.09);border-color:rgba(255,255,255,.35);color:#fff}
+
+    /* HERO ENTRANCE ANIMATIONS */
+    @keyframes fadeUp{from{opacity:0;transform:translateY(28px)}to{opacity:1;transform:translateY(0)}}
+    @keyframes fadeIn{from{opacity:0}to{opacity:1}}
+    .hero-copy .hero-pill{animation:fadeUp .6s ease both;animation-delay:.1s}
+    .hero-copy h1{animation:fadeUp .65s ease both;animation-delay:.22s}
+    .hero-copy .hero-sub{animation:fadeUp .65s ease both;animation-delay:.36s}
+    .hero-copy .hero-btns{animation:fadeUp .65s ease both;animation-delay:.48s}
+    #typingDemo{animation:fadeIn .9s ease both;animation-delay:.55s}
+    .hero-foot{animation:fadeIn 1.2s ease both;animation-delay:.9s}
+    /* TYPING DEMO MOCKUP */
+    .hero-layout{display:grid;grid-template-columns:1fr 1fr;gap:48px;align-items:center;max-width:1200px;width:100%;padding:120px 48px 90px;position:relative;z-index:2}
+    .hero-copy{text-align:left}
+    .hero-copy .hero-pill{margin-bottom:28px}
+    .hero-copy h1{font-size:clamp(2.2rem,4.5vw,3.8rem);font-weight:900;line-height:1.1;letter-spacing:-2px;color:#fff;margin-bottom:20px}
+    .hero-copy .hero-sub{font-size:1rem;color:rgba(255,255,255,.5);line-height:1.8;max-width:460px;margin:0 0 36px}
+    .hero-copy .hero-btns{justify-content:flex-start}
+    .typing-demo{
+      background:rgba(10,12,28,.85);border:1px solid rgba(30,64,175,.28);
+      border-radius:16px;overflow:hidden;
+      box-shadow:0 32px 80px rgba(0,0,0,.55),0 0 0 1px rgba(30,64,175,.12),inset 0 1px 0 rgba(255,255,255,.06);
+      backdrop-filter:blur(12px);
+    }
+    .td-topbar{
+      display:flex;align-items:center;gap:8px;
+      padding:12px 16px;border-bottom:1px solid rgba(255,255,255,.07);
+      background:rgba(255,255,255,.03);
+    }
+    .td-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+    .td-dot-r{background:#ff5f57}.td-dot-y{background:#febc2e}.td-dot-g{background:#28c840}
+    .td-title{font-size:.7rem;font-weight:600;color:rgba(255,255,255,.3);margin-left:auto;margin-right:auto;letter-spacing:.5px}
+    .td-body{padding:20px 20px 16px}
+    .td-label{font-size:.6rem;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:rgba(30,64,175,.7);margin-bottom:10px}
+    .td-input-row{
+      display:flex;align-items:center;gap:10px;
+      background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);
+      border-radius:10px;padding:12px 14px;margin-bottom:14px;
+    }
+    .td-cursor{width:2px;height:16px;background:#818cf8;border-radius:2px;animation:tdBlink .9s step-end infinite;flex-shrink:0}
+    @keyframes tdBlink{0%,100%{opacity:1}50%{opacity:0}}
+    .td-typed{font-size:.82rem;color:rgba(255,255,255,.85);font-family:'Inter',monospace;flex:1;min-height:16px;line-height:1.4;white-space:pre-wrap;word-break:break-word}
+    .td-send{
+      width:30px;height:30px;border-radius:8px;flex-shrink:0;
+      background:linear-gradient(135deg,#1E40AF,#1E3A8A);
+      display:flex;align-items:center;justify-content:center;
+      box-shadow:0 4px 12px rgba(30,64,175,.4);
+    }
+    .td-send svg{width:13px;height:13px;fill:#fff}
+    .td-response{
+      background:rgba(30,64,175,.07);border:1px solid rgba(30,64,175,.18);
+      border-radius:10px;padding:14px;
+      font-size:.78rem;color:rgba(255,255,255,.72);line-height:1.7;
+      min-height:80px;
+    }
+    .td-response-head{
+      display:flex;align-items:center;gap:8px;margin-bottom:10px;
+    }
+    .td-avatar{
+      width:22px;height:22px;border-radius:6px;flex-shrink:0;
+      background:linear-gradient(135deg,#1E40AF,#1E3A8A);
+      display:flex;align-items:center;justify-content:center;
+    }
+    .td-avatar svg{width:11px;height:11px;fill:#fff}
+    .td-resp-name{font-size:.65rem;font-weight:700;color:#a5b4fc;letter-spacing:.5px}
+    .td-resp-text{font-size:.78rem;color:rgba(255,255,255,.65);line-height:1.7;}
+    .td-resp-line{height:7px;border-radius:4px;background:rgba(255,255,255,.1);margin-bottom:6px;}
+    .td-resp-line.w90{width:90%}.td-resp-line.w75{width:75%}.td-resp-line.w85{width:85%}.td-resp-line.w60{width:60%}
+    .td-resp-line.active{background:linear-gradient(90deg,rgba(30,64,175,.5),rgba(167,139,250,.3));animation:tdLineGrow .6s ease-out forwards}
+    @keyframes tdLineGrow{from{width:0}to{width:var(--w,90%)}}
+    .td-tags{display:flex;gap:6px;flex-wrap:wrap;margin-top:12px}
+    .td-tag{
+      font-size:.6rem;font-weight:600;letter-spacing:.5px;
+      padding:3px 9px;border-radius:100px;
+      background:rgba(30,64,175,.15);border:1px solid rgba(30,64,175,.3);color:#a5b4fc;
+    }
+    .td-footer{padding:10px 20px 14px;display:flex;align-items:center;justify-content:space-between;border-top:1px solid rgba(255,255,255,.05)}
+    .td-status{display:flex;align-items:center;gap:6px;font-size:.6rem;color:rgba(255,255,255,.3);font-weight:500}
+    .td-status-dot{width:5px;height:5px;border-radius:50%;background:#34d399;animation:pdot 2s ease-in-out infinite}
+    .td-actions{display:flex;gap:6px}
+    .td-action-btn{
+      font-size:.6rem;font-weight:600;padding:3px 10px;border-radius:6px;
+      background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);
+      color:rgba(255,255,255,.4);cursor:default;
+    }
+    @media(max-width:900px){
+      .hero-layout{grid-template-columns:1fr;padding:90px 24px 70px;gap:36px}
+      .hero-copy{text-align:center}
+      .hero-copy .hero-btns{justify-content:center}
+      .hero-copy .hero-sub{margin:0 auto 36px}
+    }
     .hero-foot{
       position:absolute;bottom:32px;left:50%;transform:translateX(-50%);
       z-index:2;display:flex;flex-direction:column;align-items:center;gap:10px;
     }
-    .hero-foot-txt{font-size:.65rem;font-weight:500;letter-spacing:2px;text-transform:uppercase;color:rgba(255,255,255,.22)}
+    .hero-foot-txt{font-size:.65rem;font-weight:500;letter-spacing:2px;text-transform:uppercase;color:rgba(255,255,255,.7)}
     .hero-arrow{width:18px;height:18px;border-right:2px solid rgba(255,255,255,.18);border-bottom:2px solid rgba(255,255,255,.18);transform:rotate(45deg);animation:bounce 2s ease-in-out infinite}
     @keyframes bounce{0%,100%{transform:rotate(45deg) translateY(0)}50%{transform:rotate(45deg) translateY(6px)}}
 
@@ -129,21 +309,47 @@
       transition:transform .2s,box-shadow .2s,border-color .2s;
       position:relative;overflow:hidden;cursor:default;
     }
-    .feat-card::after{content:'';position:absolute;inset:0;background:linear-gradient(135deg,rgba(67,56,202,.04),transparent);opacity:0;transition:opacity .3s}
-    .feat-card:hover{transform:translateY(-4px);box-shadow:0 16px 48px rgba(0,0,0,.07);border-color:rgba(67,56,202,.24)}
+    .feat-card::after{content:'';position:absolute;inset:0;background:linear-gradient(135deg,rgba(30,64,175,.04),transparent);opacity:0;transition:opacity .3s}
+    .feat-card:hover{transform:translateY(-4px);box-shadow:0 16px 48px rgba(0,0,0,.07);border-color:rgba(30,64,175,.24)}
     .feat-card:hover::after{opacity:1}
-    .feat-icon{width:42px;height:42px;border-radius:9px;background:linear-gradient(135deg,#ede9fe,#ddd6fe);display:flex;align-items:center;justify-content:center;margin-bottom:18px;flex-shrink:0}
+    .feat-icon{width:42px;height:42px;border-radius:9px;background:linear-gradient(135deg,#ede9fe,#ddd6fe);display:flex;align-items:center;justify-content:center;margin-bottom:18px;flex-shrink:0;transition:transform .3s ease,background .3s ease}
+    .feat-card:hover .feat-icon{transform:rotate(10deg) scale(1.08);background:linear-gradient(135deg,#ddd6fe,#c4b5fd)}
     .feat-icon svg{width:20px;height:20px;stroke:var(--indigo);fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
     .feat-tag{font-size:.68rem;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--indigo);margin-bottom:6px}
     .feat-title{font-size:1.05rem;font-weight:800;color:var(--text);margin-bottom:8px;letter-spacing:-.2px}
     .feat-desc{font-size:.875rem;color:var(--text2);line-height:1.7}
 
+
+    /* HOW IT WORKS */
+    .how{padding:96px 48px;background:var(--bg);position:relative;overflow:hidden}
+    .how-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:0;position:relative;margin-top:56px}
+    .how-grid::before{content:'';position:absolute;top:36px;left:calc(16.66% + 20px);right:calc(16.66% + 20px);height:2px;background:linear-gradient(90deg,#1E40AF,#1E3A8A,#1E40AF);z-index:0;opacity:.3}
+    .how-step{display:flex;flex-direction:column;align-items:center;text-align:center;padding:0 28px;position:relative;z-index:1}
+    .how-num{
+      width:72px;height:72px;border-radius:50%;
+      background:linear-gradient(135deg,#1E40AF,#1E3A8A);
+      display:flex;align-items:center;justify-content:center;
+      font-size:1.5rem;font-weight:900;color:#fff;
+      box-shadow:0 8px 28px rgba(30,64,175,.35);
+      margin-bottom:24px;flex-shrink:0;
+      transition:transform .3s ease,box-shadow .3s ease;
+    }
+    .how-step:hover .how-num{transform:scale(1.1);box-shadow:0 12px 36px rgba(30,64,175,.5)}
+    .how-step-icon{width:28px;height:28px;margin-bottom:4px}
+    .how-step-icon svg{width:28px;height:28px;stroke:#fff;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+    .how-title{font-size:1.1rem;font-weight:800;color:var(--text);margin-bottom:10px;letter-spacing:-.2px}
+    .how-desc{font-size:.875rem;color:var(--text2);line-height:1.7;max-width:240px}
+    .how-arrow{position:absolute;top:22px;right:-18px;font-size:1.4rem;color:rgba(30,64,175,.35);z-index:2;display:none}
+    @media(max-width:768px){
+      .how-grid{grid-template-columns:1fr;gap:40px}
+      .how-grid::before{display:none}
+    }
     /* 3D scroll-driven cube in features bg */
     .feat-cube-wrap{position:absolute;right:3%;top:50%;transform:translateY(-50%);pointer-events:none;perspective:900px;opacity:.06;z-index:0}
 
     /* WHY (dark) */
     .why{background:var(--dark);padding:100px 48px;display:grid;grid-template-columns:1fr 1fr;gap:80px;align-items:center;position:relative;overflow:hidden}
-    .why-glow{position:absolute;inset:0;pointer-events:none;background:radial-gradient(ellipse 55% 70% at 80% 50%,rgba(67,56,202,.18) 0%,transparent 60%),radial-gradient(ellipse 35% 50% at 20% 20%,rgba(124,58,237,.12) 0%,transparent 55%)}
+    .why-glow{position:absolute;inset:0;pointer-events:none;background:radial-gradient(ellipse 55% 70% at 80% 50%,rgba(30,64,175,.18) 0%,transparent 60%),radial-gradient(ellipse 35% 50% at 20% 20%,rgba(30,64,175,.12) 0%,transparent 55%)}
     .why>*{position:relative;z-index:1}
     .why .sec-label{color:#a5b4fc}.why .sec-label::before{background:#a5b4fc}
     .why .sec-head{color:#fff}.why .sec-sub{color:rgba(255,255,255,.45)}
@@ -156,7 +362,7 @@
     /* Orbital rings in why */
     .orbit-scene{position:absolute;right:5%;top:50%;transform:translateY(-50%);width:340px;height:340px;pointer-events:none;z-index:0;perspective:700px;display:flex;align-items:center;justify-content:center}
     .orbit-ring{position:absolute;border-radius:50%;border:1.5px solid}
-    .orbit-r1{width:320px;height:320px;border-color:rgba(99,102,241,.18);animation:orb 14s linear infinite}
+    .orbit-r1{width:320px;height:320px;border-color:rgba(30,64,175,.18);animation:orb 14s linear infinite}
     .orbit-r2{width:230px;height:230px;border-color:rgba(167,139,250,.22);animation:orb 10s linear infinite reverse}
     .orbit-r3{width:150px;height:150px;border-color:rgba(245,158,11,.28);animation:orb 7s linear infinite}
     @keyframes orb{from{transform:rotateX(74deg) rotateZ(0)}to{transform:rotateX(74deg) rotateZ(360deg)}}
@@ -189,7 +395,7 @@
     .plan-card{background:var(--bg);border:1px solid var(--line);border-radius:var(--r);padding:36px 28px;position:relative;transition:transform .2s,box-shadow .2s}
     .plan-card:hover{transform:translateY(-4px)}
     .plan-card.hot{background:linear-gradient(160deg,#3730a3,#6d28d9);border-color:transparent}
-    .plan-card.hot:hover{box-shadow:0 20px 60px rgba(67,56,202,.35)}
+    .plan-card.hot:hover{box-shadow:0 20px 60px rgba(30,64,175,.35)}
     .plan-badge{position:absolute;top:-13px;left:50%;transform:translateX(-50%);background:var(--amber);color:var(--text);font-size:.65rem;font-weight:800;letter-spacing:1px;text-transform:uppercase;padding:4px 14px;border-radius:100px;white-space:nowrap}
     .plan-lbl{font-size:.7rem;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--text2);margin-bottom:10px}
     .plan-card.hot .plan-lbl{color:rgba(255,255,255,.5)}
@@ -213,7 +419,7 @@
     .xck{font-size:.7rem;color:var(--text3);flex-shrink:0}
     .plan-card.hot .xck{color:rgba(255,255,255,.2)}
     .btn-plan{display:block;width:100%;padding:13px 14px;border-radius:8px;text-align:center;text-decoration:none;font-size:.875rem;font-weight:700;transition:all .2s;letter-spacing:.3px}
-    .btn-plan.o{background:transparent;color:var(--indigo);border:2px solid rgba(67,56,202,.3)}
+    .btn-plan.o{background:transparent;color:var(--indigo);border:2px solid rgba(30,64,175,.3)}
     .btn-plan.o:hover{background:var(--indigo);color:#fff;border-color:var(--indigo);transform:translateY(-1px)}
     .btn-plan.w{background:rgba(255,255,255,.15);color:#fff;border:2px solid rgba(255,255,255,.2)}
     .btn-plan.w:hover{background:rgba(255,255,255,.25);transform:translateY(-1px)}
@@ -228,7 +434,7 @@
 
     /* QUOTE */
     .quote-sec{padding:80px 48px;text-align:center;background:var(--bg);border-top:1px solid var(--line);border-bottom:1px solid var(--line);position:relative;overflow:hidden}
-    .quote-sec::before{content:'';position:absolute;inset:0;pointer-events:none;background:radial-gradient(ellipse at 50% 100%,rgba(67,56,202,.05) 0%,transparent 60%)}
+    .quote-sec::before{content:'';position:absolute;inset:0;pointer-events:none;background:radial-gradient(ellipse at 50% 100%,rgba(30,64,175,.05) 0%,transparent 60%)}
     .quote-q{font-size:clamp(1.4rem,3.5vw,2.5rem);font-weight:800;letter-spacing:-1px;line-height:1.3;max-width:800px;margin:0 auto 20px;position:relative;z-index:1}
     .quote-q .qi{color:var(--indigo)}
     .quote-who{font-size:.875rem;font-weight:500;color:var(--text2);position:relative;z-index:1}
@@ -256,7 +462,7 @@
     /* CTA */
     .cta{background:var(--hero);padding:100px 48px;text-align:center;position:relative;overflow:hidden}
     #scene3d-2{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:0}
-    .cta-glow{position:absolute;inset:0;pointer-events:none;z-index:0;background:radial-gradient(ellipse at 50% 50%,rgba(67,56,202,.24) 0%,transparent 62%)}
+    .cta-glow{position:absolute;inset:0;pointer-events:none;z-index:0;background:radial-gradient(ellipse at 50% 50%,rgba(30,64,175,.24) 0%,transparent 62%)}
     .cta-inner{position:relative;z-index:1;max-width:640px;margin:0 auto}
     .cta h2{font-size:clamp(2.2rem,5vw,4rem);font-weight:900;letter-spacing:-2px;line-height:1.1;color:#fff;margin-bottom:18px}
     .cta-desc{font-size:1.1rem;color:rgba(255,255,255,.45);margin-bottom:40px;line-height:1.7}
@@ -272,7 +478,7 @@
     .sc-face{position:absolute;background:transparent}
     /* XL */
     .sc-geo.xl{width:200px;height:200px}
-    .sc-geo.xl .sc-face{width:200px;height:200px;border:1.5px solid rgba(99,102,241,.25)}
+    .sc-geo.xl .sc-face{width:200px;height:200px;border:1.5px solid rgba(30,64,175,.25)}
     .sc-geo.xl .sc-face:nth-child(1){transform:translateZ(100px)}
     .sc-geo.xl .sc-face:nth-child(2){transform:rotateY(180deg) translateZ(100px)}
     .sc-geo.xl .sc-face:nth-child(3){transform:rotateY(-90deg) translateZ(100px)}
@@ -281,7 +487,7 @@
     .sc-geo.xl .sc-face:nth-child(6){transform:rotateX(-90deg) translateZ(100px)}
     /* LG */
     .sc-geo.lg{width:150px;height:150px}
-    .sc-geo.lg .sc-face{width:150px;height:150px;border:1.5px solid rgba(124,58,237,.3)}
+    .sc-geo.lg .sc-face{width:150px;height:150px;border:1.5px solid rgba(30,64,175,.3)}
     .sc-geo.lg .sc-face:nth-child(1){transform:translateZ(75px)}
     .sc-geo.lg .sc-face:nth-child(2){transform:rotateY(180deg) translateZ(75px)}
     .sc-geo.lg .sc-face:nth-child(3){transform:rotateY(-90deg) translateZ(75px)}
@@ -316,8 +522,8 @@
     /* FOOTER */
     footer{background:#06070e;padding:36px 48px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:20px;border-top:1px solid rgba(255,255,255,.05)}
     .f-logo{text-decoration:none;font-size:.95rem;font-weight:800;letter-spacing:-.3px;display:flex;align-items:center}
-    .f-logo-p{color:rgba(255,255,255,.22)}
-    .f-logo-ia{background:linear-gradient(135deg,#818cf8,#a78bfa);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+    .f-logo-p{color:rgba(255,255,255,.7)}
+    .f-logo-ia{color:#818cf8;font-weight:600}
     .f-links{display:flex;gap:24px}
     .f-link{font-size:.8rem;font-weight:500;color:rgba(255,255,255,.25);text-decoration:none;transition:color .2s}
     .f-link:hover{color:rgba(255,255,255,.6)}
@@ -358,11 +564,12 @@
 </head>
 <body>
 
+<div id="read-progress"></div>
 <nav id="nav">
-  <a class="logo" href="/">
-    <span class="logo-p">Professor</span><span class="logo-ia">IA</span>
-    <span class="logo-pulse"></span>
-  </a>
+  <div class="nav-brand">
+    <img src="{{ url_for('static', filename='logo-oficial.png') }}" alt="ProfessorIA" class="nav-logo">
+    <span class="nav-name"><span style="font-weight:600">Professor</span><span style="font-weight:900">IA</span></span>
+  </div>
   <div class="nav-links">
     <a class="nav-a" href="#planos">Planos</a>
     {% if current_user.is_authenticated %}
@@ -371,8 +578,23 @@
     <a class="nav-a" href="/login">Entrar</a>
     <a class="btn-nav" href="/cadastro">Começar grátis</a>
     {% endif %}
+    <button class="dm-toggle" id="dmToggle" aria-label="Alternar modo escuro" title="Modo escuro">
+      <svg class="icon-moon" viewBox="0 0 24 24"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/></svg>
+      <svg class="icon-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+    </button>
   </div>
 </nav>
+
+<!-- SOCIAL PROOF STRIP -->
+<div class="social-strip" id="socialStrip">
+  <span><span class="social-strip-star">★★★★★</span> Avaliação 4.9/5</span>
+  <span class="social-strip-sep">◆</span>
+  <span>+12.000 professores ativos</span>
+  <span class="social-strip-sep">◆</span>
+  <span>100% alinhado à BNCC</span>
+  <span class="social-strip-sep">◆</span>
+  <span>Grátis para começar</span>
+</div>
 
 <!-- TICKER -->
 <div class="ticker">
@@ -404,24 +626,81 @@
 <section class="hero">
   <canvas id="scene3d"></canvas>
   <div class="hero-glow"></div>
-  <div class="hero-inner">
-    <div class="hero-pill"><span class="pill-dot"></span>Assistente pedagógico com IA · BNCC</div>
-    <h1>Planeje melhor,<br/><span class="grad-text">ensine com mais impacto.</span></h1>
-    <p class="hero-sub">Gere planos de aula, provas, caça-palavras, cruzadinhas e muito mais em segundos. Feito para professores brasileiros.</p>
-    <div class="hero-btns">
-      {% if current_user.is_authenticated %}
-        {% if current_user.assinatura_ativa or current_user.is_admin %}
-          <a href="/chat" class="btn-primary">Acessar sistema →</a>
+
+  <!-- Layout de duas colunas: copy + TypingDemo -->
+  <div class="hero-layout">
+
+    <!-- Coluna esquerda: copy -->
+    <div class="hero-copy">
+      <h1>Economize até<br/><span class="grad-text">10 horas semanais.</span></h1>
+      <p class="hero-sub">Planos de aula 100% alinhados à BNCC e materiais adaptados para Educação Inclusiva instantaneamente. Feito para o professor brasileiro.</p>
+      <div class="hero-btns">
+        {% if current_user.is_authenticated %}
+          {% if current_user.assinatura_ativa or current_user.is_admin %}
+            <a href="/chat" class="btn-primary">Acessar sistema →</a>
+          {% else %}
+            <a href="/planos" class="btn-primary">Ver planos →</a>
+            <a href="/chat" class="btn-ghost-d">Explorar grátis</a>
+          {% endif %}
         {% else %}
-          <a href="/planos" class="btn-primary">Ver planos →</a>
-          <a href="/chat" class="btn-ghost-d">Explorar grátis</a>
+          <a href="/cadastro" class="btn-primary">Começar grátis →</a>
+          <a href="/login" class="btn-ghost-d">Já tenho conta</a>
         {% endif %}
-      {% else %}
-        <a href="/cadastro" class="btn-primary">Começar grátis →</a>
-        <a href="/login" class="btn-ghost-d">Já tenho conta</a>
-      {% endif %}
+      </div>
     </div>
-  </div>
+
+    <!-- Coluna direita: TypingDemo mockup -->
+    <div class="typing-demo" id="typingDemo">
+      <div class="td-topbar">
+        <span class="td-dot td-dot-r"></span>
+        <span class="td-dot td-dot-y"></span>
+        <span class="td-dot td-dot-g"></span>
+        <span class="td-title">ProfessorIA — Chat</span>
+      </div>
+      <div class="td-body">
+        <div class="td-label">Sua solicitação</div>
+        <div class="td-input-row">
+          <span class="td-typed" id="tdTyped"></span>
+          <span class="td-cursor" id="tdCursor"></span>
+          <div class="td-send">
+            <svg viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
+          </div>
+        </div>
+        <div class="td-response" id="tdResponse" style="display:none">
+          <div class="td-response-head">
+            <div class="td-avatar">
+              <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 14H9V8h2v8zm4 0h-2V8h2v8z"/></svg>
+            </div>
+            <span class="td-resp-name">ProfessorIA</span>
+          </div>
+          <div id="tdRespLines">
+            <div class="td-resp-line w90"></div>
+            <div class="td-resp-line w75"></div>
+            <div class="td-resp-line w85"></div>
+            <div class="td-resp-line w60"></div>
+          </div>
+          <div class="td-tags" id="tdTags" style="display:none">
+            <span class="td-tag">✓ BNCC</span>
+            <span class="td-tag">✓ Objetivos</span>
+            <span class="td-tag">✓ Metodologia</span>
+            <span class="td-tag">✓ Avaliação</span>
+          </div>
+        </div>
+      </div>
+      <div class="td-footer">
+        <div class="td-status">
+          <span class="td-status-dot"></span>
+          <span id="tdStatusTxt">Pronto para gerar</span>
+        </div>
+        <div class="td-actions">
+          <span class="td-action-btn">Copiar</span>
+          <span class="td-action-btn">Baixar .docx</span>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /hero-layout -->
+
   <div class="hero-foot">
     <span class="hero-foot-txt">Explorar</span>
     <span class="hero-arrow"></span>
@@ -517,6 +796,36 @@
   </div>
 </section>
 
+<!-- HOW IT WORKS -->
+<section class="how reveal">
+  <div class="sec-label">Como funciona</div>
+  <h2 class="sec-head">Três passos.<br/>Material pronto.</h2>
+  <p class="sec-sub">Do upload ao download em menos de 60 segundos. Sem complicação.</p>
+  <div class="how-grid">
+    <div class="how-step">
+      <div class="how-num">
+        <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+      </div>
+      <div class="how-title">1. Descreva ou envie</div>
+      <p class="how-desc">Digite o tema, série e tipo de material. Ou envie um PDF/DOC como base para a IA trabalhar.</p>
+    </div>
+    <div class="how-step">
+      <div class="how-num">
+        <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M12 1v4M12 19v4M4.22 4.22l2.83 2.83M16.95 16.95l2.83 2.83M1 12h4M19 12h4M4.22 19.78l2.83-2.83M16.95 7.05l2.83-2.83"/></svg>
+      </div>
+      <div class="how-title">2. IA processa</div>
+      <p class="how-desc">O motor de IA gera o material completo, alinhado à BNCC, com objetivos, metodologia e avaliação.</p>
+    </div>
+    <div class="how-step">
+      <div class="how-num">
+        <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+      </div>
+      <div class="how-title">3. Baixe e use</div>
+      <p class="how-desc">Copie, edite ou baixe em .docx. Pronto para imprimir ou compartilhar com seus alunos.</p>
+    </div>
+  </div>
+</section>
+
 <!-- WHY / MISSION (dark) -->
 <section class="why reveal">
   <div class="why-glow"></div>
@@ -598,7 +907,7 @@
   <div class="pricing-top">
     <div>
       <h2 class="sec-head" style="margin-bottom:8px">Escolha seu plano.</h2>
-      <p style="font-size:.95rem;color:var(--text2)">Sem fidelidade. Cancele quando quiser.</p>
+      <p style="font-size:.95rem;color:var(--text2)">Transforme sua rotina pedagógica hoje e recupere até 10 horas da sua semana.</p>
     </div>
     <div class="toggle-wrap">
       <span class="t-l on" id="lbl-m">Mensal</span>
@@ -617,7 +926,7 @@
       <div class="plan-price zero">R$ 0</div>
       <div class="plan-period">Para sempre</div>
       <ul class="plan-feats">
-        <li class="on">5 gerações / mês <span class="chk">✓</span></li>
+        <li class="on">3 gerações / mês <span class="chk">✓</span></li>
         <li class="on">Chat com IA <span class="chk">✓</span></li>
         <li class="on">Planos de aula <span class="chk">✓</span></li>
         <li>Provas e avaliações <span class="xck">—</span></li>
@@ -629,36 +938,38 @@
       <div class="plan-sc"></div>
     </div>
     <div class="plan-card hot">
-      <div class="plan-badge">Mais popular</div>
-      <div class="plan-lbl">Recomendado</div>
-      <div class="plan-name">Basic</div>
-      <div class="plan-price" id="preco-basic"><sup>R$</sup>39<sub>/mês</sub></div>
-      <div class="plan-period" id="per-basic">Acesso individual ilimitado</div>
-      <ul class="plan-feats">
-        <li class="on">Gerações ilimitadas <span class="chk">✓</span></li>
-        <li class="on">Chat com IA <span class="chk">✓</span></li>
-        <li class="on">Planos de aula <span class="chk">✓</span></li>
-        <li class="on">Provas e avaliações <span class="chk">✓</span></li>
-        <li class="on">Caça-palavras <span class="chk">✓</span></li>
-        <li class="on">Adaptações NEE <span class="chk">✓</span></li>
-        <li class="on">Exportar DOCX <span class="chk">✓</span></li>
-      </ul>
-      <a href="/stripe/checkout/basic" class="btn-plan am" id="btn-basic">Assinar Basic →</a>
-      <div class="plan-sc" id="sc-basic">⚡ Oferta por tempo limitado</div>
-    </div>
-    <div class="plan-card">
-      <div class="plan-lbl">Completo</div>
+      <div class="plan-badge">Recomendado</div>
+      <div class="plan-lbl">Melhor custo-benefício</div>
       <div class="plan-name">Pro</div>
       <div class="plan-price" id="preco-pro"><sup>R$</sup>59<sub>/mês</sub></div>
-      <div class="plan-period" id="per-pro">Tudo do Basic + mais</div>
+      <div class="plan-period" id="per-pro">50 materiais / mês</div>
       <ul class="plan-feats">
-        <li class="on">Tudo do Basic <span class="chk">✓</span></li>
+        <li class="on">Gerações ilimitadas <span class="chk">✓</span></li>
+        <li class="on">Modelos RAG de alta precisão <span class="chk">✓</span></li>
         <li class="on">Planejamento anual BNCC <span class="chk">✓</span></li>
-        <li class="on">Histórico completo <span class="chk">✓</span></li>
+        <li class="on">Mapas Mentais e Infográficos <span class="chk">✓</span></li>
+        <li class="on">Exportar DOCX com Logo da Escola <span class="chk">✓</span></li>
         <li class="on">Entrada e saída de áudio <span class="chk">✓</span></li>
         <li class="on">Suporte prioritário <span class="chk">✓</span></li>
       </ul>
-      <a href="/stripe/checkout/pro" class="btn-plan o" id="btn-pro">Assinar Pro →</a>
+      <a href="/stripe/checkout/pro" class="btn-plan w" id="btn-pro">Assinar Pro →</a>
+      <div class="plan-sc" id="sc-pro">⚡ A escolha dos professores</div>
+    </div>
+    <div class="plan-card">
+      <div class="plan-lbl">Essencial</div>
+      <div class="plan-name">Basic</div>
+      <div class="plan-price" id="preco-basic"><sup>R$</sup>39<sub>/mês</sub></div>
+      <div class="plan-period" id="per-basic">Até 50 materiais/mês</div>
+      <ul class="plan-feats">
+        <li class="on">50 materiais / mês <span class="chk">✓</span></li>
+        <li class="on">Modelos RAG de alta precisão <span class="chk">✓</span></li>
+        <li class="on">Planos de aula BNCC <span class="chk">✓</span></li>
+        <li class="on">Provas e avaliações <span class="chk">✓</span></li>
+        <li class="on">Caça-palavras e Cruzadinhas <span class="chk">✓</span></li>
+        <li class="on">Adaptações NEE <span class="chk">✓</span></li>
+        <li>Exportar DOCX com Logo <span class="xck">—</span></li>
+      </ul>
+      <a href="/stripe/checkout/basic" class="btn-plan o" id="btn-basic">Assinar Basic →</a>
       <div class="plan-sc"></div>
     </div>
   </div>
@@ -733,7 +1044,10 @@
 </section>
 
 <footer>
-  <a class="f-logo" href="/"><span class="f-logo-p">Professor</span><span class="f-logo-ia">IA</span></a>
+  <a class="f-logo" href="/" style="display:flex;align-items:center;gap:7px;">
+    <img src="{{ url_for('static', filename='logo-oficial.png') }}" alt="ProfessorIA" style="height: 32px; width: auto; flex-shrink: 0;">
+    <span class="f-logo-p">Professor</span><span class="f-logo-ia">IA</span>
+  </a>
   <div class="f-links">
     <a class="f-link" href="#planos">Planos</a>
     <a class="f-link" href="/login">Login</a>
@@ -743,6 +1057,14 @@
   </div>
   <span class="f-copy">© 2026 ProfessorIA</span>
 </footer>
+
+<!-- STICKY CTA -->
+{% if not current_user.is_authenticated %}
+<a class="sticky-cta" id="stickyCta" href="/cadastro">
+  <svg viewBox="0 0 24 24"><path d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+  Começar grátis
+</a>
+{% endif %}
 
 <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js"></script>
 <script>
@@ -1037,6 +1359,117 @@ new IntersectionObserver(function(es){
   })();
 })();
 
+/* ── TypingDemo: animação de digitação cíclica ─────────────────────────────── */
+(function(){
+  var prompts = [
+    'Crie um plano de aula sobre frações para o 5º ano, alinhado à BNCC',
+    'Gere uma prova de Ciências com 10 questões para o 7º ano',
+    'Faça um caça-palavras sobre o Sistema Solar com 15 palavras',
+    'Crie uma cruzadinha sobre verbos no pretérito para o 6º ano',
+    'Adapte uma atividade de Matemática para aluno com TDAH',
+    'Gere um mapa mental sobre a Revolução Industrial',
+    'Crie um bilhete para os pais sobre a reunião de pais e mestres',
+  ];
+  var idx = 0, charIdx = 0, phase = 'typing'; // typing | waiting | deleting | respond | reset
+  var typedEl = document.getElementById('tdTyped');
+  var respEl  = document.getElementById('tdResponse');
+  var statusEl = document.getElementById('tdStatusTxt');
+  var tagsEl  = document.getElementById('tdTags');
+  var lines   = document.querySelectorAll('#tdRespLines .td-resp-line');
+  if (!typedEl) return;
+
+  function setStatus(txt) { if (statusEl) statusEl.textContent = txt; }
+
+  function animateLines(cb) {
+    lines.forEach(function(l){ l.classList.remove('active'); l.style.background=''; });
+    var i = 0;
+    function next() {
+      if (i >= lines.length) { if (cb) cb(); return; }
+      lines[i].classList.add('active');
+      lines[i].style.setProperty('--w', lines[i].classList.contains('w90')?'90%':lines[i].classList.contains('w75')?'75%':lines[i].classList.contains('w85')?'85%':'60%');
+      i++; setTimeout(next, 280);
+    }
+    next();
+  }
+
+  function tick() {
+    var prompt = prompts[idx];
+    if (phase === 'typing') {
+      if (charIdx <= prompt.length) {
+        typedEl.textContent = prompt.slice(0, charIdx);
+        charIdx++;
+        setTimeout(tick, charIdx === 1 ? 400 : 42 + Math.random()*28);
+      } else {
+        phase = 'waiting'; setStatus('Gerando...');
+        setTimeout(tick, 600);
+      }
+    } else if (phase === 'waiting') {
+      respEl.style.display = 'block';
+      lines.forEach(function(l){ l.classList.remove('active'); l.style.background='rgba(255,255,255,.1)'; });
+      tagsEl.style.display = 'none';
+      animateLines(function(){
+        tagsEl.style.display = 'flex';
+        setStatus('Pronto · ' + (1 + Math.floor(Math.random()*2)) + 's');
+        phase = 'deleting';
+        setTimeout(tick, 2800);
+      });
+    } else if (phase === 'deleting') {
+      if (charIdx > 0) {
+        charIdx--;
+        typedEl.textContent = prompt.slice(0, charIdx);
+        setTimeout(tick, 18);
+      } else {
+        phase = 'reset';
+        setTimeout(tick, 300);
+      }
+    } else if (phase === 'reset') {
+      respEl.style.display = 'none';
+      tagsEl.style.display = 'none';
+      setStatus('Pronto para gerar');
+      idx = (idx + 1) % prompts.length;
+      charIdx = 0;
+      phase = 'typing';
+      setTimeout(tick, 500);
+    }
+  }
+  setTimeout(tick, 1200);
+})();
+
+/* ── Progress bar + Sticky CTA + Social Strip + Dark Mode ─────────────────── */
+(function(){
+  var prog = document.getElementById('read-progress');
+  var sticky = document.getElementById('stickyCta');
+  var strip = document.getElementById('socialStrip');
+  var dmBtn = document.getElementById('dmToggle');
+
+  /* Dark mode persistence */
+  if(localStorage.getItem('pia-land-dark')==='1') document.body.classList.add('dark-land');
+  if(dmBtn){
+    dmBtn.addEventListener('click',function(){
+      var isDark = document.body.classList.toggle('dark-land');
+      localStorage.setItem('pia-land-dark', isDark?'1':'0');
+    });
+  }
+
+  /* Scroll-driven: progress + sticky + social strip */
+  function onScroll(){
+    var scrollTop = window.scrollY||0;
+    var docH = document.documentElement.scrollHeight - window.innerHeight;
+    var pct = docH > 0 ? (scrollTop/docH)*100 : 0;
+    if(prog) prog.style.width = pct + '%';
+    if(sticky){
+      if(scrollTop > 400) sticky.classList.add('visible');
+      else sticky.classList.remove('visible');
+    }
+    if(strip){
+      if(scrollTop > 80) strip.classList.add('lit-strip');
+      else strip.classList.remove('lit-strip');
+    }
+  }
+  window.addEventListener('scroll', onScroll, {passive:true});
+  onScroll();
+})();
+
 /* Pricing toggle */
 function alternar(){
   var anual=document.getElementById('tog-anual').checked;
@@ -1053,7 +1486,7 @@ function alternar(){
     if(bp)bp.href='/stripe/checkout/pro_anual';
   }else{
     document.getElementById('preco-basic').innerHTML='<sup>R$</sup>39<sub>/mês</sub>';
-    document.getElementById('per-basic').textContent='Acesso individual ilimitado';
+    document.getElementById('per-basic').textContent='Até 50 materiais/mês';
     document.getElementById('preco-pro').innerHTML='<sup>R$</sup>59<sub>/mês</sub>';
     document.getElementById('per-pro').textContent='Tudo do Basic + mais';
     if(bb)bb.href='/stripe/checkout/basic';

@@ -4,23 +4,24 @@
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Criar Conta — ProfessorIA</title>
-  <link rel="icon" type="image/svg+xml" href="/static/logo.svg"/>
+  <link rel="icon" type="image/svg+xml" href="/static/logo-oficial.png"/>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet"/>
   <style>
     *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-    :root{--bg:#ffffff;--text:#111827;--text2:#6b7280;--text3:#9ca3af;--indigo:#4338ca;--violet:#7c3aed;--amber:#f59e0b;--line:rgba(17,24,39,.08);--line2:rgba(17,24,39,.14);--hero:#050811;--r:10px}
+    :root{--bg:#ffffff;--text:#111827;--text2:#6b7280;--text3:#9ca3af;--indigo:#1E40AF;--violet:#1E3A8A;--amber:#f59e0b;--line:rgba(17,24,39,.08);--line2:rgba(17,24,39,.14);--hero:#050811;--r:10px}
     body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;display:flex;flex-direction:column}
+    #bg3d{position:fixed;inset:0;z-index:0;pointer-events:none;opacity:.3}
     ::selection{background:#ede9fe;color:var(--indigo)}
     nav{height:60px;padding:0 40px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--line);flex-shrink:0}
     .logo{text-decoration:none;display:flex;align-items:center;gap:2px}
     .logo-p{font-size:1rem;font-weight:800;color:var(--text);letter-spacing:-.3px}
-    .logo-ia{font-size:1rem;font-weight:800;letter-spacing:-.3px;background:linear-gradient(135deg,#818cf8,#a78bfa,#60a5fa);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
-    .logo-dot{width:6px;height:6px;border-radius:50%;background:var(--amber);margin-left:2px;flex-shrink:0}
+    .logo-ia{font-size:1rem;font-weight:600;letter-spacing:-.3px;color:#1E40AF}
+    
     .nav-r{font-size:.875rem;font-weight:600;color:var(--text2);text-decoration:none;transition:color .2s}
     .nav-r:hover{color:var(--text)}
     .page{flex:1;display:flex}
     .left{width:420px;flex-shrink:0;background:var(--hero);padding:56px 48px;display:flex;flex-direction:column;justify-content:space-between;position:relative;overflow:hidden}
-    .left-glow{position:absolute;inset:0;pointer-events:none;background:radial-gradient(ellipse 70% 60% at 30% 40%,rgba(124,58,237,.2) 0%,transparent 65%),radial-gradient(ellipse 50% 50% at 80% 80%,rgba(67,56,202,.15) 0%,transparent 60%)}
+    .left-glow{position:absolute;inset:0;pointer-events:none;background:radial-gradient(ellipse 70% 60% at 30% 40%,rgba(30,64,175,.2) 0%,transparent 65%),radial-gradient(ellipse 50% 50% at 80% 80%,rgba(30,64,175,.15) 0%,transparent 60%)}
     .left-cube{position:absolute;right:-30px;top:50%;transform:translateY(-50%);perspective:900px;pointer-events:none;opacity:.1;z-index:0}
     .left>*{position:relative;z-index:1}
     .left-tag{font-size:.7rem;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:rgba(255,255,255,.35);margin-bottom:40px}
@@ -33,7 +34,7 @@
     .left-bottom{font-size:.7rem;font-weight:600;letter-spacing:1.5px;color:rgba(255,255,255,.18)}
     .cube-wrap{perspective:800px;display:flex;align-items:center;justify-content:center}
     .cube{transform-style:preserve-3d;animation:cspin 26s linear infinite reverse;width:150px;height:150px}
-    .c-face{position:absolute;width:150px;height:150px;border:1.5px solid rgba(99,102,241,.45)}
+    .c-face{position:absolute;width:150px;height:150px;border:1.5px solid rgba(30,64,175,.45)}
     .c-face:nth-child(1){transform:translateZ(75px)}
     .c-face:nth-child(2){transform:rotateY(180deg) translateZ(75px)}
     .c-face:nth-child(3){transform:rotateY(-90deg) translateZ(75px)}
@@ -50,9 +51,9 @@
     .field{margin-bottom:22px}
     label{font-size:.72rem;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--text2);display:block;margin-bottom:8px}
     input[type=text],input[type=email],input[type=password]{width:100%;padding:11px 14px;border:1.5px solid var(--line2);border-radius:var(--r);font-size:.95rem;font-family:'Inter',sans-serif;font-weight:400;color:var(--text);background:var(--bg);transition:border-color .2s,box-shadow .2s;outline:none}
-    input:focus{border-color:var(--indigo);box-shadow:0 0 0 3px rgba(67,56,202,.1)}
+    input:focus{border-color:var(--indigo);box-shadow:0 0 0 3px rgba(30,64,175,.1)}
     input::placeholder{color:var(--text3);font-weight:400}
-    .btn{width:100%;padding:13px;background:linear-gradient(135deg,#4338ca,#7c3aed);color:#fff;border:none;font-size:.9rem;font-weight:700;font-family:'Inter',sans-serif;border-radius:var(--r);cursor:pointer;transition:opacity .2s,transform .2s;margin-top:8px;box-shadow:0 4px 18px rgba(67,56,202,.3)}
+    .btn{width:100%;padding:13px;background:linear-gradient(135deg,#1E40AF,#1E3A8A);color:#fff;border:none;font-size:.9rem;font-weight:700;font-family:'Inter',sans-serif;border-radius:var(--r);cursor:pointer;transition:opacity .2s,transform .2s;margin-top:8px;box-shadow:0 4px 18px rgba(30,64,175,.3)}
     .btn:hover{opacity:.9;transform:translateY(-1px)}
     .links{margin-top:24px;padding-top:24px;border-top:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;font-size:.82rem}
     .link-label{color:var(--text2);font-weight:500}
@@ -62,10 +63,12 @@
   </style>
 </head>
 <body>
+<canvas id="bg3d"></canvas>
 <nav>
   <a class="logo" href="/">
+    <img src="{{ url_for('static', filename='logo-oficial.png') }}" alt="ProfessorIA" style="height: 32px; width: auto; flex-shrink: 0;">
     <span class="logo-p">Professor</span><span class="logo-ia">IA</span>
-    <span class="logo-dot"></span>
+    
   </a>
   <a class="nav-r" href="/login">Já tenho conta →</a>
 </nav>
@@ -127,5 +130,6 @@
     </div>
   </div>
 </div>
+<script src="/static/bg3d.js"></script>
 </body>
 </html>

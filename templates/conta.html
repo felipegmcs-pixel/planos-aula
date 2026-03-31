@@ -6,11 +6,11 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Minha Conta — ProfessorIA</title>
-  <link rel="icon" type="image/svg+xml" href="/static/logo.svg"/>
+  <link rel="icon" type="image/svg+xml" href="/static/logo-oficial.png"/>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet"/>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-    :root { --preto: #0a0a0a; --branco: #ffffff; --amarelo: #f0e000; --cinza: #666660; --linha: rgba(0,0,0,0.09); --verde: #16a34a; }
+    :root { --preto: #0a0a0a; --branco: #ffffff; --amarelo: #1E40AF; --cinza: #666660; --linha: rgba(0,0,0,0.09); --verde: #16a34a; }
     body { font-family: 'Inter', sans-serif; background: var(--branco); color: var(--preto); min-height: 100vh; }
     ::selection { background: var(--amarelo); color: var(--preto); }
 
@@ -73,7 +73,8 @@
 <body>
 
 <nav>
-  <a class="nav-logo" href="/">
+  <a class="nav-logo" href="/" style="gap:8px;">
+    <img src="{{ url_for('static', filename='logo-oficial.png') }}" alt="ProfessorIA" style="height: 32px; width: auto; flex-shrink: 0;">
     PROFESSOR<span class="tm">IA™</span>
   </a>
   <div class="nav-links">

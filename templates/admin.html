@@ -4,13 +4,13 @@
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Admin — ProfessorIA</title>
-  <link rel="icon" type="image/svg+xml" href="/static/logo.svg"/>
+  <link rel="icon" type="image/svg+xml" href="/static/logo-oficial.png"/>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet"/>
   <style>
     *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
     :root{
       --bg:#f7f8ff;--card:#fff;--text:#111827;--text2:#6b7280;--text3:#9ca3af;
-      --indigo:#4338ca;--violet:#7c3aed;--amber:#f59e0b;--red:#dc2626;--green:#059669;
+      --indigo:#1E40AF;--violet:#1E3A8A;--amber:#f59e0b;--red:#dc2626;--green:#059669;
       --line:rgba(17,24,39,.08);--r:10px;
     }
     body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
@@ -21,7 +21,7 @@
         box-shadow:0 1px 0 var(--line)}
     .nav-logo{text-decoration:none;font-size:.92rem;font-weight:800;color:var(--text);display:flex;align-items:center;gap:8px}
     .nav-logo-ia{background:linear-gradient(135deg,#818cf8,#a78bfa);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
-    .nav-mark{width:26px;height:26px;border-radius:7px;background:linear-gradient(135deg,#4338ca,#7c3aed);
+    .nav-mark{width:32px;height:32px;border-radius:7px;background:linear-gradient(135deg,#1E40AF,#1E3A8A);
                display:flex;align-items:center;justify-content:center}
     .nav-links{display:flex;align-items:center;gap:20px}
     .nav-link{font-size:.8rem;font-weight:500;color:var(--text2);text-decoration:none;transition:color .2s}
@@ -64,7 +64,7 @@
     tr:hover td{background:#f9faff}
 
     /* AVATAR */
-    .avatar{width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,#4338ca,#7c3aed);
+    .avatar{width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,#1E40AF,#1E3A8A);
             display:flex;align-items:center;justify-content:center;font-size:.65rem;font-weight:800;color:#fff;flex-shrink:0}
     .user-info{display:flex;align-items:center;gap:10px}
     .user-name-td{font-weight:600;color:var(--text);font-size:.83rem}
@@ -88,7 +88,7 @@
     .toggle-slider{position:absolute;inset:0;background:#e5e7eb;border-radius:22px;cursor:pointer;transition:.25s}
     .toggle-slider::before{content:'';position:absolute;width:16px;height:16px;left:3px;bottom:3px;
                              background:#fff;border-radius:50%;transition:.25s;box-shadow:0 1px 3px rgba(0,0,0,.2)}
-    .toggle input:checked + .toggle-slider{background:linear-gradient(135deg,#4338ca,#7c3aed)}
+    .toggle input:checked + .toggle-slider{background:linear-gradient(135deg,#1E40AF,#1E3A8A)}
     .toggle input:checked + .toggle-slider::before{transform:translateX(16px)}
 
     /* QUICK ACTIONS */
@@ -128,18 +128,9 @@
 <nav>
   <a class="nav-logo" href="/">
     <span class="nav-mark">
-      <svg viewBox="0 0 20 20" fill="none" width="18" height="18">
-        <circle cx="5"  cy="10" r="2" fill="white" opacity=".9"/>
-        <circle cx="10" cy="5"  r="2" fill="white" opacity=".9"/>
-        <circle cx="10" cy="15" r="2" fill="white" opacity=".9"/>
-        <circle cx="15" cy="10" r="2" fill="#f59e0b"/>
-        <line x1="5" y1="10" x2="10" y2="5"  stroke="white" stroke-width=".8" opacity=".5"/>
-        <line x1="5" y1="10" x2="10" y2="15" stroke="white" stroke-width=".8" opacity=".5"/>
-        <line x1="10" y1="5"  x2="15" y2="10" stroke="white" stroke-width=".8" opacity=".5"/>
-        <line x1="10" y1="15" x2="15" y2="10" stroke="white" stroke-width=".8" opacity=".5"/>
-      </svg>
+      <img src="{{ url_for('static', filename='logo-oficial.png') }}" alt="ProfessorIA" style="height: 32px; width: auto; flex-shrink: 0; object-fit: contain;">
     </span>
-    Professor<span class="nav-logo-ia">IA</span>&nbsp;·&nbsp;Admin
+    ProfessorIA&nbsp;·&nbsp;Admin
   </a>
   <div class="nav-links">
     <a class="nav-link" href="/chat">← Voltar ao chat</a>
