@@ -1101,8 +1101,18 @@
 
   function baixarDocx(texto) {
     _dlTexto = texto;
+
+    // Mapa mental → PDF direto, sem modal
     if (/##\s*🧠\s*TEMA CENTRAL/i.test(texto)) {
       _baixarDireto('mapa-mental-ProfessorIA.pdf');
+      return;
+    }
+
+    // Plano de aula oficial → precisa dos dados da escola (modal completo)
+    const ehPlanoAula = /PLANO\s+DE\s+AULA|habilidade.*bncc|objetivos\s+de\s+aprendizagem/i.test(texto.slice(0, 400));
+    if (!ehPlanoAula) {
+      // Todos os outros materiais baixam direto — servidor usa dados do perfil
+      _baixarDireto('material-ProfessorIA.docx');
       return;
     }
     const saved = JSON.parse(localStorage.getItem('pia-escola-cfg') || '{}');
