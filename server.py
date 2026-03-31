@@ -1,5 +1,6 @@
 import os
 import io
+import re
 import json
 import secrets
 import smtplib
@@ -478,6 +479,9 @@ def init_db():
             criado_em    TEXT
         )
     ''')
+    conn.execute("ALTER TABLE questions_bank ADD COLUMN IF NOT EXISTS gabarito TEXT DEFAULT ''")
+    conn.execute("ALTER TABLE questions_bank ADD COLUMN IF NOT EXISTS ano_serie TEXT DEFAULT ''")
+    conn.execute("ALTER TABLE questions_bank ADD COLUMN IF NOT EXISTS habilidade_bncc TEXT DEFAULT ''")
     conn.execute('''
         CREATE TABLE IF NOT EXISTS referrals (
             id         SERIAL PRIMARY KEY,
@@ -1010,21 +1014,29 @@ def cadastro():
         if not nome or not email or not senha:
             flash('Preencha todos os campos.')
             return render_template('cadastro.html')
+        if len(senha) < 6:
+            flash('A senha deve ter pelo menos 6 caracteres.')
+            return render_template('cadastro.html')
         conn = get_db()
         existe = conn.execute('SELECT id FROM usuarios WHERE email = ?', (email,)).fetchone()
         if existe:
             conn.close()
             flash('Este e-mail já está cadastrado.')
             return render_template('cadastro.html')
-        conn.execute(
-            'INSERT INTO usuarios (nome, email, senha, criado_em) VALUES (?, ?, ?, ?)',
-            (nome, email, generate_password_hash(senha), datetime.now().strftime('%Y-%m-%d'))
-        )
-        conn.commit()
-        row = conn.execute('SELECT * FROM usuarios WHERE email = ?', (email,)).fetchone()
-        conn.close()
-        login_user(Usuario(row))
-        return redirect(url_for('chat'))
+        try:
+            conn.execute(
+                'INSERT INTO usuarios (nome, email, senha, criado_em) VALUES (?, ?, ?, ?)',
+                (nome, email, generate_password_hash(senha), datetime.now().strftime('%Y-%m-%d'))
+            )
+            conn.commit()
+            row = conn.execute('SELECT * FROM usuarios WHERE email = ?', (email,)).fetchone()
+            conn.close()
+            login_user(Usuario(row))
+            return redirect(url_for('chat'))
+        except Exception as e:
+            conn.close()
+            flash('Erro ao criar conta. Tente novamente.')
+            return render_template('cadastro.html')
     return render_template('cadastro.html')
 
 # ─── Recuperação de senha ─────────────────────────────────────────────────────
@@ -1728,21 +1740,30 @@ def gerar():
         if partes:
             conteudo_pdf = "\n\n".join(partes)
 
-    conteudo  = gerar_conteudo_ia(dados['disciplina'], dados['turma'], temas,
-                                   dados['periodo'], dados['datas'],
-                                   int(dados.get('aula_inicio', 1)), conteudo_pdf)
+    try:
+        conteudo = gerar_conteudo_ia(dados['disciplina'], dados['turma'], temas,
+                                     dados['periodo'], dados['datas'],
+                                     int(dados.get('aula_inicio', 1)), conteudo_pdf)
+    except Exception as e:
+        flash(f'Erro ao gerar conteúdo: {str(e)[:200]}', 'erro')
+        return redirect(url_for('chat'))
+
     base_nome = f"Plano_{dados['disciplina'].replace(' ', '_')}_{dados['turma'].replace(' ', '_')}"
 
-    if formato == 'pdf':
-        buf        = criar_pdf(dados, conteudo['aulas'])
-        file_bytes = buf.read()
-        nome       = base_nome + '.pdf'
-        mimetype   = 'application/pdf'
-    else:
-        buf        = criar_docx(dados, conteudo['aulas'])
-        file_bytes = buf.read()
-        nome       = base_nome + '.docx'
-        mimetype   = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+    try:
+        if formato == 'pdf':
+            buf        = criar_pdf(dados, conteudo['aulas'])
+            file_bytes = buf.read()
+            nome       = base_nome + '.pdf'
+            mimetype   = 'application/pdf'
+        else:
+            buf        = criar_docx(dados, conteudo['aulas'])
+            file_bytes = buf.read()
+            nome       = base_nome + '.docx'
+            mimetype   = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+    except Exception as e:
+        flash(f'Erro ao gerar arquivo: {str(e)[:200]}', 'erro')
+        return redirect(url_for('chat'))
 
     conn = get_db()
     conn.execute(
@@ -2350,8 +2371,9 @@ def _detect_doc_type(texto):
             (('### 🔴' in t or '### 🔵' in t) and '## 🧠' in t)):
         return 'mapa_mental'
     signals = ['### aula', '**conteúdo e objetivos', '**estratégias didáticas',
-               '**recursos pedagógicos', 'planejamento da aula', '**avaliação:']
-    return 'plano_aula' if sum(1 for s in signals if s in t) >= 3 else 'outro'
+               '**recursos pedagógicos', 'planejamento da aula', '**avaliação:',
+               'planejamento de aula', '# planejamento da aula', 'componente curricular']
+    return 'plano_aula' if sum(1 for s in signals if s in t) >= 2 else 'outro'
 
 
 def _parse_mapa_mental(texto):
@@ -2671,15 +2693,17 @@ def gerar_mapa_mental_pdf(texto, meta=None):
     ITEM_H     = 20
     MAX_ITEMS  = 6
 
-    # Posições [bottom-left x, y] dos 4 quadrantes
+    # Posições [bottom-left x, y] — suporta até 6 categorias
     POS = [
-        (22,             H * 0.60),   # topo-esquerda
-        (W - BOX_W - 22, H * 0.60),   # topo-direita
-        (22,             H * 0.13),   # baixo-esquerda
-        (W - BOX_W - 22, H * 0.13),   # baixo-direita
+        (22,             H * 0.62),   # topo-esquerda
+        (W - BOX_W - 22, H * 0.62),   # topo-direita
+        (22,             H * 0.32),   # meio-esquerda
+        (W - BOX_W - 22, H * 0.32),   # meio-direita
+        (22,             H * 0.04),   # baixo-esquerda
+        (W - BOX_W - 22, H * 0.04),   # baixo-direita
     ]
 
-    n = min(len(categorias), 4)
+    n = min(len(categorias), 6)
 
     # ── Linhas de conexão (desenhadas antes das caixas) ──
     for i in range(n):
@@ -3285,7 +3309,7 @@ def gerar_docx_pia(texto, meta=None, logo_path=None):
 @login_required
 def api_chat_download():
     """Converte o texto de uma mensagem do chat em DOCX com design ProfessorIA."""
-    import os
+    import os, traceback
     data = request.json or {}
     texto = data.get('texto', '').strip()
     if not texto:
@@ -3438,9 +3462,11 @@ def api_planejamento():
     if not current_user.assinatura_ativa and not current_user.is_admin:
         return jsonify({'erro': 'Plano necessário'}), 403
 
-    data = request.json
-    disciplina    = data.get('disciplina', '')
-    turma         = data.get('turma', '')
+    data = request.get_json(silent=True) or {}
+    disciplina    = data.get('disciplina', '').strip()
+    turma         = data.get('turma', '').strip()
+    if not disciplina or not turma:
+        return jsonify({'erro': 'Disciplina e turma são obrigatórios'}), 400
     ano           = data.get('ano', str(datetime.now().year))
     aulas_semana  = int(data.get('aulas_semana', 2))
     inicio        = data.get('inicio', f'01/02/{ano}')
@@ -3463,12 +3489,10 @@ Gere um planejamento bimestral detalhado seguindo a BNCC com:
 
 Formato: texto estruturado e claro, pronto para entregar à coordenação."""
 
-    resposta = client.messages.create(
-        model="claude-sonnet-4-6",
-        max_tokens=6000,
-        messages=[{"role": "user", "content": prompt}]
-    )
-    conteudo = resposta.content[0].text
+    try:
+        conteudo = chamar_ia_simples(prompt)
+    except Exception as e:
+        return jsonify({'erro': f'Erro ao gerar planejamento: {str(e)[:200]}'}), 500
 
     conn = get_db()
     conn.execute(
@@ -3502,9 +3526,6 @@ def nao_encontrado(e):
 def erro_interno(e):
     return render_template('500.html'), 500
 
-if __name__ == '__main__':
-    port = int(os.environ.get("PORT", 5001))
-    app.run(debug=False, host='0.0.0.0', port=port)
 @app.route('/api/pagamento/pix/<plano_id>', methods=['POST'])
 @login_required
 def criar_pix_mp(plano_id):
@@ -3571,14 +3592,14 @@ def api_listar_questoes():
     disciplina = request.args.get('disciplina', '')
     ano_serie  = request.args.get('ano_serie', '')
     busca      = request.args.get('busca', '')
-    sql = "SELECT * FROM questions_bank WHERE usuario_id = %s"
+    sql = "SELECT * FROM questions_bank WHERE usuario_id = ?"
     params = [current_user.id]
     if disciplina:
-        sql += " AND disciplina = %s"; params.append(disciplina)
+        sql += " AND disciplina = ?"; params.append(disciplina)
     if ano_serie:
-        sql += " AND ano_serie = %s"; params.append(ano_serie)
+        sql += " AND (ano_serie = ? OR serie = ?)"; params += [ano_serie, ano_serie]
     if busca:
-        sql += " AND (enunciado ILIKE %s OR habilidade_bncc ILIKE %s)"
+        sql += " AND (enunciado ILIKE ? OR habilidade_bncc ILIKE ?)"
         params += [f'%{busca}%', f'%{busca}%']
     sql += " ORDER BY id DESC LIMIT 200"
     rows = conn.execute(sql, params).fetchall()
@@ -3606,7 +3627,7 @@ def api_salvar_questao():
     conn.execute(
         """INSERT INTO questions_bank
            (usuario_id, enunciado, alternativas, gabarito, ano_serie, disciplina, habilidade_bncc, tipo, criado_em)
-           VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s)""",
+           VALUES (?,?,?,?,?,?,?,?,?)""",
         (current_user.id,
          enunciado,
          json.dumps(alternativas, ensure_ascii=False),
@@ -3625,7 +3646,7 @@ def api_salvar_questao():
 @login_required
 def api_deletar_questao(qid):
     conn = get_db()
-    conn.execute("DELETE FROM questions_bank WHERE id = %s AND usuario_id = %s", (qid, current_user.id))
+    conn.execute("DELETE FROM questions_bank WHERE id = ? AND usuario_id = ?", (qid, current_user.id))
     conn.commit()
     conn.close()
     return jsonify({'ok': True})
@@ -3653,12 +3674,7 @@ Retorne APENAS o JSON array, sem texto adicional.
 TEXTO:
 {texto[:4000]}"""
     try:
-        resp = client.messages.create(
-            model="claude-3-5-sonnet-20241022",
-            max_tokens=2000,
-            messages=[{"role": "user", "content": prompt}]
-        )
-        raw = resp.content[0].text.strip()
+        raw = chamar_ia_simples(prompt).strip()
         # Remove markdown code fences if present
         raw = re.sub(r'^```[a-z]*\n?', '', raw)
         raw = re.sub(r'\n?```$', '', raw)
@@ -3670,7 +3686,7 @@ TEXTO:
                 conn.execute(
                     """INSERT INTO questions_bank
                        (usuario_id, enunciado, alternativas, gabarito, ano_serie, disciplina, habilidade_bncc, tipo, criado_em)
-                       VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s)""",
+                       VALUES (?,?,?,?,?,?,?,?,?)""",
                     (current_user.id,
                      q.get('enunciado',''),
                      json.dumps(q.get('alternativas',[]), ensure_ascii=False),
@@ -3696,34 +3712,30 @@ TEXTO:
 @login_required
 def dashboard():
     conn = get_db()
-    # Stats gerais
     total_materiais = conn.execute(
-        "SELECT COUNT(*) as c FROM historico WHERE usuario_id = %s", (current_user.id,)
+        "SELECT COUNT(*) as c FROM historico WHERE usuario_id = ?", (current_user.id,)
     ).fetchone()['c']
     total_questoes = conn.execute(
-        "SELECT COUNT(*) as c FROM questions_bank WHERE usuario_id = %s", (current_user.id,)
+        "SELECT COUNT(*) as c FROM questions_bank WHERE usuario_id = ?", (current_user.id,)
     ).fetchone()['c']
     total_chat = conn.execute(
-        "SELECT COUNT(*) as c FROM chat_messages WHERE usuario_id = %s AND role = 'user'", (current_user.id,)
+        "SELECT COUNT(*) as c FROM chat_messages WHERE usuario_id = ? AND role = 'user'", (current_user.id,)
     ).fetchone()['c']
-    # Materiais por disciplina (top 5)
     por_disciplina = conn.execute(
         """SELECT disciplina, COUNT(*) as total FROM historico
-           WHERE usuario_id = %s AND disciplina != ''
+           WHERE usuario_id = ? AND disciplina != ''
            GROUP BY disciplina ORDER BY total DESC LIMIT 5""",
         (current_user.id,)
     ).fetchall()
-    # Materiais por mês (últimos 6 meses)
     por_mes = conn.execute(
         """SELECT SUBSTRING(data, 4, 7) as mes, COUNT(*) as total
-           FROM historico WHERE usuario_id = %s AND data != ''
+           FROM historico WHERE usuario_id = ? AND data != ''
            GROUP BY mes ORDER BY mes DESC LIMIT 6""",
         (current_user.id,)
     ).fetchall()
-    # Últimas gerações
     ultimas = conn.execute(
         """SELECT id, data, disciplina, turma, num_aulas, nome_arquivo
-           FROM historico WHERE usuario_id = %s
+           FROM historico WHERE usuario_id = ?
            ORDER BY id DESC LIMIT 5""",
         (current_user.id,)
     ).fetchall()
@@ -3745,18 +3757,17 @@ def api_dashboard_stats():
     dias = int(request.args.get('dias', 30))
     conn = get_db()
     total_materiais = conn.execute(
-        "SELECT COUNT(*) as c FROM historico WHERE usuario_id = %s", (current_user.id,)
+        "SELECT COUNT(*) as c FROM historico WHERE usuario_id = ?", (current_user.id,)
     ).fetchone()['c']
     total_aulas = conn.execute(
-        "SELECT COALESCE(SUM(num_aulas),0) as s FROM historico WHERE usuario_id = %s", (current_user.id,)
+        "SELECT COALESCE(SUM(num_aulas),0) as s FROM historico WHERE usuario_id = ?", (current_user.id,)
     ).fetchone()['s']
     total_questoes = conn.execute(
-        "SELECT COUNT(*) as c FROM questions_bank WHERE usuario_id = %s", (current_user.id,)
+        "SELECT COUNT(*) as c FROM questions_bank WHERE usuario_id = ?", (current_user.id,)
     ).fetchone()['c']
-    # Materiais por semana (últimas 8 semanas)
     por_semana_rows = conn.execute(
         """SELECT TO_CHAR(TO_DATE(data,'DD/MM/YYYY'),'IYYY-IW') as semana, COUNT(*) as total
-           FROM historico WHERE usuario_id = %s AND data != ''
+           FROM historico WHERE usuario_id = ? AND data != ''
            GROUP BY semana ORDER BY semana DESC LIMIT 8""",
         (current_user.id,)
     ).fetchall()
@@ -3771,7 +3782,7 @@ def api_dashboard_stats():
     # Recent
     recentes = conn.execute(
         """SELECT id, data, disciplina, turma, num_aulas FROM historico
-           WHERE usuario_id = %s ORDER BY id DESC LIMIT 8""",
+           WHERE usuario_id = ? ORDER BY id DESC LIMIT 8""",
         (current_user.id,)
     ).fetchall()
     conn.close()
@@ -3794,17 +3805,17 @@ def api_dashboard_stats():
 def _get_or_create_referral(usuario_id):
     conn = get_db()
     row = conn.execute(
-        "SELECT * FROM referrals WHERE usuario_id = %s", (usuario_id,)
+        "SELECT * FROM referrals WHERE usuario_id = ?", (usuario_id,)
     ).fetchone()
     if not row:
         codigo = secrets.token_urlsafe(8).upper()[:10]
         conn.execute(
-            "INSERT INTO referrals (usuario_id, codigo, usos, creditos, criado_em) VALUES (%s,%s,0,0,%s)",
+            "INSERT INTO referrals (usuario_id, codigo, usos, creditos, criado_em) VALUES (?,?,0,0,?)",
             (usuario_id, codigo, datetime.now().strftime('%d/%m/%Y'))
         )
         conn.commit()
         row = conn.execute(
-            "SELECT * FROM referrals WHERE usuario_id = %s", (usuario_id,)
+            "SELECT * FROM referrals WHERE usuario_id = ?", (usuario_id,)
         ).fetchone()
     conn.close()
     return dict(row)
@@ -3838,7 +3849,7 @@ def escola_painel():
                       (SELECT COUNT(*) FROM historico h WHERE h.usuario_id = u.id) as materiais
                FROM escola_membros em
                LEFT JOIN usuarios u ON u.id = em.usuario_id
-               WHERE em.escola_id = %s ORDER BY em.criado_em DESC""",
+               WHERE em.escola_id = ? ORDER BY em.criado_em DESC""",
             (current_user.escola_id,)
         ).fetchall()
         stats = conn.execute(
@@ -3846,7 +3857,7 @@ def escola_painel():
                       COUNT(h.id) as materiais_total
                FROM escola_membros em
                LEFT JOIN historico h ON h.usuario_id = em.usuario_id
-               WHERE em.escola_id = %s""",
+               WHERE em.escola_id = ?""",
             (current_user.escola_id,)
         ).fetchone()
         conn.close()
@@ -3870,7 +3881,7 @@ def api_escola_convidar():
     token = secrets.token_urlsafe(24)
     conn = get_db()
     conn.execute(
-        "INSERT INTO escola_convites (escola_id, email, token, usado, criado_em) VALUES (%s,%s,%s,0,%s)",
+        "INSERT INTO escola_convites (escola_id, email, token, usado, criado_em) VALUES (?,?,?,0,?)",
         (current_user.escola_id, email, token, datetime.now().strftime('%d/%m/%Y'))
     )
     conn.commit()
@@ -3896,7 +3907,7 @@ def api_escola_relatorio():
            FROM escola_membros em
            JOIN usuarios u ON u.id = em.usuario_id
            LEFT JOIN historico h ON h.usuario_id = u.id
-           WHERE em.escola_id = %s
+           WHERE em.escola_id = ?
            GROUP BY u.id, u.nome, u.email
            ORDER BY materiais DESC""",
         (current_user.escola_id,)
@@ -3958,7 +3969,7 @@ def api_onboarding_completar():
     template = d.get('template', '')
     conn = get_db()
     conn.execute(
-        """UPDATE usuarios SET onboarding_done = 1, escola_template = %s WHERE id = %s""",
+        """UPDATE usuarios SET onboarding_done = 1, escola_template = ? WHERE id = ?""",
         (template, current_user.id)
     )
     conn.commit()

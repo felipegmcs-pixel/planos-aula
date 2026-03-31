@@ -1113,7 +1113,12 @@
         method:'POST', headers:{'Content-Type':'application/json'},
         body: JSON.stringify({ texto: _dlTexto })
       });
-      if (!resp.ok) { alert('Erro ao gerar arquivo.'); return; }
+      if (!resp.ok) {
+        let msg = 'Erro ao gerar arquivo.';
+        try { const d = await resp.json(); if (d.erro) msg = d.erro; } catch(_) {}
+        alert(msg);
+        return;
+      }
       const blob = await resp.blob();
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a'); a.href = url; a.download = nome; a.click();
@@ -1131,7 +1136,7 @@
     }
 
     // Plano de aula oficial → precisa dos dados da escola (modal completo)
-    const ehPlanoAula = /PLANO\s+DE\s+AULA|habilidade.*bncc|objetivos\s+de\s+aprendizagem/i.test(texto.slice(0, 400));
+    const ehPlanoAula = /PLANO\s+DE\s+AULA|PLANEJAMENTO\s+DA\s+AULA|habilidade.*bncc|objetivos\s+de\s+aprendizagem|componente\s+curricular/i.test(texto.slice(0, 600));
     if (!ehPlanoAula) {
       // Todos os outros materiais baixam direto — servidor usa dados do perfil
       _baixarDireto('material-ProfessorIA.docx');
@@ -1203,7 +1208,12 @@
         method:'POST', headers:{'Content-Type':'application/json'},
         body: JSON.stringify({ texto: _dlTexto, escola, professor, disciplina, bimestre, serie, estado })
       });
-      if (!resp.ok) { alert('Erro ao gerar arquivo.'); return; }
+      if (!resp.ok) {
+        let msg = 'Erro ao gerar arquivo.';
+        try { const d = await resp.json(); if (d.erro) msg = d.erro; } catch(_) {}
+        alert(msg);
+        return;
+      }
       const blob = await resp.blob();
       const url  = URL.createObjectURL(blob);
       const a    = document.createElement('a');
@@ -1276,8 +1286,8 @@
     if (curAvatar) curAvatar.classList.add('typing');
     try {
       const resp = await fetch('/api/chat',{ method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({messages:historico,anexo:anexoEnvio}) });
-      if (resp.status===403) { stream.done(); location.reload(); return; }
-      if (!resp.ok) { stream.add('Erro ao conectar. Tente novamente.'); stream.done(); return; }
+      if (resp.status===403) { stream.add('Limite de gerações atingido. Assine um plano para continuar.'); stream.done(); return; }
+      if (!resp.ok) { stream.add('Erro ao conectar ao servidor. Tente novamente.'); stream.done(); return; }
 
       // Lê SSE streaming
       const reader = resp.body.getReader();
@@ -1297,7 +1307,7 @@
           if (payload === '[DONE]') break;
           try {
             const obj = JSON.parse(payload);
-            if (obj.erro) { stream.add('\n\nErro: ' + obj.erro); break; }
+            if (obj.erro) { stream.add('\n\n⚠️ ' + obj.erro); break; }
             if (obj.chunk) { stream.add(obj.chunk); fullText += obj.chunk; }
           } catch(_) {}
         }
@@ -1305,7 +1315,7 @@
 
       const textoFinal = stream.done();
       historico.push({role:'assistant', content: textoFinal || fullText});
-    } catch(err) { stream.add('Erro ao conectar. Tente novamente.'); stream.done(); }
+    } catch(err) { stream.add('Erro de conexão. Verifique sua internet e tente novamente.'); stream.done(); }
     finally {
       const pm = document.getElementById('piaMark');
       if (pm) pm.classList.remove('typing');
