@@ -13,6 +13,7 @@ from flask_login import (LoginManager, UserMixin, login_user,
                          logout_user, login_required, current_user)
 from werkzeug.security import generate_password_hash, check_password_hash
 from anthropic import Anthropic
+from openai import OpenAI
 from docx import Document
 from docx.shared import Pt, RGBColor, Cm, Inches
 from docx.enum.text import WD_ALIGN_PARAGRAPH
@@ -44,6 +45,12 @@ login_manager.login_view = 'login'
 login_manager.login_message = None
 
 client = Anthropic(api_key=os.environ.get('ANTHROPIC_API_KEY'), timeout=120.0)
+
+# ── OpenAI (Motor Duplo) ──────────────────────────────────────────────────────
+OPENAI_API_KEY = os.environ.get('OPENAI_API_KEY', '')
+client_openai = OpenAI(api_key=OPENAI_API_KEY) if OPENAI_API_KEY else None
+MOTOR_IA = os.environ.get('MOTOR_IA', 'claude').lower()  # 'claude' ou 'openai'
+print(f'✓ Motor IA configurado: {MOTOR_IA}')
 
 # ── Gemini (Google) — usado se GEMINI_API_KEY estiver configurada ──────────────
 GEMINI_API_KEY = os.environ.get('GEMINI_API_KEY', '')
@@ -268,60 +275,94 @@ def _to_gemini_parts(content):
     return parts
 
 def chamar_ia_chat(sistema, messages):
-    """Chama Gemini se disponível, senão usa Claude. Suporta mensagens multimodais."""
-    if _gemini_disponivel():
+    """Motor Duplo: Claude (primário) + OpenAI (fallback). Suporta mensagens multimodais."""
+    motor_principal = MOTOR_IA
+    motores = [motor_principal, 'openai' if motor_principal == 'claude' else 'claude']
+    
+    for motor in motores:
         try:
-            import google.generativeai as genai
-            historico = []
-            for m in messages[:-1]:
-                role = 'user' if m['role'] == 'user' else 'model'
-                historico.append({'role': role, 'parts': _to_gemini_parts(m['content'])})
-            gm = genai.GenerativeModel(
-                model_name='gemini-1.5-pro',
-                system_instruction=sistema
-            )
-            chat = gm.start_chat(history=historico)
-            resp = chat.send_message(_to_gemini_parts(messages[-1]['content']))
-            return resp.text
+            if motor == 'claude':
+                import requests as req_lib
+                api_key = os.environ.get('ANTHROPIC_API_KEY', '').strip()
+                if not api_key:
+                    print('⚠ ANTHROPIC_API_KEY não configurada, pulando Claude')
+                    continue
+                r = req_lib.post(
+                    'https://api.anthropic.com/v1/messages',
+                    json={'model': 'claude-sonnet-4-6', 'max_tokens': 4000,
+                          'system': sistema, 'messages': messages},
+                    headers={'x-api-key': api_key, 'anthropic-version': '2023-06-01',
+                             'content-type': 'application/json'},
+                    timeout=120
+                )
+                if r.status_code != 200:
+                    print(f'⚠ Claude API {r.status_code}, tentando fallback...')
+                    continue
+                print(f'✓ Resposta gerada com Claude')
+                return r.json()['content'][0]['text']
+            
+            elif motor == 'openai':
+                if not client_openai:
+                    print('⚠ OPENAI_API_KEY não configurada, pulando OpenAI')
+                    continue
+                resp = client_openai.chat.completions.create(
+                    model='gpt-4o-mini',
+                    max_tokens=4000,
+                    system_prompt=sistema,
+                    messages=messages
+                )
+                print(f'✓ Resposta gerada com OpenAI (gpt-4o-mini)')
+                return resp.choices[0].message.content
+        
         except Exception as e:
-            print(f'Gemini falhou, usando Claude: {e}')
-
-    # Fallback: Claude via HTTP direto (suporta conteúdo multimodal nativamente)
-    import requests as req_lib
-    api_key = os.environ.get('ANTHROPIC_API_KEY', '').strip()
-    if not api_key:
-        raise RuntimeError('Nenhuma API de IA configurada (GEMINI_API_KEY ou ANTHROPIC_API_KEY)')
-    r = req_lib.post(
-        'https://api.anthropic.com/v1/messages',
-        json={'model': 'claude-sonnet-4-6', 'max_tokens': 4000,
-              'system': sistema, 'messages': messages},
-        headers={'x-api-key': api_key, 'anthropic-version': '2023-06-01',
-                 'content-type': 'application/json'},
-        timeout=120
-    )
-    if r.status_code != 200:
-        raise RuntimeError(f'Claude API {r.status_code}: {r.text[:300]}')
-    return r.json()['content'][0]['text']
+            print(f'⚠ Erro com {motor}: {str(e)[:100]}')
+            if motor == motores[-1]:
+                raise RuntimeError(f'Todos os motores falharam. Último erro: {str(e)}')
+            continue
+    
+    raise RuntimeError('Nenhum motor de IA disponível (configure ANTHROPIC_API_KEY ou OPENAI_API_KEY)')
 
 
 def chamar_ia_simples(prompt):
-    """Chama Gemini se disponível, senão usa Claude. Para prompts únicos (sem histórico)."""
-    if _gemini_disponivel():
+    """Motor Duplo: Claude (primário) + OpenAI (fallback). Para prompts únicos (sem histórico)."""
+    motor_principal = MOTOR_IA
+    motores = [motor_principal, 'openai' if motor_principal == 'claude' else 'claude']
+    
+    for motor in motores:
         try:
-            import google.generativeai as genai
-            gm = genai.GenerativeModel('gemini-1.5-pro')
-            resp = gm.generate_content(prompt)
-            return resp.text
+            if motor == 'claude':
+                api_key = os.environ.get('ANTHROPIC_API_KEY', '').strip()
+                if not api_key:
+                    print('⚠ ANTHROPIC_API_KEY não configurada, pulando Claude')
+                    continue
+                resposta = client.messages.create(
+                    model='claude-sonnet-4-6',
+                    max_tokens=4000,
+                    messages=[{'role': 'user', 'content': prompt}]
+                )
+                print(f'✓ Resposta gerada com Claude')
+                return resposta.content[0].text
+            
+            elif motor == 'openai':
+                if not client_openai:
+                    print('⚠ OPENAI_API_KEY não configurada, pulando OpenAI')
+                    continue
+                resp = client_openai.chat.completions.create(
+                    model='gpt-4o-mini',
+                    max_tokens=4000,
+                    messages=[{'role': 'user', 'content': prompt}]
+                )
+                print(f'✓ Resposta gerada com OpenAI (gpt-4o-mini)')
+                return resp.choices[0].message.content
+        
         except Exception as e:
-            print(f'Gemini falhou, usando Claude: {e}')
+            print(f'⚠ Erro com {motor}: {str(e)[:100]}')
+            if motor == motores[-1]:
+                raise RuntimeError(f'Todos os motores falharam. Último erro: {str(e)}')
+            continue
+    
+    raise RuntimeError('Nenhum motor de IA disponível (configure ANTHROPIC_API_KEY ou OPENAI_API_KEY)')
 
-    # Fallback: Claude SDK
-    resposta = client.messages.create(
-        model='claude-sonnet-4-6',
-        max_tokens=4000,
-        messages=[{'role': 'user', 'content': prompt}]
-    )
-    return resposta.content[0].text
 
 # ─── Banco de dados ───────────────────────────────────────────────────────────
 
