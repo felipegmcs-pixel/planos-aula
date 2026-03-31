@@ -89,7 +89,14 @@
 
 <nav>
   <a class="nav-logo" href="/" style="gap:8px;">
-    <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" width="22" height="22" aria-hidden="true" style="flex-shrink:0;"><path fill-rule="evenodd" fill="currentColor" d="M 10 50 A 40 40 0 0 1 90 50 L 90 74 L 50 90 L 10 74 Z M 16 54 Q 50 36 84 54 Q 50 66 16 54 Z M 12 65 L 50 90 L 50 82 L 20 68 Z M 88 65 L 50 90 L 50 82 L 80 68 Z"/></svg>
+    <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" width="22" height="22" aria-hidden="true" style="flex-shrink:0;">
+      <g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M 30 80 A 40 40 0 1 1 70 80" />
+        <circle cx="50" cy="45" r="4" fill="currentColor" />
+        <path d="M 50 49 L 50 65" />
+        <path d="M 40 75 Q 50 60 60 75" />
+      </g>
+    </svg>
     PROFESSOR<span class="tm">IA™</span>
   </a>
   <div class="nav-links">
@@ -149,14 +156,13 @@
       <div class="plano-preco-val zero">R$ 0</div>
       <div class="plano-periodo">PARA SEMPRE</div>
       <ul class="plano-features">
-        <li class="on">5 GERAÇÕES / MÊS <span class="check-icon">✓</span></li>
-        <li class="on">CHAT COM IA <span class="check-icon">✓</span></li>
-        <li class="on">PLANOS DE AULA <span class="check-icon">✓</span></li>
-        <li>PROVAS E AVALIAÇÕES <span class="x-icon">—</span></li>
-        <li>CAÇA-PALAVRAS <span class="x-icon">—</span></li>
-        <li>ATIVIDADES E BILHETES <span class="x-icon">—</span></li>
-        <li>ADAPTAÇÕES NEE <span class="x-icon">—</span></li>
-        <li>EXPORTAR PDF / WORD <span class="x-icon">—</span></li>
+        <li class="on">GERAÇÕES ILIMITADAS <span class="check-icon">✓</span></li>
+        <li class="on">MODELOS RAG DE ALTA PRECISÃO <span class="check-icon">✓</span></li>
+        <li class="on">PLANOS DE AULA BNCC <span class="check-icon">✓</span></li>
+        <li class="on">PROVAS E AVALIAÇÕES <span class="check-icon">✓</span></li>
+        <li class="on">CAÇA-PALAVRAS E CRUZADINHAS <span class="check-icon">✓</span></li>
+        <li class="on">ADAPTAÇÕES NEE <span class="check-icon">✓</span></li>
+        <li class="on">DOWNLOAD EM DOCX PROFISSIONAL <span class="check-icon">✓</span></li>
       </ul>
       {% if assinatura_ativa %}
         <button class="btn-plano ghost" disabled>PLANO BÁSICO</button>
@@ -173,15 +179,14 @@
       <div class="plano-periodo" id="per-pro">ACESSO COMPLETO ILIMITADO</div>
       <ul class="plano-features">
         <li class="on">GERAÇÕES ILIMITADAS <span class="check-icon">✓</span></li>
-        <li class="on">CHAT COM IA <span class="check-icon">✓</span></li>
-        <li class="on">PLANOS DE AULA <span class="check-icon">✓</span></li>
+        <li class="on">MODELOS RAG DE ALTA PRECISÃO <span class="check-icon">✓</span></li>
+        <li class="on">PLANOS DE AULA BNCC <span class="check-icon">✓</span></li>
         <li class="on">PROVAS E AVALIAÇÕES <span class="check-icon">✓</span></li>
-        <li class="on">CAÇA-PALAVRAS <span class="check-icon">✓</span></li>
-        <li class="on">ATIVIDADES E BILHETES <span class="check-icon">✓</span></li>
+        <li class="on">MAPAS MENTAIS E INFOGRÁFICOS <span class="check-icon">✓</span></li>
         <li class="on">ADAPTAÇÕES NEE <span class="check-icon">✓</span></li>
-        <li class="on">EXPORTAR PDF E WORD <span class="check-icon">✓</span></li>
+        <li class="on">DOWNLOAD EM DOCX PROFISSIONAL <span class="check-icon">✓</span></li>
         <li class="on">PLANEJAMENTO ANUAL BNCC <span class="check-icon">✓</span></li>
-        <li class="on">HISTÓRICO COMPLETO <span class="check-icon">✓</span></li>
+        <li class="on">SEM SISTEMA DE CRÉDITOS <span class="check-icon">✓</span></li>
         <li class="on">SUPORTE PRIORITÁRIO <span class="check-icon">✓</span></li>
       </ul>
       {% if assinatura_ativa and plano_atual in ('pro','pro_anual') %}

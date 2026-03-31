@@ -156,19 +156,20 @@
     }
     [data-theme="dark"] .logo-ia { color: #a5b4fc; }
 
-    /* ─── ProfessorIA icon mark v10 (cúpula/olho/livro) ─── */
+    /* ─── ProfessorIA icon mark (estilo Apple) ─── */
     .pia-mark {
-      width: 30px; height: 30px; border-radius: 7px; flex-shrink: 0;
-      background: #0f172a;
+      width: 32px; height: 32px; border-radius: 8px; flex-shrink: 0;
+      background: #ffffff !important; /* Container branco obrigatório */
+      padding: 4px;
       display: flex; align-items: center; justify-content: center;
       transition: filter .3s, transform .3s;
+      box-shadow: 0 1px 4px rgba(0,0,0,.15);
     }
-    /* No dark sidebar, use white container so logo is always visible */
+    .pia-mark svg g { stroke: #0f172a !important; }
+    .pia-mark svg g circle { fill: #0f172a !important; }
     [data-theme="dark"] .pia-mark {
-      background: #ffffff;
-      box-shadow: 0 1px 4px rgba(0,0,0,.35);
+      box-shadow: 0 1px 8px rgba(0,0,0,.4);
     }
-    [data-theme="dark"] .pia-mark svg path { fill: #0f172a; }
     .pia-mark.typing {
       animation: iconTyping 1s ease-in-out infinite;
     }
@@ -741,9 +742,14 @@
     <div class="sidebar-header">
       <a class="logo" href="/">
         <span class="pia-mark" id="piaMark">
-          <!-- ProfessorIA Logo v10: cúpula · olho · livro -->
+          <!-- ProfessorIA Logo Minimalista Ancestral -->
           <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" width="28" height="28" aria-label="ProfessorIA">
-            <path fill-rule="evenodd" fill="white" d="M 10 50 A 40 40 0 0 1 90 50 L 90 74 L 50 90 L 10 74 Z M 16 54 Q 50 36 84 54 Q 50 66 16 54 Z M 12 65 L 50 90 L 50 82 L 20 68 Z M 88 65 L 50 90 L 50 82 L 80 68 Z"/>
+            <g fill="none" stroke="#0f172a" stroke-width="4" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M 30 80 A 40 40 0 1 1 70 80" />
+              <circle cx="50" cy="45" r="4" fill="#0f172a" />
+              <path d="M 50 49 L 50 65" />
+              <path d="M 40 75 Q 50 60 60 75" />
+            </g>
           </svg>
         </span>
         <span class="logo-p">Professor</span><span class="logo-ia">IA</span>
@@ -1356,6 +1362,9 @@
         // Preserva texto já digitado e acrescenta a transcrição
         const atual = inputEl.value.trim();
         inputEl.value = atual ? atual + ' ' + d.texto.trim() : d.texto.trim();
+        // Garante que o textarea redimensione se necessário
+        inputEl.style.height = 'auto';
+        inputEl.style.height = inputEl.scrollHeight + 'px';
         inputEl.dispatchEvent(new Event('input'));
         inputEl.focus();
       } else if (d.erro) {

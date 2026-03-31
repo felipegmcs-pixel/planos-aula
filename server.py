@@ -31,6 +31,9 @@ try:
 except ImportError:
     _mp_SDK = None
 
+# ─── Configuração de Estilo de Imagem (Frente 4) ──────────────────────────────
+IMAGE_STYLE_MODIFIER = "Estilo: Traço Acadêmico-Inclusivo. Ilustração digital moderna, textura sutil de aquarela, linhas limpas, visual minimalista. PROIBIDO inserir textos, palavras ou letras dentro da imagem. Apenas a arte temática."
+
 # ─── App ──────────────────────────────────────────────────────────────────────
 
 app = Flask(__name__)
@@ -91,35 +94,34 @@ STRIPE_PRICES = {
 
 LIMITE_GRATIS = 5  # gerações gratuitas por mês no plano grátis
 
-SYSTEM_PROMPT = """Você é o ProfessorIA, assistente especializado em ajudar professores brasileiros.
+SYSTEM_PROMPT = """Você é o ProfessorIA, Especialista Sênior em Pedagogia Brasileira.
+Sua missão é automatizar a criação de materiais pedagógicos de alta qualidade, garantindo 100% de alinhamento à BNCC.
 
-Você cria materiais pedagógicos de alta qualidade, incluindo:
+DIRETRIZES DE RAG E PRECISÃO:
+- Baseie-se ESTRITAMENTE nos documentos anexados pelo usuário. Se a informação não estiver no texto, não invente.
+- Zero alucinação: se não souber ou não houver base no anexo, informe que a informação não consta no material fornecido.
+
+VOCÊ CRIA:
 - Planos de aula completos (objetivos, conteúdo, metodologia, avaliação)
 - Provas e avaliações (questões abertas e múltipla escolha, com gabarito)
-- Caça-palavras (lista de palavras + grade de letras formatada)
-- Cruzadinhas (grade com pistas horizontal e vertical, gabarito)
-- Mapas mentais (estrutura em árvore com ramos e sub-ramos)
-- Atividades e exercícios lúdicos
+- Caça-palavras e Cruzadinhas (formatados para impressão)
+- Mapas mentais e Estruturas para Infográficos
 - Planejamento anual (distribuição por bimestre)
-- Resumos de conteúdo para alunos
-- Rubricas de avaliação
-- Bilhetes para os pais
+- Adaptações para Educação Inclusiva (NEE)
 
 REGRAS PARA PROVAS E ATIVIDADES:
-- NUNCA inclua "Nome:", "Data:", "Série:" ou campos do aluno no texto — o sistema de exportação adiciona automaticamente no cabeçalho: Nome:___ Data:__/__/__ Ano:
-- Logo após o título, adicione um bloco de Instruções com 3-4 itens (ex: Leia atentamente; Use caneta azul ou preta; Justifique as respostas discursivas)
-- Ao final, inclua o gabarito completo separado por uma linha (--- GABARITO ---)
-- Indique a pontuação de cada questão ou seção
+- NUNCA inclua "Nome:", "Data:", "Série:" ou campos do aluno no texto — o sistema de exportação adiciona automaticamente no cabeçalho.
+- Logo após o título, adicione um bloco de Instruções com 3-4 itens.
+- Ao final, inclua o gabarito completo separado por uma linha (--- GABARITO ---).
 
 ADAPTAÇÕES PARA NEE (Necessidades Educacionais Especiais):
 Quando o professor pedir material adaptado, aplique as seguintes diretrizes:
-
-- Deficiência Intelectual (DI): linguagem extremamente simples (nível de 6-8 anos), frases curtas (máx 10 palavras), instruções passo a passo numeradas, repetição dos conceitos principais, sem abstração. Avaliação com critérios diferenciados.
-- TEA (Transtorno do Espectro Autista): rotina clara e previsível, instruções objetivas sem duplo sentido, evitar linguagem figurada, estrutura visual definida, antecipação das etapas, tópicos específicos e delimitados.
-- TDAH: atividades curtas (máx 15 min cada), muita variação de formato, uso de negrito para pontos principais, pausas explícitas, recompensas e gamificação, tarefas com checkboxes.
-- Dislexia: abordagem multissensorial (visual + auditivo), fonética explícita, fontes espaçadas, frases curtas, evitar paredes de texto, sugestão de leitura em voz alta.
-- Baixa Visão: descrições detalhadas de tudo que seria visual, alto contraste nas instruções, evitar referências como "veja a figura", descrever imagens por extenso.
-- CAA (Comunicação Alternativa): usar palavras-chave simples, estrutura de prancha de comunicação, símbolos descritos por texto, frases no formato sujeito+verbo+objeto.
+- Deficiência Intelectual (DI): linguagem extremamente simples, frases curtas, instruções passo a passo.
+- TEA (Transtorno do Espectro Autista): rotina clara, instruções objetivas, estrutura visual definida.
+- TDAH: atividades curtas, variação de formato, uso de negrito, checkboxes.
+- Dislexia: abordagem multissensorial, fontes espaçadas, evitar paredes de texto.
+- Baixa Visão: descrições detalhadas, alto contraste.
+- CAA (Comunicação Alternativa): palavras-chave simples, estrutura de prancha.
 
 CAÇA-PALAVRAS — geração direta:
 Quando pedirem um caça-palavras, gere imediatamente com a seguinte estrutura:
@@ -3276,24 +3278,35 @@ def api_listar_questoes():
     return jsonify([dict(r) for r in rows])
 
 @app.route('/api/questoes', methods=['POST'])
+@app.route('/api/questions/save', methods=['POST']) # Alias solicitado no Super Prompt
 @login_required
 def api_salvar_questao():
     d = request.get_json(force=True)
     if not d.get('enunciado'):
         return jsonify({'erro': 'Enunciado obrigatório'}), 400
+    
+    # Mapeamento de campos para suportar o novo Super Prompt
+    enunciado = d.get('enunciado', '')
+    alternativas = d.get('alternativas', [])
+    gabarito = d.get('gabarito', d.get('resposta_correta', ''))
+    bncc = d.get('bncc_skill', d.get('habilidade_bncc', ''))
+    disciplina = d.get('disciplina', '')
+    serie = d.get('serie', d.get('ano_serie', ''))
+    tipo = d.get('tipo', 'multipla_escolha')
+
     conn = get_db()
     conn.execute(
         """INSERT INTO questions_bank
            (usuario_id, enunciado, alternativas, gabarito, ano_serie, disciplina, habilidade_bncc, tipo, criado_em)
            VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s)""",
         (current_user.id,
-         d.get('enunciado',''),
-         json.dumps(d.get('alternativas', []), ensure_ascii=False),
-         d.get('gabarito',''),
-         d.get('ano_serie',''),
-         d.get('disciplina',''),
-         d.get('habilidade_bncc',''),
-         d.get('tipo','multipla_escolha'),
+         enunciado,
+         json.dumps(alternativas, ensure_ascii=False),
+         gabarito,
+         serie,
+         disciplina,
+         bncc,
+         tipo,
          datetime.now().strftime('%d/%m/%Y %H:%M'))
     )
     conn.commit()

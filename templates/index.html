@@ -92,6 +92,8 @@
     .logo-mark svg{color:white}
     .logo-p{font-size:1.08rem;font-weight:800;color:#fff;letter-spacing:-.3px;transition:color .35s}
     nav.lit .logo-p{color:#0f172a}
+    nav.lit .logo-mark svg g { stroke: #0f172a; }
+    nav.lit .logo-mark svg g circle { fill: #0f172a; }
     .logo-ia{
       font-size:1.08rem;font-weight:600;letter-spacing:-.3px;
       color:#818cf8;transition:color .35s;
@@ -553,7 +555,12 @@
     <span class="logo-mark">
       <!-- ProfessorIA Logo v10: cúpula · olho · livro -->
       <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" width="26" height="26" aria-hidden="true">
-        <path fill-rule="evenodd" fill="currentColor" d="M 10 50 A 40 40 0 0 1 90 50 L 90 74 L 50 90 L 10 74 Z M 16 54 Q 50 36 84 54 Q 50 66 16 54 Z M 12 65 L 50 90 L 50 82 L 20 68 Z M 88 65 L 50 90 L 50 82 L 80 68 Z"/>
+        <g fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M 30 80 A 40 40 0 1 1 70 80" />
+          <circle cx="50" cy="45" r="4" fill="currentColor" />
+          <path d="M 50 49 L 50 65" />
+          <path d="M 40 75 Q 50 60 60 75" />
+        </g>
       </svg>
     </span>
     <span class="logo-p">Professor</span><span class="logo-ia">IA</span>
@@ -621,8 +628,8 @@
     <!-- Coluna esquerda: copy -->
     <div class="hero-copy">
       <div class="hero-pill"><span class="pill-dot"></span>Assistente pedagógico com IA · BNCC</div>
-      <h1>Planeje melhor,<br/><span class="grad-text">ensine com mais impacto.</span></h1>
-      <p class="hero-sub">Gere planos de aula, provas, caça-palavras, cruzadinhas e muito mais em segundos. Feito para professores brasileiros.</p>
+      <h1>Economize até<br/><span class="grad-text">10 horas semanais.</span></h1>
+      <p class="hero-sub">Planos de aula 100% alinhados à BNCC e materiais adaptados para Educação Inclusiva instantaneamente. Feito para o professor brasileiro.</p>
       <div class="hero-btns">
         {% if current_user.is_authenticated %}
           {% if current_user.assinatura_ativa or current_user.is_admin %}
@@ -934,12 +941,12 @@
       <div class="plan-period" id="per-basic">Acesso individual ilimitado</div>
       <ul class="plan-feats">
         <li class="on">Gerações ilimitadas <span class="chk">✓</span></li>
-        <li class="on">Chat com IA <span class="chk">✓</span></li>
-        <li class="on">Planos de aula <span class="chk">✓</span></li>
+        <li class="on">Modelos RAG de alta precisão <span class="chk">✓</span></li>
+        <li class="on">Planos de aula BNCC <span class="chk">✓</span></li>
         <li class="on">Provas e avaliações <span class="chk">✓</span></li>
-        <li class="on">Caça-palavras <span class="chk">✓</span></li>
+        <li class="on">Caça-palavras e Cruzadinhas <span class="chk">✓</span></li>
         <li class="on">Adaptações NEE <span class="chk">✓</span></li>
-        <li class="on">Exportar DOCX <span class="chk">✓</span></li>
+        <li class="on">Download em DOCX profissional <span class="chk">✓</span></li>
       </ul>
       <a href="/stripe/checkout/basic" class="btn-plan am" id="btn-basic">Assinar Basic →</a>
       <div class="plan-sc" id="sc-basic">⚡ Oferta por tempo limitado</div>
@@ -952,8 +959,9 @@
       <ul class="plan-feats">
         <li class="on">Tudo do Basic <span class="chk">✓</span></li>
         <li class="on">Planejamento anual BNCC <span class="chk">✓</span></li>
-        <li class="on">Histórico completo <span class="chk">✓</span></li>
+        <li class="on">Mapas Mentais e Infográficos <span class="chk">✓</span></li>
         <li class="on">Entrada e saída de áudio <span class="chk">✓</span></li>
+        <li class="on">Sem sistema de créditos <span class="chk">✓</span></li>
         <li class="on">Suporte prioritário <span class="chk">✓</span></li>
       </ul>
       <a href="/stripe/checkout/pro" class="btn-plan o" id="btn-pro">Assinar Pro →</a>
