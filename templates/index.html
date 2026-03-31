@@ -81,11 +81,21 @@
       position:fixed;top:0;left:0;right:0;z-index:900;
       height:64px;padding:0 48px;
       display:flex;align-items:center;justify-content:space-between;
-      background:rgba(5,8,17,.92);backdrop-filter:blur(20px);
-      border-bottom:1px solid rgba(255,255,255,.06);
+      background:#ffffff;backdrop-filter:blur(20px);
+      border-bottom:1px solid rgba(0,0,0,.08);
       transition:background .35s,border-color .35s;
     }
-    nav.lit{background:rgba(255,255,255,.97);border-bottom-color:var(--line)}
+    nav.lit{background:#ffffff;border-bottom-color:rgba(0,0,0,.08)}
+    .nav-brand{
+      display:flex;align-items:center;gap:12px;flex:1;justify-content:center;
+    }
+    .nav-logo{
+      height:52px;width:auto;object-fit:contain;flex-shrink:0;
+    }
+    .nav-name{
+      font-size:1.5rem;font-weight:900;color:#1E40AF;letter-spacing:-.3px;
+      font-family:Inter,sans-serif;
+    }
     .logo{display:flex;align-items:center;text-decoration:none;gap:12px;transition:color .35s;vertical-align:middle}
     .logo-mark{display:flex;align-items:center;justify-content:center;width:44px;height:44px;border-radius:8px;background:#0f172a;flex-shrink:0;transition:background .35s,box-shadow .35s}
     nav.lit .logo-mark{background:#1E40AF;width:32px;height:32px;transition:color .35s,stroke .35s}
@@ -551,7 +561,10 @@
 
 <div id="read-progress"></div>
 <nav id="nav">
-  <a class="logo" href="/" style="visibility: hidden; pointer-events: none;"></a>
+  <div class="nav-brand">
+    <img src="{{ url_for('static', filename='logo-oficial.png') }}" alt="ProfessorIA" class="nav-logo">
+    <span class="nav-name">ProfessorIA</span>
+  </div>
   <div class="nav-links">
     <a class="nav-a" href="#planos">Planos</a>
     {% if current_user.is_authenticated %}
@@ -614,10 +627,6 @@
 
     <!-- Coluna esquerda: copy -->
     <div class="hero-copy">
-      <div style="text-align: center; margin-bottom: 48px;">
-        <img src="{{ url_for('static', filename='logo-oficial.png') }}" alt="ProfessorIA" style="height: 100px; width: auto; object-fit: contain; margin-bottom: 20px;">
-        <h2 style="font-size: 2.5rem; font-weight: 900; color: #fff; letter-spacing: -0.8px; margin: 0; font-family: 'Inter', sans-serif;">ProfessorIA</h2>
-      </div>
       <h1>Economize até<br/><span class="grad-text">10 horas semanais.</span></h1>
       <p class="hero-sub">Planos de aula 100% alinhados à BNCC e materiais adaptados para Educação Inclusiva instantaneamente. Feito para o professor brasileiro.</p>
       <div class="hero-btns">

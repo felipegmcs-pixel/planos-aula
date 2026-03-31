@@ -48,11 +48,23 @@ html:not([data-theme="dark"]) body {
 }
 
 /* ── NAV ── */
-nav { background: var(--nav-bg) !important; }
-[data-theme="dark"] nav { border-bottom-color: var(--linha) !important; }
+nav { 
+  background: #ffffff !important;
+  border-bottom: 1px solid rgba(0,0,0,0.08) !important;
+}
+nav a, nav span, nav button { color: #1E40AF !important; }
+[data-theme="dark"] nav { 
+  background: #ffffff !important;
+  border-bottom-color: rgba(0,0,0,0.08) !important;
+}
+[data-theme="dark"] nav a, [data-theme="dark"] nav span, [data-theme="dark"] nav button { 
+  color: #1E40AF !important; 
+}
 
-/* ── Ticker always dark ── */
-[data-theme="dark"] .ticker { background: #1a1a18 !important; }
+/* ── Ticker always white ── */
+.ticker { background: #ffffff !important; border-bottom: 1px solid rgba(0,0,0,0.08) !important; }
+[data-theme="dark"] .ticker { background: #ffffff !important; border-bottom-color: rgba(0,0,0,0.08) !important; }
+.ticker a, .ticker span { color: #1E40AF !important; }
 
 /* ── Inputs ── */
 input[type=text],
