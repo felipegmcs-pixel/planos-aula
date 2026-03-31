@@ -165,7 +165,7 @@
       transition: filter .3s, transform .3s;
       box-shadow: 0 1px 4px rgba(0,0,0,.15);
     }
-    .pia-mark svg g { stroke: #0f172a !important; }
+    .pia-mark svg g {stroke="currentColor" !important; }
     .pia-mark svg g circle { fill: #0f172a !important; }
     .pia-mark svg g path { stroke: #0f172a !important; }
     [data-theme="dark"] .pia-mark {
@@ -743,20 +743,7 @@
     <div class="sidebar-header">
       <a class="logo" href="/">
         <span class="pia-mark" id="piaMark">
-          <!-- ProfessorIA Logo Ancestral: Mãe e Filho Conectados -->
-          <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" width="28" height="28" aria-label="ProfessorIA">
-            <g fill="none" stroke="#0f172a" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-              <circle cx="35" cy="28" r="10" />
-              <path d="M 35 38 L 35 55" />
-              <path d="M 35 42 Q 20 45 18 55" />
-              <path d="M 35 42 Q 50 45 52 55" />
-              <circle cx="60" cy="50" r="7" />
-              <path d="M 60 57 L 60 70" />
-              <path d="M 60 60 Q 48 58 42 52" />
-              <path d="M 45 48 Q 50 45 55 48" />
-              <circle cx="50" cy="50" r="2" fill="#0f172a" />
-            </g>
-          </svg>
+          <img src="{{ url_for('static', filename='logo-oficial.png') }}" alt="ProfessorIA" style="height: 32px; width: auto; object-fit: contain;">
         </span>
         <span class="logo-p">Professor</span><span class="logo-ia">IA</span>
       </a>
