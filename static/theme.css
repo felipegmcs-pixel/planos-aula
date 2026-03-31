@@ -52,18 +52,21 @@ nav {
   background: #ffffff !important;
   border-bottom: 1px solid rgba(0,0,0,0.08) !important;
 }
-nav a, nav span, nav button { color: #1E40AF !important; }
+nav, nav * { color: #1E40AF !important; }
+nav a, nav span, nav button, nav .nav-name, nav .nav-logo { color: #1E40AF !important; }
 [data-theme="dark"] nav { 
   background: #ffffff !important;
   border-bottom-color: rgba(0,0,0,0.08) !important;
 }
-[data-theme="dark"] nav a, [data-theme="dark"] nav span, [data-theme="dark"] nav button { 
+[data-theme="dark"] nav, [data-theme="dark"] nav * { color: #1E40AF !important; }
+[data-theme="dark"] nav a, [data-theme="dark"] nav span, [data-theme="dark"] nav button, [data-theme="dark"] nav .nav-name { 
   color: #1E40AF !important; 
 }
 
 /* ── Ticker always white ── */
 .ticker { background: #ffffff !important; border-bottom: 1px solid rgba(0,0,0,0.08) !important; }
 [data-theme="dark"] .ticker { background: #ffffff !important; border-bottom-color: rgba(0,0,0,0.08) !important; }
+.ticker, .ticker * { color: #1E40AF !important; }
 .ticker a, .ticker span { color: #1E40AF !important; }
 
 /* ── Inputs ── */
