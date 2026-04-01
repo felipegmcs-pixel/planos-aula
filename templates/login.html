@@ -67,9 +67,10 @@
     .box-step::before{content:'';width:16px;height:2px;background:var(--indigo);border-radius:2px}
     h1{font-size:clamp(2rem,5vw,2.8rem);font-weight:900;letter-spacing:-1.5px;line-height:1.05;color:var(--text);margin-bottom:36px}
 
-    .alert{padding:12px 16px;font-size:.82rem;font-weight:600;border-radius:var(--r);margin-bottom:24px}
-    .alert-erro, .alert-error{background:rgba(185,28,28,.06);border:1px solid rgba(185,28,28,.2);color:#991b1b}
-    .alert-ok, .alert-success{background:rgba(5,150,105,.06);border:1px solid rgba(5,150,105,.2);color:#065f46}
+    /* loading state reutiliza .btn-loading de theme.css */
+    @keyframes btnSpin { to { transform: rotate(360deg); } }
+    .btn-loading { position: relative; color: transparent !important; pointer-events: none; }
+    .btn-loading::after { content:''; position:absolute; inset:0; margin:auto; width:18px; height:18px; border:2px solid rgba(255,255,255,.35); border-top-color:#fff; border-radius:50%; animation:btnSpin .7s linear infinite; }
 
     .field{margin-bottom:24px}
     label{font-size:.72rem;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--text2);display:block;margin-bottom:8px}
@@ -138,13 +139,12 @@
       <div class="box-step">Entrar na conta</div>
       <h1>Olá,<br/>professor.</h1>
 
-      {% with messages = get_flashed_messages(with_categories=true) %}
-        {% if messages %}
-          <div class="alert alert-{{ messages[0][0] }}">{{ messages[0][1] }}</div>
-        {% endif %}
-      {% endwith %}
+      {# Flash messages → toast.js converte automaticamente #}
+      {% for cat, msg in get_flashed_messages(with_categories=true) %}
+        <template data-toast data-cat="{{ cat }}" data-msg="{{ msg }}"></template>
+      {% endfor %}
 
-      <form method="POST">
+      <form method="POST" id="loginForm">
         <div class="field">
           <label>E-mail</label>
           <input type="email" name="email" placeholder="seu@email.com" required autofocus/>
@@ -153,7 +153,7 @@
           <label>Senha</label>
           <input type="password" name="senha" placeholder="••••••••" required/>
         </div>
-        <button type="submit" class="btn">Entrar →</button>
+        <button type="submit" class="btn" id="loginBtn">Entrar →</button>
       </form>
 
       <div class="links">
@@ -170,5 +170,13 @@
   </div>
 </div>
 <script src="/static/bg3d.js"></script>
+<script src="/static/toast.js"></script>
+<script>
+  document.getElementById('loginForm').addEventListener('submit', function () {
+    var btn = document.getElementById('loginBtn');
+    btn.classList.add('btn-loading');
+    btn.disabled = true;
+  });
+</script>
 </body>
 </html>

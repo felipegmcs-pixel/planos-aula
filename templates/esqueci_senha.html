@@ -98,15 +98,15 @@
       <p class="sub-text">Digite o e-mail cadastrado e enviaremos um link para criar uma nova senha.</p>
 
       {% for cat, msg in get_flashed_messages(with_categories=true) %}
-        <div class="alert alert-{{ cat }}">{{ msg }}</div>
+        <template data-toast data-cat="{{ cat }}" data-msg="{{ msg }}"></template>
       {% endfor %}
 
-      <form method="POST">
+      <form method="POST" id="esqueciForm">
         <div class="field">
           <label>E-mail cadastrado</label>
           <input type="email" name="email" placeholder="seu@email.com" required autofocus/>
         </div>
-        <button type="submit" class="btn">Enviar link →</button>
+        <button type="submit" class="btn" id="esqueciBtn">Enviar link →</button>
       </form>
 
       <div class="links">
@@ -116,5 +116,15 @@
     </div>
   </div>
 </div>
+<script src="/static/toast.js"></script>
+<script>
+  document.getElementById('esqueciForm').addEventListener('submit', function () {
+    var btn = document.getElementById('esqueciBtn');
+    btn.classList.add('btn-loading');
+    btn.disabled = true;
+    // Reabilita após 8s caso o servidor demore
+    setTimeout(function () { btn.classList.remove('btn-loading'); btn.disabled = false; }, 8000);
+  });
+</script>
 </body>
 </html>

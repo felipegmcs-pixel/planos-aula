@@ -192,7 +192,7 @@
     .sidebar-nav { padding: 16px 12px 10px; flex-shrink: 0; display: flex; flex-direction: column; gap: 3px; }
     .nav-item {
       display: flex; align-items: center; gap: 10px;
-      padding: 9px 12px; border-radius: 8px;
+      padding: 10px 12px; min-height: 44px; border-radius: 8px;
       font-size: .78rem; font-weight: 500; color: var(--sb-text);
       text-decoration: none; cursor: pointer;
       transition: background .15s, color .15s, box-shadow .15s;
@@ -277,11 +277,13 @@
       border-bottom: 1px solid var(--sb-line); flex-shrink: 0;
       background: var(--sb-bg); position: relative; z-index: 1;
     }
-    .topbar-logo { font-size: .88rem; font-weight: 800; letter-spacing: -.3px; text-decoration: none; display: flex; align-items: center; }
-    .topbar-logo .tp  { color: #fff; }
-    .topbar-logo .tia { color: #818cf8; font-weight: 600; }
-    .btn-hamburger { background: none; border: none; cursor: pointer; display: flex; flex-direction: column; gap: 4px; padding: 6px; }
-    .btn-hamburger span { display: block; width: 18px; height: 1.5px; background: rgba(255,255,255,.7); border-radius: 2px; }
+    .topbar-logo { font-size: .88rem; font-weight: 800; letter-spacing: -.3px; text-decoration: none; display: flex; align-items: center; gap: 8px; }
+    .topbar-logo .tp  { color: var(--sb-fg); }
+    .topbar-logo .tia { color: var(--indigo); font-weight: 600; }
+    .topbar-logo-img { height: 28px; width: auto; object-fit: contain; }
+    .btn-hamburger { background: none; border: none; cursor: pointer; display: flex; flex-direction: column; gap: 5px; padding: 10px; min-width: 44px; min-height: 44px; align-items: center; justify-content: center; }
+    .btn-hamburger span { display: block; width: 18px; height: 1.5px; background: var(--sb-fg); opacity: .75; border-radius: 2px; transition: opacity .2s; }
+    .btn-hamburger:hover span { opacity: 1; }
 
     /* ════════════════════════════════════════
        BANNER
@@ -651,6 +653,88 @@
     .nee-btn.confirm:hover { opacity: .9; }
 
     /* ════════════════════════════════════════
+       DOWNLOAD MODAL
+    ════════════════════════════════════════ */
+    .dl-overlay {
+      display: none; position: fixed; inset: 0; z-index: 400;
+      background: rgba(5,8,17,.88); backdrop-filter: blur(10px);
+      align-items: center; justify-content: center; padding: 20px;
+    }
+    .dl-overlay.open { display: flex; }
+    .dl-modal {
+      background: #0f1120; border: 1px solid rgba(255,255,255,.1);
+      width: 100%; max-width: 480px; padding: 36px;
+      font-family: 'Inter', sans-serif; border-radius: 18px;
+      box-shadow: 0 24px 80px rgba(0,0,0,.7), 0 0 60px rgba(30,64,175,.15);
+    }
+    .dl-modal-tag {
+      font-size: .55rem; font-weight: 700; letter-spacing: 2.5px;
+      text-transform: uppercase; color: #818cf8; margin-bottom: 16px;
+      display: flex; align-items: center; gap: 8px;
+    }
+    .dl-modal-tag::before {
+      content: ''; display: inline-block; width: 16px; height: 2px;
+      background: #1E40AF; border-radius: 2px;
+    }
+    .dl-modal-title {
+      font-size: 1.3rem; font-weight: 900; letter-spacing: -1px;
+      color: #fff; line-height: 1.1; margin-bottom: 20px;
+    }
+    .dl-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px; }
+    .dl-grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-bottom: 10px; }
+    .dl-field { margin-bottom: 16px; }
+    .dl-field-sm { margin-bottom: 12px; }
+    .dl-label {
+      font-size: .55rem; font-weight: 700; letter-spacing: 2px;
+      text-transform: uppercase; color: rgba(255,255,255,.35);
+      display: block; margin-bottom: 6px;
+    }
+    .dl-label-sm {
+      font-size: .7rem; color: rgba(255,255,255,.4); cursor: pointer;
+    }
+    .dl-input, .dl-select {
+      width: 100%; padding: 9px 12px;
+      background: rgba(255,255,255,.05); border: 1.5px solid rgba(255,255,255,.1);
+      color: #fff; font-family: 'Inter', sans-serif; font-size: .82rem;
+      border-radius: 8px; outline: none; transition: border-color .2s;
+    }
+    .dl-input:focus, .dl-select:focus { border-color: rgba(30,64,175,.5); }
+    .dl-select option { background: #1a1c2e; }
+    .dl-file-row { display: flex; align-items: center; gap: 10px; }
+    .dl-file-label {
+      padding: 8px 14px; background: rgba(255,255,255,.06);
+      border: 1.5px solid rgba(255,255,255,.1); border-radius: 8px;
+      font-size: .72rem; font-weight: 600; color: rgba(255,255,255,.5);
+      cursor: pointer; transition: border-color .2s, color .2s;
+    }
+    .dl-file-label:hover { border-color: rgba(30,64,175,.4); color: #fff; }
+    .dl-file-name {
+      font-size: .72rem; color: rgba(255,255,255,.35);
+      flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    }
+    .dl-logo-preview {
+      display: none; width: 36px; height: 36px; object-fit: contain;
+      border-radius: 4px; background: rgba(255,255,255,.08); padding: 2px;
+    }
+    .dl-checkbox-row { display: flex; align-items: center; gap: 8px; margin-bottom: 16px; }
+    .dl-checkbox { accent-color: #1E40AF; width: 14px; height: 14px; }
+    .dl-actions { display: flex; gap: 10px; }
+    .dl-btn-primary {
+      flex: 1; padding: 13px; background: linear-gradient(135deg, #1E40AF, #1E3A8A);
+      color: #fff; border: none; font-size: .78rem; font-weight: 700;
+      font-family: 'Inter', sans-serif; border-radius: 10px; cursor: pointer;
+      transition: opacity .2s; box-shadow: 0 4px 18px rgba(30,64,175,.4);
+    }
+    .dl-btn-primary:hover { opacity: .9; }
+    .dl-btn-cancel {
+      padding: 13px 18px; background: transparent; color: rgba(255,255,255,.4);
+      border: 1.5px solid rgba(255,255,255,.1); font-size: .78rem; font-weight: 600;
+      font-family: 'Inter', sans-serif; border-radius: 10px; cursor: pointer;
+      transition: border-color .2s, color .2s;
+    }
+    .dl-btn-cancel:hover { border-color: rgba(255,255,255,.3); color: rgba(255,255,255,.7); }
+
+    /* ════════════════════════════════════════
        RESPONSIVE
     ════════════════════════════════════════ */
     @media (max-width: 768px) {
@@ -676,81 +760,69 @@
 <canvas id="bg3d" style="position:fixed;inset:0;z-index:0;pointer-events:none;opacity:.25"></canvas>
 
 <!-- Modal Download DOCX -->
-<div id="downloadModal" style="
-  display:none; position:fixed; inset:0; z-index:400;
-  background:rgba(5,8,17,.88); backdrop-filter:blur(10px);
-  align-items:center; justify-content:center; padding:20px;
-" onclick="if(event.target===this)fecharDownloadModal()">
-  <div style="
-    background:#0f1120; border:1px solid rgba(255,255,255,.1);
-    width:100%; max-width:480px; padding:36px;
-    font-family:'Inter',sans-serif; border-radius:18px;
-    box-shadow:0 24px 80px rgba(0,0,0,.7),0 0 60px rgba(30,64,175,.15);
-  ">
-    <div style="font-size:.55rem;font-weight:700;letter-spacing:2.5px;text-transform:uppercase;color:#818cf8;margin-bottom:16px;display:flex;align-items:center;gap:8px;">
-      <span style="display:inline-block;width:16px;height:2px;background:#1E40AF;border-radius:2px;"></span>
-      Baixar como DOCX
-    </div>
-    <h2 style="font-size:1.3rem;font-weight:900;letter-spacing:-1px;color:#fff;line-height:1.1;margin-bottom:20px;">Dados da avaliação</h2>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;">
+<div id="downloadModal" class="dl-overlay" onclick="if(event.target===this)fecharDownloadModal()">
+  <div class="dl-modal">
+    <div class="dl-modal-tag">Baixar como DOCX</div>
+    <h2 class="dl-modal-title">Dados da avaliação</h2>
+    <div class="dl-grid-2">
       <div>
-        <label style="font-size:.55rem;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:rgba(255,255,255,.35);display:block;margin-bottom:6px;">Nome da escola</label>
-        <input id="dl-escola" type="text" placeholder="E.E. Nome da Escola" style="width:100%;padding:9px 12px;background:rgba(255,255,255,.05);border:1.5px solid rgba(255,255,255,.1);color:#fff;font-family:'Inter',sans-serif;font-size:.82rem;border-radius:8px;outline:none;transition:border-color .2s;" onfocus="this.style.borderColor='rgba(30,64,175,.5)'" onblur="this.style.borderColor='rgba(255,255,255,.1)'"/>
+        <label class="dl-label">Nome da escola</label>
+        <input id="dl-escola" type="text" class="dl-input" placeholder="E.E. Nome da Escola"/>
       </div>
       <div>
-        <label style="font-size:.55rem;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:rgba(255,255,255,.35);display:block;margin-bottom:6px;">Nome do professor(a)</label>
-        <input id="dl-professor" type="text" placeholder="Profa. Ana Silva" style="width:100%;padding:9px 12px;background:rgba(255,255,255,.05);border:1.5px solid rgba(255,255,255,.1);color:#fff;font-family:'Inter',sans-serif;font-size:.82rem;border-radius:8px;outline:none;transition:border-color .2s;" onfocus="this.style.borderColor='rgba(30,64,175,.5)'" onblur="this.style.borderColor='rgba(255,255,255,.1)'"/>
+        <label class="dl-label">Nome do professor(a)</label>
+        <input id="dl-professor" type="text" class="dl-input" placeholder="Profa. Ana Silva"/>
       </div>
     </div>
-    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:10px;">
+    <div class="dl-grid-3">
       <div>
-        <label style="font-size:.55rem;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:rgba(255,255,255,.35);display:block;margin-bottom:6px;">Disciplina</label>
-        <input id="dl-disciplina" type="text" placeholder="História" style="width:100%;padding:9px 12px;background:rgba(255,255,255,.05);border:1.5px solid rgba(255,255,255,.1);color:#fff;font-family:'Inter',sans-serif;font-size:.82rem;border-radius:8px;outline:none;transition:border-color .2s;" onfocus="this.style.borderColor='rgba(30,64,175,.5)'" onblur="this.style.borderColor='rgba(255,255,255,.1)'"/>
+        <label class="dl-label">Disciplina</label>
+        <input id="dl-disciplina" type="text" class="dl-input" placeholder="História"/>
       </div>
       <div>
-        <label style="font-size:.55rem;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:rgba(255,255,255,.35);display:block;margin-bottom:6px;">Bimestre</label>
-        <select id="dl-bimestre" style="width:100%;padding:9px 12px;background:rgba(255,255,255,.05);border:1.5px solid rgba(255,255,255,.1);color:#fff;font-family:'Inter',sans-serif;font-size:.82rem;border-radius:8px;outline:none;">
-          <option value="" style="background:#1a1c2e;">—</option>
-          <option value="1" style="background:#1a1c2e;">1º</option>
-          <option value="2" style="background:#1a1c2e;">2º</option>
-          <option value="3" style="background:#1a1c2e;">3º</option>
-          <option value="4" style="background:#1a1c2e;">4º</option>
+        <label class="dl-label">Bimestre</label>
+        <select id="dl-bimestre" class="dl-select">
+          <option value="">—</option>
+          <option value="1">1º</option>
+          <option value="2">2º</option>
+          <option value="3">3º</option>
+          <option value="4">4º</option>
         </select>
       </div>
       <div>
-        <label style="font-size:.55rem;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:rgba(255,255,255,.35);display:block;margin-bottom:6px;">Série / Ano</label>
-        <input id="dl-serie" type="text" placeholder="8º Ano" style="width:100%;padding:9px 12px;background:rgba(255,255,255,.05);border:1.5px solid rgba(255,255,255,.1);color:#fff;font-family:'Inter',sans-serif;font-size:.82rem;border-radius:8px;outline:none;transition:border-color .2s;" onfocus="this.style.borderColor='rgba(30,64,175,.5)'" onblur="this.style.borderColor='rgba(255,255,255,.1)'"/>
+        <label class="dl-label">Série / Ano</label>
+        <input id="dl-serie" type="text" class="dl-input" placeholder="8º Ano"/>
       </div>
     </div>
-    <div style="margin-bottom:16px;">
-      <label style="font-size:.55rem;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:rgba(255,255,255,.35);display:block;margin-bottom:6px;">Estado (para plano de aula oficial)</label>
-      <input id="dl-estado" type="text" placeholder="São Paulo" style="width:100%;padding:9px 12px;background:rgba(255,255,255,.05);border:1.5px solid rgba(255,255,255,.1);color:#fff;font-family:'Inter',sans-serif;font-size:.82rem;border-radius:8px;outline:none;transition:border-color .2s;" onfocus="this.style.borderColor='rgba(30,64,175,.5)'" onblur="this.style.borderColor='rgba(255,255,255,.1)'"/>
+    <div class="dl-field">
+      <label class="dl-label">Estado (para plano de aula oficial)</label>
+      <input id="dl-estado" type="text" class="dl-input" placeholder="São Paulo"/>
     </div>
-    <div style="margin-bottom:12px;">
-      <label style="font-size:.55rem;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:rgba(255,255,255,.35);display:block;margin-bottom:6px;">Logo da escola (PNG/JPG)</label>
-      <div style="display:flex;align-items:center;gap:10px;">
-        <label for="dl-logo" style="padding:8px 14px;background:rgba(255,255,255,.06);border:1.5px solid rgba(255,255,255,.1);border-radius:8px;font-size:.72rem;font-weight:600;color:rgba(255,255,255,.5);cursor:pointer;transition:all .2s;" onmouseover="this.style.borderColor='rgba(30,64,175,.4)';this.style.color='#fff'" onmouseout="this.style.borderColor='rgba(255,255,255,.1)';this.style.color='rgba(255,255,255,.5)'">Escolher arquivo</label>
+    <div class="dl-field-sm">
+      <label class="dl-label">Logo da escola (PNG/JPG)</label>
+      <div class="dl-file-row">
+        <label for="dl-logo" class="dl-file-label">Escolher arquivo</label>
         <input type="file" id="dl-logo" accept=".png,.jpg,.jpeg,.svg,.webp" style="display:none" onchange="previewLogo(this)"/>
-        <span id="dl-logo-nome" style="font-size:.72rem;color:rgba(255,255,255,.35);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">Nenhuma logo carregada</span>
-        <img id="dl-logo-preview" src="" alt="" style="display:none;width:36px;height:36px;object-fit:contain;border-radius:4px;background:rgba(255,255,255,.08);padding:2px;"/>
+        <span id="dl-logo-nome" class="dl-file-name">Nenhuma logo carregada</span>
+        <img id="dl-logo-preview" src="" alt="" class="dl-logo-preview"/>
       </div>
     </div>
-    <div style="margin-bottom:20px;">
-      <label style="font-size:.55rem;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:rgba(255,255,255,.35);display:block;margin-bottom:6px;">Brasão do Governo / Secretaria (PNG/JPG)</label>
-      <div style="display:flex;align-items:center;gap:10px;">
-        <label for="dl-logo-estado" style="padding:8px 14px;background:rgba(255,255,255,.06);border:1.5px solid rgba(255,255,255,.1);border-radius:8px;font-size:.72rem;font-weight:600;color:rgba(255,255,255,.5);cursor:pointer;transition:all .2s;" onmouseover="this.style.borderColor='rgba(30,64,175,.4)';this.style.color='#fff'" onmouseout="this.style.borderColor='rgba(255,255,255,.1)';this.style.color='rgba(255,255,255,.5)'">Escolher arquivo</label>
+    <div class="dl-field">
+      <label class="dl-label">Brasão do Governo / Secretaria (PNG/JPG)</label>
+      <div class="dl-file-row">
+        <label for="dl-logo-estado" class="dl-file-label">Escolher arquivo</label>
         <input type="file" id="dl-logo-estado" accept=".png,.jpg,.jpeg,.svg,.webp" style="display:none" onchange="previewLogoEstado(this)"/>
-        <span id="dl-logo-estado-nome" style="font-size:.72rem;color:rgba(255,255,255,.35);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">Nenhum brasão carregado</span>
-        <img id="dl-logo-estado-preview" src="" alt="" style="display:none;width:36px;height:36px;object-fit:contain;border-radius:4px;background:rgba(255,255,255,.08);padding:2px;"/>
+        <span id="dl-logo-estado-nome" class="dl-file-name">Nenhum brasão carregado</span>
+        <img id="dl-logo-estado-preview" src="" alt="" class="dl-logo-preview"/>
       </div>
     </div>
-    <div style="display:flex;align-items:center;gap:8px;margin-bottom:16px;">
-      <input type="checkbox" id="dl-salvar" checked style="accent-color:#1E40AF;width:14px;height:14px;"/>
-      <label for="dl-salvar" style="font-size:.7rem;color:rgba(255,255,255,.4);cursor:pointer;">Lembrar escola e professor para próximos downloads</label>
+    <div class="dl-checkbox-row">
+      <input type="checkbox" id="dl-salvar" class="dl-checkbox" checked/>
+      <label for="dl-salvar" class="dl-label-sm">Lembrar escola e professor para próximos downloads</label>
     </div>
-    <div style="display:flex;gap:10px;">
-      <button id="dl-btn-baixar" onclick="confirmarDownload()" style="flex:1;padding:13px;background:linear-gradient(135deg,#1E40AF,#1E3A8A);color:#fff;border:none;font-size:.78rem;font-weight:700;font-family:'Inter',sans-serif;border-radius:10px;cursor:pointer;transition:opacity .2s;box-shadow:0 4px 18px rgba(30,64,175,.4);" onmouseover="this.style.opacity='.9'" onmouseout="this.style.opacity='1'">↓ Baixar .DOCX</button>
-      <button onclick="fecharDownloadModal()" style="padding:13px 18px;background:transparent;color:rgba(255,255,255,.4);border:1.5px solid rgba(255,255,255,.1);font-size:.78rem;font-weight:600;font-family:'Inter',sans-serif;border-radius:10px;cursor:pointer;transition:all .2s;" onmouseover="this.style.borderColor='rgba(255,255,255,.3)';this.style.color='rgba(255,255,255,.7)'" onmouseout="this.style.borderColor='rgba(255,255,255,.1)';this.style.color='rgba(255,255,255,.4)'">Cancelar</button>
+    <div class="dl-actions">
+      <button id="dl-btn-baixar" class="dl-btn-primary" onclick="confirmarDownload()">↓ Baixar .DOCX</button>
+      <button class="dl-btn-cancel" onclick="fecharDownloadModal()">Cancelar</button>
     </div>
   </div>
 </div>
@@ -1165,10 +1237,10 @@
       if (d.logo_estado_path) document.getElementById('dl-logo-estado-nome').textContent = 'Brasão salvo no perfil ✓';
     }).catch(() => {});
 
-    document.getElementById('downloadModal').style.display = 'flex';
+    document.getElementById('downloadModal').classList.add('open');
   }
 
-  function fecharDownloadModal() { document.getElementById('downloadModal').style.display = 'none'; }
+  function fecharDownloadModal() { document.getElementById('downloadModal').classList.remove('open'); }
 
   function previewLogo(input) {
     const f = input.files[0]; if (!f) return;
