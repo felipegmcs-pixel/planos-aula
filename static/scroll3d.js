@@ -1,127 +1,129 @@
-/* scroll3d.js — ProfessorIA TorusKnot 3D (hero column only) */
 (function () {
   'use strict';
 
-  const container = document.getElementById('canvas-container');
-  if (!container) return;
+  const CONTAINER_ID = 'particle-canvas-container';
+  const NODE_COUNT   = 100;
+  const MAX_DIST     = 130;
+  const NODE_RADIUS  = 2.2;
+  const SPEED        = 0.35;
+  const MOUSE_RADIUS = 160;
+  const MOUSE_FORCE  = 0.018;
+  const COLOR_NODE   = '96,165,250';  // blue-400
+  const COLOR_LINE   = '30,64,175';   // blue-800
 
-  /* ── Renderer ── */
-  const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-  renderer.setClearColor(0x000000, 0);
-  renderer.shadowMap.enabled = true;
-  container.appendChild(renderer.domElement);
+  let canvas, ctx, W, H, nodes = [], mouse = { x: -9999, y: -9999 };
 
-  /* ── Scene + Camera ── */
-  const scene  = new THREE.Scene();
-  const camera = new THREE.PerspectiveCamera(45, 1, 0.1, 100);
-  camera.position.set(0, 0, 5.5);
-
-  /* ── Resize to container ── */
-  function resize() {
-    const w = container.clientWidth;
-    const h = container.clientHeight;
-    renderer.setSize(w, h, false);
-    camera.aspect = w / h;
-    camera.updateProjectionMatrix();
-  }
-  resize();
-  const ro = new ResizeObserver(resize);
-  ro.observe(container);
-
-  /* ── TorusKnot geometry ── */
-  const geo = new THREE.TorusKnotGeometry(1.1, 0.34, 180, 24, 2, 3);
-
-  /* Gradient vertex colors: blue at core, cyan at tips */
-  const pos    = geo.attributes.position;
-  const colArr = new Float32Array(pos.count * 3);
-  const cBlue = new THREE.Color('#1E40AF');
-  const cCyan = new THREE.Color('#67e8f9');
-  const tmpV  = new THREE.Vector3();
-  for (let i = 0; i < pos.count; i++) {
-    tmpV.fromBufferAttribute(pos, i);
-    const t = (tmpV.length() - 0.7) / 1.0;   // 0 = inner, 1 = outer
-    const c = cBlue.clone().lerp(cCyan, Math.min(Math.max(t, 0), 1));
-    colArr[i * 3]     = c.r;
-    colArr[i * 3 + 1] = c.g;
-    colArr[i * 3 + 2] = c.b;
-  }
-  geo.setAttribute('color', new THREE.BufferAttribute(colArr, 3));
-
-  const mat = new THREE.MeshStandardMaterial({
-    vertexColors: true,
-    metalness: 0.75,
-    roughness: 0.22,
-    envMapIntensity: 1.0,
-  });
-
-  const mesh = new THREE.Mesh(geo, mat);
-  scene.add(mesh);
-
-  /* ── Wireframe overlay (subtle) ── */
-  const wireMat = new THREE.MeshBasicMaterial({
-    color: 0x2563EB, wireframe: true, transparent: true, opacity: 0.04,
-  });
-  const wireMesh = new THREE.Mesh(geo, wireMat);
-  scene.add(wireMesh);
-
-  /* ── Lights ── */
-  // Ambient — very dim blue-tinted fill
-  const ambient = new THREE.AmbientLight(0x0d1a3a, 1.2);
-  scene.add(ambient);
-
-  // Key light — bright blue, upper-right
-  const keyLight = new THREE.PointLight(0x1E40AF, 120, 18);
-  keyLight.position.set(4, 4, 4);
-  scene.add(keyLight);
-
-  // Fill light — cyan, lower-left
-  const fillLight = new THREE.PointLight(0x67e8f9, 60, 14);
-  fillLight.position.set(-4, -2, 3);
-  scene.add(fillLight);
-
-  // Rim light — indigo, behind
-  const rimLight = new THREE.DirectionalLight(0x818cf8, 1.4);
-  rimLight.position.set(0, 2, -4);
-  scene.add(rimLight);
-
-  /* ── Mouse parallax ── */
-  let mouseX = 0, mouseY = 0;
-  let targetX = 0, targetY = 0;
-
-  window.addEventListener('mousemove', (e) => {
-    // Normalize to [-0.5, 0.5] relative to viewport
-    mouseX = (e.clientX / window.innerWidth  - 0.5) * 0.8;
-    mouseY = (e.clientY / window.innerHeight - 0.5) * 0.5;
-  });
-
-  /* ── Animate ── */
-  let t = 0;
-  function animate() {
-    requestAnimationFrame(animate);
-    t += 0.008;
-
-    // Smooth mouse tracking
-    targetX += (mouseX - targetX) * 0.06;
-    targetY += (mouseY - targetY) * 0.06;
-
-    // Auto rotation + mouse tilt
-    mesh.rotation.x = t * 0.32 + targetY * 0.6;
-    mesh.rotation.y = t * 0.5  + targetX * 0.8;
-    mesh.rotation.z = t * 0.18;
-
-    wireMesh.rotation.copy(mesh.rotation);
-
-    // Subtle breathing scale
-    const s = 1 + Math.sin(t * 1.1) * 0.018;
-    mesh.scale.setScalar(s);
-    wireMesh.scale.setScalar(s);
-
-    // Pulsing key light intensity
-    keyLight.intensity = 100 + Math.sin(t * 1.8) * 25;
-
-    renderer.render(scene, camera);
+  function Node() {
+    this.x  = Math.random() * W;
+    this.y  = Math.random() * H;
+    const a = Math.random() * Math.PI * 2;
+    this.vx = Math.cos(a) * SPEED * (0.4 + Math.random() * 0.6);
+    this.vy = Math.sin(a) * SPEED * (0.4 + Math.random() * 0.6);
+    this.r  = NODE_RADIUS * (0.7 + Math.random() * 0.6);
   }
 
-  animate();
+  function init(container) {
+    canvas = document.createElement('canvas');
+    canvas.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;display:block;';
+    container.style.position = 'relative';
+    container.appendChild(canvas);
+    ctx = canvas.getContext('2d');
+
+    resize(container);
+
+    const ro = new ResizeObserver(function () { resize(container); });
+    ro.observe(container);
+
+    container.addEventListener('mousemove', function (e) {
+      const rect = canvas.getBoundingClientRect();
+      mouse.x = e.clientX - rect.left;
+      mouse.y = e.clientY - rect.top;
+    });
+    container.addEventListener('mouseleave', function () {
+      mouse.x = -9999;
+      mouse.y = -9999;
+    });
+
+    loop();
+  }
+
+  function resize(container) {
+    W = container.clientWidth  || 400;
+    H = container.clientHeight || 400;
+    canvas.width  = W;
+    canvas.height = H;
+    nodes = Array.from({ length: NODE_COUNT }, function () { return new Node(); });
+  }
+
+  function loop() {
+    requestAnimationFrame(loop);
+    ctx.clearRect(0, 0, W, H);
+
+    // Update positions
+    for (var i = 0; i < nodes.length; i++) {
+      var n  = nodes[i];
+      var dx = mouse.x - n.x;
+      var dy = mouse.y - n.y;
+      var d  = Math.sqrt(dx * dx + dy * dy);
+
+      if (d < MOUSE_RADIUS && d > 0) {
+        var force = (1 - d / MOUSE_RADIUS) * MOUSE_FORCE;
+        n.vx += (dx / d) * force;
+        n.vy += (dy / d) * force;
+      }
+
+      var spd = Math.sqrt(n.vx * n.vx + n.vy * n.vy);
+      if (spd > SPEED * 2) {
+        n.vx = (n.vx / spd) * SPEED * 2;
+        n.vy = (n.vy / spd) * SPEED * 2;
+      }
+
+      n.x += n.vx;
+      n.y += n.vy;
+
+      if (n.x < -10)    n.x = W + 10;
+      else if (n.x > W + 10) n.x = -10;
+      if (n.y < -10)    n.y = H + 10;
+      else if (n.y > H + 10) n.y = -10;
+    }
+
+    // Draw connecting lines
+    for (var i = 0; i < nodes.length; i++) {
+      for (var j = i + 1; j < nodes.length; j++) {
+        var a  = nodes[i], b = nodes[j];
+        var dx = a.x - b.x, dy = a.y - b.y;
+        var d  = Math.sqrt(dx * dx + dy * dy);
+        if (d < MAX_DIST) {
+          var alpha = (1 - d / MAX_DIST) * 0.45;
+          ctx.beginPath();
+          ctx.strokeStyle = 'rgba(' + COLOR_LINE + ',' + alpha + ')';
+          ctx.lineWidth   = 0.8;
+          ctx.moveTo(a.x, a.y);
+          ctx.lineTo(b.x, b.y);
+          ctx.stroke();
+        }
+      }
+    }
+
+    // Draw nodes
+    for (var i = 0; i < nodes.length; i++) {
+      var n = nodes[i];
+      ctx.beginPath();
+      ctx.arc(n.x, n.y, n.r, 0, Math.PI * 2);
+      ctx.fillStyle = 'rgba(' + COLOR_NODE + ',0.85)';
+      ctx.fill();
+    }
+  }
+
+  function start() {
+    var container = document.getElementById(CONTAINER_ID);
+    if (!container) return;
+    init(container);
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', start);
+  } else {
+    start();
+  }
 })();
