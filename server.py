@@ -1974,7 +1974,12 @@ def api_chat():
                         return
                     print('Gemini retornou resposta vazia, tentando próximo motor...')
                 except Exception as e:
-                    print(f'Gemini streaming falhou, usando Claude: {e}')
+                    err_g = str(e)
+                    print(f'Gemini streaming falhou: {err_g}')
+                    # Se for erro de quota/rate limit do Gemini, já avisa e sai
+                    if any(x in err_g.lower() for x in ['quota', 'rate', '429', 'limit', 'resource exhausted']):
+                        yield f"data: {json.dumps({'erro': 'Limite do Gemini atingido. Tente novamente em alguns segundos.'})}\n\n"
+                        return
                 chunks = []  # reset
 
             # Claude streaming
