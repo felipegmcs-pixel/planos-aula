@@ -1550,7 +1550,7 @@ def gerar():
         (current_user.id, datetime.now().strftime('%d/%m/%Y %H:%M'),
          dados['professor'], dados['escola'], dados['disciplina'],
          dados['turma'], dados['num_aulas'], dados['periodo'],
-         dados['datas'], json.dumps(temas), file_bytes, nome)
+         dados['datas'], json.dumps(temas, ensure_ascii=False), file_bytes, nome)
     )
     conn.commit()
     conn.close()
@@ -1739,7 +1739,7 @@ def api_chat():
                         text = getattr(chunk, 'text', '') or ''
                         if text:
                             chunks.append(text)
-                            yield f"data: {json.dumps({'chunk': text})}\n\n"
+                            yield f"data: {json.dumps({'chunk': text}, ensure_ascii=False)}\n\n"
                     if chunks:  # só retorna se Gemini respondeu algo de fato
                         yield "data: [DONE]\n\n"
                         resposta = ''.join(chunks)
@@ -1766,7 +1766,7 @@ def api_chat():
                 ) as stream:
                     for text in stream.text_stream:
                         chunks.append(text)
-                        yield f"data: {json.dumps({'chunk': text})}\n\n"
+                        yield f"data: {json.dumps({'chunk': text}, ensure_ascii=False)}\n\n"
                 claude_ok = True
             except Exception as ce:
                 err = str(ce).lower()
@@ -1780,7 +1780,7 @@ def api_chat():
                 import requests as req_lib
                 openai_key = os.environ.get('OPENAI_API_KEY', '').strip()
                 if not openai_key:
-                    yield f"data: {json.dumps({'erro': 'Créditos da API esgotados. Tente novamente mais tarde.'})}\n\n"
+                    yield f"data: {json.dumps({'erro': 'Créditos da API esgotados. Tente novamente mais tarde.'}, ensure_ascii=False)}\n\n"
                     return
                 openai_msgs = [{'role': 'system', 'content': sistema}] + [
                     {'role': m['role'], 'content': m['content'] if isinstance(m['content'], str) else str(m['content'])}
@@ -1797,7 +1797,7 @@ def api_chat():
                     err_body = ro.text[:300]
                     logger.warning('OpenAI streaming erro %s: %s', ro.status_code, err_body)
                     msg = 'Limite de requisições atingido. Aguarde alguns segundos e tente novamente.' if ro.status_code == 429 else f'Serviço de IA indisponível ({ro.status_code}). Tente novamente mais tarde.'
-                    yield f"data: {json.dumps({'erro': msg})}\n\n"
+                    yield f"data: {json.dumps({'erro': msg}, ensure_ascii=False)}\n\n"
                     return
                 for line in ro.iter_lines():
                     if not line:
@@ -1811,12 +1811,12 @@ def api_chat():
                         parsed = json.loads(line)
                         if 'error' in parsed:
                             logger.warning('OpenAI stream erro: %s', parsed["error"])
-                            yield f"data: {json.dumps({'erro': parsed['error'].get('message', 'Erro OpenAI')[:200]})}\n\n"
+                            yield f"data: {json.dumps({'erro': parsed['error'].get('message', 'Erro OpenAI')[:200]}, ensure_ascii=False)}\n\n"
                             return
                         delta = parsed['choices'][0]['delta'].get('content', '')
                         if delta:
                             chunks.append(delta)
-                            yield f"data: {json.dumps({'chunk': delta})}\n\n"
+                            yield f"data: {json.dumps({'chunk': delta}, ensure_ascii=False)}\n\n"
                     except Exception:
                         pass
 
@@ -1831,7 +1831,7 @@ def api_chat():
 
         except Exception as e:
             logger.error('Erro no streaming de IA: %s', traceback.format_exc())
-            yield f"data: {json.dumps({'erro': str(e)})}\n\n"
+            yield f"data: {json.dumps({'erro': str(e)}, ensure_ascii=False)}\n\n"
 
     return Response(
         generate(),
