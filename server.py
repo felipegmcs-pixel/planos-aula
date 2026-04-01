@@ -38,12 +38,6 @@ from reportlab.lib.units import cm as rcm
 from reportlab.lib.styles import ParagraphStyle
 from reportlab.lib.enums import TA_CENTER, TA_LEFT
 from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer
-try:
-    import mercadopago as _mp
-    _mp_SDK = getattr(_mp, 'SDK', None)
-except ImportError:
-    _mp_SDK = None
-
 # ─── Configuração de Estilo de Imagem (Frente 4) ──────────────────────────────
 IMAGE_STYLE_MODIFIER = "Estilo: Traço Acadêmico-Inclusivo. Ilustração digital moderna, textura sutil de aquarela, linhas limpas, visual minimalista. PROIBIDO inserir textos, palavras ou letras dentro da imagem. Apenas a arte temática."
 
@@ -90,16 +84,10 @@ if GEMINI_API_KEY:
         logger.warning('Gemini não carregou: %s', _ge)
         _gemini_model = None
 
-MP_ACCESS_TOKEN = os.environ.get('MP_ACCESS_TOKEN', '')
-MP_PUBLIC_KEY   = os.environ.get('MP_PUBLIC_KEY', '')
-mp_sdk = _mp_SDK(MP_ACCESS_TOKEN) if (MP_ACCESS_TOKEN and _mp_SDK) else None
-
 NUPAY_MERCHANT_KEY   = os.environ.get('NUPAY_MERCHANT_KEY', '')
 NUPAY_MERCHANT_TOKEN = os.environ.get('NUPAY_MERCHANT_TOKEN', '')
 NUPAY_API_URL        = 'https://api.spinpay.com.br'   # produção
 # NUPAY_API_URL      = 'https://sandbox-api.spinpay.com.br'  # testes
-
-MP_WEBHOOK_SECRET = os.environ.get('MP_WEBHOOK_SECRET', '')
 
 SITE_URL    = os.environ.get('SITE_URL', 'http://localhost:5001')
 ADMIN_EMAIL = os.environ.get('ADMIN_EMAIL', '')
@@ -1297,202 +1285,6 @@ def stripe_webhook():
 
     return '', 200
 
-
-@app.route('/pagamento/criar/<plano_id>', methods=['POST'])
-@login_required
-def pagamento_criar(plano_id):
-    if plano_id not in PLANOS:
-        return redirect(url_for('chat'))
-
-    if not mp_sdk:
-        flash('Pagamento não configurado ainda. Entre em contato com o suporte.')
-        return redirect(url_for('chat'))
-
-    plano = PLANOS[plano_id]
-
-    preference_data = {
-        "items": [{
-            "title": f"Plano {plano['nome']} — Plano de Aula IA",
-            "quantity": 1,
-            "unit_price": plano['preco'],
-            "currency_id": "BRL"
-        }],
-        "payer": {"email": current_user.email},
-        "back_urls": {
-            "success": f"{SITE_URL}/pagamento/sucesso",
-            "failure": f"{SITE_URL}/pagamento/falha",
-            "pending": f"{SITE_URL}/pagamento/pendente"
-        },
-        "auto_return": "approved",
-        "notification_url": f"{SITE_URL}/pagamento/webhook",
-        "external_reference": f"{current_user.id}|{plano_id}"
-    }
-
-    result = mp_sdk.preference().create(preference_data)
-    pref   = result.get("response", {})
-
-    if "init_point" not in pref:
-        flash('Erro ao criar pagamento. Tente novamente.')
-        return redirect(url_for('chat'))
-
-    return redirect(pref["init_point"])
-
-@app.route('/pagamento/checkout/<plano_id>')
-@login_required
-def pagamento_checkout(plano_id):
-    if plano_id not in PLANOS:
-        return redirect(url_for('chat'))
-    plano = PLANOS[plano_id]
-    return render_template('pagamento_checkout.html',
-                           plano_id=plano_id,
-                           plano=plano,
-                           public_key=MP_PUBLIC_KEY,
-                           usuario_email=current_user.email)
-
-@app.route('/pagamento/processar', methods=['POST'])
-@login_required
-def pagamento_processar():
-    import requests as req
-    data = request.get_json(silent=True) or {}
-    plano_id          = data.get('plano_id')
-    token             = data.get('token')
-    payment_method_id = data.get('payment_method_id')
-    issuer_id         = data.get('issuer_id')
-
-    try:
-        installments = int(data.get('installments', 1))
-        if not 1 <= installments <= 12:
-            return jsonify({'error': 'Parcelamento deve ser entre 1 e 12'}), 400
-    except (ValueError, TypeError):
-        return jsonify({'error': 'Parcelamento inválido'}), 400
-
-    if not token or plano_id not in PLANOS:
-        return jsonify({'error': 'Dados inválidos'}), 400
-    if not MP_ACCESS_TOKEN:
-        return jsonify({'error': 'Pagamento não configurado'}), 500
-
-    plano = PLANOS[plano_id]
-    payment_data = {
-        'id': payment_method_id,
-        'type': 'credit_card',
-        'token': token,
-        'installments': installments,
-    }
-    if issuer_id:
-        payment_data['issuer_id'] = str(issuer_id)
-
-    order_body = {
-        'type': 'online',
-        'processing_mode': 'automatic',
-        'external_reference': f'{current_user.id}|{plano_id}',
-        'total_amount': f'{plano["preco"]:.2f}',
-        'payer': {'email': current_user.email},
-        'transactions': {
-            'payments': [{'amount': f'{plano["preco"]:.2f}', 'payment_method': payment_data}]
-        }
-    }
-
-    headers = {
-        'Authorization': f'Bearer {MP_ACCESS_TOKEN}',
-        'Content-Type': 'application/json',
-        'X-Idempotency-Key': f'{current_user.id}-{plano_id}-{token[:10]}',
-    }
-
-    resp   = req.post('https://api.mercadopago.com/v1/orders', json=order_body, headers=headers)
-    result = resp.json()
-
-    payments = result.get('transactions', {}).get('payments', [{}])
-    pay_status = payments[0].get('status', '') if payments else ''
-    order_status = result.get('status', '')
-
-    if order_status in ('processed',) or pay_status in ('processed', 'accredited'):
-        ativar_assinatura(current_user.id, plano_id)
-        return jsonify({'status': 'approved'})
-
-    detail = result.get('status_detail') or pay_status or order_status
-    return jsonify({'status': 'rejected', 'detail': detail})
-
-@app.route('/pagamento/webhook', methods=['POST'])
-def pagamento_webhook():
-    if not mp_sdk:
-        return jsonify({'ok': False}), 400
-
-    # ── Verificação de assinatura HMAC do Mercado Pago ────────────────────────
-    if MP_WEBHOOK_SECRET:
-        import hmac as _hmac, hashlib as _hashlib
-        xsig = request.headers.get('x-signature', '')
-        xrid = request.headers.get('x-request-id', '')
-        data_id = request.args.get('data.id', '') or (request.get_json(silent=True) or {}).get('data', {}).get('id', '')
-        ts = ''
-        v1 = ''
-        for part in xsig.split(','):
-            part = part.strip()
-            if part.startswith('ts='):
-                ts = part[3:]
-            elif part.startswith('v1='):
-                v1 = part[3:]
-        manifest = f'id:{data_id};request-id:{xrid};ts:{ts};'
-        expected = _hmac.new(MP_WEBHOOK_SECRET.encode(), manifest.encode(), _hashlib.sha256).hexdigest()
-        if not _hmac.compare_digest(expected, v1):
-            logger.warning('MP webhook: assinatura inválida — possível requisição forjada')
-            return jsonify({'ok': False}), 401
-    # ─────────────────────────────────────────────────────────────────────────
-
-    data = request.get_json(silent=True) or {}
-    topic = data.get('type') or request.args.get('type', '')
-    payment_id = data.get('data', {}).get('id') or request.args.get('id')
-
-    if topic != 'payment' or not payment_id:
-        return jsonify({'ok': True})
-
-    result  = mp_sdk.payment().get(payment_id)
-    payment = result.get("response", {})
-
-    if payment.get("status") != "approved":
-        return jsonify({'ok': True})
-
-    external_ref = payment.get("external_reference", "")
-    try:
-        usuario_id, plano_id = external_ref.split("|")
-        usuario_id = int(usuario_id)
-    except Exception:
-        return jsonify({'ok': False}), 400
-
-    if plano_id not in PLANOS:
-        return jsonify({'ok': False}), 400
-
-    ativar_assinatura(usuario_id, plano_id)
-    return jsonify({'ok': True})
-
-@app.route('/pagamento/sucesso')
-@login_required
-def pagamento_sucesso():
-    # Atualiza dados do usuário da sessão
-    conn = get_db()
-    row  = conn.execute('SELECT * FROM usuarios WHERE id = ?', (current_user.id,)).fetchone()
-    conn.close()
-    if row:
-        login_user(Usuario(row))
-    return render_template('pagamento_status.html',
-                           status='sucesso',
-                           titulo='Pagamento aprovado!',
-                           mensagem='Sua conta está ativa. Bom trabalho!')
-
-@app.route('/pagamento/pendente')
-@login_required
-def pagamento_pendente():
-    return render_template('pagamento_status.html',
-                           status='pendente',
-                           titulo='Pagamento pendente',
-                           mensagem='Assim que confirmarmos seu pagamento, sua conta será ativada.')
-
-@app.route('/pagamento/falha')
-@login_required
-def pagamento_falha():
-    return render_template('pagamento_status.html',
-                           status='falha',
-                           titulo='Pagamento não realizado',
-                           mensagem='Ocorreu um problema. Tente novamente ou escolha outro método.')
 
 # ─── NuPay ────────────────────────────────────────────────────────────────────
 
@@ -3583,56 +3375,6 @@ def nao_encontrado(e):
 @app.errorhandler(500)
 def erro_interno(e):
     return render_template('500.html'), 500
-
-@app.route('/api/pagamento/pix/<plano_id>', methods=['POST'])
-@login_required
-def criar_pix_mp(plano_id):
-    if plano_id not in PLANOS:
-        return jsonify({'erro': 'Plano inválido'}), 400
-    
-    plano = PLANOS[plano_id]
-    import uuid
-    import requests as req
-
-    idempotency_key = str(uuid.uuid4())
-
-    payment_data = {
-        "transaction_amount": float(plano['preco']),
-        "description": f"Plano {plano['nome']} - ProfessorIA",
-        "payment_method_id": "pix",
-        "payer": {
-            "email": current_user.email,
-            "first_name": current_user.nome.split()[0],
-        },
-        "external_reference": f"{current_user.id}|{plano_id}",
-        "notification_url": f"{SITE_URL}/pagamento/webhook"
-    }
-
-    headers = {
-        "Authorization": f"Bearer {MP_ACCESS_TOKEN}",
-        "X-Idempotency-Key": idempotency_key
-    }
-
-    try:
-        response = req.post(
-            "https://api.mercadopago.com/v1/payments",
-            json=payment_data,
-            headers=headers
-        )
-        res = response.json()
-
-        if response.status_code == 201:
-            pix_info = res['point_of_interaction']['transaction_data']
-            return jsonify({
-                'status': 'pending',
-                'qr_code_base64': pix_info['qr_code_base_64'],
-                'copy_paste': pix_info['qr_code']
-            })
-        else:
-            return jsonify({'erro': res.get('message', 'Erro ao gerar PIX')}), 400
-    except Exception as e:
-        return jsonify({'erro': str(e)}), 500
-
 
 # ═══════════════════════════════════════════════════════════════════════════════
 # BANCO DE QUESTÕES
