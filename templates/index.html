@@ -79,7 +79,7 @@
     /* NAV */
     nav{
       position:fixed;top:0;left:0;right:0;z-index:900;
-      height:64px;padding:0 48px;
+      height:88px;padding:0 5%;
       display:flex;align-items:center;justify-content:space-between;
       background:#ffffff;backdrop-filter:blur(20px);
       border-bottom:1px solid rgba(0,0,0,.08);
@@ -87,19 +87,14 @@
     }
     nav.lit{background:#ffffff;border-bottom-color:rgba(0,0,0,.08)}
     .nav-brand{
-      display:flex;align-items:center;gap:12px;flex:1;justify-content:center;
+      display:flex;align-items:center;gap:14px;flex:1;justify-content:center;
     }
     .nav-logo{
-      height:48px;width:auto;object-fit:contain;flex-shrink:0;
+      height:72px;width:auto;object-fit:contain;flex-shrink:0;
     }
     .nav-name{
-      font-size:2rem;font-weight:900;color:#0F172A;letter-spacing:-1px;
-      font-family:Inter,sans-serif;white-space:nowrap;
-      background:linear-gradient(135deg,#1E40AF 0%,#1E3A8A 100%);
-      -webkit-background-clip:text;
-      -webkit-text-fill-color:transparent;
-      background-clip:text;
-      font-variation-settings:"wght" 800;
+      font-size:2.8rem;font-weight:900;color:#050505;letter-spacing:-0.07em;
+      font-family:Inter,sans-serif;white-space:nowrap;text-transform:uppercase;
     }
     .logo{display:flex;align-items:center;text-decoration:none;gap:12px;transition:color .35s;vertical-align:middle}
     .logo-mark{display:flex;align-items:center;justify-content:center;width:44px;height:44px;border-radius:8px;background:#0f172a;flex-shrink:0;transition:background .35s,box-shadow .35s}
@@ -131,7 +126,7 @@
 
     /* SOCIAL PROOF STRIP */
     .social-strip{
-      position:fixed;top:64px;left:0;right:0;z-index:899;
+      position:fixed;top:88px;left:0;right:0;z-index:899;
       height:0;overflow:hidden;
       background:linear-gradient(90deg,#1e1b4b,#1a1840);
       border-bottom:1px solid rgba(30,64,175,.22);
@@ -144,7 +139,7 @@
     .social-strip-sep{color:rgba(30,64,175,.35);font-size:.5rem}
     .social-strip-star{color:#f59e0b;letter-spacing:1px}
     /* TICKER */
-    .ticker{margin-top:64px;height:40px;background:linear-gradient(90deg,#1e1b4b,#1a1840);border-bottom:1px solid rgba(30,64,175,.22);overflow:hidden;display:flex;align-items:center}
+    .ticker{margin-top:88px;height:40px;background:linear-gradient(90deg,#1e1b4b,#1a1840);border-bottom:1px solid rgba(30,64,175,.22);overflow:hidden;display:flex;align-items:center}
     .tick-track{display:flex;white-space:nowrap;animation:tick 32s linear infinite}
     .tick-i{font-size:.68rem;font-weight:600;letter-spacing:2px;text-transform:uppercase;color:rgba(165,180,252,.6);padding:0 20px}
     .tick-d{color:var(--amber);font-size:.4rem}
@@ -549,8 +544,10 @@
       .pricing-cube-a,.pricing-cube-b{display:none}
     }
     @media(max-width:768px){
-      nav{padding:0 20px;height:56px}
-      .ticker{margin-top:56px}
+      nav{padding:0 20px;height:64px}
+      .ticker{margin-top:64px}
+      .nav-logo{height:48px}
+      .nav-name{font-size:1.8rem}
       .hero-inner{padding:80px 24px 80px}
       .stats{grid-template-columns:repeat(2,1fr)}
       .stat:nth-child(2){border-right:none}
