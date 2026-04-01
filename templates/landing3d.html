@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>ProfessorIA — Experience</title>
+  <title>ProfessorIA — Planos de Aula com IA em Segundos</title>
   <link rel="icon" href="/static/logo-oficial.png"/>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet"/>
   <style>
@@ -34,7 +34,6 @@
       height: 100%;
       z-index: 0;
       pointer-events: none;
-      transition: opacity .4s;
     }
 
     /* ── NAV ── */
@@ -51,73 +50,69 @@
       backdrop-filter: blur(12px);
       background: rgba(3,7,18,.5);
     }
-
-    .nav-logo {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      text-decoration: none;
-    }
+    .nav-logo { display:flex; align-items:center; gap:6px; text-decoration:none; }
     .nav-logo img { height: 28px; }
-    .nav-logo .np { font-size: .95rem; font-weight: 800; color: #fff; letter-spacing: -.3px; }
-    .nav-logo .ni { font-size: .95rem; font-weight: 600; color: var(--cyan); letter-spacing: -.3px; }
-
+    .nav-logo .np { font-size:.95rem; font-weight:800; color:#fff; letter-spacing:-.3px; }
+    .nav-logo .ni { font-size:.95rem; font-weight:600; color:var(--cyan); letter-spacing:-.3px; }
     .nav-cta {
       padding: 9px 20px;
       background: rgba(30,64,175,.25);
       border: 1px solid rgba(30,64,175,.5);
-      color: #fff;
-      font-size: .8rem;
-      font-weight: 700;
-      font-family: 'Inter', sans-serif;
-      border-radius: 8px;
-      text-decoration: none;
+      color: #fff; font-size:.8rem; font-weight:700; font-family:'Inter',sans-serif;
+      border-radius: 8px; text-decoration:none;
       transition: background .2s, border-color .2s;
     }
-    .nav-cta:hover { background: rgba(30,64,175,.5); border-color: var(--cyan); }
+    .nav-cta:hover { background:rgba(30,64,175,.5); border-color:var(--cyan); }
 
-    /* ── SECTIONS ── */
-    #scroll-wrapper { position: relative; z-index: 1; }
+    /* ── SCROLL SECTIONS ── */
+    #scroll-wrapper { position:relative; z-index:1; }
 
     section {
       min-height: 100vh;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
+      display: flex; flex-direction:column; align-items:center; justify-content:center;
       text-align: center;
       padding: 80px 40px 60px;
       position: relative;
     }
+    section::after {
+      content:''; position:absolute; bottom:0; left:0; right:0; height:120px;
+      background: linear-gradient(to bottom, transparent, rgba(3,7,18,.4));
+      pointer-events: none;
+    }
 
-    /* ── CONTENT CARD — dark respiro behind text ── */
+    /* ── CONTENT CARD ── */
     .content-card {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      background: radial-gradient(circle, rgba(0,0,0,0.42) 0%, rgba(0,0,0,0) 72%);
+      display: flex; flex-direction:column; align-items:center;
+      background: radial-gradient(circle, rgba(0,0,0,0.45) 0%, rgba(0,0,0,0) 72%);
       padding: 48px 40px 44px;
       border-radius: 24px;
     }
 
+    /* ── TAGS ── */
     .s-tag {
-      font-size: .6rem;
-      font-weight: 700;
-      letter-spacing: 3px;
-      text-transform: uppercase;
-      color: rgba(103,232,249,.65);
-      margin-bottom: 20px;
-      display: flex;
-      align-items: center;
-      gap: 10px;
+      font-size:.6rem; font-weight:700; letter-spacing:3px; text-transform:uppercase;
+      color:rgba(103,232,249,.7); margin-bottom:20px;
+      display:flex; align-items:center; gap:10px;
     }
     .s-tag::before, .s-tag::after {
-      content: '';
-      width: 24px;
-      height: 1px;
-      background: rgba(103,232,249,.35);
+      content:''; width:24px; height:1px; background:rgba(103,232,249,.35);
     }
 
+    /* ── HERO TITLE (S1 — sentence, not single word) ── */
+    .hero-title {
+      font-size: clamp(2.2rem, 5.5vw, 4.2rem);
+      font-weight: 900;
+      letter-spacing: -2px;
+      line-height: 1.05;
+      margin-bottom: 22px;
+      background: linear-gradient(135deg, #fff 0%, #c7d2fe 45%, var(--cyan) 100%);
+      -webkit-background-clip: text;
+      background-clip: text;
+      -webkit-text-fill-color: transparent;
+      max-width: 700px;
+    }
+
+    /* ── BIG WORD TITLE (S2, S3, S4) ── */
     .s-title {
       font-size: clamp(3.5rem, 9vw, 8rem);
       font-weight: 900;
@@ -131,403 +126,303 @@
       text-shadow: none;
     }
 
-    /* ── LEGIBILITY FIX ── */
+    /* ── SUBTITLES ── */
     .s-sub {
       font-size: 1.05rem;
-      color: rgba(255, 255, 255, 0.95);
+      color: rgba(255,255,255,.95);
       font-weight: 500;
-      max-width: 420px;
+      max-width: 480px;
       line-height: 1.75;
-      text-shadow: 0px 4px 15px rgba(0, 0, 0, 0.9);
+      text-shadow: 0px 4px 15px rgba(0,0,0,.9);
     }
 
-    /* Section 1 scroll hint */
-    .scroll-hint {
-      position: absolute;
-      bottom: 36px;
-      left: 50%;
-      transform: translateX(-50%);
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 8px;
-      font-size: .55rem;
-      letter-spacing: 3px;
-      text-transform: uppercase;
-      color: rgba(255,255,255,.35);
-      animation: shint 2.2s ease-in-out infinite;
-    }
-    .scroll-hint::after {
-      content: '';
-      width: 1px;
-      height: 36px;
-      background: linear-gradient(to bottom, rgba(103,232,249,.5), transparent);
-    }
-    @keyframes shint {
-      0%, 100% { transform: translateX(-50%) translateY(0); opacity: .5; }
-      50%       { transform: translateX(-50%) translateY(7px); opacity: 1; }
-    }
-
-    /* Section stats */
-    .s-stats {
-      display: flex;
-      gap: 40px;
-      margin-top: 36px;
-    }
-    .stat-item {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 4px;
-    }
+    /* ── STATS ── */
+    .s-stats { display:flex; gap:40px; margin-top:36px; }
+    .stat-item { display:flex; flex-direction:column; align-items:center; gap:4px; }
     .stat-num {
-      font-size: 1.6rem;
-      font-weight: 900;
-      letter-spacing: -1px;
-      color: var(--cyan);
-      text-shadow: 0 0 20px rgba(103,232,249,.4);
+      font-size:1.6rem; font-weight:900; letter-spacing:-1px;
+      color:var(--cyan); text-shadow:0 0 20px rgba(103,232,249,.4);
     }
     .stat-lbl {
-      font-size: .62rem;
-      font-weight: 600;
-      letter-spacing: 1.5px;
-      text-transform: uppercase;
-      color: rgba(255,255,255,.55);
-      text-shadow: 0 2px 8px rgba(0,0,0,.8);
+      font-size:.62rem; font-weight:600; letter-spacing:1.5px; text-transform:uppercase;
+      color:rgba(255,255,255,.55); text-shadow:0 2px 8px rgba(0,0,0,.8);
     }
 
-    /* Section pills */
-    .s-pills {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 10px;
-      justify-content: center;
-      margin-top: 32px;
-      max-width: 500px;
-    }
+    /* ── PILLS ── */
+    .s-pills { display:flex; flex-wrap:wrap; gap:10px; justify-content:center; margin-top:32px; max-width:520px; }
     .pill {
-      padding: 6px 16px;
-      border: 1px solid rgba(167,139,250,.35);
-      border-radius: 100px;
-      font-size: .72rem;
-      font-weight: 600;
-      color: rgba(167,139,250,.85);
-      background: rgba(167,139,250,.08);
-      text-shadow: 0 2px 8px rgba(0,0,0,.6);
+      padding:6px 16px; border:1px solid rgba(167,139,250,.35); border-radius:100px;
+      font-size:.72rem; font-weight:600; color:rgba(167,139,250,.9);
+      background:rgba(167,139,250,.08); text-shadow:0 2px 8px rgba(0,0,0,.6);
     }
 
-    /* CTA button */
+    /* ── SCROLL HINT ── */
+    .scroll-hint {
+      position:absolute; bottom:36px; left:50%; transform:translateX(-50%);
+      display:flex; flex-direction:column; align-items:center; gap:8px;
+      font-size:.55rem; letter-spacing:3px; text-transform:uppercase;
+      color:rgba(255,255,255,.35); animation:shint 2.2s ease-in-out infinite;
+    }
+    .scroll-hint::after {
+      content:''; width:1px; height:36px;
+      background:linear-gradient(to bottom, rgba(103,232,249,.5), transparent);
+    }
+    @keyframes shint {
+      0%,100% { transform:translateX(-50%) translateY(0); opacity:.5; }
+      50%      { transform:translateX(-50%) translateY(7px); opacity:1; }
+    }
+
+    /* ── CTA BUTTONS ── */
     .cta-btn {
-      margin-top: 36px;
-      padding: 15px 36px;
+      margin-top: 32px;
+      padding: 16px 40px;
       background: linear-gradient(135deg, var(--blue), #1E3A8A);
-      color: #fff;
-      border: none;
-      border-radius: 12px;
-      font-size: .9rem;
-      font-weight: 700;
-      font-family: 'Inter', sans-serif;
-      cursor: pointer;
-      text-decoration: none;
-      box-shadow: 0 8px 40px rgba(30,64,175,.5), 0 0 80px rgba(30,64,175,.15);
+      color: #fff; border:none; border-radius:12px;
+      font-size:.95rem; font-weight:800; font-family:'Inter',sans-serif;
+      cursor:pointer; text-decoration:none;
+      box-shadow: 0 8px 40px rgba(30,64,175,.55), 0 0 80px rgba(30,64,175,.15);
       transition: opacity .2s, transform .2s, box-shadow .2s;
       display: inline-block;
     }
     .cta-btn:hover {
-      opacity: .92;
-      transform: translateY(-2px);
-      box-shadow: 0 12px 50px rgba(30,64,175,.6), 0 0 100px rgba(103,232,249,.1);
+      opacity:.92; transform:translateY(-2px);
+      box-shadow:0 12px 50px rgba(30,64,175,.65), 0 0 100px rgba(103,232,249,.12);
+    }
+    .cta-hint {
+      margin-top:12px; font-size:.7rem;
+      color:rgba(255,255,255,.35); text-shadow:0 2px 8px rgba(0,0,0,.8);
     }
 
-    /* Vignette at bottom of each section for readability */
-    section::after {
-      content: '';
-      position: absolute;
-      bottom: 0; left: 0; right: 0;
-      height: 120px;
-      background: linear-gradient(to bottom, transparent, rgba(3,7,18,.4));
-      pointer-events: none;
+    /* ── NEE HIGHLIGHT ── */
+    .nee-block {
+      margin-top: 28px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      justify-content: center;
+      max-width: 480px;
+    }
+    .nee-tag {
+      padding: 5px 14px;
+      border-radius: 100px;
+      font-size: .7rem;
+      font-weight: 600;
+      background: rgba(52,211,153,.08);
+      border: 1px solid rgba(52,211,153,.25);
+      color: rgba(52,211,153,.85);
+      text-shadow: 0 2px 6px rgba(0,0,0,.6);
     }
 
     /* ── SHOWCASE SECTION ── */
-    section.showcase {
-      background: rgba(3,7,18,.6);
-    }
+    section.showcase { background:rgba(3,7,18,.6); }
     .showcase-title {
-      font-size: clamp(1.6rem, 4vw, 2.6rem);
-      font-weight: 900;
-      letter-spacing: -1.5px;
-      line-height: 1.1;
-      margin-bottom: 12px;
-      background: linear-gradient(135deg, #fff 0%, #c7d2fe 60%, var(--cyan) 100%);
-      -webkit-background-clip: text;
-      background-clip: text;
-      -webkit-text-fill-color: transparent;
+      font-size:clamp(1.8rem,4vw,2.8rem); font-weight:900; letter-spacing:-1.5px; line-height:1.08;
+      margin-bottom:12px;
+      background:linear-gradient(135deg,#fff 0%,#c7d2fe 60%,var(--cyan) 100%);
+      -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent;
     }
     .showcase-sub {
-      font-size: .95rem;
-      color: rgba(255,255,255,.7);
-      font-weight: 500;
-      max-width: 440px;
-      line-height: 1.7;
-      text-shadow: 0 3px 10px rgba(0,0,0,.8);
-      margin-bottom: 40px;
+      font-size:.95rem; color:rgba(255,255,255,.75); font-weight:500;
+      max-width:460px; line-height:1.7; text-shadow:0 3px 10px rgba(0,0,0,.8); margin-bottom:40px;
     }
     .mockup-frame {
-      width: 100%;
-      max-width: 860px;
-      aspect-ratio: 16 / 9;
-      border-radius: 20px;
-      border: 1px solid rgba(255,255,255,.1);
-      background: rgba(15,23,42,.7);
-      backdrop-filter: blur(16px);
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      gap: 14px;
-      position: relative;
-      overflow: hidden;
-      box-shadow: 0 30px 80px rgba(0,0,0,.5), inset 0 1px 0 rgba(255,255,255,.06);
+      width:100%; max-width:860px; aspect-ratio:16/9; border-radius:20px;
+      border:1px solid rgba(255,255,255,.1); background:rgba(15,23,42,.7);
+      backdrop-filter:blur(16px); display:flex; flex-direction:column;
+      align-items:center; justify-content:center; gap:14px;
+      position:relative; overflow:hidden;
+      box-shadow:0 30px 80px rgba(0,0,0,.5), inset 0 1px 0 rgba(255,255,255,.06);
     }
     .mockup-frame::before {
-      content: '';
-      position: absolute;
-      inset: 0;
-      background: radial-gradient(ellipse 60% 50% at 50% 40%, rgba(30,64,175,.12) 0%, transparent 70%);
+      content:''; position:absolute; inset:0;
+      background:radial-gradient(ellipse 60% 50% at 50% 40%,rgba(30,64,175,.12) 0%,transparent 70%);
     }
-    .mockup-dots {
-      display: flex;
-      gap: 7px;
-      position: absolute;
-      top: 18px;
-      left: 22px;
+    .mockup-dots { display:flex; gap:7px; position:absolute; top:18px; left:22px; }
+    .mockup-dots span { width:10px; height:10px; border-radius:50%; background:rgba(255,255,255,.12); }
+    .mockup-icon { font-size:2.5rem; opacity:.15; }
+    .mockup-label { font-size:.72rem; font-weight:600; letter-spacing:2px; text-transform:uppercase; color:rgba(255,255,255,.18); }
+
+    /* ── TESTIMONIALS ── */
+    section.testimonials {
+      min-height: auto;
+      padding: 100px 40px 80px;
+      background: rgba(3,7,18,.75);
     }
-    .mockup-dots span {
-      width: 10px; height: 10px;
-      border-radius: 50%;
-      background: rgba(255,255,255,.12);
+    .testim-title {
+      font-size:clamp(1.8rem,4vw,2.6rem); font-weight:900; letter-spacing:-1.5px; line-height:1.1;
+      margin-bottom:10px;
+      background:linear-gradient(135deg,#fff 0%,#c7d2fe 55%,var(--cyan) 100%);
+      -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent;
     }
-    .mockup-icon {
-      font-size: 2.5rem;
-      opacity: .18;
+    .testim-sub {
+      font-size:.92rem; color:rgba(255,255,255,.55); font-weight:500;
+      margin-bottom:52px; text-shadow:0 2px 8px rgba(0,0,0,.6);
     }
-    .mockup-label {
-      font-size: .75rem;
-      font-weight: 600;
-      letter-spacing: 2px;
-      text-transform: uppercase;
-      color: rgba(255,255,255,.2);
+    .testim-grid {
+      display:flex; gap:20px; flex-wrap:wrap; justify-content:center;
+      width:100%; max-width:880px;
     }
+    .testim-card {
+      flex:1; min-width:240px; max-width:270px;
+      background:#0f172a; border:1px solid rgba(255,255,255,.07);
+      border-radius:16px; padding:28px 24px;
+      display:flex; flex-direction:column; gap:16px;
+      text-align:left; transition:transform .25s, border-color .25s;
+    }
+    .testim-card:hover { transform:translateY(-3px); border-color:rgba(103,232,249,.2); }
+    .testim-stars { color:#f59e0b; font-size:.85rem; letter-spacing:2px; }
+    .testim-text {
+      font-size:.85rem; line-height:1.65; color:rgba(255,255,255,.72); font-weight:400;
+      font-style:italic;
+    }
+    .testim-text::before { content:'"'; }
+    .testim-text::after  { content:'"'; }
+    .testim-author { display:flex; flex-direction:column; gap:2px; margin-top:auto; }
+    .testim-name { font-size:.8rem; font-weight:700; color:#fff; }
+    .testim-role { font-size:.7rem; font-weight:500; color:rgba(255,255,255,.35); }
 
     /* ── PRICING SECTION ── */
     section.pricing {
-      min-height: auto;
-      padding: 100px 40px 80px;
-      background: rgba(3,7,18,.8);
+      min-height:auto; padding:100px 40px 80px; background:rgba(3,7,18,.8);
     }
     .pricing-tag {
-      font-size: .6rem;
-      font-weight: 700;
-      letter-spacing: 3px;
-      text-transform: uppercase;
-      color: rgba(103,232,249,.65);
-      margin-bottom: 16px;
-      display: flex;
-      align-items: center;
-      gap: 10px;
+      font-size:.6rem; font-weight:700; letter-spacing:3px; text-transform:uppercase;
+      color:rgba(103,232,249,.65); margin-bottom:16px;
+      display:flex; align-items:center; gap:10px;
     }
     .pricing-tag::before, .pricing-tag::after {
-      content: '';
-      width: 24px;
-      height: 1px;
-      background: rgba(103,232,249,.35);
+      content:''; width:24px; height:1px; background:rgba(103,232,249,.35);
     }
     .pricing-title {
-      font-size: clamp(2rem, 5vw, 3.2rem);
-      font-weight: 900;
-      letter-spacing: -2px;
-      line-height: 1.05;
-      margin-bottom: 12px;
-      background: linear-gradient(135deg, #fff 0%, #c7d2fe 50%, var(--cyan) 100%);
-      -webkit-background-clip: text;
-      background-clip: text;
-      -webkit-text-fill-color: transparent;
+      font-size:clamp(2rem,5vw,3.2rem); font-weight:900; letter-spacing:-2px; line-height:1.05;
+      margin-bottom:10px;
+      background:linear-gradient(135deg,#fff 0%,#c7d2fe 50%,var(--cyan) 100%);
+      -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent;
     }
     .pricing-sub {
-      font-size: .95rem;
-      color: rgba(255,255,255,.6);
-      font-weight: 500;
-      margin-bottom: 56px;
-      text-shadow: 0 3px 10px rgba(0,0,0,.6);
+      font-size:.95rem; color:rgba(255,255,255,.55); font-weight:500;
+      margin-bottom:56px; text-shadow:0 3px 10px rgba(0,0,0,.6);
     }
     .cards-grid {
-      display: flex;
-      gap: 24px;
-      justify-content: center;
-      flex-wrap: wrap;
-      width: 100%;
-      max-width: 820px;
+      display:flex; gap:24px; justify-content:center; flex-wrap:wrap;
+      width:100%; max-width:820px;
     }
     .price-card {
-      flex: 1;
-      min-width: 280px;
-      max-width: 360px;
-      background: #0f172a;
-      border: 1px solid rgba(255,255,255,.08);
-      border-radius: 20px;
-      padding: 36px 32px;
-      display: flex;
-      flex-direction: column;
-      gap: 0;
-      text-align: left;
-      transition: transform .25s, box-shadow .25s;
+      flex:1; min-width:280px; max-width:360px;
+      background:#0f172a; border:1px solid rgba(255,255,255,.08);
+      border-radius:20px; padding:36px 32px;
+      display:flex; flex-direction:column;
+      text-align:left; transition:transform .25s, box-shadow .25s;
     }
-    .price-card:hover {
-      transform: translateY(-4px);
-    }
+    .price-card:hover { transform:translateY(-4px); }
     .price-card.featured {
-      border-color: rgba(30,64,175,.7);
-      box-shadow: 0 0 0 1px rgba(30,64,175,.4), 0 20px 60px rgba(30,64,175,.2);
-      background: linear-gradient(160deg, #0f172a 0%, #0d1a3a 100%);
+      border-color:rgba(30,64,175,.7);
+      box-shadow:0 0 0 1px rgba(30,64,175,.4), 0 20px 60px rgba(30,64,175,.2);
+      background:linear-gradient(160deg,#0f172a 0%,#0d1a3a 100%);
     }
     .card-badge {
-      font-size: .6rem;
-      font-weight: 700;
-      letter-spacing: 2px;
-      text-transform: uppercase;
-      color: var(--cyan);
-      background: rgba(103,232,249,.1);
-      border: 1px solid rgba(103,232,249,.2);
-      padding: 4px 12px;
-      border-radius: 100px;
-      align-self: flex-start;
-      margin-bottom: 20px;
+      font-size:.6rem; font-weight:700; letter-spacing:2px; text-transform:uppercase;
+      color:var(--cyan); background:rgba(103,232,249,.1); border:1px solid rgba(103,232,249,.2);
+      padding:4px 12px; border-radius:100px; align-self:flex-start; margin-bottom:20px;
     }
-    .card-title {
-      font-size: 1.1rem;
-      font-weight: 800;
-      color: #fff;
-      margin-bottom: 6px;
-      letter-spacing: -.3px;
-    }
+    .card-title { font-size:1.1rem; font-weight:800; color:#fff; margin-bottom:6px; letter-spacing:-.3px; }
     .card-price {
-      font-size: 2.8rem;
-      font-weight: 900;
-      letter-spacing: -2px;
-      color: #fff;
-      line-height: 1;
-      margin-bottom: 4px;
+      font-size:2.8rem; font-weight:900; letter-spacing:-2px; color:#fff; line-height:1; margin-bottom:4px;
     }
-    .card-price sup {
-      font-size: 1.1rem;
-      font-weight: 700;
-      letter-spacing: 0;
-      vertical-align: super;
-    }
-    .card-price-period {
-      font-size: .78rem;
-      color: rgba(255,255,255,.4);
-      font-weight: 500;
-      margin-bottom: 28px;
-    }
-    .card-divider {
-      width: 100%;
-      height: 1px;
-      background: rgba(255,255,255,.07);
-      margin-bottom: 24px;
-    }
+    .card-price sup { font-size:1.1rem; font-weight:700; letter-spacing:0; vertical-align:super; }
+    .card-price-period { font-size:.78rem; color:rgba(255,255,255,.4); font-weight:500; margin-bottom:28px; }
+    .card-divider { width:100%; height:1px; background:rgba(255,255,255,.07); margin-bottom:24px; }
     .card-features {
-      list-style: none;
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
-      margin-bottom: 32px;
-      flex: 1;
+      list-style:none; display:flex; flex-direction:column; gap:12px; margin-bottom:32px; flex:1;
     }
     .card-features li {
-      font-size: .84rem;
-      font-weight: 500;
-      color: rgba(255,255,255,.65);
-      display: flex;
-      align-items: flex-start;
-      gap: 10px;
-      line-height: 1.4;
+      font-size:.84rem; font-weight:500; color:rgba(255,255,255,.65);
+      display:flex; align-items:flex-start; gap:10px; line-height:1.4;
     }
-    .card-features li::before {
-      content: '✓';
-      color: #34d399;
-      font-weight: 700;
-      flex-shrink: 0;
-      margin-top: 1px;
-    }
-    .card-features li.muted { color: rgba(255,255,255,.28); }
-    .card-features li.muted::before { color: rgba(255,255,255,.18); content: '–'; }
+    .card-features li::before { content:'✓'; color:#34d399; font-weight:700; flex-shrink:0; margin-top:1px; }
+    .card-features li.muted { color:rgba(255,255,255,.25); }
+    .card-features li.muted::before { color:rgba(255,255,255,.18); content:'–'; }
     .card-btn {
-      width: 100%;
-      padding: 13px;
-      border-radius: 12px;
-      font-size: .88rem;
-      font-weight: 700;
-      font-family: 'Inter', sans-serif;
-      cursor: pointer;
-      text-decoration: none;
-      text-align: center;
-      display: block;
-      transition: opacity .2s, transform .2s;
+      width:100%; padding:13px; border-radius:12px;
+      font-size:.88rem; font-weight:700; font-family:'Inter',sans-serif;
+      cursor:pointer; text-decoration:none; text-align:center; display:block;
+      transition:opacity .2s, transform .2s;
     }
-    .card-btn:hover { opacity: .85; transform: translateY(-1px); }
-    .card-btn.outline {
-      background: transparent;
-      border: 1.5px solid rgba(255,255,255,.2);
-      color: rgba(255,255,255,.7);
-    }
+    .card-btn:hover { opacity:.85; transform:translateY(-1px); }
+    .card-btn.outline { background:transparent; border:1.5px solid rgba(255,255,255,.2); color:rgba(255,255,255,.7); }
     .card-btn.solid {
-      background: linear-gradient(135deg, #1E40AF, #1E3A8A);
-      border: none;
-      color: #fff;
-      box-shadow: 0 6px 28px rgba(30,64,175,.45);
+      background:linear-gradient(135deg,#1E40AF,#1E3A8A); border:none; color:#fff;
+      box-shadow:0 6px 28px rgba(30,64,175,.45);
     }
+
+    /* ── FAQ SECTION ── */
+    section.faq {
+      min-height:auto; padding:80px 40px 80px; background:rgba(3,7,18,.85);
+    }
+    .faq-title {
+      font-size:clamp(1.6rem,4vw,2.4rem); font-weight:900; letter-spacing:-1.5px;
+      margin-bottom:8px;
+      background:linear-gradient(135deg,#fff 0%,#c7d2fe 60%,var(--cyan) 100%);
+      -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent;
+    }
+    .faq-sub {
+      font-size:.9rem; color:rgba(255,255,255,.45); font-weight:500;
+      margin-bottom:44px;
+    }
+    .faq-list {
+      width:100%; max-width:680px; display:flex; flex-direction:column; gap:12px; text-align:left;
+    }
+    .faq-list details {
+      background:#0f172a; border:1px solid rgba(255,255,255,.08);
+      border-radius:14px; overflow:hidden;
+      transition:border-color .2s;
+    }
+    .faq-list details:hover { border-color:rgba(103,232,249,.2); }
+    .faq-list details[open] { border-color:rgba(30,64,175,.5); }
+    .faq-list summary {
+      padding:20px 24px; cursor:pointer;
+      font-size:.92rem; font-weight:700; color:rgba(255,255,255,.88);
+      list-style:none; display:flex; justify-content:space-between; align-items:center; gap:16px;
+      transition:color .2s;
+    }
+    .faq-list summary::-webkit-details-marker { display:none; }
+    .faq-list summary::after {
+      content:'+'; font-size:1.2rem; font-weight:300;
+      color:rgba(103,232,249,.6); flex-shrink:0; transition:transform .25s;
+    }
+    .faq-list details[open] summary::after { transform:rotate(45deg); }
+    .faq-list details[open] summary { color:#fff; }
+    .faq-answer {
+      padding:0 24px 22px; font-size:.87rem; line-height:1.75;
+      color:rgba(255,255,255,.6); font-weight:400;
+    }
+    .faq-answer strong { color:var(--cyan); font-weight:600; }
 
     /* ── FOOTER ── */
     footer {
-      position: relative;
-      z-index: 1;
-      padding: 28px 40px;
-      border-top: 1px solid rgba(255,255,255,.06);
-      background: rgba(3,7,18,.9);
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      flex-wrap: wrap;
-      gap: 12px;
+      position:relative; z-index:1; padding:28px 40px;
+      border-top:1px solid rgba(255,255,255,.06);
+      background:rgba(3,7,18,.95);
+      display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:12px;
     }
-    .footer-copy {
-      font-size: .75rem;
-      color: rgba(255,255,255,.25);
-      font-weight: 500;
-    }
-    .footer-links {
-      display: flex;
-      gap: 24px;
-    }
+    .footer-copy { font-size:.75rem; color:rgba(255,255,255,.22); font-weight:500; }
+    .footer-links { display:flex; gap:24px; }
     .footer-links a {
-      font-size: .75rem;
-      font-weight: 600;
-      color: rgba(255,255,255,.3);
-      text-decoration: none;
-      transition: color .2s;
+      font-size:.75rem; font-weight:600; color:rgba(255,255,255,.28);
+      text-decoration:none; transition:color .2s;
     }
-    .footer-links a:hover { color: rgba(255,255,255,.65); }
+    .footer-links a:hover { color:rgba(255,255,255,.65); }
 
-    @media (max-width: 600px) {
-      .s-stats { gap: 24px; }
-      nav { padding: 0 20px; }
-      section { padding: 80px 24px 60px; }
-      section.pricing { padding: 80px 24px 60px; }
-      footer { padding: 24px 24px; justify-content: center; text-align: center; }
-      .footer-links { justify-content: center; }
-      .content-card { padding: 36px 24px 32px; }
+    /* ── MOBILE ── */
+    @media (max-width:600px) {
+      nav { padding:0 20px; }
+      section { padding:80px 24px 60px; }
+      section.pricing, section.testimonials, section.faq { padding:72px 24px 60px; }
+      footer { padding:24px; justify-content:center; text-align:center; }
+      .footer-links { justify-content:center; }
+      .content-card { padding:36px 20px 32px; }
+      .s-stats { gap:22px; }
+      .hero-title { letter-spacing:-1px; }
     }
   </style>
 </head>
@@ -540,20 +435,22 @@
     <img src="{{ url_for('static', filename='logo-oficial.png') }}" alt="ProfessorIA"/>
     <span class="np">Professor</span><span class="ni">IA</span>
   </a>
-  <a class="nav-cta" href="/cadastro">Criar conta grátis →</a>
+  <a class="nav-cta" href="/cadastro">Começar Grátis →</a>
 </nav>
 
 <div id="scroll-wrapper">
 
-  <!-- S1: Inteligência -->
+  <!-- ── S1: HERO ── -->
   <section id="s1">
     <div class="content-card">
-      <div class="s-tag">ProfessorIA — Tecnologia Educacional</div>
-      <h1 class="s-title">Inteli&shy;gência</h1>
+      <div class="s-tag">5.000+ professores já economizam horas toda semana</div>
+      <h1 class="hero-title">Seus Planos de Aula da BNCC<br/>Prontos em Segundos.</h1>
       <p class="s-sub">
-        Uma rede neural construída para a educação brasileira.
-        Cada nó é um conceito. Cada conexão, uma competência da BNCC.
+        A primeira inteligência artificial feita para devolver o final de semana
+        do professor brasileiro. Do berçário ao ensino médio.
       </p>
+      <a href="/cadastro" class="cta-btn">Começar Agora — É Grátis</a>
+      <p class="cta-hint">5 gerações gratuitas por mês · Sem cartão de crédito</p>
       <div class="s-stats">
         <div class="stat-item"><span class="stat-num">+5k</span><span class="stat-lbl">Professores</span></div>
         <div class="stat-item"><span class="stat-num">30s</span><span class="stat-lbl">Por plano</span></div>
@@ -563,66 +460,71 @@
     <div class="scroll-hint">scroll</div>
   </section>
 
-  <!-- S2: Educação -->
+  <!-- ── S2: EDUCAÇÃO INCLUSIVA ── -->
   <section id="s2">
     <div class="content-card">
-      <div class="s-tag">Geração com IA</div>
-      <h1 class="s-title">Edu&shy;cação</h1>
+      <div class="s-tag">Educação Inclusiva Instantânea</div>
+      <h2 class="s-title">Inclu&shy;são</h2>
       <p class="s-sub">
-        Planos de aula, avaliações, mapas mentais e caça-palavras
-        gerados em segundos. Exportação profissional em DOCX.
+        Adapte qualquer atividade para alunos com necessidades especiais com
+        1 clique. O ProfessorIA gera versões inclusivas automaticamente,
+        sem esforço extra.
+      </p>
+      <div class="nee-block">
+        <span class="nee-tag">Dislexia</span>
+        <span class="nee-tag">TDAH</span>
+        <span class="nee-tag">TEA</span>
+        <span class="nee-tag">Altas Habilidades</span>
+        <span class="nee-tag">Deficiência Visual</span>
+        <span class="nee-tag">Deficiência Auditiva</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── S3: PROVAS E ATIVIDADES ── -->
+  <section id="s3">
+    <div class="content-card">
+      <div class="s-tag">Provas e Atividades Prontas</div>
+      <h2 class="s-title">Avalia&shy;ção</h2>
+      <p class="s-sub">
+        Questões com gabarito, caça-palavras temáticos e mapas mentais gerados em segundos.
+        Nunca mais passe horas montando uma prova do zero.
       </p>
       <div class="s-pills">
-        <span class="pill">Planos de Aula</span>
-        <span class="pill">Provas & Avaliações</span>
-        <span class="pill">Mapas Mentais</span>
+        <span class="pill">Questões com Gabarito</span>
         <span class="pill">Caça-palavras</span>
-        <span class="pill">Adaptação NEE</span>
+        <span class="pill">Mapas Mentais</span>
+        <span class="pill">Cruzadinhas</span>
+        <span class="pill">Atividades Lúdicas</span>
         <span class="pill">Planejamento Anual</span>
       </div>
     </div>
   </section>
 
-  <!-- S3: Conexão -->
-  <section id="s3">
-    <div class="content-card">
-      <div class="s-tag">Base Nacional Comum Curricular</div>
-      <h1 class="s-title">Cone&shy;xão</h1>
-      <p class="s-sub">
-        Cada material é automaticamente alinhado às competências e
-        habilidades da BNCC — do Ensino Fundamental ao Médio.
-      </p>
-    </div>
-  </section>
-
-  <!-- S4: Futuro -->
+  <!-- ── S4: CTA FINAL ── -->
   <section id="s4">
     <div class="content-card">
       <div class="s-tag">Comece hoje, grátis</div>
-      <h1 class="s-title">Futuro</h1>
+      <h2 class="s-title">Come&shy;ce</h2>
       <p class="s-sub">
-        O futuro da educação já começou. Junte-se a professores que transformam
-        horas de planejamento em segundos de criatividade.
+        Mais de 5.000 professores já transformaram o domingo.
+        Você está a 30 segundos do seu primeiro plano de aula completo.
       </p>
-      <a href="/cadastro" class="cta-btn">Começar gratuitamente →</a>
-      <p style="margin-top:16px;font-size:.7rem;color:rgba(255,255,255,.35);text-shadow:0 2px 8px rgba(0,0,0,.8)">
-        5 gerações gratuitas por mês · Sem cartão
-      </p>
+      <a href="/cadastro" class="cta-btn">Começar Agora — É Grátis</a>
+      <p class="cta-hint">Sem cartão · Cancele quando quiser</p>
     </div>
   </section>
 
-  <!-- S5: Interface na Prática -->
+  <!-- ── S5: SHOWCASE ── -->
   <section class="showcase" id="s5">
-    <div class="s-tag">Interface na Prática</div>
+    <div class="s-tag">Veja na Prática</div>
     <h2 class="showcase-title">Feito para a rotina<br/>do professor brasileiro.</h2>
     <p class="showcase-sub">
       Simples de usar, rápido de aprender. Gere, edite e exporte
       seus materiais sem sair da plataforma.
     </p>
     <div class="mockup-frame">
-      <div class="mockup-dots">
-        <span></span><span></span><span></span>
-      </div>
+      <div class="mockup-dots"><span></span><span></span><span></span></div>
       <div class="mockup-icon">🖥</div>
       <div class="mockup-label">Preview em breve</div>
     </div>
@@ -630,7 +532,54 @@
 
 </div><!-- /scroll-wrapper -->
 
-<!-- S6: Pricing (fora do scroll-wrapper para não interferir no GSAP) -->
+<!-- ── TESTIMONIALS ── -->
+<section class="testimonials" id="s-testim">
+  <div class="pricing-tag">O que os professores dizem</div>
+  <h2 class="testim-title">Aprovado em sala de aula.</h2>
+  <p class="testim-sub">De professores reais, para professores reais.</p>
+
+  <div class="testim-grid">
+
+    <div class="testim-card">
+      <div class="testim-stars">★★★★★</div>
+      <p class="testim-text">
+        Antes eu gastava o domingo inteiro fazendo planos. Agora faço em 3 minutos
+        e ainda sobra tempo para a família. Não consigo mais imaginar minha rotina sem o ProfessorIA.
+      </p>
+      <div class="testim-author">
+        <span class="testim-name">Profa. Maria S.</span>
+        <span class="testim-role">Ensino Fundamental — Matemática · SP</span>
+      </div>
+    </div>
+
+    <div class="testim-card">
+      <div class="testim-stars">★★★★★</div>
+      <p class="testim-text">
+        A adaptação para NEE me surpreendeu. Tenho alunos com TDAH e dislexia,
+        e a ferramenta gera versões inclusivas perfeitas em segundos. Economizei horas de retrabalho.
+      </p>
+      <div class="testim-author">
+        <span class="testim-name">Prof. Carlos M.</span>
+        <span class="testim-role">Educação Especial — EF II · RJ</span>
+      </div>
+    </div>
+
+    <div class="testim-card">
+      <div class="testim-stars">★★★★★</div>
+      <p class="testim-text">
+        As provas com gabarito prontas foram um divisor de águas. O alinhamento à BNCC
+        é automático e preciso. Nunca mais fiquei até meia-noite preparando avaliação.
+      </p>
+      <div class="testim-author">
+        <span class="testim-name">Profa. Ana L.</span>
+        <span class="testim-role">Ensino Médio — Ciências · MG</span>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ── PRICING ── -->
 <section class="pricing" id="s6">
   <div class="pricing-tag">Planos e Preços</div>
   <h2 class="pricing-title">Simples assim.</h2>
@@ -638,7 +587,6 @@
 
   <div class="cards-grid">
 
-    <!-- Card Gratuito -->
     <div class="price-card">
       <div class="card-title">Gratuito</div>
       <div class="card-price"><sup>R$</sup>0</div>
@@ -650,12 +598,12 @@
         <li>Exportação em DOCX</li>
         <li class="muted">Avaliações e provas</li>
         <li class="muted">Mapas mentais</li>
+        <li class="muted">Adaptação NEE</li>
         <li class="muted">Planejamento anual</li>
       </ul>
       <a href="/cadastro" class="card-btn outline">Criar conta grátis →</a>
     </div>
 
-    <!-- Card Pro -->
     <div class="price-card featured">
       <div class="card-badge">Mais popular</div>
       <div class="card-title">ProfessorIA Pro</div>
@@ -665,11 +613,11 @@
       <ul class="card-features">
         <li>Gerações ilimitadas</li>
         <li>Planos de aula completos</li>
-        <li>Avaliações e provas</li>
+        <li>Avaliações e provas com gabarito</li>
         <li>Mapas mentais automáticos</li>
-        <li>Caça-palavras e atividades</li>
+        <li>Caça-palavras e atividades lúdicas</li>
+        <li>Adaptação para NEE com 1 clique</li>
         <li>Planejamento anual BNCC</li>
-        <li>Adaptação para NEE</li>
         <li>Suporte prioritário</li>
       </ul>
       <a href="/cadastro" class="card-btn solid">Começar agora →</a>
@@ -678,16 +626,54 @@
   </div>
 </section>
 
+<!-- ── FAQ ── -->
+<section class="faq" id="s-faq">
+  <div class="pricing-tag">Perguntas Frequentes</div>
+  <h2 class="faq-title">Ainda tem dúvidas?</h2>
+  <p class="faq-sub">Respondemos as mais comuns aqui.</p>
+
+  <div class="faq-list">
+
+    <details>
+      <summary>Serve para a minha disciplina?</summary>
+      <p class="faq-answer">
+        Sim. O ProfessorIA funciona para <strong>qualquer disciplina do currículo brasileiro</strong> —
+        Português, Matemática, Ciências, História, Geografia, Artes, Educação Física e muito mais.
+        Do berçário ao 3º ano do Ensino Médio. Basta informar a disciplina, a série e o tema
+        e a IA cuida do resto.
+      </p>
+    </details>
+
+    <details>
+      <summary>Como funciona o alinhamento à BNCC?</summary>
+      <p class="faq-answer">
+        Cada material gerado é automaticamente vinculado às <strong>competências e habilidades da BNCC</strong>
+        correspondentes à série e disciplina informadas. O código BNCC aparece no documento exportado,
+        pronto para entregar à coordenação. Nenhuma configuração manual necessária.
+      </p>
+    </details>
+
+    <details>
+      <summary>Posso cancelar quando quiser?</summary>
+      <p class="faq-answer">
+        Sim, <strong>sem burocracia e sem multa</strong>. Você cancela com 1 clique a qualquer momento
+        diretamente no painel. Seu acesso Pro continua ativo até o fim do período já pago.
+        Após o cancelamento, você continua com a conta gratuita permanentemente.
+      </p>
+    </details>
+
+  </div>
+</section>
+
 <footer>
-  <span class="footer-copy">© 2026 ProfessorIA. Inspirado em quem ensina.</span>
+  <span class="footer-copy">© 2026 ProfessorIA — Inspirado em quem ensina.</span>
   <nav class="footer-links">
-    <a href="/termos">Termos</a>
+    <a href="/termos">Termos de Uso</a>
     <a href="/privacidade">Privacidade</a>
     <a href="mailto:contato@professoria.com.br">Contato</a>
   </nav>
 </footer>
 
-<!-- Three.js + GSAP via CDN -->
 <script src="https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
