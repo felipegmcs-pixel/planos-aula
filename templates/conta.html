@@ -10,9 +10,9 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet"/>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-    :root { --preto: #0a0a0a; --branco: #ffffff; --amarelo: #1E40AF; --cinza: #666660; --linha: rgba(0,0,0,0.09); --verde: #16a34a; }
+    :root { --preto: #0a0a0a; --branco: #ffffff; --azul-academico: #1E40AF; --cinza: #666660; --linha: rgba(0,0,0,0.09); --verde: #16a34a; }
     body { font-family: 'Inter', sans-serif; background: var(--branco); color: var(--preto); min-height: 100vh; }
-    ::selection { background: var(--amarelo); color: var(--preto); }
+    ::selection { background: var(--azul-academico); color: var(--preto); }
 
     nav { padding: 0 40px; height: 56px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--linha); position: sticky; top: 0; z-index: 10; background: rgba(255,255,255,0.97); backdrop-filter: blur(12px); }
     .nav-logo { font-size: 0.72rem; font-weight: 900; letter-spacing: 3px; text-transform: uppercase; color: var(--preto); text-decoration: none; display: flex; align-items: center; gap: 10px; }
@@ -22,8 +22,8 @@
     .nav-link:hover { color: var(--preto); }
 
     .page-header { padding: 60px 40px 48px; border-bottom: 1px solid var(--linha); max-width: 800px; margin: 0 auto; }
-    .page-tag { font-size: 0.55rem; font-weight: 700; letter-spacing: 3px; text-transform: uppercase; color: var(--amarelo); margin-bottom: 20px; display: flex; align-items: center; gap: 12px; }
-    .page-tag::before { content: ''; width: 24px; height: 1px; background: var(--amarelo); }
+    .page-tag { font-size: 0.55rem; font-weight: 700; letter-spacing: 3px; text-transform: uppercase; color: var(--azul-academico); margin-bottom: 20px; display: flex; align-items: center; gap: 12px; }
+    .page-tag::before { content: ''; width: 24px; height: 1px; background: var(--azul-academico); }
     h1 { font-size: clamp(2rem, 5vw, 3.2rem); font-weight: 900; letter-spacing: -2.5px; text-transform: uppercase; line-height: 1; }
 
     .container { max-width: 800px; margin: 0 auto; padding: 0 40px 100px; }
@@ -55,7 +55,7 @@
     input::placeholder { color: #bbb; font-weight: 300; }
 
     .btn { display: inline-flex; align-items: center; gap: 8px; padding: 12px 24px; background: var(--preto); color: var(--branco); border: none; font-size: 0.62rem; font-weight: 900; font-family: 'Inter', sans-serif; letter-spacing: 2.5px; text-transform: uppercase; cursor: pointer; transition: background .2s; text-decoration: none; }
-    .btn:hover { background: var(--amarelo); color: var(--preto); }
+    .btn:hover { background: var(--azul-academico); color: var(--preto); }
     .btn-ghost { background: transparent; color: var(--preto); border: 1px solid var(--linha); }
     .btn-ghost:hover { background: var(--hover-bg); border-color: var(--linha-f); }
     .acoes { display: flex; gap: 10px; flex-wrap: wrap; }

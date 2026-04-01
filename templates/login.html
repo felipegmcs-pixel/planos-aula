@@ -68,8 +68,8 @@
     h1{font-size:clamp(2rem,5vw,2.8rem);font-weight:900;letter-spacing:-1.5px;line-height:1.05;color:var(--text);margin-bottom:36px}
 
     .alert{padding:12px 16px;font-size:.82rem;font-weight:600;border-radius:var(--r);margin-bottom:24px}
-    .alert-erro{background:rgba(185,28,28,.06);border:1px solid rgba(185,28,28,.2);color:#991b1b}
-    .alert-ok{background:rgba(5,150,105,.06);border:1px solid rgba(5,150,105,.2);color:#065f46}
+    .alert-erro, .alert-error{background:rgba(185,28,28,.06);border:1px solid rgba(185,28,28,.2);color:#991b1b}
+    .alert-ok, .alert-success{background:rgba(5,150,105,.06);border:1px solid rgba(5,150,105,.2);color:#065f46}
 
     .field{margin-bottom:24px}
     label{font-size:.72rem;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--text2);display:block;margin-bottom:8px}
@@ -138,8 +138,10 @@
       <div class="box-step">Entrar na conta</div>
       <h1>Olá,<br/>professor.</h1>
 
-      {% with messages = get_flashed_messages() %}
-        {% if messages %}<div class="alert alert-erro">{{ messages[0] }}</div>{% endif %}
+      {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+          <div class="alert alert-{{ messages[0][0] }}">{{ messages[0][1] }}</div>
+        {% endif %}
       {% endwith %}
 
       <form method="POST">

@@ -10,10 +10,10 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet"/>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-    :root { --preto: #0a0a0a; --branco: #ffffff; --amarelo: #1E40AF; --cinza: #666660; --linha: rgba(0,0,0,0.09); }
+    :root { --preto: #0a0a0a; --branco: #ffffff; --azul-academico: #1E40AF; --cinza: #666660; --linha: rgba(0,0,0,0.09); }
     html, body { height: 100%; }
     body { font-family: 'Inter', sans-serif; background: var(--preto); color: var(--branco); display: flex; flex-direction: column; }
-    ::selection { background: var(--amarelo); color: var(--preto); }
+    ::selection { background: var(--azul-academico); color: var(--preto); }
 
     nav {
       padding: 0 40px; height: 56px;
@@ -34,14 +34,14 @@
       letter-spacing: -8px; line-height: 1;
       color: var(--branco); margin-bottom: 8px;
     }
-    .code span { color: var(--amarelo); }
+    .code span { color: var(--azul-academico); }
     .tag { font-size: 0.52rem; font-weight: 700; letter-spacing: 3px; text-transform: uppercase; color: rgba(255,255,255,0.35); margin-bottom: 24px; display: flex; align-items: center; gap: 10px; }
     .tag::after { content: ''; flex: 1; max-width: 32px; height: 1px; background: rgba(255,255,255,0.2); }
     .msg { font-size: clamp(1.4rem, 4vw, 2.2rem); font-weight: 900; letter-spacing: -1.5px; text-transform: uppercase; line-height: 1.05; margin-bottom: 16px; }
     .desc { font-size: 0.78rem; color: rgba(255,255,255,0.45); line-height: 1.8; margin-bottom: 40px; }
     .btn {
       display: inline-block; padding: 14px 32px;
-      background: var(--amarelo); color: var(--preto);
+      background: var(--azul-academico); color: var(--preto);
       font-size: 0.62rem; font-weight: 900;
       font-family: 'Inter', sans-serif; letter-spacing: 2.5px;
       text-transform: uppercase; text-decoration: none;

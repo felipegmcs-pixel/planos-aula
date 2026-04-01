@@ -27,6 +27,7 @@
       --sb-active: rgba(30,64,175,.09);
       --sb-line: rgba(17,24,39,.07);
       --sidebar-w: 240px;
+      --card-bg: #ffffff;
     }
     [data-theme="dark"] {
       --bg: #0b0d14;
@@ -42,6 +43,7 @@
       --sb-text: rgba(255,255,255,.5);
       --sb-active: rgba(30,64,175,.2);
       --sb-line: rgba(255,255,255,.07);
+      --card-bg: #1a1c2e;
     }
     html, body { height: 100%; font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); overflow: hidden; }
     ::selection { background: #ede9fe; color: var(--indigo); }
@@ -177,7 +179,7 @@
       transition: filter .3s, transform .3s;
       
     }
-    .pia-mark svg g {stroke="currentColor" !important; }
+    .pia-mark svg g { stroke: currentColor; }
     .pia-mark svg g circle { fill: #0f172a !important; }
     .pia-mark svg g path { stroke: #0f172a !important; }
     [data-theme="dark"] .pia-mark {

@@ -4,7 +4,16 @@ import re
 import json
 import secrets
 import smtplib
+import logging
 from email.mime.text import MIMEText
+
+# ─── Logging estruturado ──────────────────────────────────────────────────────
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s [%(levelname)s] %(message)s',
+    datefmt='%Y-%m-%d %H:%M:%S'
+)
+logger = logging.getLogger('professorIA')
 import psycopg2
 import psycopg2.extras
 from datetime import datetime, timedelta
@@ -51,7 +60,7 @@ client = Anthropic(api_key=os.environ.get('ANTHROPIC_API_KEY'), timeout=120.0)
 OPENAI_API_KEY = os.environ.get('OPENAI_API_KEY', '')
 client_openai = OpenAI(api_key=os.environ.get('OPENAI_API_KEY')) if os.environ.get('OPENAI_API_KEY') else None
 MOTOR_IA = os.environ.get('MOTOR_IA', 'claude').lower()  # 'claude' ou 'openai'
-print(f'✓ Motor IA configurado: {MOTOR_IA}')
+logger.info('Motor IA configurado: %s', MOTOR_IA)
 
 # ── Gemini (Google) — usado se GEMINI_API_KEY estiver configurada ──────────────
 GEMINI_API_KEY = os.environ.get('GEMINI_API_KEY', '')
@@ -61,9 +70,9 @@ if GEMINI_API_KEY:
         import google.generativeai as genai
         genai.configure(api_key=GEMINI_API_KEY)
         _gemini_model = genai  # referência ao módulo configurado
-        print('✓ Gemini configurado com sucesso')
+        logger.info('Gemini configurado com sucesso')
     except Exception as _ge:
-        print(f'⚠ Gemini não carregou: {_ge}')
+        logger.warning('Gemini não carregou: %s', _ge)
         _gemini_model = None
 
 MP_ACCESS_TOKEN = os.environ.get('MP_ACCESS_TOKEN', '')
@@ -315,7 +324,7 @@ def chamar_ia_chat(sistema, messages):
                 return resp.choices[0].message.content
         
         except Exception as e:
-            print(f'⚠ Erro com {motor}: {str(e)[:100]}')
+            logger.warning('Erro com motor %s: %s', motor, str(e)[:200])
             if motor == motores[-1]:
                 raise RuntimeError(f'Todos os motores falharam. Último erro: {str(e)}')
             continue
@@ -356,11 +365,11 @@ def chamar_ia_simples(prompt):
                 return resp.choices[0].message.content
         
         except Exception as e:
-            print(f'⚠ Erro com {motor}: {str(e)[:100]}')
+            logger.warning('Erro com motor %s: %s', motor, str(e)[:200])
             if motor == motores[-1]:
                 raise RuntimeError(f'Todos os motores falharam. Último erro: {str(e)}')
             continue
-    
+
     raise RuntimeError('Nenhum motor de IA disponível (configure ANTHROPIC_API_KEY ou OPENAI_API_KEY)')
 
 
@@ -523,6 +532,14 @@ def init_db():
             criado_em TEXT
         )
     ''')
+    # ─── Índices de performance ────────────────────────────────────────────────
+    conn.execute('CREATE INDEX IF NOT EXISTS idx_historico_usuario ON historico(usuario_id)')
+    conn.execute('CREATE INDEX IF NOT EXISTS idx_chat_messages_usuario ON chat_messages(usuario_id)')
+    conn.execute('CREATE INDEX IF NOT EXISTS idx_questions_bank_usuario ON questions_bank(usuario_id)')
+    conn.execute('CREATE INDEX IF NOT EXISTS idx_questions_bank_disciplina ON questions_bank(disciplina)')
+    conn.execute('CREATE INDEX IF NOT EXISTS idx_questions_bank_ano_serie ON questions_bank(ano_serie)')
+    conn.execute('CREATE INDEX IF NOT EXISTS idx_planejamento_usuario ON planejamento_anual(usuario_id)')
+    conn.execute('CREATE INDEX IF NOT EXISTS idx_reset_tokens_token ON reset_tokens(token)')
     conn.commit()
     conn.close()
 
@@ -542,8 +559,11 @@ class Usuario(UserMixin):
         self.onboarding_done = row.get('onboarding_done', 0) or 0
         self.escola_nome     = row.get('escola_nome', '') or ''
         self.professor_nome  = row.get('professor_nome', '') or ''
-        self.logo_path       = row.get('logo_path', '') or ''
-        self.logo_estado_path = row.get('logo_estado_path', '') or ''
+        # Valida prefixo para evitar path traversal caso o DB seja comprometido
+        _logo = row.get('logo_path', '') or ''
+        self.logo_path = _logo if _logo.startswith('static/logos/') else ''
+        _logo_e = row.get('logo_estado_path', '') or ''
+        self.logo_estado_path = _logo_e if _logo_e.startswith('static/logos/') else ''
         self.escola_id       = row.get('escola_id', None)
         self.papel           = row.get('papel', 'professor') or 'professor'
 
@@ -567,6 +587,25 @@ def load_user(user_id):
     row = conn.execute('SELECT * FROM usuarios WHERE id = ?', (user_id,)).fetchone()
     conn.close()
     return Usuario(row) if row else None
+
+# ─── Helper: ativar assinatura ────────────────────────────────────────────────
+
+def ativar_assinatura(usuario_id, plano_id):
+    """Ativa ou renova assinatura de um usuário. Usado por todos os gateways."""
+    if plano_id not in PLANOS:
+        print(f'⚠ ativar_assinatura: plano inválido "{plano_id}" para usuário {usuario_id}')
+        return False
+    dias = PLANOS[plano_id]['dias']
+    valido_ate = (datetime.now() + timedelta(days=dias)).strftime('%Y-%m-%d')
+    conn = get_db()
+    conn.execute(
+        'UPDATE usuarios SET ativo = 1, plano = ?, valido_ate = ? WHERE id = ?',
+        (plano_id, valido_ate, usuario_id)
+    )
+    conn.commit()
+    conn.close()
+    logger.info('Assinatura ativada: usuário %s → plano %s até %s', usuario_id, plano_id, valido_ate)
+    return True
 
 # ─── Helper: verificar assinatura ─────────────────────────────────────────────
 
@@ -596,7 +635,7 @@ def enviar_email(to, subject, body_html):
             s.sendmail(FROM_EMAIL, [to], msg.as_string())
         return True
     except Exception as e:
-        print(f'Email error: {e}')
+        logger.error('Falha ao enviar email para %s: %s', to, e)
         return False
 
 # ─── PDF (reportlab) ──────────────────────────────────────────────────────────
@@ -1071,13 +1110,14 @@ def redefinir_senha(token):
     conn = get_db()
     row = conn.execute(
         "SELECT * FROM reset_tokens WHERE token = ? AND usado = 0", (token,)).fetchone()
+    # Mensagem unificada para token inválido/expirado/já usado — evita enumeração de tokens
     if not row:
         conn.close()
-        flash('Link inválido ou já utilizado.', 'erro')
-        return redirect(url_for('login'))
+        flash('Link inválido, expirado ou já utilizado. Solicite um novo.', 'erro')
+        return redirect(url_for('esqueci_senha'))
     if datetime.strptime(row['expira_em'], '%Y-%m-%d %H:%M:%S') < datetime.now():
         conn.close()
-        flash('Link expirado. Solicite um novo.', 'erro')
+        flash('Link inválido, expirado ou já utilizado. Solicite um novo.', 'erro')
         return redirect(url_for('esqueci_senha'))
     if request.method == 'POST':
         senha = request.form.get('senha', '')
@@ -1154,22 +1194,13 @@ def stripe_sucesso():
             session = stripe_lib.checkout.Session.retrieve(session_id)
             if session.payment_status in ('paid', 'no_payment_required'):
                 plano_id = session.metadata.get('plano_id', 'basic')
-                plano    = PLANOS.get(plano_id, PLANOS['basic'])
-                valido   = (datetime.now() + timedelta(days=plano['dias'])).strftime('%Y-%m-%d')
-                conn = get_db()
-                conn.execute(
-                    "UPDATE usuarios SET plano=?, ativo=1, valido_ate=? WHERE id=?",
-                    (plano_id, valido, current_user.id)
-                )
-                conn.commit()
+                ativar_assinatura(current_user.id, plano_id)
                 # Refresh session user so chat/banner updates immediately
+                conn = get_db()
                 row = conn.execute('SELECT * FROM usuarios WHERE id=?', (current_user.id,)).fetchone()
                 conn.close()
                 if row:
                     login_user(Usuario(row))
-            else:
-                conn = get_db()
-                conn.close()
         except Exception:
             pass
     return render_template('pagamento_status.html',
@@ -1194,15 +1225,7 @@ def stripe_webhook():
         plano_id = session.get('metadata', {}).get('plano_id', 'basic')
         uid      = session.get('metadata', {}).get('usuario_id')
         if uid and plano_id in PLANOS:
-            plano  = PLANOS[plano_id]
-            valido = (datetime.now() + timedelta(days=plano['dias'])).strftime('%Y-%m-%d')
-            conn   = get_db()
-            conn.execute(
-                "UPDATE usuarios SET plano=?, ativo=1, valido_ate=? WHERE id=?",
-                (plano_id, valido, int(uid))
-            )
-            conn.commit()
-            conn.close()
+            ativar_assinatura(int(uid), plano_id)
 
     elif event['type'] in ('customer.subscription.deleted', 'customer.subscription.paused'):
         sub = event['data']['object']
@@ -1280,11 +1303,17 @@ def pagamento_checkout(plano_id):
 def pagamento_processar():
     import requests as req
     data = request.get_json(silent=True) or {}
-    plano_id           = data.get('plano_id')
-    token              = data.get('token')
-    payment_method_id  = data.get('payment_method_id')
-    installments       = int(data.get('installments', 1))
-    issuer_id          = data.get('issuer_id')
+    plano_id          = data.get('plano_id')
+    token             = data.get('token')
+    payment_method_id = data.get('payment_method_id')
+    issuer_id         = data.get('issuer_id')
+
+    try:
+        installments = int(data.get('installments', 1))
+        if not 1 <= installments <= 12:
+            return jsonify({'error': 'Parcelamento deve ser entre 1 e 12'}), 400
+    except (ValueError, TypeError):
+        return jsonify({'error': 'Parcelamento inválido'}), 400
 
     if not token or plano_id not in PLANOS:
         return jsonify({'error': 'Dados inválidos'}), 400
@@ -1326,13 +1355,7 @@ def pagamento_processar():
     order_status = result.get('status', '')
 
     if order_status in ('processed',) or pay_status in ('processed', 'accredited'):
-        dias = plano['dias']
-        valido_ate = (datetime.now() + timedelta(days=dias)).strftime('%Y-%m-%d')
-        conn = get_db()
-        conn.execute('UPDATE usuarios SET ativo = 1, plano = ?, valido_ate = ? WHERE id = ?',
-                     (plano_id, valido_ate, current_user.id))
-        conn.commit()
-        conn.close()
+        ativar_assinatura(current_user.id, plano_id)
         return jsonify({'status': 'approved'})
 
     detail = result.get('status_detail') or pay_status or order_status
@@ -1366,17 +1389,7 @@ def pagamento_webhook():
     if plano_id not in PLANOS:
         return jsonify({'ok': False}), 400
 
-    dias = PLANOS[plano_id]['dias']
-    valido_ate = (datetime.now() + timedelta(days=dias)).strftime('%Y-%m-%d')
-
-    conn = get_db()
-    conn.execute(
-        'UPDATE usuarios SET ativo = 1, plano = ?, valido_ate = ? WHERE id = ?',
-        (plano_id, valido_ate, usuario_id)
-    )
-    conn.commit()
-    conn.close()
-
+    ativar_assinatura(usuario_id, plano_id)
     return jsonify({'ok': True})
 
 @app.route('/pagamento/sucesso')
@@ -1502,17 +1515,7 @@ def nupay_webhook():
     if plano_id not in PLANOS:
         return jsonify({'ok': False}), 400
 
-    dias       = PLANOS[plano_id]['dias']
-    valido_ate = (datetime.now() + timedelta(days=dias)).strftime('%Y-%m-%d')
-
-    conn = get_db()
-    conn.execute(
-        'UPDATE usuarios SET ativo = 1, plano = ?, valido_ate = ? WHERE id = ?',
-        (plano_id, valido_ate, usuario_id)
-    )
-    conn.commit()
-    conn.close()
-
+    ativar_assinatura(usuario_id, plano_id)
     return jsonify({'ok': True})
 
 @app.route('/pagamento/nupay/sucesso')
@@ -1972,9 +1975,9 @@ def api_chat():
                         )
                         conn2.commit(); conn2.close()
                         return
-                    print('Gemini retornou resposta vazia, tentando próximo motor...')
+                    logger.warning('Gemini retornou resposta vazia, tentando próximo motor')
                 except Exception as e:
-                    print(f'Gemini streaming falhou, tentando próximo motor: {str(e)}')
+                    logger.warning('Gemini streaming falhou, tentando próximo motor: %s', e)
                 chunks = []  # reset — sempre tenta Claude/OpenAI se Gemini falhar
 
             # Claude streaming
@@ -1994,7 +1997,7 @@ def api_chat():
                 err = str(ce).lower()
                 if not any(x in err for x in ['credit', 'balance', 'payment', '400', 'billing']):
                     raise
-                print(f'Claude indisponível no streaming, tentando OpenAI: {ce}')
+                logger.warning('Claude indisponível no streaming, tentando OpenAI: %s', ce)
                 chunks = []
 
             if not claude_ok:
@@ -2008,24 +2011,13 @@ def api_chat():
                     {'role': m['role'], 'content': m['content'] if isinstance(m['content'], str) else str(m['content'])}
                     for m in messages
                 ]
-                import time as _time
                 ro = req_lib.post(
                     'https://api.openai.com/v1/chat/completions',
                     json={'model': 'gpt-4o-mini', 'max_tokens': 8000, 'messages': openai_msgs, 'stream': True},
                     headers={'Authorization': f'Bearer {openai_key}', 'content-type': 'application/json'},
                     stream=True, timeout=120
                 )
-                print(f'OpenAI streaming status: {ro.status_code}')
-                if ro.status_code == 429:
-                    print('OpenAI 429 — aguardando 3s e tentando novamente...')
-                    _time.sleep(3)
-                    ro = req_lib.post(
-                        'https://api.openai.com/v1/chat/completions',
-                        json={'model': 'gpt-4o-mini', 'max_tokens': 8000, 'messages': openai_msgs, 'stream': True},
-                        headers={'Authorization': f'Bearer {openai_key}', 'content-type': 'application/json'},
-                        stream=True, timeout=120
-                    )
-                    print(f'OpenAI retry status: {ro.status_code}')
+                logger.info('OpenAI streaming status: %s', ro.status_code)
                 if ro.status_code != 200:
                     err_body = ro.text[:300]
                     print(f'OpenAI erro: {err_body}')
@@ -2063,7 +2055,7 @@ def api_chat():
             conn2.commit(); conn2.close()
 
         except Exception as e:
-            print("ERRO STREAM:", traceback.format_exc())
+            logger.error('Erro no streaming de IA: %s', traceback.format_exc())
             yield f"data: {json.dumps({'erro': str(e)})}\n\n"
 
     return Response(
@@ -3441,21 +3433,6 @@ def api_upload_logo_estado():
     conn.execute("UPDATE usuarios SET logo_estado_path=? WHERE id=?", (rel, current_user.id))
     conn.commit(); conn.close()
     return jsonify({'ok': True, 'logo_estado_path': rel})
-
-
-def _add_formatted_run(paragraph, text):
-    """Legado — mantido para compatibilidade com criar_docx."""
-    import re
-    parts = re.split(r'(\*\*.*?\*\*|\*.*?\*)', text)
-    for part in parts:
-        if part.startswith('**') and part.endswith('**'):
-            run = paragraph.add_run(part[2:-2])
-            run.bold = True
-        elif part.startswith('*') and part.endswith('*'):
-            run = paragraph.add_run(part[1:-1])
-            run.italic = True
-        else:
-            paragraph.add_run(part)
 
 
 # ─── Planejamento Anual ────────────────────────────────────────────────────────

@@ -4,11 +4,11 @@
 
 /* ── LIGHT ── */
 :root {
-  color-scheme: only light;
+  color-scheme: light;
   --preto:   #0f172a;
   --branco:  #ffffff;
   --cinza:   #666660;
-  --amarelo: #1E40AF;
+  --azul-academico: #1E40AF;
   --linha:   rgba(0,0,0,0.08);
   --linha-f: rgba(0,0,0,0.14);
   --nav-bg:  rgba(255,255,255,0.97);
@@ -23,11 +23,11 @@
 
 /* ── DARK ── */
 [data-theme="dark"] {
-  color-scheme: dark;
+  color-scheme: dark;  /* scrollbars, inputs e selects nativos do browser usam modo escuro */
   --preto:   #f0f0ec;
   --branco:  #111110;
   --cinza:   #888882;
-  --amarelo: #1E40AF;
+  --azul-academico: #1E40AF;
   --linha:   rgba(255,255,255,0.08);
   --linha-f: rgba(255,255,255,0.14);
   --nav-bg:  rgba(17,17,16,0.97);
