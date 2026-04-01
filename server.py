@@ -1422,6 +1422,10 @@ def conta_senha():
 def index():
     return render_template('index.html')
 
+@app.route('/teste3d')
+def teste3d():
+    return render_template('landing3d.html')
+
 @app.route('/historico')
 @login_required
 @assinatura_required
