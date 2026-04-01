@@ -1954,7 +1954,7 @@ def api_chat():
                     for m in messages[:-1]:
                         role = 'user' if m['role'] == 'user' else 'model'
                         historico_g.append({'role': role, 'parts': _to_gemini_parts(m['content'])})
-                    gm = genai.GenerativeModel(model_name='gemini-1.5-flash', system_instruction=sistema)
+                    gm = genai.GenerativeModel(model_name='gemini-2.0-flash', system_instruction=sistema)
                     chat_g = gm.start_chat(history=historico_g)
                     resp_g = chat_g.send_message(_to_gemini_parts(messages[-1]['content']), stream=True)
                     for chunk in resp_g:
@@ -1976,9 +1976,9 @@ def api_chat():
                 except Exception as e:
                     err_g = str(e)
                     print(f'Gemini streaming falhou: {err_g}')
-                    # Se for erro de quota/rate limit do Gemini, já avisa e sai
-                    if any(x in err_g.lower() for x in ['quota', 'rate', '429', 'limit', 'resource exhausted']):
-                        yield f"data: {json.dumps({'erro': 'Limite do Gemini atingido. Tente novamente em alguns segundos.'})}\n\n"
+                    # Só para em rate limit/quota real — outros erros tentam próximo motor
+                    if any(x in err_g.lower() for x in ['quota exceeded', 'resource exhausted', 'rate_limit_exceeded']):
+                        yield f"data: {json.dumps({'erro': f'Limite do Gemini atingido. Tente novamente em instantes. ({err_g[:120]})'})}\n\n"
                         return
                 chunks = []  # reset
 
