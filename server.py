@@ -47,6 +47,8 @@ IMAGE_STYLE_MODIFIER = "Estilo: Traço Acadêmico-Inclusivo. Ilustração digita
 app = Flask(__name__)
 app.secret_key = os.environ.get('SECRET_KEY', 'dev-secret-troque-em-producao')
 
+app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16 MB máximo por request
+
 login_manager = LoginManager(app)
 login_manager.login_view = 'login'
 login_manager.login_message = 'Faça login para acessar esta página.'
@@ -289,41 +291,34 @@ def chamar_ia_chat(sistema, messages):
     """Motor Duplo: Claude (primário) + OpenAI (fallback). Suporta mensagens multimodais."""
     motor_principal = MOTOR_IA
     motores = [motor_principal, 'openai' if motor_principal == 'claude' else 'claude']
-    
+
     for motor in motores:
         try:
             if motor == 'claude':
-                import requests as req_lib
-                api_key = os.environ.get('ANTHROPIC_API_KEY', '').strip()
-                if not api_key:
-                    print('⚠ ANTHROPIC_API_KEY não configurada, pulando Claude')
+                if not os.environ.get('ANTHROPIC_API_KEY'):
+                    logger.warning('ANTHROPIC_API_KEY não configurada, pulando Claude')
                     continue
-                r = req_lib.post(
-                    'https://api.anthropic.com/v1/messages',
-                    json={'model': 'claude-sonnet-4-6', 'max_tokens': 4000,
-                          'system': sistema, 'messages': messages},
-                    headers={'x-api-key': api_key, 'anthropic-version': '2023-06-01',
-                             'content-type': 'application/json'},
-                    timeout=120
+                resposta = client.messages.create(
+                    model='claude-sonnet-4-6',
+                    max_tokens=4000,
+                    system=sistema,
+                    messages=messages
                 )
-                if r.status_code != 200:
-                    print(f'⚠ Claude API {r.status_code}, tentando fallback...')
-                    continue
-                print(f'✓ Resposta gerada com Claude')
-                return r.json()['content'][0]['text']
-            
+                logger.info('Resposta gerada com Claude (chat)')
+                return resposta.content[0].text
+
             elif motor == 'openai':
                 if not client_openai:
-                    print('⚠ OPENAI_API_KEY não configurada, pulando OpenAI')
+                    logger.warning('OPENAI_API_KEY não configurada, pulando OpenAI')
                     continue
                 resp = client_openai.chat.completions.create(
                     model='gpt-4o-mini',
                     max_tokens=4000,
                     messages=[{'role': 'system', 'content': sistema}] + messages
                 )
-                print(f'✓ Resposta gerada com OpenAI (gpt-4o-mini)')
+                logger.info('Resposta gerada com OpenAI (chat)')
                 return resp.choices[0].message.content
-        
+
         except Exception as e:
             logger.warning('Erro com motor %s: %s', motor, str(e)[:200])
             if motor == motores[-1]:
@@ -337,34 +332,33 @@ def chamar_ia_simples(prompt):
     """Motor Duplo: Claude (primário) + OpenAI (fallback). Para prompts únicos (sem histórico)."""
     motor_principal = MOTOR_IA
     motores = [motor_principal, 'openai' if motor_principal == 'claude' else 'claude']
-    
+
     for motor in motores:
         try:
             if motor == 'claude':
-                api_key = os.environ.get('ANTHROPIC_API_KEY', '').strip()
-                if not api_key:
-                    print('⚠ ANTHROPIC_API_KEY não configurada, pulando Claude')
+                if not os.environ.get('ANTHROPIC_API_KEY'):
+                    logger.warning('ANTHROPIC_API_KEY não configurada, pulando Claude')
                     continue
                 resposta = client.messages.create(
                     model='claude-sonnet-4-6',
                     max_tokens=4000,
                     messages=[{'role': 'user', 'content': prompt}]
                 )
-                print(f'✓ Resposta gerada com Claude')
+                logger.info('Resposta gerada com Claude (simples)')
                 return resposta.content[0].text
-            
+
             elif motor == 'openai':
                 if not client_openai:
-                    print('⚠ OPENAI_API_KEY não configurada, pulando OpenAI')
+                    logger.warning('OPENAI_API_KEY não configurada, pulando OpenAI')
                     continue
                 resp = client_openai.chat.completions.create(
                     model='gpt-4o-mini',
                     max_tokens=4000,
                     messages=[{'role': 'user', 'content': prompt}]
                 )
-                print(f'✓ Resposta gerada com OpenAI (gpt-4o-mini)')
+                logger.info('Resposta gerada com OpenAI (simples)')
                 return resp.choices[0].message.content
-        
+
         except Exception as e:
             logger.warning('Erro com motor %s: %s', motor, str(e)[:200])
             if motor == motores[-1]:
@@ -594,7 +588,7 @@ def load_user(user_id):
 def ativar_assinatura(usuario_id, plano_id):
     """Ativa ou renova assinatura de um usuário. Usado por todos os gateways."""
     if plano_id not in PLANOS:
-        print(f'⚠ ativar_assinatura: plano inválido "{plano_id}" para usuário {usuario_id}')
+        logger.warning('ativar_assinatura: plano inválido "%s" para usuário %s', plano_id, usuario_id)
         return False
     dias = PLANOS[plano_id]['dias']
     valido_ate = (datetime.now() + timedelta(days=dias)).strftime('%Y-%m-%d')
@@ -1787,7 +1781,7 @@ def api_chat():
                 logger.info('OpenAI streaming status: %s', ro.status_code)
                 if ro.status_code != 200:
                     err_body = ro.text[:300]
-                    print(f'OpenAI erro: {err_body}')
+                    logger.warning('OpenAI streaming erro %s: %s', ro.status_code, err_body)
                     msg = 'Limite de requisições atingido. Aguarde alguns segundos e tente novamente.' if ro.status_code == 429 else f'Serviço de IA indisponível ({ro.status_code}). Tente novamente mais tarde.'
                     yield f"data: {json.dumps({'erro': msg})}\n\n"
                     return
@@ -1802,7 +1796,7 @@ def api_chat():
                     try:
                         parsed = json.loads(line)
                         if 'error' in parsed:
-                            print(f'OpenAI stream erro: {parsed["error"]}')
+                            logger.warning('OpenAI stream erro: %s', parsed["error"])
                             yield f"data: {json.dumps({'erro': parsed['error'].get('message', 'Erro OpenAI')[:200]})}\n\n"
                             return
                         delta = parsed['choices'][0]['delta'].get('content', '')
@@ -3131,7 +3125,7 @@ def api_chat_download():
             mimetype='application/vnd.openxmlformats-officedocument.wordprocessingml.document'
         )
     except Exception as e:
-        print(f'ERRO DOWNLOAD: {traceback.format_exc()}')
+        logger.error('Erro no chat-download: %s', traceback.format_exc())
         return jsonify({'erro': f'Falha ao gerar arquivo: {str(e)[:200]}'}), 500
 
 
@@ -3158,49 +3152,48 @@ def api_config_escola():
     return jsonify({'ok': True})
 
 
-@app.route('/api/upload-logo', methods=['POST'])
-@login_required
-def api_upload_logo():
-    """Recebe a logo da escola como upload e salva em static/logos/."""
-    import os, uuid
-    f = request.files.get('logo')
-    if not f:
-        return jsonify({'erro': 'Nenhum arquivo enviado'}), 400
+_LOGO_EXTS    = {'.png', '.jpg', '.jpeg', '.webp'}
+_LOGO_MAX_BYTES = 2 * 1024 * 1024  # 2 MB
+
+def _salvar_logo(f, prefixo, campo_db):
+    """Valida, salva e atualiza o logo/brasão do usuário. Retorna (rel_path, erro_msg)."""
+    import uuid
+    if not f or not f.filename:
+        return None, 'Nenhum arquivo enviado'
     ext = os.path.splitext(f.filename)[1].lower()
-    if ext not in ('.png', '.jpg', '.jpeg', '.gif', '.webp', '.svg'):
-        return jsonify({'erro': 'Formato não suportado. Use PNG, JPG ou SVG.'}), 400
-    fname = f'logo_{current_user.id}_{uuid.uuid4().hex[:8]}{ext}'
+    if ext not in _LOGO_EXTS:
+        return None, 'Formato não suportado. Use PNG, JPG ou WEBP.'
+    data = f.read()
+    if len(data) > _LOGO_MAX_BYTES:
+        return None, 'Arquivo muito grande. Máximo 2 MB.'
+    fname    = f'{prefixo}_{current_user.id}_{uuid.uuid4().hex[:8]}{ext}'
     save_dir = os.path.join(os.path.dirname(__file__), 'static', 'logos')
     os.makedirs(save_dir, exist_ok=True)
     fpath = os.path.join(save_dir, fname)
-    f.save(fpath)
+    with open(fpath, 'wb') as fp:
+        fp.write(data)
     rel = f'static/logos/{fname}'
     conn = get_db()
-    conn.execute("UPDATE usuarios SET logo_path=? WHERE id=?", (rel, current_user.id))
+    conn.execute(f'UPDATE usuarios SET {campo_db}=? WHERE id=?', (rel, current_user.id))
     conn.commit(); conn.close()
+    return rel, None
+
+
+@app.route('/api/upload-logo', methods=['POST'])
+@login_required
+def api_upload_logo():
+    rel, erro = _salvar_logo(request.files.get('logo'), 'logo', 'logo_path')
+    if erro:
+        return jsonify({'erro': erro}), 400
     return jsonify({'ok': True, 'logo_path': rel})
 
 
 @app.route('/api/upload-logo-estado', methods=['POST'])
 @login_required
 def api_upload_logo_estado():
-    """Recebe o brasão/logo do governo estadual e salva em static/logos/."""
-    import os, uuid
-    f = request.files.get('logo')
-    if not f:
-        return jsonify({'erro': 'Nenhum arquivo enviado'}), 400
-    ext = os.path.splitext(f.filename)[1].lower()
-    if ext not in ('.png', '.jpg', '.jpeg', '.gif', '.webp', '.svg'):
-        return jsonify({'erro': 'Formato não suportado. Use PNG, JPG ou SVG.'}), 400
-    fname = f'brasao_{current_user.id}_{uuid.uuid4().hex[:8]}{ext}'
-    save_dir = os.path.join(os.path.dirname(__file__), 'static', 'logos')
-    os.makedirs(save_dir, exist_ok=True)
-    fpath = os.path.join(save_dir, fname)
-    f.save(fpath)
-    rel = f'static/logos/{fname}'
-    conn = get_db()
-    conn.execute("UPDATE usuarios SET logo_estado_path=? WHERE id=?", (rel, current_user.id))
-    conn.commit(); conn.close()
+    rel, erro = _salvar_logo(request.files.get('logo'), 'brasao', 'logo_estado_path')
+    if erro:
+        return jsonify({'erro': erro}), 400
     return jsonify({'ok': True, 'logo_estado_path': rel})
 
 
