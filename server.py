@@ -1975,7 +1975,9 @@ def api_chat():
                     print('Gemini retornou resposta vazia, tentando próximo motor...')
                 except Exception as e:
                     err_g = str(e)
-                    print(f'Gemini streaming falhou, tentando próximo motor: {err_g}')
+                    print(f'Gemini streaming falhou: {err_g}')
+                    yield f"data: {json.dumps({'erro': f'[DEBUG Gemini] {err_g[:300]}'})}\n\n"
+                    return
                 chunks = []  # reset — sempre tenta Claude/OpenAI se Gemini falhar
 
             # Claude streaming
