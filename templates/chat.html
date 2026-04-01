@@ -476,6 +476,10 @@
       border-left: 3px solid var(--indigo);
       border-radius: 4px 18px 18px 18px;
     }
+    .bg3d-canvas{position:fixed;inset:0;z-index:0;pointer-events:none;opacity:.25}
+    .file-input-hidden{display:none}
+    .msg-attachment-img{max-width:220px;max-height:160px;display:block;margin-bottom:8px;border-radius:8px;border:1px solid rgba(255,255,255,.2)}
+    .msg-attachment-file{font-size:.65rem;font-weight:600;padding:6px 10px;background:rgba(255,255,255,.15);margin-bottom:8px;display:inline-block;border-radius:6px}
     [data-theme="dark"] .msg.assistant .msg-bubble { background: rgba(255,255,255,.04); }
 
     /* Typing dots */
@@ -821,7 +825,7 @@
   <link rel="stylesheet" href="/static/theme.css"/>
 </head>
 <body>
-<canvas id="bg3d" style="position:fixed;inset:0;z-index:0;pointer-events:none;opacity:.25"></canvas>
+<canvas id="bg3d" class="bg3d-canvas"></canvas>
 
 <!-- Modal Download DOCX -->
 <div id="downloadModal" class="dl-overlay" onclick="if(event.target===this)fecharDownloadModal()">
@@ -1108,7 +1112,7 @@
           <button class="btn-anexo-remover" onclick="removerAnexo()" title="Remover">✕</button>
         </div>
         <div class="input-box">
-          <input type="file" id="fileInput" accept="image/*,.png,.jpg,.jpeg,.gif,.webp,.pdf,.docx,.txt,.csv,.md" style="display:none" onchange="selecionarArquivo(this)"/>
+          <input type="file" id="fileInput" accept="image/*,.png,.jpg,.jpeg,.gif,.webp,.pdf,.docx,.txt,.csv,.md" class="file-input-hidden" onchange="selecionarArquivo(this)"/>
           <button class="btn-attach" id="btnAttach" title="Anexar" onclick="document.getElementById('fileInput').click()" {% if limite_atingido %}disabled{% endif %}>
             <svg viewBox="0 0 24 24"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>
           </button>
@@ -1162,9 +1166,9 @@
     let anexoHtml = '';
     if (anexo) {
       if (anexo.tipo === 'image')
-        anexoHtml = `<img src="data:${anexo.mime};base64,${anexo.base64}" style="max-width:220px;max-height:160px;display:block;margin-bottom:8px;border-radius:8px;border:1px solid rgba(255,255,255,.2)" alt="${escapeHtml(anexo.nome)}"/>`;
+        anexoHtml = `<img src="data:${anexo.mime};base64,${anexo.base64}" class="msg-attachment-img" alt="${escapeHtml(anexo.nome)}"/>`;
       else if (anexo.tipo === 'documento')
-        anexoHtml = `<div style="font-size:.65rem;font-weight:600;padding:6px 10px;background:rgba(255,255,255,.15);margin-bottom:8px;display:inline-block;border-radius:6px">📄 ${escapeHtml(anexo.nome)}</div>`;
+        anexoHtml = `<div class="msg-attachment-file">📄 ${escapeHtml(anexo.nome)}</div>`;
     }
     div.innerHTML = `
       <div class="msg-avatar">EU</div>
