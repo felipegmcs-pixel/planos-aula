@@ -181,6 +181,13 @@
       transition:transform .2s,box-shadow .2s;
     }
     .btn-primary:hover{transform:translateY(-2px);box-shadow:0 14px 44px rgba(30,64,175,.52)}
+    .btn-primary-lg{font-size:1rem;padding:16px 36px}
+    .nav-name-p{font-weight:600}
+    .nav-name-ia{font-weight:900}
+    .sec-head-mb{margin-bottom:8px}
+    .sec-pricing-sub{font-size:.95rem;color:var(--text2)}
+    .hero-pill-cta{margin-bottom:28px}
+    .f-logo-img{height:32px;width:auto;flex-shrink:0;object-fit:contain}
     .btn-ghost-d{
       display:inline-flex;align-items:center;gap:8px;
       padding:15px 30px;border-radius:10px;
@@ -568,7 +575,7 @@
 <nav id="nav">
   <div class="nav-brand">
     <img src="{{ url_for('static', filename='logo-oficial.png') }}" alt="ProfessorIA" class="nav-logo">
-    <span class="nav-name"><span style="font-weight:600">Professor</span><span style="font-weight:900">IA</span></span>
+    <span class="nav-name"><span class="nav-name-p">Professor</span><span class="nav-name-ia">IA</span></span>
   </div>
   <div class="nav-links">
     <a class="nav-a" href="#planos">Planos</a>
@@ -906,8 +913,8 @@
   <div class="sec-label">Preços</div>
   <div class="pricing-top">
     <div>
-      <h2 class="sec-head" style="margin-bottom:8px">Escolha seu plano.</h2>
-      <p style="font-size:.95rem;color:var(--text2)">Transforme sua rotina pedagógica hoje e recupere até 10 horas da sua semana.</p>
+      <h2 class="sec-head sec-head-mb">Escolha seu plano.</h2>
+      <p class="sec-pricing-sub">Transforme sua rotina pedagógica hoje e recupere até 10 horas da sua semana.</p>
     </div>
     <div class="toggle-wrap">
       <span class="t-l on" id="lbl-m">Mensal</span>
@@ -1028,24 +1035,24 @@
     </div>
   </div>
   <div class="cta-inner">
-    <div class="hero-pill" style="margin-bottom:28px"><span class="pill-dot"></span>Comece hoje, é grátis</div>
+    <div class="hero-pill hero-pill-cta"><span class="pill-dot"></span>Comece hoje, é grátis</div>
     <h2>Pronto para<br/><span class="grad-text">economizar horas</span><br/>toda semana?</h2>
     <p class="cta-desc">Junte-se a mais de 12.000 professores que já usam a IA para planejar melhor e ensinar com mais qualidade.</p>
     {% if current_user.is_authenticated %}
       {% if current_user.assinatura_ativa or current_user.is_admin %}
-        <a href="/chat" class="btn-primary" style="font-size:1rem;padding:16px 36px">Acessar sistema →</a>
+        <a href="/chat" class="btn-primary btn-primary-lg">Acessar sistema →</a>
       {% else %}
-        <a href="/planos" class="btn-primary" style="font-size:1rem;padding:16px 36px">Ver planos →</a>
+        <a href="/planos" class="btn-primary btn-primary-lg">Ver planos →</a>
       {% endif %}
     {% else %}
-      <a href="/cadastro" class="btn-primary" style="font-size:1rem;padding:16px 36px">Criar conta grátis →</a>
+      <a href="/cadastro" class="btn-primary btn-primary-lg">Criar conta grátis →</a>
     {% endif %}
   </div>
 </section>
 
 <footer>
-  <a class="f-logo" href="/" style="display:flex;align-items:center;gap:7px;">
-    <img src="{{ url_for('static', filename='logo-oficial.png') }}" alt="ProfessorIA" style="height: 32px; width: auto; flex-shrink: 0;">
+  <a class="f-logo" href="/">
+    <img src="{{ url_for('static', filename='logo-oficial.png') }}" alt="ProfessorIA" class="f-logo-img">
     <span class="f-logo-p">Professor</span><span class="f-logo-ia">IA</span>
   </a>
   <div class="f-links">

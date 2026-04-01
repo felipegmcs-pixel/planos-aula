@@ -61,6 +61,10 @@
     .link-label{color:var(--text2);font-weight:500}
     .link-a{color:var(--indigo);font-weight:700;text-decoration:none;transition:opacity .2s}
     .link-a:hover{opacity:.75}
+    .lgpd-wrap{margin-bottom:16px;margin-top:4px}
+    .lgpd-label{display:flex;align-items:flex-start;gap:10px;cursor:pointer;font-size:.82rem;color:var(--text2);font-weight:500;text-transform:none;letter-spacing:0;line-height:1.5}
+    .lgpd-check{margin-top:3px;accent-color:var(--indigo);flex-shrink:0;width:15px;height:15px}
+    .lgpd-link{color:var(--indigo);font-weight:700;text-decoration:none}
     @media(max-width:700px){.left{display:none}.right{padding:40px 24px}}
   </style>
 </head>
@@ -122,10 +126,10 @@
           <label>Senha</label>
           <input type="password" name="senha" placeholder="Mínimo 6 caracteres" required minlength="6"/>
         </div>
-        <div style="margin-bottom:16px;margin-top:4px">
-          <label style="display:flex;align-items:flex-start;gap:10px;cursor:pointer;font-size:.82rem;color:var(--text2);font-weight:500;text-transform:none;letter-spacing:0;line-height:1.5">
-            <input type="checkbox" name="aceito_termos" required style="margin-top:3px;accent-color:var(--indigo);flex-shrink:0;width:15px;height:15px"/>
-            <span>Li e aceito os <a href="/termos" target="_blank" style="color:var(--indigo);font-weight:700;text-decoration:none">Termos de Uso</a> e a <a href="/privacidade" target="_blank" style="color:var(--indigo);font-weight:700;text-decoration:none">Política de Privacidade</a></span>
+        <div class="lgpd-wrap">
+          <label class="lgpd-label">
+            <input type="checkbox" name="aceito_termos" required class="lgpd-check"/>
+            <span>Li e aceito os <a href="/termos" target="_blank" class="lgpd-link">Termos de Uso</a> e a <a href="/privacidade" target="_blank" class="lgpd-link">Política de Privacidade</a></span>
           </label>
         </div>
         <button type="submit" class="btn" id="cadastroBtn">Criar conta grátis →</button>

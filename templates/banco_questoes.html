@@ -56,6 +56,9 @@
     /* Main */
     .main{flex:1;overflow-y:auto;display:flex;flex-direction:column;min-width:0}
     .topbar-spacer{width:22px;flex-shrink:0}
+    .btn-topbar-nav{background:none;border:none;cursor:pointer;color:var(--text);display:flex;align-items:center;justify-content:center;padding:8px;min-width:44px;min-height:44px;border-radius:8px}
+    .btn-topbar-nav:hover{background:rgba(0,0,0,.06)}
+    .topbar-title{font-size:.85rem;font-weight:700}
     .topbar{display:none;padding:14px 16px;border-bottom:1px solid var(--linha);align-items:center;justify-content:space-between;background:var(--bg2);position:sticky;top:0;z-index:50}
 
     /* Page content */
@@ -323,10 +326,10 @@
 
   <div class="main">
     <div class="topbar">
-      <button onclick="document.getElementById('sidebar').classList.toggle('open')" style="background:none;border:none;cursor:pointer;color:var(--text)">
+      <button onclick="document.getElementById('sidebar').classList.toggle('open')" class="btn-topbar-nav">
         <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
       </button>
-      <span style="font-size:.85rem;font-weight:700">Banco de Questões</span>
+      <span class="topbar-title">Banco de Questões</span>
       <div class="topbar-spacer"></div>
     </div>
 

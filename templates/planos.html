@@ -106,6 +106,10 @@
       .pricing-header{padding:40px 24px}
       .pricing-grid{padding:0 24px}
     }
+    .alert-wrap{max-width:900px;margin:0 auto 24px;padding:0 48px}
+    .alert-wrap--active{margin-bottom:48px}
+    .alert-danger{border:1px solid rgba(185,28,28,.25);background:rgba(185,28,28,.05);color:#991b1b;padding:14px 20px;font-size:.75rem;font-weight:700;letter-spacing:1px;text-transform:uppercase;border-radius:8px}
+    .alert-success{border:1px solid rgba(16,185,129,.25);background:rgba(16,185,129,.05);color:#065f46;padding:14px 20px;font-size:.75rem;font-weight:700;letter-spacing:1px;text-transform:uppercase;border-radius:8px}
   </style>
   <link rel="stylesheet" href="/static/theme.css"/>
 </head>
@@ -148,19 +152,15 @@
 
   {% with msgs = get_flashed_messages(with_categories=true) %}
     {% for cat, msg in msgs %}
-      <div style="max-width:900px;margin:0 auto 24px;padding:0 48px;">
-        <div style="border:1px solid rgba(185,28,28,.25);background:rgba(185,28,28,.05);color:#991b1b;padding:14px 20px;font-size:.75rem;font-weight:700;letter-spacing:1px;text-transform:uppercase;border-radius:8px;">
-          ✕ {{ msg }}
-        </div>
+      <div class="alert-wrap">
+        <div class="alert-danger">✕ {{ msg }}</div>
       </div>
     {% endfor %}
   {% endwith %}
 
   {% if assinatura_ativa %}
-  <div style="max-width:900px;margin:0 auto 48px;padding:0 48px;">
-    <div style="border:1px solid rgba(16,185,129,.25);background:rgba(16,185,129,.05);color:#065f46;padding:14px 20px;font-size:.75rem;font-weight:700;letter-spacing:1px;text-transform:uppercase;border-radius:8px;">
-      ✓ ASSINATURA ATIVA — Plano {{ plano_atual|upper }} válido até {{ valido_ate }}
-    </div>
+  <div class="alert-wrap alert-wrap--active">
+    <div class="alert-success">✓ ASSINATURA ATIVA — Plano {{ plano_atual|upper }} válido até {{ valido_ate }}</div>
   </div>
   {% endif %}
 
