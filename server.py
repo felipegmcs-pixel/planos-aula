@@ -540,6 +540,9 @@ def init_db():
     conn.execute('CREATE INDEX IF NOT EXISTS idx_questions_bank_ano_serie ON questions_bank(ano_serie)')
     conn.execute('CREATE INDEX IF NOT EXISTS idx_planejamento_usuario ON planejamento_anual(usuario_id)')
     conn.execute('CREATE INDEX IF NOT EXISTS idx_reset_tokens_token ON reset_tokens(token)')
+    conn.execute('CREATE INDEX IF NOT EXISTS idx_usuarios_email ON usuarios(email)')
+    conn.execute('CREATE INDEX IF NOT EXISTS idx_historico_criado_em ON historico(criado_em)')
+    conn.execute('CREATE INDEX IF NOT EXISTS idx_chat_messages_criado_em ON chat_messages(criado_em)')
     conn.commit()
     conn.close()
 
@@ -3164,10 +3167,13 @@ def api_config_escola():
 
 _LOGO_EXTS    = {'.png', '.jpg', '.jpeg', '.webp'}
 _LOGO_MAX_BYTES = 2 * 1024 * 1024  # 2 MB
+_LOGO_CAMPOS_PERMITIDOS = {'logo_path', 'logo_estado_path'}
 
 def _salvar_logo(f, prefixo, campo_db):
     """Valida, salva e atualiza o logo/brasão do usuário. Retorna (rel_path, erro_msg)."""
     import uuid
+    if campo_db not in _LOGO_CAMPOS_PERMITIDOS:
+        return None, 'Campo inválido'
     if not f or not f.filename:
         return None, 'Nenhum arquivo enviado'
     ext = os.path.splitext(f.filename)[1].lower()
@@ -3687,7 +3693,8 @@ def api_onboarding_completar():
     )
     conn.commit()
     conn.close()
-    return jsonify({'ok': True, 'redirect': f'/chat?disciplina={disciplina}&serie={serie}'})
+    from urllib.parse import urlencode
+    return jsonify({'ok': True, 'redirect': '/chat?' + urlencode({'disciplina': disciplina, 'serie': serie})})
 
 
 # ESTE BLOCO ABAIXO DEVE SER O FINAL ABSOLUTO DO ARQUIVO
