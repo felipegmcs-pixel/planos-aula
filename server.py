@@ -1493,19 +1493,19 @@ def deletar_historico(item_id):
 @limiter.limit('10 per minute')
 def gerar():
     dados = {
-        'professor':  request.form.get('professor', ''),
-        'escola':     request.form.get('escola', ''),
-        'diretoria':  request.form.get('diretoria', ''),
-        'endereco':   request.form.get('endereco', ''),
-        'ano_letivo': request.form.get('ano_letivo', str(datetime.now().year)),
-        'disciplina': request.form.get('disciplina', ''),
-        'turma':      request.form.get('turma', ''),
-        'num_aulas':  request.form.get('num_aulas', '1'),
-        'aula_inicio':request.form.get('aula_inicio', '1'),
-        'periodo':    request.form.get('periodo', 'quinzenal'),
-        'datas':      request.form.get('datas', ''),
+        'professor':  request.form.get('professor', '')[:200],
+        'escola':     request.form.get('escola', '')[:200],
+        'diretoria':  request.form.get('diretoria', '')[:200],
+        'endereco':   request.form.get('endereco', '')[:300],
+        'ano_letivo': request.form.get('ano_letivo', str(datetime.now().year))[:4],
+        'disciplina': request.form.get('disciplina', '')[:100],
+        'turma':      request.form.get('turma', '')[:50],
+        'num_aulas':  request.form.get('num_aulas', '1')[:3],
+        'aula_inicio':request.form.get('aula_inicio', '1')[:3],
+        'periodo':    request.form.get('periodo', 'quinzenal')[:20],
+        'datas':      request.form.get('datas', '')[:500],
     }
-    temas    = request.form.getlist('temas[]')
+    temas    = [t[:200] for t in request.form.getlist('temas[]')]
     urls_pdf = [u.strip() for u in request.form.getlist('urls_pdf[]') if u.strip()]
     formato  = request.form.get('formato', 'docx')
 
@@ -3155,8 +3155,8 @@ def api_config_escola():
             'logo_estado_path': current_user.logo_estado_path,
         })
     data = request.json or {}
-    escola   = data.get('escola_nome', '').strip()
-    prof     = data.get('professor_nome', '').strip()
+    escola   = data.get('escola_nome', '').strip()[:200]
+    prof     = data.get('professor_nome', '').strip()[:200]
     conn = get_db()
     conn.execute(
         "UPDATE usuarios SET escola_nome=?, professor_nome=? WHERE id=?",
