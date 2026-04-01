@@ -737,6 +737,68 @@
     .dl-btn-cancel:hover { border-color: rgba(255,255,255,.3); color: rgba(255,255,255,.7); }
 
     /* ════════════════════════════════════════
+       ONBOARDING MODAL
+    ════════════════════════════════════════ */
+    .ob-overlay {
+      position: fixed; inset: 0; z-index: 9999;
+      background: rgba(5,8,17,.9); backdrop-filter: blur(10px);
+      display: flex; align-items: center; justify-content: center; padding: 20px;
+    }
+    .ob-modal {
+      background: #0f1120; border: 1px solid rgba(255,255,255,.1);
+      width: 100%; max-width: 560px; padding: 48px;
+      font-family: 'Inter', sans-serif; border-radius: 20px;
+      box-shadow: 0 32px 100px rgba(0,0,0,.7), 0 0 80px rgba(30,64,175,.14);
+    }
+    .ob-tag {
+      font-size: .55rem; font-weight: 700; letter-spacing: 2.5px;
+      text-transform: uppercase; color: #818cf8; margin-bottom: 20px;
+      display: flex; align-items: center; gap: 8px;
+    }
+    .ob-tag::before {
+      content: ''; display: inline-block; width: 16px; height: 2px;
+      background: #1E40AF; border-radius: 2px; flex-shrink: 0;
+    }
+    .ob-title {
+      font-size: 1.6rem; font-weight: 900; letter-spacing: -1px;
+      color: #fff; line-height: 1.1; margin-bottom: 12px;
+    }
+    .ob-desc {
+      font-size: .78rem; color: rgba(255,255,255,.45);
+      line-height: 1.75; margin-bottom: 28px;
+    }
+    .ob-label {
+      font-size: .6rem; font-weight: 700; letter-spacing: 2px;
+      text-transform: uppercase; color: rgba(255,255,255,.35);
+      display: block; margin-bottom: 10px;
+    }
+    .ob-textarea {
+      width: 100%; min-height: 140px; padding: 14px;
+      background: rgba(255,255,255,.04); border: 1.5px solid rgba(255,255,255,.1);
+      color: #fff; font-family: 'Inter', sans-serif; font-size: .82rem;
+      line-height: 1.6; resize: vertical; outline: none;
+      border-radius: 10px; transition: border-color .2s;
+    }
+    .ob-textarea:focus { border-color: rgba(30,64,175,.5); }
+    .ob-actions { display: flex; gap: 10px; margin-top: 20px; }
+    .ob-btn-primary {
+      flex: 1; padding: 14px;
+      background: linear-gradient(135deg, #1E40AF, #1E3A8A);
+      color: #fff; border: none; font-size: .72rem; font-weight: 700;
+      font-family: 'Inter', sans-serif; border-radius: 10px; cursor: pointer;
+      transition: opacity .2s; box-shadow: 0 4px 18px rgba(30,64,175,.4);
+    }
+    .ob-btn-primary:hover { opacity: .9; }
+    .ob-btn-skip {
+      flex: 1; padding: 14px; background: transparent;
+      color: rgba(255,255,255,.4); border: 1.5px solid rgba(255,255,255,.1);
+      font-size: .72rem; font-weight: 600; font-family: 'Inter', sans-serif;
+      border-radius: 10px; cursor: pointer; transition: border-color .2s, color .2s;
+    }
+    .ob-btn-skip:hover { border-color: rgba(255,255,255,.3); color: rgba(255,255,255,.7); }
+    .pia-mark-img { height: 32px; width: auto; object-fit: contain; }
+
+    /* ════════════════════════════════════════
        RESPONSIVE
     ════════════════════════════════════════ */
     @media (max-width: 768px) {
@@ -858,7 +920,7 @@
     <div class="sidebar-header">
       <a class="logo" href="/">
         <span class="pia-mark" id="piaMark">
-          <img src="{{ url_for('static', filename='logo-oficial.png') }}" alt="ProfessorIA" style="height: 32px; width: auto; object-fit: contain;">
+          <img src="{{ url_for('static', filename='logo-oficial.png') }}" alt="ProfessorIA" class="pia-mark-img">
         </span>
         <span class="logo-p">Professor</span><span class="logo-ia">IA</span>
       </a>
@@ -1565,19 +1627,16 @@
 
 {% if not onboarding_done %}
 <!-- ONBOARDING MODAL -->
-<div id="onboarding-overlay" style="position:fixed;inset:0;z-index:9999;background:rgba(5,8,17,.9);backdrop-filter:blur(10px);display:flex;align-items:center;justify-content:center;padding:20px;">
-  <div style="background:#0f1120;border:1px solid rgba(255,255,255,.1);width:100%;max-width:560px;padding:48px;font-family:'Inter',sans-serif;border-radius:20px;box-shadow:0 32px 100px rgba(0,0,0,.7),0 0 80px rgba(30,64,175,.14);">
-    <div style="font-size:.55rem;font-weight:700;letter-spacing:2.5px;text-transform:uppercase;color:#818cf8;margin-bottom:20px;display:flex;align-items:center;gap:8px;">
-      <span style="display:inline-block;width:16px;height:2px;background:#1E40AF;border-radius:2px;"></span>
-      Configuração inicial
-    </div>
-    <h2 style="font-size:1.6rem;font-weight:900;letter-spacing:-1px;color:#fff;line-height:1.1;margin-bottom:12px;">Modelo de plano<br/>da sua escola</h2>
-    <p style="font-size:.78rem;color:rgba(255,255,255,.45);line-height:1.75;margin-bottom:28px;">Cole abaixo o esqueleto ou modelo padrão de plano de aula da sua escola. O ProfessorIA usará essa estrutura sempre que gerar planos de aula para você.</p>
-    <label style="font-size:.6rem;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:rgba(255,255,255,.35);display:block;margin-bottom:10px;">Esqueleto do plano de aula</label>
-    <textarea id="onboarding-template" placeholder="Ex: Escola: ___ / Professor: ___ / Disciplina: ___ / Objetivo: ___ / Desenvolvimento: ___ / Avaliação: ___" style="width:100%;min-height:140px;padding:14px;background:rgba(255,255,255,.04);border:1.5px solid rgba(255,255,255,.1);color:#fff;font-family:'Inter',sans-serif;font-size:.82rem;line-height:1.6;resize:vertical;outline:none;border-radius:10px;transition:border-color .2s;" onfocus="this.style.borderColor='rgba(30,64,175,.5)'" onblur="this.style.borderColor='rgba(255,255,255,.1)'"></textarea>
-    <div style="display:flex;gap:10px;margin-top:20px;">
-      <button onclick="salvarOnboarding()" style="flex:1;padding:14px;background:linear-gradient(135deg,#1E40AF,#1E3A8A);color:#fff;border:none;font-size:.72rem;font-weight:700;font-family:'Inter',sans-serif;border-radius:10px;cursor:pointer;transition:opacity .2s;box-shadow:0 4px 18px rgba(30,64,175,.4);" onmouseover="this.style.opacity='.9'" onmouseout="this.style.opacity='1'">Salvar e continuar →</button>
-      <button onclick="pularOnboarding()" style="flex:1;padding:14px;background:transparent;color:rgba(255,255,255,.4);border:1.5px solid rgba(255,255,255,.1);font-size:.72rem;font-weight:600;font-family:'Inter',sans-serif;border-radius:10px;cursor:pointer;transition:all .2s;" onmouseover="this.style.borderColor='rgba(255,255,255,.3)';this.style.color='rgba(255,255,255,.7)'" onmouseout="this.style.borderColor='rgba(255,255,255,.1)';this.style.color='rgba(255,255,255,.4)'">Pular por agora</button>
+<div id="onboarding-overlay" class="ob-overlay">
+  <div class="ob-modal">
+    <div class="ob-tag">Configuração inicial</div>
+    <h2 class="ob-title">Modelo de plano<br/>da sua escola</h2>
+    <p class="ob-desc">Cole abaixo o esqueleto ou modelo padrão de plano de aula da sua escola. O ProfessorIA usará essa estrutura sempre que gerar planos de aula para você.</p>
+    <label class="ob-label">Esqueleto do plano de aula</label>
+    <textarea id="onboarding-template" class="ob-textarea" placeholder="Ex: Escola: ___ / Professor: ___ / Disciplina: ___ / Objetivo: ___ / Desenvolvimento: ___ / Avaliação: ___"></textarea>
+    <div class="ob-actions">
+      <button onclick="salvarOnboarding()" class="ob-btn-primary">Salvar e continuar →</button>
+      <button onclick="pularOnboarding()" class="ob-btn-skip">Pular por agora</button>
     </div>
   </div>
 </div>

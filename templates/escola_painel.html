@@ -55,6 +55,7 @@
 
     /* Main */
     .main{flex:1;overflow-y:auto;display:flex;flex-direction:column;min-width:0}
+    .topbar-spacer{width:22px;flex-shrink:0}
     .topbar{display:none;padding:14px 16px;border-bottom:1px solid var(--linha);align-items:center;justify-content:space-between;background:var(--bg2);position:sticky;top:0;z-index:50}
     .page-wrap{padding:32px;max-width:1100px}
     .page-header{display:flex;align-items:flex-end;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:24px}
@@ -190,7 +191,7 @@
         <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
       </button>
       <span style="font-size:.85rem;font-weight:700">Painel da Escola</span>
-      <div style="width:22px"></div>
+      <div class="topbar-spacer"></div>
     </div>
 
     <div class="page-wrap">
