@@ -155,6 +155,10 @@
       .stats-grid{grid-template-columns:repeat(2,1fr)}
       .charts-row{grid-template-columns:1fr}
     }
+    @media(max-width:768px){
+      .sidebar{width:220px}
+      .nav-item span{font-size:.7rem}
+    }
     @media(max-width:640px){
       .sidebar{position:fixed;left:0;top:0;bottom:0;z-index:200;transform:translateX(-100%)}
       .sidebar.open{transform:translateX(0)}

@@ -1734,7 +1734,11 @@ def api_chat():
                         historico_g.append({'role': role, 'parts': _to_gemini_parts(m['content'])})
                     gm = genai.GenerativeModel(model_name='gemini-2.0-flash', system_instruction=sistema)
                     chat_g = gm.start_chat(history=historico_g)
-                    resp_g = chat_g.send_message(_to_gemini_parts(messages[-1]['content']), stream=True)
+                    resp_g = chat_g.send_message(
+                        _to_gemini_parts(messages[-1]['content']),
+                        stream=True,
+                        request_options={'timeout': 60}
+                    )
                     for chunk in resp_g:
                         text = getattr(chunk, 'text', '') or ''
                         if text:
