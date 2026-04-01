@@ -50,10 +50,15 @@
       backdrop-filter: blur(12px);
       background: rgba(3,7,18,.5);
     }
-    .nav-logo { display:flex; align-items:center; gap:6px; text-decoration:none; }
-    .nav-logo img { height: 28px; }
-    .nav-logo .np { font-size:.95rem; font-weight:800; color:#fff; letter-spacing:-.3px; }
-    .nav-logo .ni { font-size:.95rem; font-weight:600; color:var(--cyan); letter-spacing:-.3px; }
+    .nav-logo { display:flex; align-items:center; gap:10px; text-decoration:none; }
+    .nav-logo img {
+      height: 40px;
+      filter: drop-shadow(0 0 8px rgba(30,64,175,.7)) drop-shadow(0 0 20px rgba(103,232,249,.25));
+      transition: filter .3s;
+    }
+    .nav-logo:hover img { filter: drop-shadow(0 0 12px rgba(30,64,175,.9)) drop-shadow(0 0 28px rgba(103,232,249,.4)); }
+    .nav-logo .np { font-size:1.05rem; font-weight:800; color:#fff; letter-spacing:-.3px; }
+    .nav-logo .ni { font-size:1.05rem; font-weight:600; color:var(--cyan); letter-spacing:-.3px; }
     .nav-cta {
       padding: 9px 20px;
       background: rgba(30,64,175,.25);
@@ -83,9 +88,12 @@
     /* ── CONTENT CARD ── */
     .content-card {
       display: flex; flex-direction:column; align-items:center;
-      background: radial-gradient(circle, rgba(0,0,0,0.45) 0%, rgba(0,0,0,0) 72%);
-      padding: 48px 40px 44px;
-      border-radius: 24px;
+      background: radial-gradient(ellipse 90% 80% at 50% 50%, rgba(0,0,0,0.62) 0%, rgba(0,0,0,0.28) 55%, rgba(0,0,0,0) 80%);
+      backdrop-filter: blur(4px);
+      -webkit-backdrop-filter: blur(4px);
+      padding: 52px 44px 48px;
+      border-radius: 28px;
+      max-width: 760px;
     }
 
     /* ── TAGS ── */
@@ -447,7 +455,7 @@
       <h1 class="hero-title">Seus Planos de Aula da BNCC<br/>Prontos em Segundos.</h1>
       <p class="s-sub">
         A primeira inteligência artificial feita para devolver o final de semana
-        do professor brasileiro. Do berçário ao ensino médio.
+        do professor brasileiro. Economize até 10 horas semanais com 1 clique.
       </p>
       <a href="/cadastro" class="cta-btn">Começar Agora — É Grátis</a>
       <p class="cta-hint">5 gerações gratuitas por mês · Sem cartão de crédito</p>
@@ -501,15 +509,22 @@
     </div>
   </section>
 
-  <!-- ── S4: CTA FINAL ── -->
+  <!-- ── S4: PLANEJAMENTO ANUAL ── -->
   <section id="s4">
     <div class="content-card">
-      <div class="s-tag">Comece hoje, grátis</div>
-      <h2 class="s-title">Come&shy;ce</h2>
+      <div class="s-tag">Planejamento Anual Simplificado</div>
+      <h2 class="s-title">Plane&shy;ja&shy;mento</h2>
       <p class="s-sub">
-        Mais de 5.000 professores já transformaram o domingo.
-        Você está a 30 segundos do seu primeiro plano de aula completo.
+        Monte o planejamento anual completo alinhado à BNCC em minutos.
+        Distribua conteúdos por bimestre, defina objetivos e gere o documento
+        pronto para a coordenação — sem planilhas, sem domingo perdido.
       </p>
+      <div class="s-pills" style="margin-top:28px">
+        <span class="pill">Distribuição Bimestral</span>
+        <span class="pill">Objetivos por Competência</span>
+        <span class="pill">Exportação Oficial DOCX</span>
+        <span class="pill">Alinhamento BNCC Automático</span>
+      </div>
       <a href="/cadastro" class="cta-btn">Começar Agora — É Grátis</a>
       <p class="cta-hint">Sem cartão · Cancele quando quiser</p>
     </div>
