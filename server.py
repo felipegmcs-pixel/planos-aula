@@ -1143,6 +1143,7 @@ def esqueci_senha():
     return render_template('esqueci_senha.html')
 
 @app.route('/redefinir-senha/<token>', methods=['GET', 'POST'])
+@limiter.limit('5 per 10 minutes', methods=['POST'])
 def redefinir_senha(token):
     conn = get_db()
     row = conn.execute(
