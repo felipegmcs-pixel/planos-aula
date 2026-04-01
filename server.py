@@ -24,6 +24,7 @@ from flask_login import (LoginManager, UserMixin, login_user,
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
+import stripe as stripe_lib
 from anthropic import Anthropic
 from openai import OpenAI
 from docx import Document
@@ -83,11 +84,6 @@ if GEMINI_API_KEY:
     except Exception as _ge:
         logger.warning('Gemini não carregou: %s', _ge)
         _gemini_model = None
-
-NUPAY_MERCHANT_KEY   = os.environ.get('NUPAY_MERCHANT_KEY', '')
-NUPAY_MERCHANT_TOKEN = os.environ.get('NUPAY_MERCHANT_TOKEN', '')
-NUPAY_API_URL        = 'https://api.spinpay.com.br'   # produção
-# NUPAY_API_URL      = 'https://sandbox-api.spinpay.com.br'  # testes
 
 SITE_URL    = os.environ.get('SITE_URL', 'http://localhost:5001')
 ADMIN_EMAIL = os.environ.get('ADMIN_EMAIL', '')
@@ -1202,10 +1198,9 @@ def stripe_checkout(plano_id):
         return redirect(url_for('chat'))
     price_id = STRIPE_PRICES.get(plano_id, '')
     if not price_id:
-        flash(f'Price ID não configurado para o plano "{plano_id}" (STRIPE_PRICE_{plano_id.upper()}).', 'erro')
+        flash(f'Price ID não configurado para o plano "{plano_id}".', 'erro')
         return redirect(url_for('chat'))
     try:
-        import stripe as stripe_lib
         stripe_lib.api_key = STRIPE_SECRET_KEY
         session = stripe_lib.checkout.Session.create(
             payment_method_types=['card'],
@@ -1218,7 +1213,8 @@ def stripe_checkout(plano_id):
         )
         return redirect(session.url, code=303)
     except Exception as e:
-        flash(f'Erro Stripe: {str(e)}', 'erro')
+        logger.error('Stripe checkout erro: %s', e)
+        flash(f'Erro ao iniciar pagamento. Tente novamente.', 'erro')
         return redirect(url_for('chat'))
 
 
@@ -1228,20 +1224,18 @@ def stripe_sucesso():
     session_id = request.args.get('session_id', '')
     if session_id and STRIPE_SECRET_KEY:
         try:
-            import stripe as stripe_lib
             stripe_lib.api_key = STRIPE_SECRET_KEY
             session = stripe_lib.checkout.Session.retrieve(session_id)
             if session.payment_status in ('paid', 'no_payment_required'):
                 plano_id = session.metadata.get('plano_id', 'basic')
                 ativar_assinatura(current_user.id, plano_id)
-                # Refresh session user so chat/banner updates immediately
                 conn = get_db()
                 row = conn.execute('SELECT * FROM usuarios WHERE id=?', (current_user.id,)).fetchone()
                 conn.close()
                 if row:
                     login_user(Usuario(row))
-        except Exception:
-            pass
+        except Exception as e:
+            logger.warning('Stripe sucesso: erro ao verificar sessão %s — %s', session_id, e)
     return render_template('pagamento_status.html',
                            status='sucesso',
                            titulo='PAGAMENTO APROVADO',
@@ -1250,150 +1244,65 @@ def stripe_sucesso():
 
 @app.route('/stripe/webhook', methods=['POST'])
 def stripe_webhook():
-    import stripe as stripe_lib
     stripe_lib.api_key = STRIPE_SECRET_KEY
     payload = request.get_data()
     sig     = request.headers.get('Stripe-Signature', '')
     try:
         event = stripe_lib.Webhook.construct_event(payload, sig, STRIPE_WEBHOOK_SECRET)
-    except Exception:
+    except stripe_lib.errors.SignatureVerificationError as e:
+        logger.warning('Stripe webhook: assinatura inválida — %s', e)
+        return '', 400
+    except Exception as e:
+        logger.error('Stripe webhook: erro ao construir evento — %s', e)
         return '', 400
 
-    if event['type'] == 'checkout.session.completed':
+    etype = event['type']
+    logger.info('Stripe evento recebido: %s', etype)
+
+    if etype == 'checkout.session.completed':
         session  = event['data']['object']
         plano_id = session.get('metadata', {}).get('plano_id', 'basic')
         uid      = session.get('metadata', {}).get('usuario_id')
         if uid and plano_id in PLANOS:
             ativar_assinatura(int(uid), plano_id)
 
-    elif event['type'] in ('customer.subscription.deleted', 'customer.subscription.paused'):
-        sub = event['data']['object']
-        # customer_email is not on the subscription object — retrieve customer
+    elif etype == 'invoice.payment_succeeded':
+        # Renovação mensal/anual — mantém a assinatura ativa no banco
+        invoice = event['data']['object']
+        sub_id  = invoice.get('subscription')
+        if sub_id:
+            try:
+                sub      = stripe_lib.Subscription.retrieve(sub_id)
+                customer = stripe_lib.Customer.retrieve(sub.customer)
+                email    = getattr(customer, 'email', '') or ''
+                if email:
+                    conn = get_db()
+                    row  = conn.execute('SELECT id, plano FROM usuarios WHERE email=?', (email,)).fetchone()
+                    conn.close()
+                    if row:
+                        ativar_assinatura(row['id'], row['plano'] or 'basic')
+                        logger.info('Stripe renovação: usuário %s renovado via invoice', row['id'])
+            except Exception as e:
+                logger.error('Stripe invoice.payment_succeeded: erro — %s', e)
+
+    elif etype in ('customer.subscription.deleted', 'customer.subscription.paused'):
+        sub         = event['data']['object']
         customer_id = sub.get('customer', '')
-        email = ''
         if customer_id:
             try:
                 customer = stripe_lib.Customer.retrieve(customer_id)
-                email = customer.get('email', '') or ''
-            except Exception:
-                pass
-        if email:
-            conn = get_db()
-            conn.execute("UPDATE usuarios SET plano='', ativo=0, valido_ate='' WHERE email=?", (email,))
-            conn.commit()
-            conn.close()
+                email    = getattr(customer, 'email', '') or ''
+                if email:
+                    conn = get_db()
+                    conn.execute("UPDATE usuarios SET plano='', ativo=0, valido_ate='' WHERE email=?", (email,))
+                    conn.commit()
+                    conn.close()
+                    logger.info('Stripe: assinatura cancelada/pausada para %s', email)
+            except Exception as e:
+                logger.error('Stripe subscription cancel: erro — %s', e)
 
     return '', 200
 
-
-# ─── NuPay ────────────────────────────────────────────────────────────────────
-
-@app.route('/pagamento/nupay/criar/<plano_id>', methods=['POST'])
-@login_required
-def nupay_criar(plano_id):
-    if plano_id not in PLANOS:
-        return redirect(url_for('chat'))
-
-    if not NUPAY_MERCHANT_KEY or not NUPAY_MERCHANT_TOKEN:
-        flash('NuPay não configurado ainda. Escolha outro método de pagamento.')
-        return redirect(url_for('chat'))
-
-    import requests, uuid
-    plano = PLANOS[plano_id]
-
-    payload = {
-        "merchantOrderReference": f"order-{current_user.id}-{uuid.uuid4().hex[:8]}",
-        "referenceId": f"{current_user.id}|{plano_id}",
-        "amount": {
-            "value": int(plano['preco'] * 100),
-            "currency": "BRL"
-        },
-        "shopper": {
-            "email": current_user.email,
-            "fullName": current_user.nome
-        },
-        "authorizationOptions": {
-            "type": "CIBA"
-        },
-        "callbackUrls": {
-            "success": f"{SITE_URL}/pagamento/nupay/sucesso",
-            "failure": f"{SITE_URL}/pagamento/falha",
-            "pending": f"{SITE_URL}/pagamento/pendente"
-        },
-        "notificationUrl": f"{SITE_URL}/pagamento/nupay/webhook"
-    }
-
-    try:
-        resp = requests.post(
-            f"{NUPAY_API_URL}/v1/checkouts/payments",
-            json=payload,
-            headers={
-                "X-Merchant-Key":   NUPAY_MERCHANT_KEY,
-                "X-Merchant-Token": NUPAY_MERCHANT_TOKEN,
-                "Content-Type":     "application/json"
-            },
-            timeout=15
-        )
-        data = resp.json()
-        payment_url = data.get("paymentUrl")
-        if not payment_url:
-            raise ValueError("paymentUrl não retornado")
-        return redirect(payment_url)
-    except Exception as e:
-        flash('Erro ao criar pagamento NuPay. Tente Mercado Pago ou tente novamente.')
-        return redirect(url_for('chat'))
-
-@app.route('/pagamento/nupay/webhook', methods=['POST'])
-def nupay_webhook():
-    data = request.get_json(silent=True) or {}
-
-    status        = data.get('status', '')
-    reference_id  = data.get('referenceId', '')
-    psp_reference = data.get('pspReferenceId', '')
-
-    if status != 'COMPLETED' or not reference_id:
-        return jsonify({'ok': True})
-
-    try:
-        import requests as req
-        resp = req.get(
-            f"{NUPAY_API_URL}/v1/checkouts/payments/{psp_reference}/status",
-            headers={
-                "X-Merchant-Key":   NUPAY_MERCHANT_KEY,
-                "X-Merchant-Token": NUPAY_MERCHANT_TOKEN
-            },
-            timeout=10
-        )
-        confirmed_status = resp.json().get('status', '')
-        if confirmed_status not in ('COMPLETED', 'AUTHORIZED'):
-            return jsonify({'ok': True})
-    except Exception:
-        return jsonify({'ok': False}), 400
-
-    try:
-        usuario_id, plano_id = reference_id.split('|')
-        usuario_id = int(usuario_id)
-    except Exception:
-        return jsonify({'ok': False}), 400
-
-    if plano_id not in PLANOS:
-        return jsonify({'ok': False}), 400
-
-    ativar_assinatura(usuario_id, plano_id)
-    return jsonify({'ok': True})
-
-@app.route('/pagamento/nupay/sucesso')
-@login_required
-def nupay_sucesso():
-    conn = get_db()
-    row  = conn.execute('SELECT * FROM usuarios WHERE id = ?', (current_user.id,)).fetchone()
-    conn.close()
-    if row:
-        login_user(Usuario(row))
-    return render_template('pagamento_status.html',
-                           status='sucesso',
-                           titulo='Pagamento aprovado!',
-                           mensagem='Sua conta está ativa. Bom trabalho!')
 
 # ─── Admin ────────────────────────────────────────────────────────────────────
 
