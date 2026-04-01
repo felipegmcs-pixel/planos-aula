@@ -99,6 +99,8 @@ NUPAY_MERCHANT_TOKEN = os.environ.get('NUPAY_MERCHANT_TOKEN', '')
 NUPAY_API_URL        = 'https://api.spinpay.com.br'   # produção
 # NUPAY_API_URL      = 'https://sandbox-api.spinpay.com.br'  # testes
 
+MP_WEBHOOK_SECRET = os.environ.get('MP_WEBHOOK_SECRET', '')
+
 SITE_URL    = os.environ.get('SITE_URL', 'http://localhost:5001')
 ADMIN_EMAIL = os.environ.get('ADMIN_EMAIL', '')
 
@@ -653,10 +655,14 @@ def admin_required(f):
 @app.errorhandler(429)
 def ratelimit_handler(e):
     logger.warning('Rate limit atingido: %s — %s', _limiter_key(), request.path)
-    return jsonify({
-        'erro': 'muitas_requisicoes',
-        'msg': 'Muitas requisições em pouco tempo. Aguarde um momento e tente novamente.'
-    }), 429
+    # Rotas HTML recebem flash; rotas de API recebem JSON
+    if request.path.startswith('/api/') or request.is_json:
+        return jsonify({
+            'erro': 'muitas_requisicoes',
+            'msg': 'Muitas requisições em pouco tempo. Aguarde um momento e tente novamente.'
+        }), 429
+    flash('Muitas tentativas em pouco tempo. Aguarde um momento e tente novamente.', 'erro')
+    return redirect(request.referrer or url_for('login'))
 
 # ─── Email helper ─────────────────────────────────────────────────────────────
 
@@ -1059,6 +1065,7 @@ def criar_docx(dados_form, aulas_ia):
 # ─── Auth ─────────────────────────────────────────────────────────────────────
 
 @app.route('/login', methods=['GET', 'POST'])
+@limiter.limit('10 per minute', methods=['POST'])
 def login():
     if current_user.is_authenticated:
         return redirect(url_for('chat'))
@@ -1071,7 +1078,7 @@ def login():
         if row and check_password_hash(row['senha'], senha):
             login_user(Usuario(row))
             return redirect(url_for('chat'))
-        flash('E-mail ou senha incorretos.')
+        flash('E-mail ou senha incorretos.', 'erro')
     return render_template('login.html')
 
 @app.route('/logout')
@@ -1081,13 +1088,14 @@ def logout():
     return redirect(url_for('login'))
 
 @app.route('/cadastro', methods=['GET', 'POST'])
+@limiter.limit('5 per minute', methods=['POST'])
 def cadastro():
     if current_user.is_authenticated:
         return redirect(url_for('chat'))
     if request.method == 'POST':
-        nome  = request.form.get('nome', '').strip()
-        email = request.form.get('email', '').strip().lower()
-        senha = request.form.get('senha', '')
+        nome  = request.form.get('nome', '').strip()[:120]
+        email = request.form.get('email', '').strip().lower()[:254]
+        senha = request.form.get('senha', '')[:128]
         aceito_termos = request.form.get('aceito_termos')
         if not nome or not email or not senha:
             flash('Preencha todos os campos.', 'erro')
@@ -1123,6 +1131,7 @@ def cadastro():
 # ─── Recuperação de senha ─────────────────────────────────────────────────────
 
 @app.route('/esqueci-senha', methods=['GET', 'POST'])
+@limiter.limit('5 per minute', methods=['POST'])
 def esqueci_senha():
     if request.method == 'POST':
         email = request.form.get('email', '').strip().lower()
@@ -1407,6 +1416,27 @@ def pagamento_processar():
 def pagamento_webhook():
     if not mp_sdk:
         return jsonify({'ok': False}), 400
+
+    # ── Verificação de assinatura HMAC do Mercado Pago ────────────────────────
+    if MP_WEBHOOK_SECRET:
+        import hmac as _hmac, hashlib as _hashlib
+        xsig = request.headers.get('x-signature', '')
+        xrid = request.headers.get('x-request-id', '')
+        data_id = request.args.get('data.id', '') or (request.get_json(silent=True) or {}).get('data', {}).get('id', '')
+        ts = ''
+        v1 = ''
+        for part in xsig.split(','):
+            part = part.strip()
+            if part.startswith('ts='):
+                ts = part[3:]
+            elif part.startswith('v1='):
+                v1 = part[3:]
+        manifest = f'id:{data_id};request-id:{xrid};ts:{ts};'
+        expected = _hmac.new(MP_WEBHOOK_SECRET.encode(), manifest.encode(), _hashlib.sha256).hexdigest()
+        if not _hmac.compare_digest(expected, v1):
+            logger.warning('MP webhook: assinatura inválida — possível requisição forjada')
+            return jsonify({'ok': False}), 401
+    # ─────────────────────────────────────────────────────────────────────────
 
     data = request.get_json(silent=True) or {}
     topic = data.get('type') or request.args.get('type', '')
