@@ -1954,7 +1954,7 @@ def api_chat():
                     for m in messages[:-1]:
                         role = 'user' if m['role'] == 'user' else 'model'
                         historico_g.append({'role': role, 'parts': _to_gemini_parts(m['content'])})
-                    gm = genai.GenerativeModel(model_name='gemini-1.5-pro', system_instruction=sistema)
+                    gm = genai.GenerativeModel(model_name='gemini-1.5-flash', system_instruction=sistema)
                     chat_g = gm.start_chat(history=historico_g)
                     resp_g = chat_g.send_message(_to_gemini_parts(messages[-1]['content']), stream=True)
                     for chunk in resp_g:
@@ -2008,6 +2008,7 @@ def api_chat():
                     {'role': m['role'], 'content': m['content'] if isinstance(m['content'], str) else str(m['content'])}
                     for m in messages
                 ]
+                import time as _time
                 ro = req_lib.post(
                     'https://api.openai.com/v1/chat/completions',
                     json={'model': 'gpt-4o-mini', 'max_tokens': 8000, 'messages': openai_msgs, 'stream': True},
@@ -2015,10 +2016,21 @@ def api_chat():
                     stream=True, timeout=120
                 )
                 print(f'OpenAI streaming status: {ro.status_code}')
+                if ro.status_code == 429:
+                    print('OpenAI 429 — aguardando 3s e tentando novamente...')
+                    _time.sleep(3)
+                    ro = req_lib.post(
+                        'https://api.openai.com/v1/chat/completions',
+                        json={'model': 'gpt-4o-mini', 'max_tokens': 8000, 'messages': openai_msgs, 'stream': True},
+                        headers={'Authorization': f'Bearer {openai_key}', 'content-type': 'application/json'},
+                        stream=True, timeout=120
+                    )
+                    print(f'OpenAI retry status: {ro.status_code}')
                 if ro.status_code != 200:
                     err_body = ro.text[:300]
                     print(f'OpenAI erro: {err_body}')
-                    yield f"data: {json.dumps({'erro': f'Serviço de IA indisponível ({ro.status_code}). Tente novamente mais tarde.'})}\n\n"
+                    msg = 'Limite de requisições atingido. Aguarde alguns segundos e tente novamente.' if ro.status_code == 429 else f'Serviço de IA indisponível ({ro.status_code}). Tente novamente mais tarde.'
+                    yield f"data: {json.dumps({'erro': msg})}\n\n"
                     return
                 for line in ro.iter_lines():
                     if not line:
