@@ -1135,7 +1135,8 @@ def esqueci_senha():
             if enviado:
                 flash('Email enviado! Verifique sua caixa de entrada.', 'ok')
             else:
-                flash(f'Link de redefinição: {link}', 'ok')
+                logger.warning('SMTP não configurado — link de reset gerado para %s (não exposto ao usuário)', email)
+                flash('Se esse email estiver cadastrado, você receberá as instruções.', 'ok')
         else:
             flash('Se esse email estiver cadastrado, você receberá as instruções.', 'ok')
         conn.close()
