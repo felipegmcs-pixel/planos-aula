@@ -122,6 +122,12 @@
           <label>Senha</label>
           <input type="password" name="senha" placeholder="Mínimo 6 caracteres" required minlength="6"/>
         </div>
+        <div style="margin-bottom:16px;margin-top:4px">
+          <label style="display:flex;align-items:flex-start;gap:10px;cursor:pointer;font-size:.82rem;color:var(--text2);font-weight:500;text-transform:none;letter-spacing:0;line-height:1.5">
+            <input type="checkbox" name="aceito_termos" required style="margin-top:3px;accent-color:var(--indigo);flex-shrink:0;width:15px;height:15px"/>
+            <span>Li e aceito os <a href="/termos" target="_blank" style="color:var(--indigo);font-weight:700;text-decoration:none">Termos de Uso</a> e a <a href="/privacidade" target="_blank" style="color:var(--indigo);font-weight:700;text-decoration:none">Política de Privacidade</a></span>
+          </label>
+        </div>
         <button type="submit" class="btn" id="cadastroBtn">Criar conta grátis →</button>
       </form>
 

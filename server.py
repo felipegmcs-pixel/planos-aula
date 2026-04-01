@@ -22,6 +22,8 @@ from flask import (Flask, render_template, request, send_file,
 from flask_login import (LoginManager, UserMixin, login_user,
                          logout_user, login_required, current_user)
 from werkzeug.security import generate_password_hash, check_password_hash
+from flask_limiter import Limiter
+from flask_limiter.util import get_remote_address
 from anthropic import Anthropic
 from openai import OpenAI
 from docx import Document
@@ -52,7 +54,20 @@ app.secret_key = os.environ.get('SECRET_KEY', 'dev-secret-troque-em-producao')
 
 login_manager = LoginManager(app)
 login_manager.login_view = 'login'
-login_manager.login_message = None
+login_manager.login_message = 'Faça login para acessar esta página.'
+login_manager.login_message_category = 'info'
+
+def _limiter_key():
+    if current_user.is_authenticated:
+        return f'user:{current_user.id}'
+    return get_remote_address()
+
+limiter = Limiter(
+    app=app,
+    key_func=_limiter_key,
+    default_limits=[],
+    storage_uri='memory://'
+)
 
 client = Anthropic(api_key=os.environ.get('ANTHROPIC_API_KEY'), timeout=120.0)
 
@@ -620,6 +635,29 @@ def assinatura_required(f):
         return f(*args, **kwargs)
     return decorated
 
+# ─── Helper: verificar admin ──────────────────────────────────────────────────
+
+def admin_required(f):
+    from functools import wraps
+    @wraps(f)
+    def decorated(*args, **kwargs):
+        if not current_user.is_authenticated:
+            return redirect(url_for('login'))
+        if not current_user.is_admin:
+            return jsonify({'erro': 'Acesso negado'}), 403
+        return f(*args, **kwargs)
+    return decorated
+
+# ─── Handler 429 (rate limit) ─────────────────────────────────────────────────
+
+@app.errorhandler(429)
+def ratelimit_handler(e):
+    logger.warning('Rate limit atingido: %s — %s', _limiter_key(), request.path)
+    return jsonify({
+        'erro': 'muitas_requisicoes',
+        'msg': 'Muitas requisições em pouco tempo. Aguarde um momento e tente novamente.'
+    }), 429
+
 # ─── Email helper ─────────────────────────────────────────────────────────────
 
 def enviar_email(to, subject, body_html):
@@ -1050,8 +1088,12 @@ def cadastro():
         nome  = request.form.get('nome', '').strip()
         email = request.form.get('email', '').strip().lower()
         senha = request.form.get('senha', '')
+        aceito_termos = request.form.get('aceito_termos')
         if not nome or not email or not senha:
-            flash('Preencha todos os campos.')
+            flash('Preencha todos os campos.', 'erro')
+            return render_template('cadastro.html')
+        if not aceito_termos:
+            flash('Você precisa aceitar os Termos de Uso e a Política de Privacidade para criar uma conta.', 'erro')
             return render_template('cadastro.html')
         if len(senha) < 6:
             flash('A senha deve ter pelo menos 6 caracteres.')
@@ -1534,20 +1576,16 @@ def nupay_sucesso():
 # ─── Admin ────────────────────────────────────────────────────────────────────
 
 @app.route('/admin')
-@login_required
+@admin_required
 def admin():
-    if not current_user.is_admin:
-        return redirect(url_for('index'))
     conn  = get_db()
     users = conn.execute('SELECT * FROM usuarios ORDER BY id DESC').fetchall()
     conn.close()
     return render_template('admin.html', users=users)
 
 @app.route('/admin/ativar/<int:uid>', methods=['POST'])
-@login_required
+@admin_required
 def admin_ativar(uid):
-    if not current_user.is_admin:
-        return redirect(url_for('index'))
     dias = int(request.form.get('dias', 30))
     plano = request.form.get('plano', 'professor')
     valido_ate = (datetime.now() + timedelta(days=dias)).strftime('%Y-%m-%d')
@@ -1559,10 +1597,8 @@ def admin_ativar(uid):
     return redirect(url_for('admin'))
 
 @app.route('/admin/desativar/<int:uid>', methods=['POST'])
-@login_required
+@admin_required
 def admin_desativar(uid):
-    if not current_user.is_admin:
-        return redirect(url_for('index'))
     conn = get_db()
     conn.execute('UPDATE usuarios SET ativo = 0 WHERE id = ?', (uid,))
     conn.commit()
@@ -1570,10 +1606,8 @@ def admin_desativar(uid):
     return redirect(url_for('admin'))
 
 @app.route('/admin/update', methods=['POST'])
-@login_required
+@admin_required
 def admin_update():
-    if not current_user.is_admin:
-        return jsonify({'erro': 'Não autorizado'}), 403
     data   = request.json or {}
     uid    = data.get('uid')
     action = data.get('action')
@@ -1718,6 +1752,7 @@ def deletar_historico(item_id):
 @app.route('/gerar', methods=['POST'])
 @login_required
 @assinatura_required
+@limiter.limit('10 per minute')
 def gerar():
     dados = {
         'professor':  request.form.get('professor', ''),
@@ -1885,6 +1920,7 @@ def processar_arquivo():
 
 @app.route('/api/chat', methods=['POST'])
 @login_required
+@limiter.limit('20 per minute')
 def api_chat():
     import traceback
 
@@ -2071,6 +2107,7 @@ def api_chat():
 
 @app.route('/api/transcribe', methods=['POST'])
 @login_required
+@limiter.limit('10 per minute')
 def api_transcribe():
     """Transcreve áudio do usuário usando OpenAI Whisper."""
     if 'audio' not in request.files:
@@ -2102,6 +2139,7 @@ def api_transcribe():
 
 @app.route('/api/tts', methods=['POST'])
 @login_required
+@limiter.limit('10 per minute')
 def api_tts():
     """Converte texto em áudio usando OpenAI TTS."""
     data = request.json or {}
@@ -3447,6 +3485,7 @@ def planejamento():
 
 @app.route('/api/planejamento', methods=['POST'])
 @login_required
+@limiter.limit('10 per minute')
 def api_planejamento():
     if not current_user.assinatura_ativa and not current_user.is_admin:
         return jsonify({'erro': 'Plano necessário'}), 403
@@ -3642,6 +3681,7 @@ def api_deletar_questao(qid):
 
 @app.route('/api/questoes/extrair-do-chat', methods=['POST'])
 @login_required
+@limiter.limit('10 per minute')
 def api_extrair_questoes():
     """Extrai questões estruturadas de um texto gerado pela IA e salva no banco."""
     d = request.get_json(force=True)
