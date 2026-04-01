@@ -280,7 +280,9 @@
     .topbar-logo { font-size: .88rem; font-weight: 800; letter-spacing: -.3px; text-decoration: none; display: flex; align-items: center; gap: 8px; }
     .topbar-logo .tp  { color: var(--sb-fg); }
     .topbar-logo .tia { color: var(--indigo); font-weight: 600; }
-    .topbar-logo-img { height: 28px; width: auto; object-fit: contain; }
+    .topbar-logo-img { height: 32px; width: auto; object-fit: contain; flex-shrink: 0; }
+    .topbar-spacer { width: 44px; flex-shrink: 0; }
+    .dl-file-input { display: none; }
     .btn-hamburger { background: none; border: none; cursor: pointer; display: flex; flex-direction: column; gap: 5px; padding: 10px; min-width: 44px; min-height: 44px; align-items: center; justify-content: center; }
     .btn-hamburger span { display: block; width: 18px; height: 1.5px; background: var(--sb-fg); opacity: .75; border-radius: 2px; transition: opacity .2s; }
     .btn-hamburger:hover span { opacity: 1; }
@@ -802,7 +804,7 @@
       <label class="dl-label">Logo da escola (PNG/JPG)</label>
       <div class="dl-file-row">
         <label for="dl-logo" class="dl-file-label">Escolher arquivo</label>
-        <input type="file" id="dl-logo" accept=".png,.jpg,.jpeg,.svg,.webp" style="display:none" onchange="previewLogo(this)"/>
+        <input type="file" id="dl-logo" accept=".png,.jpg,.jpeg,.svg,.webp" class="dl-file-input" onchange="previewLogo(this)"/>
         <span id="dl-logo-nome" class="dl-file-name">Nenhuma logo carregada</span>
         <img id="dl-logo-preview" src="" alt="" class="dl-logo-preview"/>
       </div>
@@ -811,7 +813,7 @@
       <label class="dl-label">Brasão do Governo / Secretaria (PNG/JPG)</label>
       <div class="dl-file-row">
         <label for="dl-logo-estado" class="dl-file-label">Escolher arquivo</label>
-        <input type="file" id="dl-logo-estado" accept=".png,.jpg,.jpeg,.svg,.webp" style="display:none" onchange="previewLogoEstado(this)"/>
+        <input type="file" id="dl-logo-estado" accept=".png,.jpg,.jpeg,.svg,.webp" class="dl-file-input" onchange="previewLogoEstado(this)"/>
         <span id="dl-logo-estado-nome" class="dl-file-name">Nenhum brasão carregado</span>
         <img id="dl-logo-estado-preview" src="" alt="" class="dl-logo-preview"/>
       </div>
@@ -922,11 +924,11 @@
       <button class="btn-hamburger" onclick="abrirSidebar()">
         <span></span><span></span><span></span>
       </button>
-      <a class="topbar-logo" href="/chat" style="display:flex;align-items:center;gap:7px;">
-        <img src="{{ url_for('static', filename='logo-oficial.png') }}" alt="ProfessorIA" style="height: 32px; width: auto; flex-shrink: 0;">
+      <a class="topbar-logo" href="/chat">
+        <img src="{{ url_for('static', filename='logo-oficial.png') }}" alt="ProfessorIA" class="topbar-logo-img">
         <span class="tp">Professor</span><span class="tia">IA</span>
       </a>
-      <div style="width:30px"></div>
+      <div class="topbar-spacer"></div>
     </div>
 
     {% if limite_atingido %}
