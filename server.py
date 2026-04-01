@@ -5,6 +5,7 @@ import json
 import secrets
 import smtplib
 import logging
+import traceback
 from email.mime.text import MIMEText
 
 # ─── Logging estruturado ──────────────────────────────────────────────────────
@@ -45,7 +46,11 @@ IMAGE_STYLE_MODIFIER = "Estilo: Traço Acadêmico-Inclusivo. Ilustração digita
 # ─── App ──────────────────────────────────────────────────────────────────────
 
 app = Flask(__name__)
-app.secret_key = os.environ.get('SECRET_KEY', 'dev-secret-troque-em-producao')
+_secret = os.environ.get('SECRET_KEY', '')
+if not _secret:
+    logger.critical('SECRET_KEY não definida — usando chave insegura. Defina SECRET_KEY em produção!')
+    _secret = 'dev-secret-troque-em-producao'
+app.secret_key = _secret
 
 app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16 MB máximo por request
 
@@ -1563,7 +1568,7 @@ def get_geracoes_mes(usuario_id):
 @login_required
 def salvar_template():
     data = request.json or {}
-    template = data.get('template', '').strip()
+    template = data.get('template', '').strip()[:5000]
     conn = get_db()
     conn.execute("UPDATE usuarios SET escola_template = ?, onboarding_done = 1 WHERE id = ?",
                 (template, current_user.id))
@@ -1647,18 +1652,18 @@ def processar_arquivo():
 @login_required
 @limiter.limit('20 per minute')
 def api_chat():
-    import traceback
-
     if not current_user.assinatura_ativa and not current_user.is_admin:
         geracoes = get_geracoes_mes(current_user.id)
         if geracoes >= LIMITE_GRATIS:
             return jsonify({'erro': 'limite_atingido', 'geracoes': geracoes}), 403
 
-    data = request.json
+    data = request.json or {}
     messages = data.get('messages', [])
     anexo   = data.get('anexo')   # { tipo, base64, mime, nome } ou { tipo, texto, nome }
     if not messages:
         return jsonify({'erro': 'Mensagem vazia'}), 400
+    if len(messages) > 100:
+        return jsonify({'erro': 'Histórico muito longo. Inicie uma nova conversa.'}), 400
 
     # Extrai conteúdo de texto da última mensagem para salvar no DB
     last_content = messages[-1].get('content', '')
@@ -1668,7 +1673,8 @@ def api_chat():
         if anexo:
             db_content += f' [arquivo: {anexo.get("nome", "")}]'
     else:
-        db_content = last_content
+        db_content = str(last_content) if last_content else ''
+    db_content = db_content[:4000]  # cap para armazenamento no banco
 
     conn = get_db()
     conn.execute(
@@ -3667,9 +3673,9 @@ def api_gerar_imagem():
 @login_required
 def api_onboarding_completar():
     d = request.get_json(force=True)
-    disciplina = d.get('disciplina', '')
-    serie = d.get('serie', '')
-    template = d.get('template', '')
+    disciplina = d.get('disciplina', '')[:100]
+    serie = d.get('serie', '')[:50]
+    template = d.get('template', '')[:5000]
     conn = get_db()
     conn.execute(
         """UPDATE usuarios SET onboarding_done = 1, escola_template = ? WHERE id = ?""",
