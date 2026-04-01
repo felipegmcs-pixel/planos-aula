@@ -1975,12 +1975,8 @@ def api_chat():
                     print('Gemini retornou resposta vazia, tentando próximo motor...')
                 except Exception as e:
                     err_g = str(e)
-                    print(f'Gemini streaming falhou: {err_g}')
-                    # Só para em rate limit/quota real — outros erros tentam próximo motor
-                    if any(x in err_g.lower() for x in ['quota exceeded', 'resource exhausted', 'rate_limit_exceeded']):
-                        yield f"data: {json.dumps({'erro': f'Limite do Gemini atingido. Tente novamente em instantes. ({err_g[:120]})'})}\n\n"
-                        return
-                chunks = []  # reset
+                    print(f'Gemini streaming falhou, tentando próximo motor: {err_g}')
+                chunks = []  # reset — sempre tenta Claude/OpenAI se Gemini falhar
 
             # Claude streaming
             claude_ok = False
