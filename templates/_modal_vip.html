@@ -1,0 +1,240 @@
+<!-- ══════════════════════════════════════════════════════════════════
+     MODAL LISTA VIP — Glassmorphism
+     Inclua com: {% include '_modal_vip.html' %}
+     Abra com:   abrirModalVip()
+══════════════════════════════════════════════════════════════════ -->
+<div id="vipOverlay">
+  <div id="vipModal" role="dialog" aria-modal="true" aria-labelledby="vipTitulo">
+
+    <!-- Botão fechar -->
+    <button class="vip-close" onclick="fecharModalVip()" aria-label="Fechar">&#x2715;</button>
+
+    <!-- ── Estado: Formulário ── -->
+    <div id="vipEstadoForm">
+
+      <div class="vip-header">
+        <div class="vip-badge">
+          <span class="vip-dot"></span>
+          Lista VIP
+        </div>
+        <h2 id="vipTitulo" class="vip-title">Garanta 50% de desconto<br>no lançamento</h2>
+        <p class="vip-sub">Vagas limitadas. Seja um dos primeiros professores.</p>
+      </div>
+
+      <form id="vipFormEl" onsubmit="enviarVip(event)" novalidate>
+        <div class="vip-field">
+          <input type="text" id="vipNome" class="vip-input" placeholder="Seu nome completo" required autocomplete="name">
+        </div>
+        <div class="vip-field">
+          <input type="email" id="vipEmail" class="vip-input" placeholder="Seu melhor e-mail" required autocomplete="email">
+        </div>
+        <div class="vip-field">
+          <input type="tel" id="vipWhatsapp" class="vip-input" placeholder="WhatsApp (11) 99999-9999"
+                 maxlength="15" inputmode="numeric" autocomplete="tel" oninput="mascaraWhatsapp(this)">
+        </div>
+
+        <button type="submit" id="vipBtn" class="vip-submit">Garantir meu lugar →</button>
+        <p id="vipErro" class="vip-erro" role="alert"></p>
+      </form>
+
+      <p class="vip-footer-note">🔒 Seus dados estão seguros. Sem spam, prometemos.</p>
+    </div>
+
+    <!-- ── Estado: Sucesso ── -->
+    <div id="vipEstadoSucesso">
+      <div class="vip-sucesso-icon">✅</div>
+      <h2 class="vip-title">Você está na Lista VIP!</h2>
+      <p class="vip-sub" style="margin-top:10px">
+        Seu lugar na Lista VIP e o desconto de
+        <strong style="color:#fbbf24">50%</strong> estão garantidos.<br>
+        Avisaremos você em primeira mão no lançamento.
+      </p>
+      <button class="vip-submit" style="margin-top:28px" onclick="fecharModalVip()">Perfeito!</button>
+    </div>
+
+  </div><!-- /vipModal -->
+</div><!-- /vipOverlay -->
+
+<style>
+/* ── Overlay ─────────────────────────────────────────────────────── */
+#vipOverlay{
+  display:none;
+  position:fixed;inset:0;z-index:9999;
+  background:rgba(0,0,0,.76);
+  backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);
+  align-items:center;justify-content:center;
+  padding:16px;
+}
+#vipOverlay.ativo{display:flex}
+
+/* ── Card ──────────────────────────────────────────────────────────── */
+#vipModal{
+  position:relative;
+  width:100%;max-width:440px;
+  background:rgba(15,23,42,.82);
+  border:1px solid rgba(255,255,255,.14);
+  backdrop-filter:blur(28px);-webkit-backdrop-filter:blur(28px);
+  border-radius:22px;
+  padding:40px 36px 32px;
+  box-shadow:0 32px 80px rgba(0,0,0,.6),inset 0 1px 0 rgba(255,255,255,.08);
+}
+@media(max-width:480px){#vipModal{padding:32px 22px 26px}}
+
+/* ── Fechar ─────────────────────────────────────────────────────── */
+.vip-close{
+  position:absolute;top:14px;right:18px;
+  background:none;border:none;
+  color:rgba(255,255,255,.45);
+  font-size:1.3rem;line-height:1;
+  cursor:pointer;transition:color .2s;padding:4px;
+}
+.vip-close:hover{color:#fff}
+
+/* ── Header ─────────────────────────────────────────────────────── */
+.vip-header{text-align:center;margin-bottom:28px}
+.vip-badge{
+  display:inline-flex;align-items:center;gap:7px;
+  background:rgba(251,191,36,.12);
+  border:1px solid rgba(251,191,36,.28);
+  border-radius:100px;padding:5px 15px;
+  margin-bottom:16px;
+  font-size:.72rem;font-weight:800;
+  color:#fbbf24;letter-spacing:.8px;text-transform:uppercase;
+}
+.vip-dot{
+  width:7px;height:7px;border-radius:50%;
+  background:#fbbf24;
+  display:inline-block;
+  animation:vipPulse 1.8s ease infinite;
+}
+@keyframes vipPulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.45;transform:scale(1.5)}}
+.vip-title{
+  color:#fff;
+  font-size:clamp(1.35rem,4vw,1.65rem);
+  font-weight:900;line-height:1.2;
+  margin:0 0 8px;letter-spacing:-.5px;
+}
+.vip-sub{color:rgba(255,255,255,.5);font-size:.88rem;margin:0;line-height:1.6}
+
+/* ── Campos ─────────────────────────────────────────────────────── */
+.vip-field{margin-bottom:12px}
+.vip-input{
+  width:100%;
+  background:rgba(255,255,255,.07);
+  border:1.5px solid rgba(255,255,255,.16);
+  border-radius:10px;
+  padding:13px 16px;
+  color:#fff;font-size:.95rem;
+  outline:none;
+  transition:border-color .2s,background .2s;
+  box-sizing:border-box;
+}
+.vip-input::placeholder{color:rgba(255,255,255,.35)}
+.vip-input:focus{
+  border-color:rgba(99,102,241,.75);
+  background:rgba(99,102,241,.08);
+}
+
+/* ── Botão ────────────────────────────────────────────────────────── */
+.vip-submit{
+  width:100%;margin-top:6px;
+  padding:15px;
+  background:linear-gradient(135deg,#6366f1 0%,#1e40af 100%);
+  border:none;border-radius:10px;
+  color:#fff;font-size:1rem;font-weight:700;
+  cursor:pointer;letter-spacing:.3px;
+  transition:opacity .2s,transform .2s,box-shadow .2s;
+  box-shadow:0 8px 24px rgba(30,64,175,.4);
+}
+.vip-submit:hover:not(:disabled){opacity:.9;transform:translateY(-1px);box-shadow:0 12px 32px rgba(30,64,175,.55)}
+.vip-submit:disabled{opacity:.6;cursor:not-allowed;transform:none}
+
+/* ── Erro + Rodapé ──────────────────────────────────────────────── */
+.vip-erro{
+  color:#f87171;font-size:.82rem;
+  text-align:center;margin:10px 0 0;
+  display:none;
+}
+.vip-erro.visivel{display:block}
+.vip-footer-note{
+  color:rgba(255,255,255,.25);font-size:.73rem;
+  text-align:center;margin-top:16px;
+}
+
+/* ── Sucesso ─────────────────────────────────────────────────────── */
+#vipEstadoSucesso{display:none;text-align:center;padding:8px 0}
+.vip-sucesso-icon{font-size:3rem;margin-bottom:14px}
+</style>
+
+<script>
+(function(){
+  function abrirModalVip(){
+    var o=document.getElementById('vipOverlay');
+    o.classList.add('ativo');
+    document.body.style.overflow='hidden';
+    setTimeout(function(){var f=document.getElementById('vipNome');if(f)f.focus();},120);
+  }
+  function fecharModalVip(){
+    document.getElementById('vipOverlay').classList.remove('ativo');
+    document.body.style.overflow='';
+  }
+
+  /* Fechar clicando fora */
+  document.getElementById('vipOverlay').addEventListener('click',function(e){
+    if(e.target===this) fecharModalVip();
+  });
+  /* Fechar com ESC */
+  document.addEventListener('keydown',function(e){
+    if(e.key==='Escape') fecharModalVip();
+  });
+
+  /* Máscara WhatsApp BR: (XX) XXXXX-XXXX */
+  window.mascaraWhatsapp=function(el){
+    var v=el.value.replace(/\D/g,'');
+    if(v.length>11) v=v.slice(0,11);
+    if(v.length>10)      v=v.replace(/^(\d{2})(\d{5})(\d{0,4}).*/,'($1) $2-$3');
+    else if(v.length>6)  v=v.replace(/^(\d{2})(\d{4})(\d{0,4}).*/,'($1) $2-$3');
+    else if(v.length>2)  v=v.replace(/^(\d{2})(\d{0,5}).*/,'($1) $2');
+    else if(v.length>0)  v=v.replace(/^(\d{0,2}).*/,'($1');
+    el.value=v;
+  };
+
+  /* Submit */
+  window.enviarVip=async function(e){
+    e.preventDefault();
+    var btn  = document.getElementById('vipBtn');
+    var erro = document.getElementById('vipErro');
+    btn.disabled=true; btn.textContent='Enviando…';
+    erro.classList.remove('visivel');
+
+    try{
+      var res=await fetch('/lista-vip',{
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({
+          nome:     document.getElementById('vipNome').value.trim(),
+          email:    document.getElementById('vipEmail').value.trim(),
+          whatsapp: document.getElementById('vipWhatsapp').value.trim()
+        })
+      });
+      var data=await res.json();
+      if(res.ok && data.ok){
+        document.getElementById('vipEstadoForm').style.display='none';
+        document.getElementById('vipEstadoSucesso').style.display='block';
+      } else {
+        erro.textContent=data.erro||'Erro ao cadastrar. Tente novamente.';
+        erro.classList.add('visivel');
+        btn.disabled=false; btn.textContent='Garantir meu lugar →';
+      }
+    }catch(_){
+      erro.textContent='Erro de conexão. Tente novamente.';
+      erro.classList.add('visivel');
+      btn.disabled=false; btn.textContent='Garantir meu lugar →';
+    }
+  };
+
+  /* Expõe globalmente para os botões de CTA */
+  window.abrirModalVip=abrirModalVip;
+  window.fecharModalVip=fecharModalVip;
+})();
+</script>

@@ -94,6 +94,7 @@ if GEMINI_API_KEY:
 
 SITE_URL    = os.environ.get('SITE_URL', 'http://localhost:5001')
 ADMIN_EMAIL = os.environ.get('ADMIN_EMAIL', '')
+LEADS_PASS  = os.environ.get('LEADS_PASS', 'professoria2026')
 
 SMTP_HOST  = os.environ.get('SMTP_HOST', '')
 SMTP_PORT  = int(os.environ.get('SMTP_PORT', 587))
@@ -532,6 +533,15 @@ def init_db():
             criado_em TEXT
         )
     ''')
+    conn.execute('''
+        CREATE TABLE IF NOT EXISTS lista_vip (
+            id         SERIAL PRIMARY KEY,
+            nome       TEXT NOT NULL,
+            email      TEXT UNIQUE NOT NULL,
+            whatsapp   TEXT DEFAULT '',
+            criado_em  TEXT
+        )
+    ''')
     # ─── Índices de performance ────────────────────────────────────────────────
     conn.execute('CREATE INDEX IF NOT EXISTS idx_historico_usuario ON historico(usuario_id)')
     conn.execute('CREATE INDEX IF NOT EXISTS idx_chat_messages_usuario ON chat_messages(usuario_id)')
@@ -587,7 +597,11 @@ class Usuario(UserMixin):
 @login_manager.user_loader
 def load_user(user_id):
     conn = get_db()
-    row = conn.execute('SELECT * FROM usuarios WHERE id = ?', (user_id,)).fetchone()
+    row = conn.execute(
+        'SELECT id, nome, email, senha, plano, ativo, valido_ate, criado_em,'
+        ' escola_nome, professor_nome, logo_path, logo_estado_path,'
+        ' escola_template, onboarding_done, escola_id, papel'
+        ' FROM usuarios WHERE id = ?', (user_id,)).fetchone()
     conn.close()
     return Usuario(row) if row else None
 
@@ -1059,7 +1073,11 @@ def login():
         email = request.form.get('email', '').strip().lower()
         senha = request.form.get('senha', '')
         conn  = get_db()
-        row   = conn.execute('SELECT * FROM usuarios WHERE email = ?', (email,)).fetchone()
+        row   = conn.execute(
+            'SELECT id, nome, email, senha, plano, ativo, valido_ate, criado_em,'
+            ' escola_nome, professor_nome, logo_path, logo_estado_path,'
+            ' escola_template, onboarding_done, escola_id, papel'
+            ' FROM usuarios WHERE email = ?', (email,)).fetchone()
         conn.close()
         if row and check_password_hash(row['senha'], senha):
             login_user(Usuario(row))
@@ -1147,37 +1165,34 @@ def esqueci_senha():
 @limiter.limit('5 per 10 minutes', methods=['POST'])
 def redefinir_senha(token):
     conn = get_db()
-    row = conn.execute(
-        "SELECT * FROM reset_tokens WHERE token = ? AND usado = 0", (token,)).fetchone()
-    # Mensagem unificada para token inválido/expirado/já usado — evita enumeração de tokens
-    if not row:
+    try:
+        row = conn.execute(
+            "SELECT * FROM reset_tokens WHERE token = ? AND usado = 0", (token,)).fetchone()
+        # Mensagem unificada para token inválido/expirado/já usado — evita enumeração de tokens
+        if not row:
+            flash('Link inválido, expirado ou já utilizado. Solicite um novo.', 'erro')
+            return redirect(url_for('esqueci_senha'))
+        if datetime.strptime(row['expira_em'], '%Y-%m-%d %H:%M:%S') < datetime.now():
+            flash('Link inválido, expirado ou já utilizado. Solicite um novo.', 'erro')
+            return redirect(url_for('esqueci_senha'))
+        if request.method == 'POST':
+            senha = request.form.get('senha', '')
+            confirma = request.form.get('confirma', '')
+            if len(senha) < 6:
+                flash('Senha deve ter pelo menos 6 caracteres.', 'erro')
+                return render_template('redefinir_senha.html', token=token)
+            if senha != confirma:
+                flash('As senhas não coincidem.', 'erro')
+                return render_template('redefinir_senha.html', token=token)
+            conn.execute("UPDATE usuarios SET senha = ? WHERE id = ?",
+                        (generate_password_hash(senha), row['usuario_id']))
+            conn.execute("UPDATE reset_tokens SET usado = 1 WHERE id = ?", (row['id'],))
+            conn.commit()
+            flash('Senha atualizada com sucesso!', 'ok')
+            return redirect(url_for('login'))
+        return render_template('redefinir_senha.html', token=token)
+    finally:
         conn.close()
-        flash('Link inválido, expirado ou já utilizado. Solicite um novo.', 'erro')
-        return redirect(url_for('esqueci_senha'))
-    if datetime.strptime(row['expira_em'], '%Y-%m-%d %H:%M:%S') < datetime.now():
-        conn.close()
-        flash('Link inválido, expirado ou já utilizado. Solicite um novo.', 'erro')
-        return redirect(url_for('esqueci_senha'))
-    if request.method == 'POST':
-        senha = request.form.get('senha', '')
-        confirma = request.form.get('confirma', '')
-        if len(senha) < 6:
-            flash('Senha deve ter pelo menos 6 caracteres.', 'erro')
-            conn.close()
-            return render_template('redefinir_senha.html', token=token)
-        if senha != confirma:
-            flash('As senhas não coincidem.', 'erro')
-            conn.close()
-            return render_template('redefinir_senha.html', token=token)
-        conn.execute("UPDATE usuarios SET senha = ? WHERE id = ?",
-                    (generate_password_hash(senha), row['usuario_id']))
-        conn.execute("UPDATE reset_tokens SET usado = 1 WHERE id = ?", (row['id'],))
-        conn.commit()
-        conn.close()
-        flash('Senha atualizada com sucesso!', 'ok')
-        return redirect(url_for('login'))
-    conn.close()
-    return render_template('redefinir_senha.html', token=token)
 
 # ─── Planos e Pagamento ───────────────────────────────────────────────────────
 
@@ -1314,7 +1329,7 @@ def stripe_webhook():
 @admin_required
 def admin():
     conn  = get_db()
-    users = conn.execute('SELECT * FROM usuarios ORDER BY id DESC').fetchall()
+    users = conn.execute('SELECT * FROM usuarios ORDER BY id DESC LIMIT 200').fetchall()
     conn.close()
     return render_template('admin.html', users=users)
 
@@ -1451,12 +1466,16 @@ def api_historico():
     conn.close()
     result = []
     for r in rows:
+        try:
+            temas_parsed = json.loads(r['temas']) if r['temas'] else []
+        except (json.JSONDecodeError, TypeError):
+            temas_parsed = []
         result.append({
             'id': r['id'], 'data': r['data'], 'professor': r['professor'],
             'escola': r['escola'], 'disciplina': r['disciplina'],
             'turma': r['turma'], 'num_aulas': r['num_aulas'],
             'periodo': r['periodo'], 'datas': r['datas'],
-            'temas': json.loads(r['temas']) if r['temas'] else [],
+            'temas': temas_parsed,
             'nome_arquivo': r['nome_arquivo']
         })
     return jsonify(result)
@@ -1659,12 +1678,17 @@ def processar_arquivo():
 
 @app.route('/api/chat', methods=['POST'])
 @login_required
-@limiter.limit('20 per minute')
+@limiter.limit('10 per minute')
 def api_chat():
     if not current_user.assinatura_ativa and not current_user.is_admin:
         geracoes = get_geracoes_mes(current_user.id)
         if geracoes >= LIMITE_GRATIS:
-            return jsonify({'erro': 'limite_atingido', 'geracoes': geracoes}), 403
+            return jsonify({
+                'erro': 'limite_atingido',
+                'geracoes': geracoes,
+                'cta': '/planos',
+                'mensagem': 'Você atingiu o limite do plano grátis. Faça upgrade para continuar gerando materiais!'
+            }), 403
 
     data = request.json or {}
     messages = data.get('messages', [])
@@ -3701,6 +3725,96 @@ def api_onboarding_completar():
     conn.close()
     from urllib.parse import urlencode
     return jsonify({'ok': True, 'redirect': '/chat?' + urlencode({'disciplina': disciplina, 'serie': serie})})
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# LISTA VIP
+# ═══════════════════════════════════════════════════════════════════════════════
+
+@app.route('/lista-vip', methods=['POST'])
+def lista_vip():
+    data     = request.get_json(silent=True) or {}
+    nome     = data.get('nome', '').strip()[:200]
+    email    = data.get('email', '').strip().lower()[:254]
+    whatsapp = data.get('whatsapp', '').strip()[:20]
+    if not nome or not email:
+        return jsonify({'erro': 'Nome e e-mail são obrigatórios'}), 400
+    try:
+        conn = get_db()
+        conn.execute(
+            'INSERT INTO lista_vip (nome, email, whatsapp, criado_em) VALUES (%s, %s, %s, %s)',
+            (nome, email, whatsapp, datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
+        )
+        conn.commit()
+        conn.close()
+        logger.info('Novo lead VIP: %s <%s>', nome, email)
+        return jsonify({'ok': True})
+    except Exception as e:
+        if 'unique' in str(e).lower():
+            return jsonify({'erro': 'Este e-mail já está na Lista VIP!'}), 409
+        logger.error('Erro ao salvar lead VIP: %s', e)
+        return jsonify({'erro': 'Erro interno. Tente novamente.'}), 500
+
+
+@app.route('/admin/leads')
+def admin_leads():
+    if request.args.get('senha', '') != LEADS_PASS:
+        return Response('Acesso negado. Use ?senha=SUA_SENHA', status=401,
+                        mimetype='text/plain; charset=utf-8')
+    conn   = get_db()
+    leads  = conn.execute(
+        'SELECT id, nome, email, whatsapp, criado_em FROM lista_vip ORDER BY id DESC'
+    ).fetchall()
+    conn.close()
+
+    if request.args.get('exportar') == 'csv':
+        buf = io.StringIO()
+        buf.write('ID,Nome,Email,WhatsApp,Cadastrado em\n')
+        for l in leads:
+            buf.write(f"{l['id']},{l['nome']},{l['email']},{l['whatsapp'] or ''},{l['criado_em']}\n")
+        return Response(
+            buf.getvalue(),
+            mimetype='text/csv; charset=utf-8',
+            headers={'Content-Disposition': 'attachment; filename=leads_vip.csv'}
+        )
+
+    senha = request.args.get('senha', '')
+    rows  = ''.join(
+        f"<tr><td>{l['id']}</td><td>{l['nome']}</td><td>{l['email']}</td>"
+        f"<td>{l['whatsapp'] or '—'}</td><td>{l['criado_em']}</td></tr>"
+        for l in leads
+    )
+    html = f"""<!DOCTYPE html>
+<html lang="pt-BR">
+<head><meta charset="utf-8"><title>Leads VIP — ProfessorIA</title>
+<style>
+*{{box-sizing:border-box;margin:0;padding:0}}
+body{{font-family:system-ui,sans-serif;background:#f1f5f9;padding:32px;color:#1e293b}}
+h1{{color:#1e40af;margin-bottom:4px}}
+.sub{{color:#64748b;font-size:.9rem;margin-bottom:20px}}
+.actions{{display:flex;gap:10px;margin-bottom:20px}}
+.btn{{padding:9px 20px;border-radius:8px;font-weight:600;font-size:.875rem;text-decoration:none;cursor:pointer;border:none}}
+.btn-primary{{background:#1e40af;color:#fff}}
+.btn-outline{{background:#fff;color:#1e40af;border:1.5px solid #1e40af}}
+table{{width:100%;border-collapse:collapse;background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 1px 6px rgba(0,0,0,.08)}}
+th{{background:#1e40af;color:#fff;padding:12px 16px;text-align:left;font-size:.8rem;letter-spacing:.5px;text-transform:uppercase}}
+td{{padding:11px 16px;border-bottom:1px solid #f1f5f9;font-size:.875rem}}
+tr:last-child td{{border-bottom:none}}
+tr:hover td{{background:#f8fafc}}
+</style></head>
+<body>
+<h1>Lista VIP — ProfessorIA</h1>
+<p class="sub">{len(leads)} lead(s) cadastrado(s)</p>
+<div class="actions">
+  <a class="btn btn-primary" href="/admin/leads?senha={senha}&exportar=csv">Exportar CSV</a>
+  <a class="btn btn-outline" href="/admin/leads?senha={senha}">Atualizar</a>
+</div>
+<table>
+  <thead><tr><th>#</th><th>Nome</th><th>E-mail</th><th>WhatsApp</th><th>Cadastrado em</th></tr></thead>
+  <tbody>{rows if rows else '<tr><td colspan="5" style="text-align:center;color:#94a3b8;padding:32px">Nenhum lead ainda.</td></tr>'}</tbody>
+</table>
+</body></html>"""
+    return html
 
 
 # ESTE BLOCO ABAIXO DEVE SER O FINAL ABSOLUTO DO ARQUIVO

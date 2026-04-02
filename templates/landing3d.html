@@ -377,7 +377,7 @@
     <a class="nav-link" href="#precos">Preços</a>
     <a class="nav-link" href="#faq">FAQ</a>
   </div>
-  <a class="nav-cta" href="/cadastro">Começar Grátis →</a>
+  <a class="nav-cta" href="#" onclick="abrirModalVip();return false;">Começar Grátis →</a>
 </nav>
 
 <!-- HERO -->
@@ -395,7 +395,7 @@
       Economize até 10 horas semanais com 1 clique.
     </p>
     <div class="hero-cta-row">
-      <a href="/cadastro" class="btn-primary">Começar Agora — É Grátis</a>
+      <a href="#" onclick="abrirModalVip();return false;" class="btn-primary">Começar Agora — É Grátis</a>
       <a href="#beneficios" class="btn-ghost">Ver como funciona</a>
     </div>
     <div class="hero-trust">
@@ -545,7 +545,7 @@
         <li class="off">Adaptação NEE</li>
         <li class="off">Planejamento anual</li>
       </ul>
-      <a href="/cadastro" class="p-btn outline">Criar conta grátis →</a>
+      <a href="#" onclick="abrirModalVip();return false;" class="p-btn outline">Criar conta grátis →</a>
     </div>
     <div class="price-card featured fade">
       <div class="p-badge">Mais popular</div>
@@ -563,7 +563,7 @@
         <li>Planejamento anual BNCC</li>
         <li>Suporte prioritário</li>
       </ul>
-      <a href="/cadastro" class="p-btn solid">Começar agora →</a>
+      <a href="#" onclick="abrirModalVip();return false;" class="p-btn solid">Começar agora →</a>
     </div>
   </div>
 </div>
@@ -618,5 +618,6 @@
   document.querySelectorAll('.fade').forEach(el => obs.observe(el));
 </script>
 
+{% include '_modal_vip.html' %}
 </body>
 </html>
