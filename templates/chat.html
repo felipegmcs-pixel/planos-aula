@@ -282,6 +282,14 @@
     .topbar-logo .tia { color: var(--indigo); font-weight: 600; }
     .topbar-logo-img { height: 32px; width: auto; object-fit: contain; flex-shrink: 0; }
     .topbar-spacer { width: 44px; flex-shrink: 0; }
+    .topbar-user {
+      width: 44px; height: 44px; border-radius: 50%; flex-shrink: 0;
+      background: linear-gradient(135deg, #1E40AF, #1E3A8A);
+      display: flex; align-items: center; justify-content: center;
+      font-size: .65rem; font-weight: 800; color: #fff;
+      text-decoration: none; border: none; cursor: pointer;
+      box-shadow: 0 0 0 2px rgba(30,64,175,.3);
+    }
     .dl-file-input { display: none; }
     .btn-hamburger { background: none; border: none; cursor: pointer; display: flex; flex-direction: column; gap: 5px; padding: 10px; min-width: 44px; min-height: 44px; align-items: center; justify-content: center; }
     .btn-hamburger span { display: block; width: 18px; height: 1.5px; background: var(--sb-fg); opacity: .75; border-radius: 2px; transition: opacity .2s; }
@@ -722,6 +730,7 @@
       display: none; width: 36px; height: 36px; object-fit: contain;
       border-radius: 4px; background: rgba(255,255,255,.08); padding: 2px;
     }
+    .dl-logo-preview.dl-logo-visible { display: block; }
     .dl-checkbox-row { display: flex; align-items: center; gap: 8px; margin-bottom: 16px; }
     .dl-checkbox { accent-color: #1E40AF; width: 14px; height: 14px; }
     .dl-actions { display: flex; gap: 10px; }
@@ -816,6 +825,10 @@
       .feature-grid { grid-template-columns: repeat(2, 1fr); }
       .welcome h1 { font-size: 2rem; }
       .welcome-3d { display: none; }
+      /* Touch targets 44px */
+      .btn-send { width: 44px; height: 44px; }
+      .btn-attach, .btn-mic { width: 44px; height: 44px; }
+      .btn-anexo-remover { min-width: 44px; min-height: 44px; display: flex; align-items: center; justify-content: center; }
     }
     @media (max-width: 400px) {
       .feature-grid { grid-template-columns: 1fr 1fr; }
@@ -994,7 +1007,7 @@
         <img src="{{ url_for('static', filename='logo-oficial.png') }}" alt="ProfessorIA" class="topbar-logo-img">
         <span class="tp">Professor</span><span class="tia">IA</span>
       </a>
-      <div class="topbar-spacer"></div>
+      <a class="topbar-user" href="/perfil" title="Minha conta">{{ current_user.nome[0].upper() }}</a>
     </div>
 
     {% if limite_atingido %}
@@ -1292,10 +1305,10 @@
     document.getElementById('dl-serie').value      = saved.serie      || '';
     document.getElementById('dl-estado').value     = saved.estado     || '';
     document.getElementById('dl-logo-nome').textContent = 'Nenhuma logo carregada';
-    document.getElementById('dl-logo-preview').style.display = 'none';
+    document.getElementById('dl-logo-preview').classList.remove('dl-logo-visible');
     document.getElementById('dl-logo').value = '';
     document.getElementById('dl-logo-estado-nome').textContent = 'Nenhum brasão carregado';
-    document.getElementById('dl-logo-estado-preview').style.display = 'none';
+    document.getElementById('dl-logo-estado-preview').classList.remove('dl-logo-visible');
     document.getElementById('dl-logo-estado').value = '';
 
     fetch('/api/config-escola').then(r => r.json()).then(d => {
@@ -1314,7 +1327,7 @@
     const f = input.files[0]; if (!f) return;
     document.getElementById('dl-logo-nome').textContent = f.name;
     const reader = new FileReader();
-    reader.onload = e => { const img = document.getElementById('dl-logo-preview'); img.src = e.target.result; img.style.display = 'block'; };
+    reader.onload = e => { const img = document.getElementById('dl-logo-preview'); img.src = e.target.result; img.classList.add('dl-logo-visible'); };
     reader.readAsDataURL(f);
   }
 
@@ -1322,7 +1335,7 @@
     const f = input.files[0]; if (!f) return;
     document.getElementById('dl-logo-estado-nome').textContent = f.name;
     const reader = new FileReader();
-    reader.onload = e => { const img = document.getElementById('dl-logo-estado-preview'); img.src = e.target.result; img.style.display = 'block'; };
+    reader.onload = e => { const img = document.getElementById('dl-logo-estado-preview'); img.src = e.target.result; img.classList.add('dl-logo-visible'); };
     reader.readAsDataURL(f);
   }
 

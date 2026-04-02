@@ -541,7 +541,7 @@ def init_db():
     conn.execute('CREATE INDEX IF NOT EXISTS idx_planejamento_usuario ON planejamento_anual(usuario_id)')
     conn.execute('CREATE INDEX IF NOT EXISTS idx_reset_tokens_token ON reset_tokens(token)')
     conn.execute('CREATE INDEX IF NOT EXISTS idx_usuarios_email ON usuarios(email)')
-    conn.execute('CREATE INDEX IF NOT EXISTS idx_historico_criado_em ON historico(criado_em)')
+    conn.execute('CREATE INDEX IF NOT EXISTS idx_historico_data ON historico(data)')
     conn.execute('CREATE INDEX IF NOT EXISTS idx_chat_messages_criado_em ON chat_messages(criado_em)')
     conn.commit()
     conn.close()
