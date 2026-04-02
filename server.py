@@ -1442,6 +1442,10 @@ def conta_senha():
 def index():
     return render_template('index.html')
 
+@app.route('/vip')
+def vip():
+    return render_template('index.html', abrir_modal=True)
+
 @app.route('/teste3d')
 def teste3d():
     return render_template('landing3d.html')

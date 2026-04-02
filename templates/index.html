@@ -1501,5 +1501,8 @@ function alternar(){
 </script>
 
 {% include '_modal_vip.html' %}
+{% if abrir_modal %}
+<script>document.addEventListener('DOMContentLoaded', function(){ abrirModalVip(); });</script>
+{% endif %}
 </body>
 </html>
