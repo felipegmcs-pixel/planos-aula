@@ -14,7 +14,7 @@
           Lista VIP
         </div>
         <h2 id="vipTitulo" class="vip-title">Garanta 50% de desconto<br>no lançamento</h2>
-        <p class="vip-sub">Vagas limitadas. Seja um dos primeiros professores.</p>
+        <p class="vip-sub">Apenas 50 vagas disponíveis com este desconto.</p>
       </div>
 
       <form id="vipFormEl" onsubmit="enviarVip(event)" novalidate>
@@ -29,7 +29,7 @@
                  maxlength="15" inputmode="numeric" autocomplete="tel" oninput="mascaraWhatsapp(this)">
         </div>
 
-        <button type="submit" id="vipBtn" class="vip-submit">Garantir meu lugar →</button>
+        <button type="submit" id="vipBtn" class="vip-submit">Quero meus 50% de desconto 🚀</button>
         <p id="vipErro" class="vip-erro" role="alert"></p>
       </form>
 
@@ -105,6 +105,7 @@
   animation:vipPulse 1.8s ease infinite;
 }
 @keyframes vipPulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.45;transform:scale(1.5)}}
+@keyframes vipSpin{to{transform:rotate(360deg)}}
 .vip-title{
   color:#fff;
   font-size:clamp(1.35rem,4vw,1.65rem);
@@ -202,7 +203,8 @@
     e.preventDefault();
     var btn  = document.getElementById('vipBtn');
     var erro = document.getElementById('vipErro');
-    btn.disabled=true; btn.textContent='Enviando…';
+    btn.disabled=true;
+    btn.innerHTML='<span style="display:inline-flex;align-items:center;gap:8px;justify-content:center"><svg style="animation:vipSpin .8s linear infinite;width:16px;height:16px" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/></svg>Enviando...</span>';
     erro.classList.remove('visivel');
 
     try{
@@ -222,12 +224,12 @@
       } else {
         erro.textContent=data.erro||'Erro ao cadastrar. Tente novamente.';
         erro.classList.add('visivel');
-        btn.disabled=false; btn.textContent='Garantir meu lugar →';
+        btn.disabled=false; btn.textContent='Quero meus 50% de desconto 🚀';
       }
     }catch(_){
       erro.textContent='Erro de conexão. Tente novamente.';
       erro.classList.add('visivel');
-      btn.disabled=false; btn.textContent='Garantir meu lugar →';
+      btn.disabled=false; btn.textContent='Quero meus 50% de desconto 🚀';
     }
   };
 
