@@ -40,6 +40,7 @@ from reportlab.lib.units import cm as rcm
 from reportlab.lib.styles import ParagraphStyle
 from reportlab.lib.enums import TA_CENTER, TA_LEFT
 from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer
+from pdf_generator import gerar_plano_pdf
 # ─── Configuração de Estilo de Imagem (Frente 4) ──────────────────────────────
 IMAGE_STYLE_MODIFIER = "Estilo: Traço Acadêmico-Inclusivo. Ilustração digital moderna, textura sutil de aquarela, linhas limpas, visual minimalista. PROIBIDO inserir textos, palavras ou letras dentro da imagem. Apenas a arte temática."
 
@@ -118,7 +119,7 @@ STRIPE_PRICES = {
     'pro_anual':   os.environ.get('STRIPE_PRICE_PRO_ANUAL', ''),
 }
 
-LIMITE_GRATIS = 5  # gerações gratuitas por mês no plano grátis
+LIMITE_GRATIS = 2  # gerações gratuitas por mês no plano grátis
 
 SYSTEM_PROMPT = """Você é o ProfessorIA, Especialista Sênior em Pedagogia Brasileira.
 Sua missão é automatizar a criação de materiais pedagógicos de alta qualidade, garantindo 100% de alinhamento à BNCC.
@@ -271,6 +272,76 @@ Quando o professor pedir um material:
 5. Para materiais NEE, sempre indique no cabeçalho o perfil para o qual foi adaptado
 
 Responda sempre em português brasileiro. Seja prático, objetivo e direto."""
+
+# ─── Plano de Aula — Structured Output ────────────────────────────────────────
+
+SYSTEM_PROMPT_PLANO = (
+    "Você é o ProfessorIA, um assistente pedagógico de elite especializado no currículo "
+    "educacional brasileiro. Sua missão é estruturar planos de aula impecáveis e alinhados à BNCC. "
+    "REGRAS ABSOLUTAS: "
+    "1) O retorno deve ser EXCLUSIVAMENTE um objeto JSON válido. "
+    "2) PROIBIDO ALUCINAR BNCC: Os códigos alfanuméricos (ex: EF08HI01) devem ser 100% reais. "
+    "3) Metodologias devem ser ativas e práticas, fuja do clichê expositivo. "
+    "4) REGRA DE FORMATAÇÃO: É ESTRITAMENTE PROIBIDO gerar tabelas em Markdown, blocos de texto "
+    "explicativo ou qualquer tipo de formatação visual. Sua resposta DEVE começar com { e terminar "
+    "com }, contendo EXCLUSIVAMENTE o objeto JSON puro. Nenhuma palavra a mais, nenhuma tabela."
+)
+
+PLANO_AULA_TOOL = {
+    "name": "salvar_plano_de_aula",
+    "description": "Salva o plano de aula estruturado gerado pelo assistente pedagógico.",
+    "input_schema": {
+        "type": "object",
+        "properties": {
+            "plano_de_aula": {
+                "type": "object",
+                "properties": {
+                    "tema_central":    {"type": "string"},
+                    "disciplina":      {"type": "string"},
+                    "ano_escolar":     {"type": "string"},
+                    "tempo_estimado":  {"type": "string"},
+                    "habilidades_bncc": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "codigo":    {"type": "string"},
+                                "descricao": {"type": "string"}
+                            },
+                            "required": ["codigo", "descricao"]
+                        }
+                    },
+                    "desenvolvimento": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "etapa":                {"type": "string"},
+                                "conteudo":             {"type": "string"},
+                                "estrategias_didaticas":{"type": "string"},
+                                "recursos_pedagogicos": {"type": "array", "items": {"type": "string"}}
+                            },
+                            "required": ["etapa", "conteudo", "estrategias_didaticas", "recursos_pedagogicos"]
+                        }
+                    },
+                    "avaliacao_e_fechamento": {
+                        "type": "object",
+                        "properties": {
+                            "metodo":   {"type": "string"},
+                            "criterios":{"type": "string"}
+                        },
+                        "required": ["metodo", "criterios"]
+                    }
+                },
+                "required": [
+                    "tema_central", "disciplina", "ano_escolar", "tempo_estimado",
+                    "habilidades_bncc", "desenvolvimento", "avaliacao_e_fechamento"
+                ]
+            }
+        },
+        "required": ["plano_de_aula"]
+    }
+}
 
 # ─── Helpers de IA (Gemini first, Claude fallback) ────────────────────────────
 
@@ -470,6 +541,7 @@ def init_db():
     conn.execute("ALTER TABLE usuarios ADD COLUMN IF NOT EXISTS onboarding_done INTEGER DEFAULT 0")
     conn.execute("ALTER TABLE usuarios ADD COLUMN IF NOT EXISTS escola_nome TEXT DEFAULT ''")
     conn.execute("ALTER TABLE usuarios ADD COLUMN IF NOT EXISTS professor_nome TEXT DEFAULT ''")
+    conn.execute("ALTER TABLE usuarios ADD COLUMN IF NOT EXISTS default_segment TEXT DEFAULT ''")
     conn.execute("ALTER TABLE usuarios ADD COLUMN IF NOT EXISTS logo_path TEXT DEFAULT ''")
     conn.execute("ALTER TABLE usuarios ADD COLUMN IF NOT EXISTS logo_estado_path TEXT DEFAULT ''")
     conn.execute("ALTER TABLE usuarios ADD COLUMN IF NOT EXISTS escola_id INTEGER DEFAULT NULL")
@@ -568,10 +640,11 @@ class Usuario(UserMixin):
         self.plano           = row['plano']
         self.ativo           = row['ativo']
         self.valido_ate      = row['valido_ate']
-        self.escola_template = row.get('escola_template', '') or ''
-        self.onboarding_done = row.get('onboarding_done', 0) or 0
-        self.escola_nome     = row.get('escola_nome', '') or ''
-        self.professor_nome  = row.get('professor_nome', '') or ''
+        self.escola_template  = row.get('escola_template', '') or ''
+        self.onboarding_done  = row.get('onboarding_done', 0) or 0
+        self.escola_nome      = row.get('escola_nome', '') or ''
+        self.professor_nome   = row.get('professor_nome', '') or ''
+        self.default_segment  = row.get('default_segment', '') or ''
         # Valida prefixo para evitar path traversal caso o DB seja comprometido
         _logo = row.get('logo_path', '') or ''
         self.logo_path = _logo if _logo.startswith('static/logos/') else ''
@@ -600,7 +673,7 @@ def load_user(user_id):
     row = conn.execute(
         'SELECT id, nome, email, senha, plano, ativo, valido_ate, criado_em,'
         ' escola_nome, professor_nome, logo_path, logo_estado_path,'
-        ' escola_template, onboarding_done, escola_id, papel'
+        ' escola_template, onboarding_done, escola_id, papel, default_segment'
         ' FROM usuarios WHERE id = ?', (user_id,)).fetchone()
     conn.close()
     return Usuario(row) if row else None
@@ -1436,6 +1509,44 @@ def conta_senha():
     flash('Senha atualizada com sucesso!', 'ok')
     return redirect(url_for('conta'))
 
+
+@app.route('/api/profile', methods=['GET', 'PUT'])
+@login_required
+def api_profile():
+    """Perfil Global do professor — fricção zero.
+    GET  → { display_name, school_name }
+    PUT  → { display_name?, school_name? }  (campos opcionais, atualiza só o que vier)
+    """
+    if request.method == 'GET':
+        return jsonify({
+            'display_name': current_user.professor_nome or '',
+            'school_name':  current_user.escola_nome or '',
+        })
+
+    data         = request.get_json(force=True) or {}
+    display_name = data.get('display_name')
+    school_name  = data.get('school_name')
+
+    # Atualiza apenas os campos enviados
+    updates, params = [], []
+    if display_name is not None:
+        updates.append('professor_nome = ?')
+        params.append(str(display_name).strip()[:200])
+    if school_name is not None:
+        updates.append('escola_nome = ?')
+        params.append(str(school_name).strip()[:200])
+
+    if not updates:
+        return jsonify({'erro': 'Nenhum campo para atualizar'}), 400
+
+    params.append(current_user.id)
+    conn = get_db()
+    conn.execute(f"UPDATE usuarios SET {', '.join(updates)} WHERE id = ?", params)
+    conn.commit()
+    conn.close()
+    return jsonify({'ok': True})
+
+
 # ─── Rotas principais ─────────────────────────────────────────────────────────
 
 @app.route('/')
@@ -1517,8 +1628,8 @@ def deletar_historico(item_id):
 @limiter.limit('10 per minute')
 def gerar():
     dados = {
-        'professor':  request.form.get('professor', '')[:200],
-        'escola':     request.form.get('escola', '')[:200],
+        'professor':  (request.form.get('professor') or current_user.professor_nome or '')[:200],
+        'escola':     (request.form.get('escola') or current_user.escola_nome or '')[:200],
         'diretoria':  request.form.get('diretoria', '')[:200],
         'endereco':   request.form.get('endereco', '')[:300],
         'ano_letivo': request.form.get('ano_letivo', str(datetime.now().year))[:4],
@@ -1582,6 +1693,180 @@ def gerar():
     return send_file(io.BytesIO(file_bytes), as_attachment=True,
                      download_name=nome, mimetype=mimetype)
 
+
+# ─── API Plano de Aula — Structured Output ────────────────────────────────────
+
+@app.route('/api/gerar-plano', methods=['POST'])
+@login_required
+@limiter.limit('10 per minute')
+def api_gerar_plano():
+    """Gera um plano de aula estruturado via JSON Schema.
+    Entrada: { tema, ano, disciplina }
+    Saída:   { plano_de_aula: { ... } }
+    """
+    if not current_user.assinatura_ativa and not current_user.is_admin:
+        geracoes = get_geracoes_mes(current_user.id)
+        if geracoes >= LIMITE_GRATIS:
+            return jsonify({
+                'erro': 'limite_atingido',
+                'geracoes': geracoes,
+                'cta': '/planos',
+                'mensagem': 'Você atingiu o limite do plano grátis. Faça upgrade para continuar gerando materiais!'
+            }), 403
+
+    data = request.get_json(force=True) or {}
+    tema       = str(data.get('tema', '')).strip()[:300]
+    ano        = str(data.get('ano', '')).strip()[:50]
+    disciplina = str(data.get('disciplina', '')).strip()[:100]
+
+    if not tema or not ano or not disciplina:
+        return jsonify({'erro': 'Campos obrigatórios: tema, ano, disciplina'}), 400
+
+    user_prompt = (
+        f"Gere um plano de aula completo para:\n"
+        f"- Tema: {tema}\n"
+        f"- Ano/Série: {ano}\n"
+        f"- Disciplina: {disciplina}\n\n"
+        "Use habilidades BNCC reais e metodologias ativas. "
+        "Inclua pelo menos 2 etapas de desenvolvimento (Introdução e Prática)."
+    )
+
+    plano_json = None
+    erro_motores = []
+
+    # ── Tenta Claude (tool_use para schema garantido) ──
+    try:
+        if os.environ.get('ANTHROPIC_API_KEY'):
+            resp = client.messages.create(
+                model='claude-sonnet-4-6',
+                max_tokens=4000,
+                system=SYSTEM_PROMPT_PLANO,
+                tools=[PLANO_AULA_TOOL],
+                tool_choice={"type": "tool", "name": "salvar_plano_de_aula"},
+                messages=[{"role": "user", "content": user_prompt}]
+            )
+            for block in resp.content:
+                if block.type == 'tool_use' and block.name == 'salvar_plano_de_aula':
+                    plano_json = block.input
+                    break
+    except Exception as e:
+        erro_motores.append(f'Claude: {e}')
+        logger.warning('api_gerar_plano — Claude falhou: %s', e)
+
+    # ── Fallback: Gemini com response_schema ──
+    if plano_json is None and _gemini_disponivel():
+        try:
+            import google.generativeai as genai
+            import google.generativeai.types as gtypes
+
+            gemini_schema = gtypes.Schema(
+                type=gtypes.Type.OBJECT,
+                properties={
+                    'plano_de_aula': gtypes.Schema(
+                        type=gtypes.Type.OBJECT,
+                        properties={
+                            'tema_central':   gtypes.Schema(type=gtypes.Type.STRING),
+                            'disciplina':     gtypes.Schema(type=gtypes.Type.STRING),
+                            'ano_escolar':    gtypes.Schema(type=gtypes.Type.STRING),
+                            'tempo_estimado': gtypes.Schema(type=gtypes.Type.STRING),
+                            'habilidades_bncc': gtypes.Schema(
+                                type=gtypes.Type.ARRAY,
+                                items=gtypes.Schema(
+                                    type=gtypes.Type.OBJECT,
+                                    properties={
+                                        'codigo':    gtypes.Schema(type=gtypes.Type.STRING),
+                                        'descricao': gtypes.Schema(type=gtypes.Type.STRING),
+                                    }
+                                )
+                            ),
+                            'desenvolvimento': gtypes.Schema(
+                                type=gtypes.Type.ARRAY,
+                                items=gtypes.Schema(
+                                    type=gtypes.Type.OBJECT,
+                                    properties={
+                                        'etapa':                 gtypes.Schema(type=gtypes.Type.STRING),
+                                        'conteudo':              gtypes.Schema(type=gtypes.Type.STRING),
+                                        'estrategias_didaticas': gtypes.Schema(type=gtypes.Type.STRING),
+                                        'recursos_pedagogicos':  gtypes.Schema(
+                                            type=gtypes.Type.ARRAY,
+                                            items=gtypes.Schema(type=gtypes.Type.STRING)
+                                        ),
+                                    }
+                                )
+                            ),
+                            'avaliacao_e_fechamento': gtypes.Schema(
+                                type=gtypes.Type.OBJECT,
+                                properties={
+                                    'metodo':    gtypes.Schema(type=gtypes.Type.STRING),
+                                    'criterios': gtypes.Schema(type=gtypes.Type.STRING),
+                                }
+                            ),
+                        }
+                    )
+                }
+            )
+            gm = genai.GenerativeModel(
+                model_name='gemini-2.0-flash',
+                system_instruction=SYSTEM_PROMPT_PLANO,
+                generation_config=genai.GenerationConfig(
+                    response_mime_type='application/json',
+                    response_schema=gemini_schema
+                )
+            )
+            resp_g = gm.generate_content(user_prompt)
+            plano_json = json.loads(resp_g.text)
+        except Exception as e:
+            erro_motores.append(f'Gemini: {e}')
+            logger.warning('api_gerar_plano — Gemini falhou: %s', e)
+
+    # ── Fallback: OpenAI com json_schema ──
+    if plano_json is None:
+        try:
+            oai_key = os.environ.get('OPENAI_API_KEY')
+            if oai_key:
+                import openai as _oai
+                oai_client = _oai.OpenAI(api_key=oai_key)
+                resp_o = oai_client.chat.completions.create(
+                    model='gpt-4o-mini',
+                    messages=[
+                        {'role': 'system',  'content': SYSTEM_PROMPT_PLANO},
+                        {'role': 'user',    'content': user_prompt}
+                    ],
+                    response_format={
+                        'type': 'json_schema',
+                        'json_schema': {
+                            'name': 'plano_de_aula',
+                            'strict': True,
+                            'schema': PLANO_AULA_TOOL['input_schema']
+                        }
+                    },
+                    max_tokens=4000
+                )
+                plano_json = json.loads(resp_o.choices[0].message.content)
+        except Exception as e:
+            erro_motores.append(f'OpenAI: {e}')
+            logger.warning('api_gerar_plano — OpenAI falhou: %s', e)
+
+    if plano_json is None:
+        return jsonify({
+            'erro': 'Todos os motores de IA falharam. Verifique as chaves de API.',
+            'detalhes': erro_motores
+        }), 503
+
+    # Contabiliza geração
+    conn = get_db()
+    conn.execute(
+        "INSERT INTO chat_messages (usuario_id, role, content, criado_em) VALUES (?, ?, ?, ?)",
+        (current_user.id, 'assistant',
+         f'[plano estruturado] {tema} — {disciplina} {ano}',
+         datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
+    )
+    conn.commit()
+    conn.close()
+
+    return jsonify(plano_json)
+
+
 # ─── Helpers de plano ─────────────────────────────────────────────────────────
 
 def get_geracoes_mes(usuario_id):
@@ -1600,10 +1885,15 @@ def get_geracoes_mes(usuario_id):
 @login_required
 def salvar_template():
     data = request.json or {}
+    escola_nome     = data.get('escola_nome', '').strip()[:200]
+    default_segment = data.get('default_segment', '').strip()[:100]
+    # Mantém compatibilidade com campo legado
     template = data.get('template', '').strip()[:5000]
     conn = get_db()
-    conn.execute("UPDATE usuarios SET escola_template = ?, onboarding_done = 1 WHERE id = ?",
-                (template, current_user.id))
+    conn.execute(
+        "UPDATE usuarios SET escola_template = ?, escola_nome = ?, default_segment = ?, onboarding_done = 1 WHERE id = ?",
+        (template, escola_nome, default_segment, current_user.id)
+    )
     conn.commit()
     conn.close()
     return jsonify({'ok': True})
@@ -3247,6 +3537,21 @@ def api_upload_logo_estado():
     return jsonify({'ok': True, 'logo_estado_path': rel})
 
 
+# ─── Gerador de Provas ────────────────────────────────────────────────────────
+
+@app.route('/prova')
+@login_required
+def prova_page():
+    geracoes = get_geracoes_mes(current_user.id)
+    tem_plano = current_user.assinatura_ativa or current_user.is_admin
+    limite_atingido = not tem_plano and geracoes >= LIMITE_GRATIS
+    return render_template('prova.html',
+                           geracoes=geracoes,
+                           limite=LIMITE_GRATIS,
+                           limite_atingido=limite_atingido,
+                           tem_plano=tem_plano)
+
+
 # ─── Planejamento Anual ────────────────────────────────────────────────────────
 
 @app.route('/planejamento')
@@ -3819,6 +4124,300 @@ tr:hover td{{background:#f8fafc}}
 </table>
 </body></html>"""
     return html
+
+
+# ─── Download PDF do Plano de Aula ───────────────────────────────────────────
+
+@app.route('/api/plano-de-aula/pdf', methods=['POST'])
+@login_required
+@limiter.limit('10 per minute')
+def api_plano_pdf():
+    """Converte o JSON estruturado do plano em PDF e retorna para download.
+
+    Body (JSON):
+        plano_de_aula: objeto completo retornado pelo /api/gerar-plano
+                       (aceita com ou sem o wrapper { "plano_de_aula": {...} })
+
+    O display_name e school_name são injetados automaticamente do perfil do usuário.
+    """
+    data = request.get_json(force=True) or {}
+
+    # Aceita { plano_de_aula: {...} } ou o objeto plano direto
+    plano_json = data if 'plano_de_aula' in data else {'plano_de_aula': data}
+    if not plano_json.get('plano_de_aula'):
+        return jsonify({'erro': 'JSON do plano de aula não encontrado no body'}), 400
+
+    display_name = current_user.professor_nome or ''
+    # Aceita escola temporária enviada pelo front-end (sem sobrescrever o perfil global)
+    escola_override = plano_json.get('plano_de_aula', {}).pop('_escola_override', None)
+    school_name = escola_override or current_user.escola_nome or ''
+
+    try:
+        pdf_bytes = gerar_plano_pdf(plano_json, display_name=display_name, school_name=school_name)
+    except Exception as e:
+        logger.error('Erro ao gerar PDF do plano: %s', e)
+        return jsonify({'erro': f'Falha ao gerar PDF: {str(e)[:200]}'}), 500
+
+    tema = plano_json['plano_de_aula'].get('tema_central', 'plano')
+    nome_arquivo = f"PlanoDeAula_{tema[:40].replace(' ', '_')}.pdf"
+
+    return send_file(
+        io.BytesIO(pdf_bytes),
+        as_attachment=True,
+        download_name=nome_arquivo,
+        mimetype='application/pdf'
+    )
+
+
+# ─── Gerador de Prova Estruturada ─────────────────────────────────────────────
+
+SYSTEM_PROMPT_PROVA = (
+    "Você é o ProfessorIA, um elaborador de exames de elite especializado no currículo "
+    "educacional brasileiro. Sua missão é criar provas rigorosas, claras e pedagogicamente sólidas. "
+    "REGRAS ABSOLUTAS: "
+    "1) O retorno deve ser EXCLUSIVAMENTE um objeto JSON válido. "
+    "2) É ESTRITAMENTE PROIBIDO usar tabelas Markdown, blocos de texto explicativo ou qualquer "
+    "formatação visual. Sua resposta DEVE começar com { e terminar com }, contendo EXCLUSIVAMENTE "
+    "o objeto JSON puro. Nenhuma palavra a mais, nenhuma tabela. "
+    "3) Questões de múltipla escolha devem ter exatamente 4 alternativas (A, B, C, D). "
+    "4) Os gabaritos devem ser precisos e pedagogicamente justificáveis. "
+    "5) As questões discursivas devem ter gabarito esperado claro e objetivo."
+)
+
+PROVA_TOOL = {
+    "name": "salvar_prova",
+    "description": "Salva a prova estruturada gerada pelo elaborador de exames.",
+    "input_schema": {
+        "type": "object",
+        "properties": {
+            "prova": {
+                "type": "object",
+                "properties": {
+                    "tema": {"type": "string"},
+                    "questoes_verdadeiro_falso": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "afirmacao": {"type": "string"},
+                                "resposta":  {"type": "string", "enum": ["V", "F"]}
+                            },
+                            "required": ["afirmacao", "resposta"]
+                        }
+                    },
+                    "questoes_multipla_escolha": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "pergunta":      {"type": "string"},
+                                "alternativas":  {
+                                    "type": "array",
+                                    "items": {"type": "string"},
+                                    "minItems": 4,
+                                    "maxItems": 4
+                                },
+                                "correta": {"type": "string", "enum": ["A", "B", "C", "D"]}
+                            },
+                            "required": ["pergunta", "alternativas", "correta"]
+                        }
+                    },
+                    "questoes_discursivas": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "pergunta":          {"type": "string"},
+                                "gabarito_esperado": {"type": "string"}
+                            },
+                            "required": ["pergunta", "gabarito_esperado"]
+                        }
+                    }
+                },
+                "required": [
+                    "tema",
+                    "questoes_verdadeiro_falso",
+                    "questoes_multipla_escolha",
+                    "questoes_discursivas"
+                ]
+            }
+        },
+        "required": ["prova"]
+    }
+}
+
+
+@app.route('/api/generate/prova', methods=['POST'])
+@login_required
+@limiter.limit('10 per minute')
+def api_generate_prova():
+    """Gera uma prova estruturada via JSON Schema.
+
+    Entrada: { tema, ano, disciplina, num_vf?, num_mc?, num_disc? }
+    Saída:   { prova: { tema, questoes_verdadeiro_falso, questoes_multipla_escolha,
+                        questoes_discursivas } }
+    """
+    if not current_user.assinatura_ativa and not current_user.is_admin:
+        geracoes = get_geracoes_mes(current_user.id)
+        if geracoes >= LIMITE_GRATIS:
+            return jsonify({
+                'erro': 'limite_atingido',
+                'geracoes': geracoes,
+                'cta': '/planos',
+                'mensagem': 'Você atingiu o limite do plano grátis. Faça upgrade para continuar gerando materiais!'
+            }), 403
+
+    data       = request.get_json(force=True) or {}
+    tema       = str(data.get('tema', '')).strip()[:300]
+    ano        = str(data.get('ano', '')).strip()[:50]
+    disciplina = str(data.get('disciplina', '')).strip()[:100]
+
+    if not tema or not ano or not disciplina:
+        return jsonify({'erro': 'Campos obrigatórios: tema, ano, disciplina'}), 400
+
+    num_vf   = max(1, min(int(data.get('num_vf',   5)), 10))
+    num_mc   = max(1, min(int(data.get('num_mc',   5)), 10))
+    num_disc = max(1, min(int(data.get('num_disc', 3)), 5))
+
+    user_prompt = (
+        f"Elabore uma prova completa para:\n"
+        f"- Tema: {tema}\n"
+        f"- Ano/Série: {ano}\n"
+        f"- Disciplina: {disciplina}\n\n"
+        f"Quantidade de questões:\n"
+        f"- Verdadeiro ou Falso: {num_vf}\n"
+        f"- Múltipla Escolha (4 alternativas A/B/C/D): {num_mc}\n"
+        f"- Discursivas (com gabarito esperado): {num_disc}\n\n"
+        "Garanta que as questões estejam alinhadas à BNCC e sejam adequadas ao nível escolar."
+    )
+
+    prova_json   = None
+    erro_motores = []
+
+    # ── Claude (tool_use — schema garantido) ──────────────────────────────────
+    try:
+        if os.environ.get('ANTHROPIC_API_KEY'):
+            resp = client.messages.create(
+                model='claude-sonnet-4-6',
+                max_tokens=4000,
+                system=SYSTEM_PROMPT_PROVA,
+                tools=[PROVA_TOOL],
+                tool_choice={"type": "tool", "name": "salvar_prova"},
+                messages=[{"role": "user", "content": user_prompt}]
+            )
+            for block in resp.content:
+                if block.type == 'tool_use' and block.name == 'salvar_prova':
+                    prova_json = block.input
+                    break
+    except Exception as e:
+        erro_motores.append(f'Claude: {e}')
+        logger.warning('api_generate_prova — Claude falhou: %s', e)
+
+    # ── Gemini (response_schema) ──────────────────────────────────────────────
+    if prova_json is None and _gemini_disponivel():
+        try:
+            import google.generativeai as genai
+            import google.generativeai.types as gtypes
+
+            item_vf = gtypes.Schema(
+                type=gtypes.Type.OBJECT,
+                properties={
+                    'afirmacao': gtypes.Schema(type=gtypes.Type.STRING),
+                    'resposta':  gtypes.Schema(type=gtypes.Type.STRING),
+                }
+            )
+            item_mc = gtypes.Schema(
+                type=gtypes.Type.OBJECT,
+                properties={
+                    'pergunta':     gtypes.Schema(type=gtypes.Type.STRING),
+                    'alternativas': gtypes.Schema(
+                        type=gtypes.Type.ARRAY,
+                        items=gtypes.Schema(type=gtypes.Type.STRING)
+                    ),
+                    'correta': gtypes.Schema(type=gtypes.Type.STRING),
+                }
+            )
+            item_disc = gtypes.Schema(
+                type=gtypes.Type.OBJECT,
+                properties={
+                    'pergunta':          gtypes.Schema(type=gtypes.Type.STRING),
+                    'gabarito_esperado': gtypes.Schema(type=gtypes.Type.STRING),
+                }
+            )
+            gemini_schema = gtypes.Schema(
+                type=gtypes.Type.OBJECT,
+                properties={
+                    'prova': gtypes.Schema(
+                        type=gtypes.Type.OBJECT,
+                        properties={
+                            'tema':                      gtypes.Schema(type=gtypes.Type.STRING),
+                            'questoes_verdadeiro_falso': gtypes.Schema(type=gtypes.Type.ARRAY, items=item_vf),
+                            'questoes_multipla_escolha': gtypes.Schema(type=gtypes.Type.ARRAY, items=item_mc),
+                            'questoes_discursivas':      gtypes.Schema(type=gtypes.Type.ARRAY, items=item_disc),
+                        }
+                    )
+                }
+            )
+            gm = genai.GenerativeModel(
+                model_name='gemini-2.0-flash',
+                system_instruction=SYSTEM_PROMPT_PROVA,
+                generation_config=genai.GenerationConfig(
+                    response_mime_type='application/json',
+                    response_schema=gemini_schema
+                )
+            )
+            resp_g = gm.generate_content(user_prompt)
+            prova_json = json.loads(resp_g.text)
+        except Exception as e:
+            erro_motores.append(f'Gemini: {e}')
+            logger.warning('api_generate_prova — Gemini falhou: %s', e)
+
+    # ── OpenAI (json_schema) ──────────────────────────────────────────────────
+    if prova_json is None:
+        try:
+            oai_key = os.environ.get('OPENAI_API_KEY')
+            if oai_key:
+                import openai as _oai
+                oai_client = _oai.OpenAI(api_key=oai_key)
+                resp_o = oai_client.chat.completions.create(
+                    model='gpt-4o-mini',
+                    messages=[
+                        {'role': 'system', 'content': SYSTEM_PROMPT_PROVA},
+                        {'role': 'user',   'content': user_prompt}
+                    ],
+                    response_format={
+                        'type': 'json_schema',
+                        'json_schema': {
+                            'name': 'prova',
+                            'strict': True,
+                            'schema': PROVA_TOOL['input_schema']
+                        }
+                    },
+                    max_tokens=4000
+                )
+                prova_json = json.loads(resp_o.choices[0].message.content)
+        except Exception as e:
+            erro_motores.append(f'OpenAI: {e}')
+            logger.warning('api_generate_prova — OpenAI falhou: %s', e)
+
+    if prova_json is None:
+        return jsonify({
+            'erro': 'Todos os motores de IA falharam. Verifique as chaves de API.',
+            'detalhes': erro_motores
+        }), 503
+
+    # Contabiliza geração
+    conn = get_db()
+    conn.execute(
+        "INSERT INTO chat_messages (usuario_id, role, content, criado_em) VALUES (?, ?, ?, ?)",
+        (current_user.id, 'assistant',
+         f'[prova estruturada] {tema} — {disciplina} {ano}',
+         datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
+    )
+    conn.commit()
+    conn.close()
+
+    return jsonify(prova_json)
 
 
 # ESTE BLOCO ABAIXO DEVE SER O FINAL ABSOLUTO DO ARQUIVO

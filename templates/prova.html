@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8"/>
+  <script>!function(){var t=localStorage.getItem("pia-theme")||"dark",a="system"===t?(window.matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light"):t;document.documentElement.setAttribute("data-theme",a),document.documentElement.style.colorScheme=a}();</script>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Gerador de Provas — ProfessorIA</title>
+  <link rel="icon" href="{{ url_for('static', filename='favicon.ico') }}" type="image/x-icon">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet"/>
+  <style>
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    :root{
+      --bg:#0b0d14;--bg2:#0f1120;--bg3:#131526;
+      --text:#e5e7eb;--text2:#9ca3af;--text3:#4b5563;
+      --indigo:#1E40AF;--indigo-l:#818cf8;
+      --linha:rgba(255,255,255,.07);--linha-f:rgba(255,255,255,.12);
+      --card:rgba(255,255,255,.04);
+      --green:#10b981;--amber:#f59e0b;--red:#ef4444;
+    }
+    [data-theme="light"]{
+      --bg:#f8f9ff;--bg2:#ffffff;--bg3:#f1f2f8;
+      --text:#111827;--text2:#6b7280;--text3:#9ca3af;
+      --linha:rgba(17,24,39,.07);--linha-f:rgba(17,24,39,.13);
+      --card:rgba(255,255,255,.9);
+    }
+    html,body{min-height:100%;font-family:'Inter',sans-serif;background:var(--bg);color:var(--text)}
+    a{color:inherit;text-decoration:none}
+
+    /* Nav */
+    .topnav{
+      height:56px;padding:0 32px;display:flex;align-items:center;justify-content:space-between;
+      border-bottom:1px solid var(--linha);background:var(--bg2);position:sticky;top:0;z-index:100;
+    }
+    .nav-logo{display:flex;align-items:center;gap:8px;font-weight:800;font-size:.9rem}
+    .nav-logo-p{color:var(--text)}
+    .nav-logo-ia{color:var(--indigo-l)}
+    .nav-back{font-size:.75rem;font-weight:600;color:var(--text2);display:flex;align-items:center;gap:6px;transition:color .18s}
+    .nav-back:hover{color:var(--text)}
+    .nav-back svg{width:14px;height:14px;stroke:currentColor;fill:none;stroke-linecap:round;stroke-linejoin:round}
+
+    /* Layout */
+    .container{max-width:780px;margin:0 auto;padding:40px 24px 80px}
+
+    /* Header */
+    .page-tag{font-size:.6rem;font-weight:700;letter-spacing:2.5px;text-transform:uppercase;color:var(--indigo-l);margin-bottom:12px;display:flex;align-items:center;gap:8px}
+    .page-tag::before{content:'';width:16px;height:2px;background:var(--indigo);border-radius:2px;display:block}
+    .page-title{font-size:clamp(1.6rem,3.5vw,2.4rem);font-weight:900;letter-spacing:-1px;line-height:1;margin-bottom:6px}
+    .page-sub{font-size:.82rem;color:var(--text2);margin-bottom:32px;line-height:1.6}
+
+    /* Form card */
+    .form-card{
+      background:var(--card);border:1px solid var(--linha-f);border-radius:16px;
+      padding:28px 24px;margin-bottom:24px;
+    }
+    .form-title{font-size:.7rem;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--text2);margin-bottom:16px}
+    .form-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}
+    .form-grid-2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+    .form-field{display:flex;flex-direction:column;gap:5px}
+    .form-field.full{grid-column:1/-1}
+    .form-label{font-size:.62rem;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--text3)}
+    .form-input,.form-select{
+      padding:9px 12px;border-radius:8px;font-size:.84rem;
+      background:rgba(255,255,255,.06);border:1.5px solid var(--linha-f);
+      color:var(--text);font-family:'Inter',sans-serif;outline:none;
+      transition:border-color .2s;width:100%;
+    }
+    [data-theme="light"] .form-input,[data-theme="light"] .form-select{background:#fff;border-color:rgba(17,24,39,.15)}
+    .form-input:focus,.form-select:focus{border-color:rgba(30,64,175,.5)}
+    .form-select option{background:var(--bg2);color:var(--text)}
+
+    .num-group{display:flex;align-items:center;gap:6px}
+    .num-label{flex:1;font-size:.78rem;color:var(--text2)}
+    .num-input{width:60px;padding:7px 10px;border-radius:7px;font-size:.82rem;text-align:center;
+      background:rgba(255,255,255,.06);border:1.5px solid var(--linha-f);
+      color:var(--text);font-family:'Inter',sans-serif;outline:none}
+    [data-theme="light"] .num-input{background:#fff;border-color:rgba(17,24,39,.15)}
+    .num-input:focus{border-color:rgba(30,64,175,.5)}
+
+    .btn-gerar{
+      width:100%;padding:13px;border-radius:10px;margin-top:20px;
+      background:linear-gradient(135deg,#1E40AF,#1E3A8A);color:#fff;
+      font-size:.84rem;font-weight:700;border:none;cursor:pointer;
+      font-family:'Inter',sans-serif;transition:opacity .2s;
+      box-shadow:0 4px 18px rgba(30,64,175,.35);
+    }
+    .btn-gerar:hover:not(:disabled){opacity:.9}
+    .btn-gerar:disabled{opacity:.5;cursor:not-allowed}
+
+    /* Loading */
+    .loading{display:none;align-items:center;gap:12px;padding:16px 0;font-size:.82rem;color:var(--text2)}
+    .loading.visible{display:flex}
+    .spinner{width:18px;height:18px;border:2px solid var(--linha-f);border-top-color:var(--indigo);border-radius:50%;animation:spin .7s linear infinite;flex-shrink:0}
+    @keyframes spin{to{transform:rotate(360deg)}}
+
+    /* Result */
+    .result-area{display:none}
+    .result-area.visible{display:block}
+    .result-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;padding-bottom:16px;border-bottom:1px solid var(--linha)}
+    .result-title-wrap{}
+    .result-tag{font-size:.58rem;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--indigo-l);margin-bottom:4px}
+    .result-nome{font-size:1.1rem;font-weight:800;letter-spacing:-.3px}
+    .result-actions{display:flex;gap:8px}
+    .btn-copiar{
+      padding:8px 14px;border-radius:8px;font-size:.72rem;font-weight:700;
+      background:var(--card);border:1px solid var(--linha-f);color:var(--text2);
+      cursor:pointer;font-family:'Inter',sans-serif;transition:all .15s;
+    }
+    .btn-copiar:hover{border-color:var(--indigo-l);color:var(--indigo-l)}
+
+    /* Questão sections */
+    .secao{margin-bottom:24px}
+    .secao-titulo{
+      font-size:.65rem;font-weight:700;letter-spacing:2px;text-transform:uppercase;
+      padding:6px 12px;border-radius:6px;margin-bottom:12px;display:inline-flex;align-items:center;gap:6px;
+    }
+    .secao-vf   .secao-titulo{background:rgba(16,185,129,.1);color:#34d399}
+    .secao-mc   .secao-titulo{background:rgba(30,64,175,.12);color:#818cf8}
+    .secao-disc .secao-titulo{background:rgba(245,158,11,.1);color:#fbbf24}
+
+    .questao{
+      background:var(--card);border:1px solid var(--linha);border-radius:12px;
+      padding:16px 18px;margin-bottom:10px;
+    }
+    .questao-num{font-size:.62rem;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--text3);margin-bottom:6px}
+    .questao-texto{font-size:.85rem;line-height:1.65;color:var(--text);margin-bottom:10px}
+    .questao-gabarito{
+      font-size:.75rem;padding:7px 11px;border-radius:7px;
+      background:rgba(16,185,129,.08);border:1px solid rgba(16,185,129,.18);
+      color:#34d399;display:flex;align-items:center;gap:6px;margin-top:4px;
+    }
+    .questao-gabarito::before{content:'✓';font-weight:700}
+    .alternativas{list-style:none;margin-bottom:8px}
+    .alternativa{
+      padding:6px 10px;border-radius:7px;font-size:.82rem;line-height:1.5;
+      color:var(--text2);margin-bottom:4px;transition:background .15s;
+    }
+    .alternativa.correta{
+      background:rgba(16,185,129,.1);color:#34d399;
+      border:1px solid rgba(16,185,129,.2);font-weight:600;
+    }
+    .alternativa-letra{font-weight:700;color:var(--indigo-l);margin-right:6px}
+
+    /* Gabarito discursivo */
+    .gabarito-box{
+      margin-top:10px;padding:10px 14px;border-radius:8px;
+      background:rgba(245,158,11,.07);border:1px solid rgba(245,158,11,.15);
+    }
+    .gabarito-box-label{font-size:.6rem;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:#fbbf24;margin-bottom:4px}
+    .gabarito-box-text{font-size:.8rem;color:var(--text2);line-height:1.6}
+
+    /* Banner */
+    .banner{padding:10px 20px;font-size:.78rem;font-weight:600;text-align:center;display:flex;align-items:center;justify-content:center;gap:10px}
+    .banner.warning{background:rgba(245,158,11,.12);color:#fbbf24;border-bottom:1px solid rgba(245,158,11,.15)}
+    .banner.danger{background:rgba(239,68,68,.12);color:#f87171;border-bottom:1px solid rgba(239,68,68,.15)}
+    .banner a{color:inherit;font-weight:700;text-decoration:underline}
+
+    @media(max-width:600px){
+      .form-grid{grid-template-columns:1fr 1fr}
+      .form-grid-2{grid-template-columns:1fr}
+      .container{padding:28px 16px 60px}
+    }
+    @media(max-width:440px){
+      .form-grid{grid-template-columns:1fr}
+    }
+  </style>
+  <link rel="stylesheet" href="/static/theme.css"/>
+</head>
+<body>
+
+<nav class="topnav">
+  <div class="nav-logo">
+    <img src="{{ url_for('static', filename='logo-oficial.png') }}" alt="ProfessorIA" style="height:28px;border-radius:6px">
+    <span class="nav-logo-p">Professor</span><span class="nav-logo-ia">IA</span>
+  </div>
+  <a class="nav-back" href="/chat">
+    <svg viewBox="0 0 24 24" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
+    Voltar ao Chat
+  </a>
+</nav>
+
+{% if limite_atingido %}
+<div class="banner danger">
+  Limite de {{ limite }} gerações atingido — <a href="/planos">Liberar acesso →</a>
+</div>
+{% elif not tem_plano %}
+<div class="banner warning">
+  <span>Plano grátis — {{ geracoes }}/{{ limite }} gerações usadas</span>
+  <a href="/planos">Fazer upgrade →</a>
+</div>
+{% endif %}
+
+<div class="container">
+  <div class="page-tag">Gerador Inteligente</div>
+  <h1 class="page-title">Criar Prova</h1>
+  <p class="page-sub">Preencha os dados e a IA gera uma prova completa com gabarito alinhada à BNCC.</p>
+
+  <div class="form-card">
+    <div class="form-title">Dados da prova</div>
+    <div class="form-grid">
+      <div class="form-field full">
+        <label class="form-label">Tema / Conteúdo</label>
+        <input id="f-tema" type="text" class="form-input" placeholder="Ex: Revolução Francesa, Equações do 2º grau..."/>
+      </div>
+      <div class="form-field">
+        <label class="form-label">Disciplina</label>
+        <input id="f-disciplina" type="text" class="form-input" placeholder="Ex: História"/>
+      </div>
+      <div class="form-field">
+        <label class="form-label">Ano / Série</label>
+        <input id="f-ano" type="text" class="form-input" placeholder="Ex: 9º Ano EF"/>
+      </div>
+    </div>
+
+    <div class="form-title" style="margin-top:20px">Quantidade de questões</div>
+    <div style="display:flex;flex-direction:column;gap:8px">
+      <div class="num-group">
+        <span class="num-label">Verdadeiro ou Falso</span>
+        <input id="f-vf" type="number" class="num-input" value="5" min="1" max="10"/>
+      </div>
+      <div class="num-group">
+        <span class="num-label">Múltipla Escolha (A / B / C / D)</span>
+        <input id="f-mc" type="number" class="num-input" value="5" min="1" max="10"/>
+      </div>
+      <div class="num-group">
+        <span class="num-label">Discursivas (com gabarito)</span>
+        <input id="f-disc" type="number" class="num-input" value="3" min="1" max="5"/>
+      </div>
+    </div>
+
+    <button class="btn-gerar" id="btn-gerar" onclick="gerarProva()" {% if limite_atingido %}disabled{% endif %}>
+      Gerar Prova →
+    </button>
+  </div>
+
+  <div class="loading" id="loading">
+    <div class="spinner"></div>
+    <span>Elaborando prova... isso pode levar alguns segundos.</span>
+  </div>
+
+  <!-- Resultado -->
+  <div class="result-area" id="resultArea">
+    <div class="result-header">
+      <div class="result-title-wrap">
+        <div class="result-tag">Prova gerada</div>
+        <div class="result-nome" id="result-nome">—</div>
+      </div>
+      <div class="result-actions">
+        <button class="btn-copiar" onclick="copiarTudo()">Copiar tudo</button>
+      </div>
+    </div>
+
+    <!-- Seção V/F -->
+    <div class="secao secao-vf">
+      <div class="secao-titulo">&#10003; Verdadeiro ou Falso</div>
+      <div id="lista-vf"></div>
+    </div>
+
+    <!-- Seção Múltipla Escolha -->
+    <div class="secao secao-mc">
+      <div class="secao-titulo">&#9679; Múltipla Escolha</div>
+      <div id="lista-mc"></div>
+    </div>
+
+    <!-- Seção Discursivas -->
+    <div class="secao secao-disc">
+      <div class="secao-titulo">&#9998; Discursivas</div>
+      <div id="lista-disc"></div>
+    </div>
+  </div>
+</div>
+
+<script src="/static/theme.js"></script>
+<script>
+  let _provaDados = null;
+
+  async function gerarProva() {
+    const tema = document.getElementById('f-tema').value.trim();
+    const disc = document.getElementById('f-disciplina').value.trim();
+    const ano  = document.getElementById('f-ano').value.trim();
+    const numVf   = parseInt(document.getElementById('f-vf').value)   || 5;
+    const numMc   = parseInt(document.getElementById('f-mc').value)   || 5;
+    const numDisc = parseInt(document.getElementById('f-disc').value) || 3;
+
+    if (!tema || !disc || !ano) {
+      alert('Preencha Tema, Disciplina e Ano para continuar.');
+      return;
+    }
+
+    const btn = document.getElementById('btn-gerar');
+    btn.disabled = true; btn.textContent = '⏳ Gerando...';
+    document.getElementById('loading').classList.add('visible');
+    document.getElementById('resultArea').classList.remove('visible');
+
+    try {
+      const resp = await fetch('/api/generate/prova', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ tema, disciplina: disc, ano, num_vf: numVf, num_mc: numMc, num_disc: numDisc })
+      });
+
+      if (resp.status === 403) {
+        const d = await resp.json();
+        alert(d.mensagem || 'Limite de gerações atingido. Faça upgrade para continuar.');
+        return;
+      }
+      if (!resp.ok) {
+        const d = await resp.json();
+        alert(d.erro || 'Erro ao gerar prova.');
+        return;
+      }
+
+      const data = await resp.json();
+      _provaDados = data.prova;
+      renderizarProva(_provaDados);
+
+    } catch(e) {
+      alert('Erro de conexão. Tente novamente.');
+    } finally {
+      btn.disabled = false; btn.textContent = 'Gerar Prova →';
+      document.getElementById('loading').classList.remove('visible');
+    }
+  }
+
+  function renderizarProva(prova) {
+    if (!prova) return;
+    document.getElementById('result-nome').textContent = prova.tema || 'Prova';
+
+    // V/F
+    const listaVf = document.getElementById('lista-vf');
+    listaVf.innerHTML = '';
+    (prova.questoes_verdadeiro_falso || []).forEach((q, i) => {
+      const div = document.createElement('div');
+      div.className = 'questao';
+      div.innerHTML = `
+        <div class="questao-num">Questão ${i + 1}</div>
+        <div class="questao-texto">${escapeHtml(q.afirmacao)}</div>
+        <div class="questao-gabarito">${q.resposta === 'V' ? 'Verdadeiro' : 'Falso'}</div>
+      `;
+      listaVf.appendChild(div);
+    });
+
+    // Múltipla Escolha
+    const listaMc = document.getElementById('lista-mc');
+    listaMc.innerHTML = '';
+    (prova.questoes_multipla_escolha || []).forEach((q, i) => {
+      const letras = ['A', 'B', 'C', 'D'];
+      const alts = (q.alternativas || []).map((alt, idx) => {
+        const letra = letras[idx] || String.fromCharCode(65 + idx);
+        const isCorreta = letra === q.correta;
+        return `<li class="alternativa${isCorreta ? ' correta' : ''}"><span class="alternativa-letra">${letra})</span>${escapeHtml(alt)}</li>`;
+      }).join('');
+      const div = document.createElement('div');
+      div.className = 'questao';
+      div.innerHTML = `
+        <div class="questao-num">Questão ${i + 1}</div>
+        <div class="questao-texto">${escapeHtml(q.pergunta)}</div>
+        <ul class="alternativas">${alts}</ul>
+      `;
+      listaMc.appendChild(div);
+    });
+
+    // Discursivas
+    const listaDi = document.getElementById('lista-disc');
+    listaDi.innerHTML = '';
+    (prova.questoes_discursivas || []).forEach((q, i) => {
+      const div = document.createElement('div');
+      div.className = 'questao';
+      div.innerHTML = `
+        <div class="questao-num">Questão ${i + 1}</div>
+        <div class="questao-texto">${escapeHtml(q.pergunta)}</div>
+        <div class="gabarito-box">
+          <div class="gabarito-box-label">Gabarito esperado</div>
+          <div class="gabarito-box-text">${escapeHtml(q.gabarito_esperado)}</div>
+        </div>
+      `;
+      listaDi.appendChild(div);
+    });
+
+    document.getElementById('resultArea').classList.add('visible');
+    document.getElementById('resultArea').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  function copiarTudo() {
+    if (!_provaDados) return;
+    let txt = `PROVA: ${_provaDados.tema || ''}\n\n`;
+
+    txt += '== VERDADEIRO OU FALSO ==\n';
+    (_provaDados.questoes_verdadeiro_falso || []).forEach((q, i) => {
+      txt += `${i+1}. ${q.afirmacao}\nGabarito: ${q.resposta === 'V' ? 'Verdadeiro' : 'Falso'}\n\n`;
+    });
+
+    txt += '== MÚLTIPLA ESCOLHA ==\n';
+    const letras = ['A','B','C','D'];
+    (_provaDados.questoes_multipla_escolha || []).forEach((q, i) => {
+      txt += `${i+1}. ${q.pergunta}\n`;
+      (q.alternativas || []).forEach((a, j) => { txt += `   ${letras[j]||j+1}) ${a}\n`; });
+      txt += `Gabarito: ${q.correta}\n\n`;
+    });
+
+    txt += '== DISCURSIVAS ==\n';
+    (_provaDados.questoes_discursivas || []).forEach((q, i) => {
+      txt += `${i+1}. ${q.pergunta}\nGabarito: ${q.gabarito_esperado}\n\n`;
+    });
+
+    navigator.clipboard.writeText(txt).then(() => {
+      const btn = document.querySelector('.btn-copiar');
+      btn.textContent = 'Copiado ✓';
+      setTimeout(() => btn.textContent = 'Copiar tudo', 2000);
+    });
+  }
+
+  function escapeHtml(str) {
+    return String(str||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+
+  // Enter no último campo aciona geração
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Enter' && (e.target.matches('.form-input') || e.target.matches('.num-input'))) {
+      gerarProva();
+    }
+  });
+</script>
+</body>
+</html>

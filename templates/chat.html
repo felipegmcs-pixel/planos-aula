@@ -528,16 +528,43 @@
     .msg.user .msg-bubble strong,.msg.user .msg-bubble h1,.msg.user .msg-bubble h2,.msg.user .msg-bubble h3 { color: #fff; }
     .msg.user .msg-bubble em { color: rgba(255,255,255,.8); }
 
-    /* Message actions */
-    .msg-actions { display: flex; gap: 6px; opacity: 0; transition: opacity .2s; flex-wrap: wrap; margin-top: 2px; }
-    .msg:hover .msg-actions { opacity: 1; }
-    .msg-btn {
-      padding: 4px 12px; border: 1.5px solid var(--linha-f); background: transparent;
-      font-size: .65rem; font-weight: 600; color: var(--text2);
-      cursor: pointer; transition: all .15s; font-family: 'Inter', sans-serif; border-radius: 6px;
+    /* Message actions — sempre visíveis, mobile-first */
+    .msg-actions {
+      display: flex; gap: 6px; flex-wrap: wrap; margin-top: 8px;
+      /* scroll horizontal suave se não couber na tela */
+      overflow-x: auto; -webkit-overflow-scrolling: touch;
+      scrollbar-width: none;
     }
-    .msg-btn:hover { border-color: var(--indigo); color: var(--indigo); background: rgba(30,64,175,.06); }
-    .msg-btn.ouvir.playing { border-color: var(--amber); color: #92400e; }
+    .msg-actions::-webkit-scrollbar { display: none; }
+
+    /* Base — ghost, ação secundária */
+    .msg-btn {
+      flex-shrink: 0;
+      padding: 7px 14px;
+      border: 1.5px solid var(--linha-f); background: transparent;
+      font-size: .68rem; font-weight: 600; color: var(--text2);
+      cursor: pointer; transition: all .15s;
+      font-family: 'Inter', sans-serif; border-radius: 8px;
+      white-space: nowrap; line-height: 1;
+    }
+    .msg-btn:hover { border-color: rgba(255,255,255,.25); color: var(--text); }
+
+    /* Download — ação primária, fundo sólido */
+    .msg-btn.baixar {
+      background: var(--indigo);
+      border-color: var(--indigo);
+      color: #fff;
+    }
+    .msg-btn.baixar:hover { background: #1633a0; border-color: #1633a0; color: #fff; }
+
+    /* Ouvir — ghost mas com ícone de destaque */
+    .msg-btn.ouvir { color: var(--text2); }
+    .msg-btn.ouvir:hover { border-color: var(--amber); color: var(--amber); }
+    .msg-btn.ouvir.playing { border-color: var(--amber); color: var(--amber); background: rgba(245,158,11,.08); }
+
+    @media (max-width: 480px) {
+      .msg-btn { padding: 9px 16px; font-size: .72rem; }
+    }
 
     /* ════════════════════════════════════════
        INPUT AREA
@@ -667,6 +694,103 @@
     .nee-btn.confirm:hover { opacity: .9; }
 
     /* ════════════════════════════════════════
+       PAYWALL MODAL
+    ════════════════════════════════════════ */
+    .paywall-bg {
+      display: none; position: fixed; inset: 0; z-index: 500;
+      background: rgba(5,8,17,.92); backdrop-filter: blur(12px);
+      align-items: center; justify-content: center; padding: 20px;
+    }
+    .paywall-bg.open { display: flex; }
+    .paywall-box {
+      background: linear-gradient(160deg, #0f1120 60%, #111b3a);
+      border: 1px solid rgba(129,140,248,.25);
+      width: 100%; max-width: 420px; padding: 36px 32px;
+      border-radius: 20px; text-align: center;
+      box-shadow: 0 24px 80px rgba(0,0,0,.7), 0 0 80px rgba(30,64,175,.18);
+    }
+    .paywall-icon { font-size: 2.4rem; margin-bottom: 16px; }
+    .paywall-tag {
+      font-size: .58rem; font-weight: 700; letter-spacing: 2.5px; text-transform: uppercase;
+      color: #f59e0b; margin-bottom: 12px;
+    }
+    .paywall-title {
+      font-size: 1.2rem; font-weight: 900; letter-spacing: -.5px; color: #fff;
+      line-height: 1.3; margin-bottom: 12px;
+    }
+    .paywall-desc {
+      font-size: .8rem; color: rgba(255,255,255,.55); line-height: 1.65; margin-bottom: 28px;
+    }
+    .paywall-price {
+      font-size: 1.8rem; font-weight: 900; color: #a5b4fc;
+      letter-spacing: -1px; margin-bottom: 4px;
+    }
+    .paywall-price-sub { font-size: .7rem; color: rgba(255,255,255,.35); margin-bottom: 24px; }
+    .paywall-btn {
+      display: block; width: 100%; padding: 15px; border-radius: 12px;
+      background: linear-gradient(135deg, #1E40AF, #7c3aed);
+      color: #fff; font-size: .88rem; font-weight: 700; text-decoration: none;
+      border: none; cursor: pointer; font-family: 'Inter', sans-serif;
+      box-shadow: 0 6px 24px rgba(30,64,175,.45); transition: opacity .2s;
+    }
+    .paywall-btn:hover { opacity: .9; }
+
+    /* ════════════════════════════════════════
+       PDF PLANO MINI-MODAL
+    ════════════════════════════════════════ */
+    .pdf-plano-bg {
+      display: none; position: fixed; inset: 0; z-index: 450;
+      background: rgba(5,8,17,.88); backdrop-filter: blur(10px);
+      align-items: center; justify-content: center; padding: 20px;
+    }
+    .pdf-plano-bg.open { display: flex; }
+    .pdf-plano-modal {
+      background: #0f1120; border: 1px solid rgba(255,255,255,.1);
+      width: 100%; max-width: 400px; padding: 32px 28px;
+      border-radius: 18px;
+      box-shadow: 0 24px 80px rgba(0,0,0,.7), 0 0 60px rgba(30,64,175,.15);
+    }
+    .pdf-plano-tag {
+      font-size: .55rem; font-weight: 700; letter-spacing: 2.5px;
+      text-transform: uppercase; color: #818cf8; margin-bottom: 14px;
+      display: flex; align-items: center; gap: 8px;
+    }
+    .pdf-plano-tag::before {
+      content: ''; display: inline-block; width: 16px; height: 2px;
+      background: #1E40AF; border-radius: 2px;
+    }
+    .pdf-plano-title {
+      font-size: 1.15rem; font-weight: 900; letter-spacing: -.5px;
+      color: #fff; margin-bottom: 6px;
+    }
+    .pdf-plano-sub { font-size: .75rem; color: rgba(255,255,255,.4); margin-bottom: 20px; line-height: 1.5; }
+    .pdf-plano-field { margin-bottom: 12px; }
+    .pdf-plano-label { font-size: .6rem; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; color: rgba(255,255,255,.4); margin-bottom: 5px; display: block; }
+    .pdf-plano-input {
+      width: 100%; padding: 9px 12px; border-radius: 8px; font-size: .82rem;
+      background: rgba(255,255,255,.06); border: 1.5px solid rgba(255,255,255,.1);
+      color: #fff; font-family: 'Inter', sans-serif; outline: none; transition: border-color .2s;
+    }
+    .pdf-plano-input:focus { border-color: rgba(30,64,175,.6); }
+    .pdf-plano-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .pdf-plano-actions { display: flex; gap: 8px; margin-top: 20px; }
+    .pdf-plano-btn-primary {
+      flex: 1; padding: 11px; border-radius: 9px;
+      background: linear-gradient(135deg, #1E40AF, #1E3A8A); color: #fff;
+      font-size: .78rem; font-weight: 700; border: none; cursor: pointer;
+      font-family: 'Inter', sans-serif; transition: opacity .2s;
+    }
+    .pdf-plano-btn-primary:hover:not(:disabled) { opacity: .9; }
+    .pdf-plano-btn-primary:disabled { opacity: .5; cursor: not-allowed; }
+    .pdf-plano-btn-cancel {
+      padding: 11px 18px; border-radius: 9px;
+      background: rgba(255,255,255,.06); color: rgba(255,255,255,.5);
+      font-size: .78rem; font-weight: 700; border: 1px solid rgba(255,255,255,.08);
+      cursor: pointer; font-family: 'Inter', sans-serif; transition: all .15s;
+    }
+    .pdf-plano-btn-cancel:hover { background: rgba(255,255,255,.1); color: #fff; }
+
+    /* ════════════════════════════════════════
        DOWNLOAD MODAL
     ════════════════════════════════════════ */
     .dl-overlay {
@@ -750,16 +874,16 @@
     .dl-btn-cancel:hover { border-color: rgba(255,255,255,.3); color: rgba(255,255,255,.7); }
 
     /* ════════════════════════════════════════
-       ONBOARDING MODAL
+       ONBOARDING MODAL (Wizard)
     ════════════════════════════════════════ */
     .ob-overlay {
       position: fixed; inset: 0; z-index: 9999;
-      background: rgba(5,8,17,.9); backdrop-filter: blur(10px);
+      background: rgba(5,8,17,.92); backdrop-filter: blur(12px);
       display: flex; align-items: center; justify-content: center; padding: 20px;
     }
     .ob-modal {
       background: #0f1120; border: 1px solid rgba(255,255,255,.1);
-      width: 100%; max-width: 560px; padding: 48px;
+      width: 100%; max-width: 440px; padding: 40px 36px;
       font-family: 'Inter', sans-serif; border-radius: 20px;
       box-shadow: 0 32px 100px rgba(0,0,0,.7), 0 0 80px rgba(30,64,175,.14);
     }
@@ -783,32 +907,49 @@
     .ob-label {
       font-size: .6rem; font-weight: 700; letter-spacing: 2px;
       text-transform: uppercase; color: rgba(255,255,255,.35);
-      display: block; margin-bottom: 10px;
+      display: block; margin-bottom: 8px;
     }
-    .ob-textarea {
-      width: 100%; min-height: 140px; padding: 14px;
-      background: rgba(255,255,255,.04); border: 1.5px solid rgba(255,255,255,.1);
-      color: #fff; font-family: 'Inter', sans-serif; font-size: .82rem;
-      line-height: 1.6; resize: vertical; outline: none;
-      border-radius: 10px; transition: border-color .2s;
+    .ob-input {
+      width: 100%; padding: 12px 14px;
+      background: rgba(255,255,255,.06); border: 1.5px solid rgba(255,255,255,.1);
+      color: #fff; font-family: 'Inter', sans-serif; font-size: .84rem;
+      outline: none; border-radius: 10px; transition: border-color .2s;
     }
-    .ob-textarea:focus { border-color: rgba(30,64,175,.5); }
-    .ob-actions { display: flex; gap: 10px; margin-top: 20px; }
+    .ob-input:focus { border-color: rgba(30,64,175,.5); }
+    .ob-input::placeholder { color: rgba(255,255,255,.25); }
+    /* Wizard steps */
+    .ob-step { display: none; }
+    .ob-step.active { display: block; }
+    /* Segment buttons */
+    .ob-segments { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 4px; }
+    .ob-seg {
+      padding: 14px 10px; border-radius: 10px; text-align: center;
+      background: rgba(255,255,255,.04); border: 1.5px solid rgba(255,255,255,.08);
+      color: rgba(255,255,255,.55); font-size: .75rem; font-weight: 600;
+      cursor: pointer; font-family: 'Inter', sans-serif; transition: all .15s;
+    }
+    .ob-seg:hover { background: rgba(30,64,175,.08); border-color: rgba(30,64,175,.3); color: #a5b4fc; }
+    .ob-seg.sel { background: rgba(30,64,175,.18); border-color: rgba(30,64,175,.5); color: #818cf8; }
+    /* Progress dots */
+    .ob-dots { display: flex; gap: 6px; justify-content: center; margin-bottom: 28px; }
+    .ob-dot { width: 6px; height: 6px; border-radius: 50%; background: rgba(255,255,255,.15); transition: all .2s; }
+    .ob-dot.active { background: #818cf8; width: 18px; border-radius: 3px; }
+    .ob-actions { display: flex; gap: 10px; margin-top: 24px; }
     .ob-btn-primary {
-      flex: 1; padding: 14px;
+      flex: 1; padding: 13px;
       background: linear-gradient(135deg, #1E40AF, #1E3A8A);
-      color: #fff; border: none; font-size: .72rem; font-weight: 700;
+      color: #fff; border: none; font-size: .78rem; font-weight: 700;
       font-family: 'Inter', sans-serif; border-radius: 10px; cursor: pointer;
       transition: opacity .2s; box-shadow: 0 4px 18px rgba(30,64,175,.4);
     }
     .ob-btn-primary:hover { opacity: .9; }
     .ob-btn-skip {
-      flex: 1; padding: 14px; background: transparent;
-      color: rgba(255,255,255,.4); border: 1.5px solid rgba(255,255,255,.1);
+      padding: 13px 18px; background: transparent;
+      color: rgba(255,255,255,.35); border: 1.5px solid rgba(255,255,255,.08);
       font-size: .72rem; font-weight: 600; font-family: 'Inter', sans-serif;
       border-radius: 10px; cursor: pointer; transition: border-color .2s, color .2s;
     }
-    .ob-btn-skip:hover { border-color: rgba(255,255,255,.3); color: rgba(255,255,255,.7); }
+    .ob-btn-skip:hover { border-color: rgba(255,255,255,.25); color: rgba(255,255,255,.6); }
     .pia-mark-img { height: 32px; width: auto; object-fit: contain; }
 
     /* ════════════════════════════════════════
@@ -929,6 +1070,52 @@
   </div>
 </div>
 
+<!-- Modal Paywall -->
+<div class="paywall-bg" id="paywallModal">
+  <div class="paywall-box">
+    <div class="paywall-icon">🔒</div>
+    <div class="paywall-tag">Convidado VIP</div>
+    <div class="paywall-title">Seu limite de testes acabou.</div>
+    <div class="paywall-desc">Como você é um Convidado VIP, libere o acesso ilimitado ao ProfessorIA agora por apenas</div>
+    <div class="paywall-price">R$ 24,95</div>
+    <div class="paywall-price-sub">no seu primeiro mês</div>
+    <a id="paywallCheckoutBtn" class="paywall-btn" href="/stripe/checkout/basic">
+      Liberar acesso ilimitado →
+    </a>
+  </div>
+</div>
+
+<!-- Modal PDF Plano de Aula -->
+<div class="pdf-plano-bg" id="pdfPlanoModal" onclick="if(event.target===this)fecharPdfPlanoModal()">
+  <div class="pdf-plano-modal">
+    <div class="pdf-plano-tag">Baixar PDF</div>
+    <div class="pdf-plano-title">Gerar Plano em PDF</div>
+    <div class="pdf-plano-sub">Preencha os dados para gerar o plano estruturado e baixar o PDF.</div>
+    <div class="pdf-plano-field">
+      <label class="pdf-plano-label">Tema da aula</label>
+      <input id="pp-tema" type="text" class="pdf-plano-input" placeholder="Ex: Revolução Industrial"/>
+    </div>
+    <div class="pdf-plano-row">
+      <div class="pdf-plano-field">
+        <label class="pdf-plano-label">Ano / Série</label>
+        <input id="pp-ano" type="text" class="pdf-plano-input" placeholder="Ex: 9º Ano"/>
+      </div>
+      <div class="pdf-plano-field">
+        <label class="pdf-plano-label">Disciplina</label>
+        <input id="pp-disciplina" type="text" class="pdf-plano-input" placeholder="Ex: História"/>
+      </div>
+    </div>
+    <div class="pdf-plano-field">
+      <label class="pdf-plano-label">Escola (para o PDF)</label>
+      <input id="pp-escola" type="text" class="pdf-plano-input" placeholder="E.E. Nome da Escola"/>
+    </div>
+    <div class="pdf-plano-actions">
+      <button id="pp-btn-gerar" class="pdf-plano-btn-primary" onclick="confirmarPdfPlano()">↓ Gerar e Baixar PDF</button>
+      <button class="pdf-plano-btn-cancel" onclick="fecharPdfPlanoModal()">Cancelar</button>
+    </div>
+  </div>
+</div>
+
 <div class="overlay" id="overlay" onclick="fecharSidebar()"></div>
 
 <div class="app">
@@ -951,6 +1138,10 @@
       <a class="nav-item" href="/dashboard">
         <svg class="nav-icon" viewBox="0 0 24 24" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
         Dashboard
+      </a>
+      <a class="nav-item" href="/prova">
+        <svg class="nav-icon" viewBox="0 0 24 24" stroke-width="2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+        Criar Prova
       </a>
       <a class="nav-item" href="/banco-questoes">
         <svg class="nav-icon" viewBox="0 0 24 24" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
@@ -1227,25 +1418,42 @@
         bubble.innerHTML = renderMD(texto) + '<span class="cursor-blink"></span>';
         scroll();
       },
+      setHtml(html) {
+        if (!started) { started = true; }
+        bubble.innerHTML = html;
+        scroll();
+      },
       done() {
         bubble.innerHTML = renderMD(texto);
         const actions = document.createElement('div');
         actions.className = 'msg-actions';
 
+        // ── Ações primárias (download) — aparecem primeiro, fundo sólido ──
+        if (texto.trim().length > 50) {
+          const isMapaMental = /##\s*🧠\s*TEMA CENTRAL/i.test(texto);
+          const ehPlanoAula  = !isMapaMental && /PLANO\s+DE\s+AULA|PLANEJAMENTO\s+DA\s+AULA|habilidade.*bncc|objetivos\s+de\s+aprendizagem|componente\s+curricular/i.test(texto.slice(0, 600));
+
+          const btnDocx = document.createElement('button');
+          btnDocx.className = 'msg-btn baixar';
+          btnDocx.textContent = isMapaMental ? '↓ Baixar PDF' : '↓ Baixar DOCX';
+          btnDocx.onclick = () => baixarDocx(texto);
+          actions.appendChild(btnDocx);
+
+          if (ehPlanoAula) {
+            const btnPdf = document.createElement('button');
+            btnPdf.className = 'msg-btn baixar';
+            btnPdf.textContent = '↓ Baixar PDF estruturado';
+            btnPdf.onclick = () => abrirPdfPlanoModal(texto);
+            actions.appendChild(btnPdf);
+          }
+        }
+
+        // ── Ações secundárias (ghost) ──
         const btnCopy = document.createElement('button');
         btnCopy.className = 'msg-btn';
         btnCopy.textContent = 'Copiar';
         btnCopy.onclick = () => { navigator.clipboard.writeText(texto); btnCopy.textContent = 'Copiado ✓'; setTimeout(() => btnCopy.textContent = 'Copiar', 2000); };
         actions.appendChild(btnCopy);
-
-        if (texto.trim().length > 50) {
-          const btnDocx = document.createElement('button');
-          btnDocx.className = 'msg-btn baixar';
-          const isMapaMental = /##\s*🧠\s*TEMA CENTRAL/i.test(texto);
-          btnDocx.textContent = isMapaMental ? '↓ Baixar .PDF' : '↓ Baixar .DOCX';
-          btnDocx.onclick = () => baixarDocx(texto);
-          actions.appendChild(btnDocx);
-        }
 
         const btnOuvir = document.createElement('button');
         btnOuvir.className = 'msg-btn ouvir';
@@ -1322,6 +1530,71 @@
   }
 
   function fecharDownloadModal() { document.getElementById('downloadModal').classList.remove('open'); }
+
+  // ── Paywall ──────────────────────────────────────────────────────────────────
+  function abrirPaywall() { document.getElementById('paywallModal').classList.add('open'); }
+
+  // ── PDF Plano de Aula ─────────────────────────────────────────────────────────
+  function abrirPdfPlanoModal(texto) {
+    // Tenta extrair disciplina e série do texto para pré-preencher
+    const m = texto.match(/componente\s+curricular[:\s]+([^\n|]+)/i)
+           || texto.match(/disciplina[:\s]+([^\n|]{3,40})/i);
+    const s = texto.match(/ano[\/\s]+série[:\s]+([^\n|]+)/i)
+           || texto.match(/(\d+[°º]\s*(?:ano|série)[^\n|]{0,20})/i);
+    if (m) document.getElementById('pp-disciplina').value = m[1].trim();
+    if (s) document.getElementById('pp-ano').value       = s[1].trim();
+
+    // Pré-preenche escola do perfil
+    fetch('/api/config-escola').then(r => r.json()).then(d => {
+      if (d.escola_nome) document.getElementById('pp-escola').value = d.escola_nome;
+      if (d.professor_nome) document.getElementById('pp-professor-nome', d.professor_nome);
+    }).catch(() => {});
+
+    document.getElementById('pdfPlanoModal').classList.add('open');
+  }
+  function fecharPdfPlanoModal() { document.getElementById('pdfPlanoModal').classList.remove('open'); }
+
+  async function confirmarPdfPlano() {
+    const btn  = document.getElementById('pp-btn-gerar');
+    const tema = document.getElementById('pp-tema').value.trim();
+    const ano  = document.getElementById('pp-ano').value.trim();
+    const disc = document.getElementById('pp-disciplina').value.trim();
+    const escola = document.getElementById('pp-escola').value.trim();
+
+    if (!tema || !ano || !disc) { alert('Preencha Tema, Ano e Disciplina.'); return; }
+
+    btn.textContent = '⏳ Gerando...'; btn.disabled = true;
+    try {
+      // 1. Gera o JSON estruturado do plano
+      const r1 = await fetch('/api/gerar-plano', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ tema, ano, disciplina: disc })
+      });
+      if (r1.status === 403) { fecharPdfPlanoModal(); abrirPaywall(); return; }
+      if (!r1.ok) { const d = await r1.json(); alert(d.erro || 'Erro ao gerar plano.'); return; }
+      const planoJson = await r1.json();
+
+      // Injeta escola se preenchida
+      if (escola && planoJson.plano_de_aula) {
+        planoJson.plano_de_aula._escola_override = escola;
+      }
+
+      // 2. Converte JSON em PDF
+      const r2 = await fetch('/api/plano-de-aula/pdf', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(planoJson)
+      });
+      if (!r2.ok) { const d = await r2.json(); alert(d.erro || 'Erro ao gerar PDF.'); return; }
+      const blob = await r2.blob();
+      const url  = URL.createObjectURL(blob);
+      const a    = document.createElement('a');
+      a.href = url;
+      a.download = `PlanoDeAula_${tema.slice(0,30).replace(/\s+/g,'_')}.pdf`;
+      a.click(); URL.revokeObjectURL(url);
+      fecharPdfPlanoModal();
+    } catch(e) { alert('Erro ao gerar PDF. Tente novamente.'); }
+    finally { btn.textContent = '↓ Gerar e Baixar PDF'; btn.disabled = false; }
+  }
 
   function previewLogo(input) {
     const f = input.files[0]; if (!f) return;
@@ -1441,7 +1714,7 @@
     if (curAvatar) curAvatar.classList.add('typing');
     try {
       const resp = await fetch('/api/chat',{ method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({messages:historico,anexo:anexoEnvio}) });
-      if (resp.status===403) { stream.add('Limite de gerações atingido. Assine um plano para continuar.'); stream.done(); return; }
+      if (resp.status===403) { stream.setHtml('Limite de gerações atingido.'); stream.done(); abrirPaywall(); return; }
       if (!resp.ok) { stream.add('Erro ao conectar ao servidor. Tente novamente.'); stream.done(); return; }
 
       // Lê SSE streaming
@@ -1643,30 +1916,87 @@
 </script>
 
 {% if not onboarding_done %}
-<!-- ONBOARDING MODAL -->
+<!-- ONBOARDING WIZARD -->
 <div id="onboarding-overlay" class="ob-overlay">
   <div class="ob-modal">
-    <div class="ob-tag">Configuração inicial</div>
-    <h2 class="ob-title">Modelo de plano<br/>da sua escola</h2>
-    <p class="ob-desc">Cole abaixo o esqueleto ou modelo padrão de plano de aula da sua escola. O ProfessorIA usará essa estrutura sempre que gerar planos de aula para você.</p>
-    <label class="ob-label">Esqueleto do plano de aula</label>
-    <textarea id="onboarding-template" class="ob-textarea" placeholder="Ex: Escola: ___ / Professor: ___ / Disciplina: ___ / Objetivo: ___ / Desenvolvimento: ___ / Avaliação: ___"></textarea>
-    <div class="ob-actions">
-      <button onclick="salvarOnboarding()" class="ob-btn-primary">Salvar e continuar →</button>
-      <button onclick="pularOnboarding()" class="ob-btn-skip">Pular por agora</button>
+    <div class="ob-tag">Bem-vindo(a) ao ProfessorIA</div>
+    <div class="ob-dots">
+      <div class="ob-dot active" id="ob-dot-1"></div>
+      <div class="ob-dot" id="ob-dot-2"></div>
+    </div>
+
+    <!-- Fase 1: Escola -->
+    <div class="ob-step active" id="ob-step-1">
+      <h2 class="ob-title">Qual é a sua<br/>Escola Principal?</h2>
+      <p class="ob-desc">Você poderá alterar isso depois em cada aula que gerar.</p>
+      <label class="ob-label" for="ob-escola">Nome da escola</label>
+      <input id="ob-escola" type="text" class="ob-input" placeholder="E.E. Nome da Escola" autocomplete="organization"/>
+      <div class="ob-actions">
+        <button onclick="obProximoPasso()" class="ob-btn-primary">Próximo →</button>
+        <button onclick="pularOnboarding()" class="ob-btn-skip">Pular</button>
+      </div>
+    </div>
+
+    <!-- Fase 2: Segmento -->
+    <div class="ob-step" id="ob-step-2">
+      <h2 class="ob-title">Qual segmento<br/>você mais atua?</h2>
+      <p class="ob-desc">Isso ajuda a personalizar os materiais gerados para você.</p>
+      <div class="ob-segments">
+        <button class="ob-seg" onclick="selSegmento(this,'Educação Infantil')">Educação Infantil</button>
+        <button class="ob-seg" onclick="selSegmento(this,'Ensino Fundamental I')">Fundamental I</button>
+        <button class="ob-seg" onclick="selSegmento(this,'Ensino Fundamental II')">Fundamental II</button>
+        <button class="ob-seg" onclick="selSegmento(this,'Ensino Médio')">Ensino Médio</button>
+      </div>
+      <div class="ob-actions">
+        <button onclick="salvarOnboarding()" class="ob-btn-primary">Começar a usar →</button>
+        <button onclick="pularOnboarding()" class="ob-btn-skip">Pular</button>
+      </div>
     </div>
   </div>
 </div>
 <script>
+  let _obSegmento = '';
+
+  function selSegmento(btn, valor) {
+    document.querySelectorAll('.ob-seg').forEach(b => b.classList.remove('sel'));
+    btn.classList.add('sel');
+    _obSegmento = valor;
+  }
+
+  function obProximoPasso() {
+    document.getElementById('ob-step-1').classList.remove('active');
+    document.getElementById('ob-step-2').classList.add('active');
+    document.getElementById('ob-dot-1').classList.remove('active');
+    document.getElementById('ob-dot-2').classList.add('active');
+  }
+
   async function salvarOnboarding() {
-    const template = document.getElementById('onboarding-template').value;
-    await fetch('/api/salvar-template',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({template})});
-    document.getElementById('onboarding-overlay').style.display='none';
+    const escola = (document.getElementById('ob-escola').value || '').trim();
+    await fetch('/api/salvar-template', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ escola_nome: escola, default_segment: _obSegmento, template: '' })
+    });
+    document.getElementById('onboarding-overlay').style.display = 'none';
+    // Pré-preenche a escola no PDF plano modal imediatamente
+    const ppEscola = document.getElementById('pp-escola');
+    if (ppEscola && escola) ppEscola.value = escola;
   }
+
   async function pularOnboarding() {
-    await fetch('/api/salvar-template',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({template:''})});
-    document.getElementById('onboarding-overlay').style.display='none';
+    await fetch('/api/salvar-template', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ escola_nome: '', default_segment: '', template: '' })
+    });
+    document.getElementById('onboarding-overlay').style.display = 'none';
   }
+
+  // Foca o input da fase 1 ao carregar
+  document.addEventListener('DOMContentLoaded', function() {
+    const el = document.getElementById('ob-escola');
+    if (el) el.focus();
+  });
 </script>
 {% endif %}
 
@@ -1682,15 +2012,20 @@
       e.stopPropagation();
       userDropdown.classList.toggle('active');
     });
-    
+
     document.addEventListener('click', function() {
       userDropdown.classList.remove('active');
     });
-    
+
     userDropdown.addEventListener('click', function(e) {
       e.stopPropagation();
     });
   }
+
+  {% if limite_atingido %}
+  // Abre paywall automaticamente se limite já atingido ao carregar a página
+  document.addEventListener('DOMContentLoaded', function() { abrirPaywall(); });
+  {% endif %}
 </script>
 </body>
 </html>
