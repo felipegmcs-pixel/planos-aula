@@ -1571,7 +1571,12 @@
         body: JSON.stringify({ tema, ano, disciplina: disc })
       });
       if (r1.status === 403) { fecharPdfPlanoModal(); abrirPaywall(); return; }
-      if (!r1.ok) { const d = await r1.json(); alert(d.erro || 'Erro ao gerar plano.'); return; }
+      if (!r1.ok) {
+        const d = await r1.json();
+        const det = d.detalhes && d.detalhes.length ? '\n\nDetalhes:\n' + d.detalhes.join('\n') : '';
+        alert((d.erro || 'Erro ao gerar plano.') + det);
+        return;
+      }
       const planoJson = await r1.json();
 
       // Injeta escola se preenchida

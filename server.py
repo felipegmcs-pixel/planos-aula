@@ -1786,6 +1786,21 @@ def api_gerar_plano():
                 if block.type == 'tool_use' and block.name == 'salvar_plano_de_aula':
                     plano_json = block.input
                     break
+            if plano_json is None:
+                # Claude respondeu mas sem tool_use — tenta extrair JSON do texto
+                for block in resp.content:
+                    if hasattr(block, 'text'):
+                        txt = block.text.strip()
+                        m = re.search(r'\{[\s\S]+\}', txt)
+                        if m:
+                            try:
+                                plano_json = json.loads(m.group())
+                            except Exception:
+                                pass
+                        break
+                if plano_json is None:
+                    erro_motores.append('Claude: resposta sem bloco tool_use')
+                    logger.warning('api_gerar_plano — Claude sem tool_use, stop_reason=%s', resp.stop_reason)
     except Exception as e:
         erro_motores.append(f'Claude: {e}')
         logger.warning('api_gerar_plano — Claude falhou: %s', e)
