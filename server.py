@@ -3663,42 +3663,201 @@ def api_upload_logo_estado():
     return jsonify({'ok': True, 'logo_estado_path': rel})
 
 
-# ─── DOCX via template docxtpl ───────────────────────────────────────────────
+# ─── DOCX via template oficial ───────────────────────────────────────────────
 
 PLANO_TEMPLATE_PATH = os.path.join(
     os.path.dirname(__file__), 'static', 'templates', 'plano_de_aula.docx'
 )
 
+
+def _renderizar_plano_docx(plano: dict, professor: str = '', escola: str = '') -> bytes:
+    """Preenche o template PLANO DE AULA.docx com os dados do plano JSON.
+
+    Estratégia: manipulação direta do XML do DOCX via zipfile + lxml para:
+      1. Substituir placeholders {{ xxx }} nos campos de metadados (Tabela 1)
+      2. Clonar a linha-template da tabela de aulas (Tabela 2) para cada etapa
+         do desenvolvimento, preservando toda a formatação original.
+    """
+    import zipfile, copy
+    from lxml import etree
+
+    # Lê o template como zip em memória
+    with open(PLANO_TEMPLATE_PATH, 'rb') as f:
+        template_bytes = f.read()
+
+    buf_in = io.BytesIO(template_bytes)
+    buf_out = io.BytesIO()
+
+    desenvolvimento = plano.get('desenvolvimento', [])
+    bncc = plano.get('habilidades_bncc', [])
+    avaliacao = plano.get('avaliacao_e_fechamento', {})
+
+    # Monta lista de aulas para preencher a tabela
+    aulas = []
+    for i, et in enumerate(desenvolvimento):
+        recursos = et.get('recursos_pedagogicos', [])
+        recursos_str = ', '.join(recursos) if isinstance(recursos, list) else str(recursos)
+        aulas.append({
+            'data':        '',            # professor preenche depois
+            'conteudo':    (
+                f"{et.get('etapa','')}\n{et.get('conteudo','')}"
+                + ('\n\n' + ' | '.join(f"{h['codigo']}: {h['descricao']}" for h in bncc) if i == 0 and bncc else '')
+            ),
+            'estrategias': et.get('estrategias_didaticas', ''),
+            'recursos':    recursos_str,
+            'avaliacao':   avaliacao.get('metodo', '') if i == len(desenvolvimento) - 1 else '',
+            'verificacao': avaliacao.get('criterios', '') if i == len(desenvolvimento) - 1 else '',
+        })
+
+    # Valores para substituição simples de placeholders
+    substituicoes = {
+        '{{ professor }}':   professor,
+        '{{ disciplina }}':  plano.get('disciplina', ''),
+        '{{ num_aulas }}':   plano.get('tempo_estimado', ''),
+        '{{ turma }}':       plano.get('ano_escolar', ''),
+        '{{ periodo }}':     datetime.now().strftime('%B de %Y'),
+        '{{ data_plano }}':  datetime.now().strftime('%d/%m/%Y'),
+        '{{ escola }}':      escola,
+    }
+
+    NS = 'http://schemas.openxmlformats.org/wordprocessingml/2006/main'
+
+    def texto_el(el):
+        """Retorna todo o texto de um elemento XML."""
+        return ''.join(t.text or '' for t in el.iter(f'{{{NS}}}t'))
+
+    def set_texto_celula(tc, novo_texto):
+        """Substitui o texto de uma célula preservando a formatação da primeira run."""
+        paras = tc.findall(f'.//{{{NS}}}p')
+        if not paras:
+            return
+        # Guarda formatação do primeiro run
+        first_run = paras[0].find(f'.//{{{NS}}}r')
+        rpr = None
+        if first_run is not None:
+            rpr = first_run.find(f'{{{NS}}}rPr')
+
+        # Limpa todos os parágrafos exceto o primeiro
+        for p in paras[1:]:
+            tc.remove(p)
+
+        # Limpa runs do primeiro parágrafo
+        para = paras[0]
+        for r in para.findall(f'{{{NS}}}r'):
+            para.remove(r)
+
+        # Adiciona novo run com o texto
+        new_r = etree.SubElement(para, f'{{{NS}}}r')
+        if rpr is not None:
+            new_r.append(copy.deepcopy(rpr))
+        new_t = etree.SubElement(new_r, f'{{{NS}}}t')
+        new_t.text = novo_texto
+        if novo_texto and (novo_texto[0] == ' ' or novo_texto[-1] == ' '):
+            new_t.set('{http://www.w3.org/XML/1998/namespace}space', 'preserve')
+
+    def subst_placeholders_xml(xml_bytes):
+        """Substitui {{ placeholder }} no XML com valores reais."""
+        text = xml_bytes.decode('utf-8')
+        for k, v in substituicoes.items():
+            text = text.replace(k, v or '')
+        # Remove os tags de loop do docxtpl que não usamos
+        text = re.sub(r'\{%tr?\s+for\s+[^%]+%\}', '', text)
+        text = re.sub(r'\{%tr?\s+endfor\s*%\}', '', text)
+        return text.encode('utf-8')
+
+    with zipfile.ZipFile(buf_in, 'r') as zin:
+        names = zin.namelist()
+        arquivos = {n: zin.read(n) for n in names}
+
+    # Processa word/document.xml
+    doc_xml = arquivos['word/document.xml']
+
+    # Substitui metadados simples
+    doc_xml = subst_placeholders_xml(doc_xml)
+
+    # Parseia XML para manipulação da tabela de aulas
+    root = etree.fromstring(doc_xml)
+
+    # Encontra todas as tabelas (w:tbl)
+    tbls = root.findall(f'.//{{{NS}}}tbl')
+
+    # A tabela de aulas é a última (Tabela 2 no inspeção: header + template row + vazia)
+    if tbls:
+        tbl_aulas = tbls[-1]
+        rows = tbl_aulas.findall(f'{{{NS}}}tr')
+
+        # Identifica a linha-template: aquela que contém texto de placeholder {{ aula.
+        template_row = None
+        template_idx = None
+        for idx, row in enumerate(rows):
+            txt = texto_el(row)
+            if '{{ aula.' in txt or '{%tr' in txt or '{% tr' in txt:
+                template_row = row
+                template_idx = idx
+                break
+
+        if template_row is not None:
+            # Remove linha template original
+            tbl_aulas.remove(template_row)
+
+            # Pega o índice de inserção (após o header)
+            insert_idx = template_idx
+
+            for i, aula in enumerate(aulas):
+                nova_row = copy.deepcopy(template_row)
+                tcs = nova_row.findall(f'.//{{{NS}}}tc')
+
+                mapa = {
+                    0: aula['data'],
+                    1: aula['conteudo'],
+                    2: aula['estrategias'],
+                    3: aula['recursos'],
+                    4: aula['avaliacao'] + ('\n' + aula['verificacao'] if aula['verificacao'] else ''),
+                }
+                for col_idx, valor in mapa.items():
+                    if col_idx < len(tcs):
+                        set_texto_celula(tcs[col_idx], valor)
+
+                # Insere antes da linha vazia final
+                rows_atuais = tbl_aulas.findall(f'{{{NS}}}tr')
+                pos = min(insert_idx + i, len(rows_atuais))
+                tbl_aulas.insert(pos, nova_row)
+
+    # Serializa XML modificado de volta
+    arquivos['word/document.xml'] = etree.tostring(root, xml_declaration=True,
+                                                    encoding='UTF-8', standalone=True)
+
+    # Monta o DOCX final
+    with zipfile.ZipFile(buf_out, 'w', zipfile.ZIP_DEFLATED) as zout:
+        for name, data in arquivos.items():
+            zout.writestr(name, data)
+
+    return buf_out.getvalue()
+
+
 @app.route('/api/plano-aula/docx', methods=['POST'])
 @login_required
 @limiter.limit('10 per minute')
 def api_plano_aula_docx():
-    """Gera o Plano de Aula preenchendo o template DOCX via docxtpl.
+    """Preenche o template oficial PLANO DE AULA.docx com dados do plano JSON.
 
-    Aceita dois formatos de entrada:
-      A) JSON do plano já gerado: { "plano_de_aula": { tema_central, ... } }
-      B) Campos brutos para gerar na hora: { "tema", "ano", "disciplina" }
-         Nesse caso chama /api/gerar-plano internamente e usa o resultado.
+    Aceita dois formatos:
+      A) { "plano_de_aula": { tema_central, disciplina, ... } }  — JSON já gerado
+      B) { "tema", "ano", "disciplina" }  — gera o plano internamente via IA
     """
-    from docxtpl import DocxTemplate
-
     if not current_user.assinatura_ativa and not current_user.is_admin:
-        geracoes = get_geracoes_mes(current_user.id)
-        if geracoes >= LIMITE_GRATIS:
+        if get_geracoes_mes(current_user.id) >= LIMITE_GRATIS:
             return jsonify({'erro': 'limite_atingido', 'cta': '/planos'}), 403
 
     data = request.get_json(force=True) or {}
-
-    # Modo A — plano JSON já fornecido
     plano = data.get('plano_de_aula')
 
-    # Modo B — gera o plano agora
     if not plano:
         tema       = str(data.get('tema', '')).strip()[:300]
         ano        = str(data.get('ano', '')).strip()[:50]
         disciplina = str(data.get('disciplina', '')).strip()[:100]
         if not tema or not ano or not disciplina:
-            return jsonify({'erro': 'Forneça plano_de_aula ou os campos tema, ano, disciplina'}), 400
+            return jsonify({'erro': 'Forneça plano_de_aula ou tema + ano + disciplina'}), 400
         try:
             plano_resp = _gerar_plano_interno(tema, ano, disciplina)
             plano = plano_resp.get('plano_de_aula', plano_resp)
@@ -3707,33 +3866,24 @@ def api_plano_aula_docx():
 
     if not plano:
         return jsonify({'erro': 'Dados do plano não encontrados'}), 400
-
     if not os.path.exists(PLANO_TEMPLATE_PATH):
-        return jsonify({'erro': 'Template DOCX não encontrado. Contate o suporte.'}), 500
-
-    # Monta o contexto para o template
-    context = {
-        'escola':      current_user.escola_nome or '',
-        'professor':   current_user.professor_nome or '',
-        'data_geracao': datetime.now().strftime('%d/%m/%Y'),
-        **plano
-    }
+        return jsonify({'erro': 'Template DOCX não encontrado no servidor.'}), 500
 
     try:
-        tpl = DocxTemplate(PLANO_TEMPLATE_PATH)
-        tpl.render(context)
-        buf = io.BytesIO()
-        tpl.save(buf)
-        buf.seek(0)
+        docx_bytes = _renderizar_plano_docx(
+            plano,
+            professor=current_user.professor_nome or '',
+            escola=current_user.escola_nome or '',
+        )
         tema_slug = str(plano.get('tema_central', 'plano'))[:40].replace(' ', '_')
         return send_file(
-            buf,
+            io.BytesIO(docx_bytes),
             as_attachment=True,
             download_name=f'PlanoDeAula_{tema_slug}.docx',
             mimetype='application/vnd.openxmlformats-officedocument.wordprocessingml.document'
         )
     except Exception as e:
-        logger.error('docxtpl render erro: %s', e)
+        logger.error('_renderizar_plano_docx erro: %s', traceback.format_exc())
         return jsonify({'erro': f'Erro ao preencher template: {str(e)[:200]}'}), 500
 
 
