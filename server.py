@@ -2,11 +2,19 @@ import os
 import io
 import re
 import json
+import base64
 import secrets
 import smtplib
 import logging
 import traceback
 from email.mime.text import MIMEText
+
+# Carrega .env em desenvolvimento (em produção as vars já estão no ambiente)
+try:
+    from dotenv import load_dotenv
+    load_dotenv()
+except ImportError:
+    pass
 
 # ─── Logging estruturado ──────────────────────────────────────────────────────
 logging.basicConfig(
@@ -96,6 +104,18 @@ if GEMINI_API_KEY:
 SITE_URL    = os.environ.get('SITE_URL', 'http://localhost:5001')
 ADMIN_EMAIL = os.environ.get('ADMIN_EMAIL', '')
 LEADS_PASS  = os.environ.get('LEADS_PASS', 'professoria2026')
+
+# ── Validação de chaves na inicialização ──────────────────────────────────────
+_CHAVES_ESPERADAS = {
+    'ANTHROPIC_API_KEY': 'Claude (geração estruturada)',
+    'OPENAI_API_KEY':    'OpenAI gpt-4o-mini + DALL-E 3 (motor primário)',
+    'GEMINI_API_KEY':    'Google Gemini (fallback)',
+    'STRIPE_SECRET_KEY': 'Stripe (pagamentos)',
+    'SECRET_KEY':        'Flask (sessões)',
+}
+for _k, _desc in _CHAVES_ESPERADAS.items():
+    if not os.environ.get(_k):
+        logger.warning('Chave ausente: %s — %s', _k, _desc)
 
 SMTP_HOST  = os.environ.get('SMTP_HOST', '')
 SMTP_PORT  = int(os.environ.get('SMTP_PORT', 587))
@@ -193,11 +213,31 @@ Exemplo de grade (dentro de bloco de código):
   4  _  _  _  _  _
 ```
 
-MAPA MENTAL — geração direta (estilo infográfico visual):
-Quando pedirem um mapa mental, gere com a seguinte estrutura que permite exportação visual colorida:
+MAPA MENTAL — geração com Mermaid.js:
+Quando pedirem um mapa mental, retorne EXCLUSIVAMENTE um bloco de código Mermaid no formato abaixo.
+NÃO adicione texto antes ou depois do bloco.
 
-Use exatamente este formato estruturado — NÃO use árvore Unicode (├──), use seções com ## e listas:
+```mermaid
+mindmap
+  root((TEMA CENTRAL))
+    Categoria 1
+      item 1
+      item 2
+      item 3
+    Categoria 2
+      item 1
+      item 2
+```
 
+Regras obrigatórias para mapa mental Mermaid:
+- Use exatamente a sintaxe mindmap com root((TEMA))
+- 4 a 6 categorias por mapa
+- 3 a 5 itens por categoria
+- Máximo 5 palavras por item (palavras-chave, não frases longas)
+- NÃO use emojis dentro do código Mermaid
+- O nó raiz root((...)) deve conter o tema em maiúsculas
+
+[FORMATO LEGADO — apenas para compatibilidade, não use em respostas novas]
 ## 🧠 TEMA CENTRAL: [TEMA EM MAIÚSCULAS]
 
 ### 🔴 [CATEGORIA 1 — ex: NÚMEROS / DATAS / CAUSAS]
@@ -364,85 +404,82 @@ def _to_gemini_parts(content):
             })
     return parts
 
-def chamar_ia_chat(sistema, messages):
-    """Motor Duplo: Claude (primário) + OpenAI (fallback). Suporta mensagens multimodais."""
-    motor_principal = MOTOR_IA
-    motores = [motor_principal, 'openai' if motor_principal == 'claude' else 'claude']
+def _llm_cadeia_chat(sistema, messages, max_tokens=4000):
+    """Cadeia de fallback: OpenAI (gpt-4o-mini) → Gemini → Claude.
+    Retorna o texto da resposta ou lança RuntimeError se todos falharem."""
+    ultimo_erro = None
 
-    for motor in motores:
+    # 1. OpenAI — motor primário
+    if client_openai:
         try:
-            if motor == 'claude':
-                if not os.environ.get('ANTHROPIC_API_KEY'):
-                    logger.warning('ANTHROPIC_API_KEY não configurada, pulando Claude')
-                    continue
-                resposta = client.messages.create(
-                    model='claude-sonnet-4-6',
-                    max_tokens=4000,
-                    system=sistema,
-                    messages=messages
-                )
-                logger.info('Resposta gerada com Claude (chat)')
-                return resposta.content[0].text
-
-            elif motor == 'openai':
-                if not client_openai:
-                    logger.warning('OPENAI_API_KEY não configurada, pulando OpenAI')
-                    continue
-                resp = client_openai.chat.completions.create(
-                    model='gpt-4o-mini',
-                    max_tokens=4000,
-                    messages=[{'role': 'system', 'content': sistema}] + messages
-                )
-                logger.info('Resposta gerada com OpenAI (chat)')
-                return resp.choices[0].message.content
-
+            resp = client_openai.chat.completions.create(
+                model='gpt-4o-mini',
+                max_tokens=max_tokens,
+                messages=[{'role': 'system', 'content': sistema}] + messages
+            )
+            logger.info('LLM: OpenAI gpt-4o-mini')
+            return resp.choices[0].message.content
         except Exception as e:
-            logger.warning('Erro com motor %s: %s', motor, str(e)[:200])
-            if motor == motores[-1]:
-                raise RuntimeError(f'Todos os motores falharam. Último erro: {str(e)}')
-            continue
+            ultimo_erro = e
+            logger.warning('OpenAI falhou, tentando Gemini: %s', str(e)[:150])
+    else:
+        logger.debug('OPENAI_API_KEY ausente, pulando OpenAI')
 
-    raise RuntimeError('Nenhum motor de IA disponível (configure ANTHROPIC_API_KEY ou OPENAI_API_KEY)')
+    # 2. Gemini — primeiro fallback
+    if _gemini_disponivel():
+        try:
+            import google.generativeai as genai
+            gm = genai.GenerativeModel(
+                model_name='gemini-2.0-flash',
+                system_instruction=sistema
+            )
+            msgs_g = []
+            for m in messages:
+                role = 'user' if m['role'] == 'user' else 'model'
+                cont = m['content'] if isinstance(m['content'], str) else str(m['content'])
+                msgs_g.append({'role': role, 'parts': [cont]})
+            chat_g = gm.start_chat(history=msgs_g[:-1])
+            resp_g = chat_g.send_message(msgs_g[-1]['parts'][0] if msgs_g else '')
+            logger.info('LLM: Gemini gemini-2.0-flash')
+            return resp_g.text
+        except Exception as e:
+            ultimo_erro = e
+            logger.warning('Gemini falhou, tentando Claude: %s', str(e)[:150])
+    else:
+        logger.debug('GEMINI_API_KEY ausente, pulando Gemini')
 
+    # 3. Claude — último recurso
+    if os.environ.get('ANTHROPIC_API_KEY'):
+        try:
+            resposta = client.messages.create(
+                model='claude-sonnet-4-6',
+                max_tokens=max_tokens,
+                system=sistema,
+                messages=messages
+            )
+            logger.info('LLM: Claude claude-sonnet-4-6')
+            return resposta.content[0].text
+        except Exception as e:
+            ultimo_erro = e
+            logger.warning('Claude também falhou: %s', str(e)[:150])
+    else:
+        logger.debug('ANTHROPIC_API_KEY ausente, pulando Claude')
+
+    raise RuntimeError(f'Todos os motores de IA falharam. Último erro: {ultimo_erro}')
+
+
+def _llm_cadeia_simples(prompt, sistema='', max_tokens=4000):
+    """Cadeia de fallback para prompt único. OpenAI → Gemini → Claude."""
+    messages = [{'role': 'user', 'content': prompt}]
+    return _llm_cadeia_chat(sistema or SYSTEM_PROMPT, messages, max_tokens=max_tokens)
+
+
+# Aliases para compatibilidade com código legado
+def chamar_ia_chat(sistema, messages):
+    return _llm_cadeia_chat(sistema, messages)
 
 def chamar_ia_simples(prompt):
-    """Motor Duplo: Claude (primário) + OpenAI (fallback). Para prompts únicos (sem histórico)."""
-    motor_principal = MOTOR_IA
-    motores = [motor_principal, 'openai' if motor_principal == 'claude' else 'claude']
-
-    for motor in motores:
-        try:
-            if motor == 'claude':
-                if not os.environ.get('ANTHROPIC_API_KEY'):
-                    logger.warning('ANTHROPIC_API_KEY não configurada, pulando Claude')
-                    continue
-                resposta = client.messages.create(
-                    model='claude-sonnet-4-6',
-                    max_tokens=4000,
-                    messages=[{'role': 'user', 'content': prompt}]
-                )
-                logger.info('Resposta gerada com Claude (simples)')
-                return resposta.content[0].text
-
-            elif motor == 'openai':
-                if not client_openai:
-                    logger.warning('OPENAI_API_KEY não configurada, pulando OpenAI')
-                    continue
-                resp = client_openai.chat.completions.create(
-                    model='gpt-4o-mini',
-                    max_tokens=4000,
-                    messages=[{'role': 'user', 'content': prompt}]
-                )
-                logger.info('Resposta gerada com OpenAI (simples)')
-                return resp.choices[0].message.content
-
-        except Exception as e:
-            logger.warning('Erro com motor %s: %s', motor, str(e)[:200])
-            if motor == motores[-1]:
-                raise RuntimeError(f'Todos os motores falharam. Último erro: {str(e)}')
-            continue
-
-    raise RuntimeError('Nenhum motor de IA disponível (configure ANTHROPIC_API_KEY ou OPENAI_API_KEY)')
+    return _llm_cadeia_simples(prompt)
 
 
 # ─── Banco de dados ───────────────────────────────────────────────────────────
@@ -2043,8 +2080,58 @@ def api_chat():
     def generate():
         chunks = []
         try:
-            # Tenta Gemini streaming primeiro
-            if _gemini_disponivel():
+            # ── 1. OpenAI streaming — motor primário ─────────────────────────
+            openai_ok = False
+            openai_key = os.environ.get('OPENAI_API_KEY', '').strip()
+            if openai_key:
+                try:
+                    import requests as req_lib
+                    openai_msgs = [{'role': 'system', 'content': sistema}] + [
+                        {'role': m['role'],
+                         'content': m['content'] if isinstance(m['content'], str) else str(m['content'])}
+                        for m in messages
+                    ]
+                    ro = req_lib.post(
+                        'https://api.openai.com/v1/chat/completions',
+                        json={'model': 'gpt-4o-mini', 'max_tokens': 8000,
+                              'messages': openai_msgs, 'stream': True},
+                        headers={'Authorization': f'Bearer {openai_key}',
+                                 'content-type': 'application/json'},
+                        stream=True, timeout=120
+                    )
+                    if ro.status_code == 200:
+                        for line in ro.iter_lines():
+                            if not line:
+                                continue
+                            line = line.decode('utf-8')
+                            if line.startswith('data: '):
+                                line = line[6:]
+                            if line == '[DONE]':
+                                break
+                            try:
+                                parsed = json.loads(line)
+                                if 'error' in parsed:
+                                    raise RuntimeError(parsed['error'].get('message', 'Erro OpenAI'))
+                                delta = parsed['choices'][0]['delta'].get('content', '')
+                                if delta:
+                                    chunks.append(delta)
+                                    yield f"data: {json.dumps({'chunk': delta}, ensure_ascii=False)}\n\n"
+                            except (json.JSONDecodeError, KeyError):
+                                pass
+                        openai_ok = bool(chunks)
+                        if openai_ok:
+                            logger.info('Streaming: OpenAI gpt-4o-mini')
+                    else:
+                        logger.warning('OpenAI streaming %s, tentando Gemini', ro.status_code)
+                except Exception as oe:
+                    logger.warning('OpenAI streaming falhou, tentando Gemini: %s', oe)
+                    chunks = []
+            else:
+                logger.debug('OPENAI_API_KEY ausente, pulando OpenAI no streaming')
+
+            # ── 2. Gemini streaming — primeiro fallback ───────────────────────
+            gemini_ok = False
+            if not openai_ok and _gemini_disponivel():
                 try:
                     import google.generativeai as genai
                     historico_g = []
@@ -2055,93 +2142,40 @@ def api_chat():
                     chat_g = gm.start_chat(history=historico_g)
                     resp_g = chat_g.send_message(
                         _to_gemini_parts(messages[-1]['content']),
-                        stream=True,
-                        request_options={'timeout': 60}
+                        stream=True, request_options={'timeout': 60}
                     )
                     for chunk in resp_g:
                         text = getattr(chunk, 'text', '') or ''
                         if text:
                             chunks.append(text)
                             yield f"data: {json.dumps({'chunk': text}, ensure_ascii=False)}\n\n"
-                    if chunks:  # só retorna se Gemini respondeu algo de fato
-                        yield "data: [DONE]\n\n"
-                        resposta = ''.join(chunks)
-                        conn2 = get_db()
-                        conn2.execute(
-                            "INSERT INTO chat_messages (usuario_id, role, content, criado_em) VALUES (?, ?, ?, ?)",
-                            (usuario_id, 'assistant', resposta, datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
-                        )
-                        conn2.commit(); conn2.close()
+                    gemini_ok = bool(chunks)
+                    if gemini_ok:
+                        logger.info('Streaming: Gemini gemini-2.0-flash')
+                    else:
+                        logger.warning('Gemini retornou vazio, tentando Claude')
+                except Exception as ge:
+                    logger.warning('Gemini streaming falhou, tentando Claude: %s', ge)
+                    chunks = []
+
+            # ── 3. Claude streaming — último recurso ─────────────────────────
+            if not openai_ok and not gemini_ok:
+                try:
+                    with client.messages.stream(
+                        model='claude-sonnet-4-6',
+                        max_tokens=8000,
+                        system=sistema,
+                        messages=messages
+                    ) as stream:
+                        for text in stream.text_stream:
+                            chunks.append(text)
+                            yield f"data: {json.dumps({'chunk': text}, ensure_ascii=False)}\n\n"
+                    logger.info('Streaming: Claude claude-sonnet-4-6')
+                except Exception as ce:
+                    logger.error('Claude streaming também falhou: %s', ce)
+                    if not chunks:
+                        yield f"data: {json.dumps({'erro': 'Todos os motores de IA estão indisponíveis. Tente novamente em instantes.'}, ensure_ascii=False)}\n\n"
                         return
-                    logger.warning('Gemini retornou resposta vazia, tentando próximo motor')
-                except Exception as e:
-                    logger.warning('Gemini streaming falhou, tentando próximo motor: %s', e)
-                chunks = []  # reset — sempre tenta Claude/OpenAI se Gemini falhar
-
-            # Claude streaming
-            claude_ok = False
-            try:
-                with client.messages.stream(
-                    model='claude-sonnet-4-6',
-                    max_tokens=8000,
-                    system=sistema,
-                    messages=messages
-                ) as stream:
-                    for text in stream.text_stream:
-                        chunks.append(text)
-                        yield f"data: {json.dumps({'chunk': text}, ensure_ascii=False)}\n\n"
-                claude_ok = True
-            except Exception as ce:
-                err = str(ce).lower()
-                if not any(x in err for x in ['credit', 'balance', 'payment', '400', 'billing']):
-                    raise
-                logger.warning('Claude indisponível no streaming, tentando OpenAI: %s', ce)
-                chunks = []
-
-            if not claude_ok:
-                # Fallback OpenAI streaming
-                import requests as req_lib
-                openai_key = os.environ.get('OPENAI_API_KEY', '').strip()
-                if not openai_key:
-                    yield f"data: {json.dumps({'erro': 'Créditos da API esgotados. Tente novamente mais tarde.'}, ensure_ascii=False)}\n\n"
-                    return
-                openai_msgs = [{'role': 'system', 'content': sistema}] + [
-                    {'role': m['role'], 'content': m['content'] if isinstance(m['content'], str) else str(m['content'])}
-                    for m in messages
-                ]
-                ro = req_lib.post(
-                    'https://api.openai.com/v1/chat/completions',
-                    json={'model': 'gpt-4o-mini', 'max_tokens': 8000, 'messages': openai_msgs, 'stream': True},
-                    headers={'Authorization': f'Bearer {openai_key}', 'content-type': 'application/json'},
-                    stream=True, timeout=120
-                )
-                logger.info('OpenAI streaming status: %s', ro.status_code)
-                if ro.status_code != 200:
-                    err_body = ro.text[:300]
-                    logger.warning('OpenAI streaming erro %s: %s', ro.status_code, err_body)
-                    msg = 'Limite de requisições atingido. Aguarde alguns segundos e tente novamente.' if ro.status_code == 429 else f'Serviço de IA indisponível ({ro.status_code}). Tente novamente mais tarde.'
-                    yield f"data: {json.dumps({'erro': msg}, ensure_ascii=False)}\n\n"
-                    return
-                for line in ro.iter_lines():
-                    if not line:
-                        continue
-                    line = line.decode('utf-8')
-                    if line.startswith('data: '):
-                        line = line[6:]
-                    if line == '[DONE]':
-                        break
-                    try:
-                        parsed = json.loads(line)
-                        if 'error' in parsed:
-                            logger.warning('OpenAI stream erro: %s', parsed["error"])
-                            yield f"data: {json.dumps({'erro': parsed['error'].get('message', 'Erro OpenAI')[:200]}, ensure_ascii=False)}\n\n"
-                            return
-                        delta = parsed['choices'][0]['delta'].get('content', '')
-                        if delta:
-                            chunks.append(delta)
-                            yield f"data: {json.dumps({'chunk': delta}, ensure_ascii=False)}\n\n"
-                    except Exception:
-                        pass
 
             yield "data: [DONE]\n\n"
             resposta = ''.join(chunks)
@@ -2468,9 +2502,38 @@ _MM_PALETTE = [
 ]
 
 
+def _extrair_mermaid(texto):
+    """Extrai o código Mermaid de um bloco ```mermaid ... ```.
+    Retorna a string do código ou None se não encontrado."""
+    m = re.search(r'```mermaid\s*\n([\s\S]+?)\n```', texto, re.IGNORECASE)
+    return m.group(1).strip() if m else None
+
+
+def _mermaid_para_png(codigo_mermaid):
+    """Converte código Mermaid em bytes PNG usando a API pública mermaid.ink.
+    Retorna bytes da imagem ou None em caso de falha."""
+    import requests as req_lib
+    try:
+        # mermaid.ink aceita JSON encodado em base64 URL-safe
+        config = json.dumps({'code': codigo_mermaid, 'mermaid': {'theme': 'default'}})
+        encoded = base64.urlsafe_b64encode(config.encode()).decode().rstrip('=')
+        url = f'https://mermaid.ink/img/{encoded}?type=png&width=1200&height=900'
+        r = req_lib.get(url, timeout=30)
+        if r.status_code == 200 and r.headers.get('content-type', '').startswith('image/'):
+            return r.content
+        logger.warning('mermaid.ink retornou status %s', r.status_code)
+    except Exception as e:
+        logger.warning('_mermaid_para_png falhou: %s', e)
+    return None
+
+
 def _detect_doc_type(texto):
     """Returns 'plano_aula', 'mapa_mental', or 'outro'."""
     t = texto.lower()
+    # Detecta Mermaid mindmap
+    if _extrair_mermaid(texto) and 'mindmap' in t:
+        return 'mapa_mental'
+    # Formato legado ## 🧠
     if ('🧠 tema central' in t or '## 🧠' in t or
             (('### 🔴' in t or '### 🔵' in t) and '## 🧠' in t)):
         return 'mapa_mental'
@@ -2752,8 +2815,62 @@ def _set_cell_bg_plano(cell, hex_color):
     tcPr.append(shd)
 
 
+def _gerar_pdf_mermaid(codigo_mermaid, titulo='Mapa Mental'):
+    """Gera PDF A4 landscape com imagem do Mermaid (via mermaid.ink)."""
+    from reportlab.pdfgen import canvas as rl_canvas
+    from reportlab.lib.pagesizes import A4, landscape
+    from reportlab.lib.colors import HexColor, white
+    from reportlab.lib.utils import ImageReader
+    import io
+
+    png_bytes = _mermaid_para_png(codigo_mermaid)
+
+    W, H = landscape(A4)
+    buf  = io.BytesIO()
+    c    = rl_canvas.Canvas(buf, pagesize=(W, H))
+
+    # Fundo branco
+    c.setFillColor(white)
+    c.rect(0, 0, W, H, fill=1, stroke=0)
+
+    # Barra superior
+    c.setFillColor(HexColor('#1E3A5F'))
+    c.rect(0, H - 36, W, 36, fill=1, stroke=0)
+    c.setFont('Helvetica-Bold', 13)
+    c.setFillColor(white)
+    c.drawCentredString(W / 2, H - 23, titulo.upper())
+
+    # Rodapé
+    c.setFont('Helvetica', 7)
+    c.setFillColor(HexColor('#6b7280'))
+    c.drawCentredString(W / 2, 14, f'Gerado por ProfessorIA™  ·  {datetime.now().strftime("%d/%m/%Y")}')
+
+    if png_bytes:
+        img_buf = io.BytesIO(png_bytes)
+        img     = ImageReader(img_buf)
+        iw, ih  = img.getSize()
+        # Escala proporcional dentro da área útil
+        margin  = 24
+        max_w   = W - margin * 2
+        max_h   = H - 36 - 28 - margin  # topo + rodapé + margem
+        scale   = min(max_w / iw, max_h / ih)
+        dw, dh  = iw * scale, ih * scale
+        dx      = (W - dw) / 2
+        dy      = 28 + margin + (max_h - dh) / 2
+        c.drawImage(img, dx, dy, width=dw, height=dh, mask='auto')
+    else:
+        # Fallback: mensagem de erro
+        c.setFont('Helvetica', 10)
+        c.setFillColor(HexColor('#374151'))
+        c.drawCentredString(W / 2, H / 2, 'Não foi possível renderizar o mapa mental. Tente novamente.')
+
+    c.save()
+    return buf.getvalue()
+
+
 def gerar_mapa_mental_pdf(texto, meta=None):
-    """Gera PDF visual de mapa mental estilo infográfico com ReportLab."""
+    """Gera PDF visual de mapa mental.
+    Suporta Mermaid (```mermaid mindmap```) e formato legado ## 🧠."""
     from reportlab.pdfgen import canvas as rl_canvas
     from reportlab.lib.pagesizes import A4, landscape
     from reportlab.lib.colors import HexColor, white
@@ -2761,6 +2878,15 @@ def gerar_mapa_mental_pdf(texto, meta=None):
 
     if meta is None:
         meta = {}
+
+    # ── Mermaid mindmap — caminho novo ────────────────────────────────────────
+    codigo_mermaid = _extrair_mermaid(texto)
+    if codigo_mermaid and 'mindmap' in codigo_mermaid.lower():
+        titulo_m = re.search(r'root\(\((.+?)\)\)', codigo_mermaid)
+        titulo   = titulo_m.group(1).strip() if titulo_m else 'Mapa Mental'
+        return _gerar_pdf_mermaid(codigo_mermaid, titulo=titulo)
+
+    # ── Formato legado ## 🧠 — caminho existente ─────────────────────────────
 
     titulo, categorias = _parse_mapa_mental(texto)
     W, H = landscape(A4)   # 841.89 x 595.28 pts
@@ -4124,6 +4250,56 @@ tr:hover td{{background:#f8fafc}}
 </table>
 </body></html>"""
     return html
+
+
+# ─── Geração de Imagens — DALL-E 3 ──────────────────────────────────────────
+
+@app.route('/api/generate/image', methods=['POST'])
+@login_required
+@limiter.limit('5 per minute')
+def api_generate_image():
+    """Gera uma ilustração via DALL-E 3.
+
+    Entrada: { prompt, size? }
+      - prompt: descrição da imagem (obrigatório)
+      - size:   '1024x1024' | '1792x1024' | '1024x1792'  (padrão: 1024x1024)
+
+    Saída: { url } com URL temporária da imagem (válida por 1h)
+    """
+    if not client_openai:
+        return jsonify({'erro': 'OPENAI_API_KEY não configurada. Adicione a chave no painel do Render.'}), 503
+
+    data   = request.get_json(force=True) or {}
+    prompt = str(data.get('prompt', '')).strip()[:4000]
+    size   = data.get('size', '1024x1024')
+
+    if not prompt:
+        return jsonify({'erro': 'Campo obrigatório: prompt'}), 400
+    if size not in ('1024x1024', '1792x1024', '1024x1792'):
+        size = '1024x1024'
+
+    # Injeta estilo pedagógico automaticamente
+    prompt_final = f"{prompt}. {IMAGE_STYLE_MODIFIER}"
+
+    try:
+        resp = client_openai.images.generate(
+            model='dall-e-3',
+            prompt=prompt_final,
+            size=size,
+            quality='standard',
+            n=1
+        )
+        url = resp.data[0].url
+        logger.info('DALL-E 3 gerou imagem para usuario %s', current_user.id)
+        return jsonify({'url': url, 'prompt_revisado': resp.data[0].revised_prompt or prompt})
+    except Exception as e:
+        err = str(e)
+        logger.error('DALL-E 3 erro: %s', err[:300])
+        if 'billing' in err.lower() or 'insufficient' in err.lower():
+            return jsonify({'erro': 'Créditos OpenAI esgotados. Adicione créditos em platform.openai.com'}), 402
+        if 'content_policy' in err.lower() or 'safety' in err.lower():
+            return jsonify({'erro': 'O prompt foi bloqueado pela política de conteúdo. Tente uma descrição diferente.'}), 422
+        return jsonify({'erro': f'Erro ao gerar imagem: {err[:200]}'}), 500
 
 
 # ─── Download PDF do Plano de Aula ───────────────────────────────────────────

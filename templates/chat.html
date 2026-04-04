@@ -1743,6 +1743,7 @@
 
       const textoFinal = stream.done();
       historico.push({role:'assistant', content: textoFinal || fullText});
+      renderizarMermaid();
     } catch(err) { stream.add('Erro de conexão. Verifique sua internet e tente novamente.'); stream.done(); }
     finally {
       const pm = document.getElementById('piaMark');
@@ -1892,8 +1893,17 @@
   }
 
   function renderMD(text) {
+    // Preserva blocos mermaid antes de escapar HTML
+    const mermaidBlocks = [];
+    text = text.replace(/```mermaid\s*\n([\s\S]+?)\n```/gi, (_, code) => {
+      const idx = mermaidBlocks.push(code.trim()) - 1;
+      return `\x00MERMAID${idx}\x00`;
+    });
     return text
       .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+      // Restaura blocos Mermaid como <pre class="mermaid">
+      .replace(/\x00MERMAID(\d+)\x00/g, (_, i) =>
+        `<pre class="mermaid">${mermaidBlocks[parseInt(i)]}</pre>`)
       .replace(/```[\w]*\n?([\s\S]*?)```/g,'<pre><code>$1</code></pre>')
       .replace(/`([^`]+)`/g,'<code>$1</code>')
       .replace(/^### (.+)$/gm,'<h3>$1</h3>')
@@ -1912,6 +1922,23 @@
       .replace(/^(?!<[hupolt]|<pre|<hr|<table)(.+)$/gm,'<p>$1</p>')
       .replace(/<p><\/p>/g,'')
       .replace(/\n/g,'<br>');
+  }
+
+  async function renderizarMermaid() {
+    const m = window._mermaidReady;
+    if (!m) return;
+    const blocos = document.querySelectorAll('pre.mermaid:not([data-processed])');
+    if (!blocos.length) return;
+    for (const el of blocos) {
+      try {
+        const { svg } = await m.render('mermaid-' + Math.random().toString(36).slice(2), el.textContent);
+        el.innerHTML = svg;
+        el.setAttribute('data-processed', '1');
+        el.style.cssText = 'background:transparent;border:none;padding:0;overflow:auto;max-width:100%';
+      } catch(e) {
+        console.warn('Mermaid render error:', e);
+      }
+    }
   }
 </script>
 
@@ -2002,6 +2029,17 @@
 
 <script src="/static/theme.js"></script>
 <script src="/static/bg3d.js"></script>
+<script type="module">
+  import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs';
+  mermaid.initialize({
+    startOnLoad: false,
+    theme: document.documentElement.getAttribute('data-theme') === 'light' ? 'default' : 'dark',
+    fontFamily: 'Inter, sans-serif',
+    fontSize: 14,
+    mindmap: { padding: 16, useMaxWidth: true }
+  });
+  window._mermaidReady = mermaid;
+</script>
 <script>
   // User menu dropdown
   const userMenuBtn = document.getElementById('userMenuBtn');
