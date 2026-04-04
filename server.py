@@ -3663,6 +3663,111 @@ def api_upload_logo_estado():
     return jsonify({'ok': True, 'logo_estado_path': rel})
 
 
+# ─── DOCX via template docxtpl ───────────────────────────────────────────────
+
+PLANO_TEMPLATE_PATH = os.path.join(
+    os.path.dirname(__file__), 'static', 'templates', 'plano_de_aula.docx'
+)
+
+@app.route('/api/plano-aula/docx', methods=['POST'])
+@login_required
+@limiter.limit('10 per minute')
+def api_plano_aula_docx():
+    """Gera o Plano de Aula preenchendo o template DOCX via docxtpl.
+
+    Aceita dois formatos de entrada:
+      A) JSON do plano já gerado: { "plano_de_aula": { tema_central, ... } }
+      B) Campos brutos para gerar na hora: { "tema", "ano", "disciplina" }
+         Nesse caso chama /api/gerar-plano internamente e usa o resultado.
+    """
+    from docxtpl import DocxTemplate
+
+    if not current_user.assinatura_ativa and not current_user.is_admin:
+        geracoes = get_geracoes_mes(current_user.id)
+        if geracoes >= LIMITE_GRATIS:
+            return jsonify({'erro': 'limite_atingido', 'cta': '/planos'}), 403
+
+    data = request.get_json(force=True) or {}
+
+    # Modo A — plano JSON já fornecido
+    plano = data.get('plano_de_aula')
+
+    # Modo B — gera o plano agora
+    if not plano:
+        tema       = str(data.get('tema', '')).strip()[:300]
+        ano        = str(data.get('ano', '')).strip()[:50]
+        disciplina = str(data.get('disciplina', '')).strip()[:100]
+        if not tema or not ano or not disciplina:
+            return jsonify({'erro': 'Forneça plano_de_aula ou os campos tema, ano, disciplina'}), 400
+        try:
+            plano_resp = _gerar_plano_interno(tema, ano, disciplina)
+            plano = plano_resp.get('plano_de_aula', plano_resp)
+        except Exception as e:
+            return jsonify({'erro': f'Falha ao gerar plano: {str(e)[:200]}'}), 500
+
+    if not plano:
+        return jsonify({'erro': 'Dados do plano não encontrados'}), 400
+
+    if not os.path.exists(PLANO_TEMPLATE_PATH):
+        return jsonify({'erro': 'Template DOCX não encontrado. Contate o suporte.'}), 500
+
+    # Monta o contexto para o template
+    context = {
+        'escola':      current_user.escola_nome or '',
+        'professor':   current_user.professor_nome or '',
+        'data_geracao': datetime.now().strftime('%d/%m/%Y'),
+        **plano
+    }
+
+    try:
+        tpl = DocxTemplate(PLANO_TEMPLATE_PATH)
+        tpl.render(context)
+        buf = io.BytesIO()
+        tpl.save(buf)
+        buf.seek(0)
+        tema_slug = str(plano.get('tema_central', 'plano'))[:40].replace(' ', '_')
+        return send_file(
+            buf,
+            as_attachment=True,
+            download_name=f'PlanoDeAula_{tema_slug}.docx',
+            mimetype='application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+        )
+    except Exception as e:
+        logger.error('docxtpl render erro: %s', e)
+        return jsonify({'erro': f'Erro ao preencher template: {str(e)[:200]}'}), 500
+
+
+def _gerar_plano_interno(tema, ano, disciplina):
+    """Reutiliza a lógica de /api/gerar-plano sem passar pelo Flask request."""
+    user_prompt = (
+        f"Gere um plano de aula completo para:\n"
+        f"- Tema: {tema}\n- Ano/Série: {ano}\n- Disciplina: {disciplina}\n\n"
+        "Use habilidades BNCC reais e metodologias ativas."
+    )
+    # Tenta Claude (tool_use) primeiro, depois fallback texto
+    if os.environ.get('ANTHROPIC_API_KEY'):
+        try:
+            resp = client.messages.create(
+                model='claude-sonnet-4-6', max_tokens=4000,
+                system=SYSTEM_PROMPT_PLANO,
+                tools=[PLANO_AULA_TOOL],
+                tool_choice={"type": "tool", "name": "salvar_plano_de_aula"},
+                messages=[{"role": "user", "content": user_prompt}]
+            )
+            for block in resp.content:
+                if block.type == 'tool_use' and block.name == 'salvar_plano_de_aula':
+                    return block.input
+        except Exception as e:
+            logger.warning('_gerar_plano_interno Claude falhou: %s', e)
+
+    # Fallback: chama a cadeia LLM e parseia JSON do texto
+    texto = _llm_cadeia_simples(user_prompt, sistema=SYSTEM_PROMPT_PLANO)
+    m = re.search(r'\{[\s\S]+\}', texto)
+    if m:
+        return json.loads(m.group())
+    raise ValueError('Não foi possível parsear JSON do plano')
+
+
 # ─── Gerador de Provas ────────────────────────────────────────────────────────
 
 @app.route('/prova')
