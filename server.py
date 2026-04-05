@@ -383,6 +383,64 @@ PLANO_AULA_TOOL = {
     }
 }
 
+# Schema OpenAI para plano de aula (strict=True exige additionalProperties: false em todo objeto)
+_OAI_PLANO_SCHEMA = {
+    "type": "object",
+    "additionalProperties": False,
+    "properties": {
+        "plano_de_aula": {
+            "type": "object",
+            "additionalProperties": False,
+            "properties": {
+                "tema_central":   {"type": "string"},
+                "disciplina":     {"type": "string"},
+                "ano_escolar":    {"type": "string"},
+                "tempo_estimado": {"type": "string"},
+                "habilidades_bncc": {
+                    "type": "array",
+                    "items": {
+                        "type": "object",
+                        "additionalProperties": False,
+                        "properties": {
+                            "codigo":    {"type": "string"},
+                            "descricao": {"type": "string"}
+                        },
+                        "required": ["codigo", "descricao"]
+                    }
+                },
+                "desenvolvimento": {
+                    "type": "array",
+                    "items": {
+                        "type": "object",
+                        "additionalProperties": False,
+                        "properties": {
+                            "etapa":                 {"type": "string"},
+                            "conteudo":              {"type": "string"},
+                            "estrategias_didaticas": {"type": "string"},
+                            "recursos_pedagogicos":  {"type": "array", "items": {"type": "string"}}
+                        },
+                        "required": ["etapa", "conteudo", "estrategias_didaticas", "recursos_pedagogicos"]
+                    }
+                },
+                "avaliacao_e_fechamento": {
+                    "type": "object",
+                    "additionalProperties": False,
+                    "properties": {
+                        "metodo":    {"type": "string"},
+                        "criterios": {"type": "string"}
+                    },
+                    "required": ["metodo", "criterios"]
+                }
+            },
+            "required": [
+                "tema_central", "disciplina", "ano_escolar", "tempo_estimado",
+                "habilidades_bncc", "desenvolvimento", "avaliacao_e_fechamento"
+            ]
+        }
+    },
+    "required": ["plano_de_aula"]
+}
+
 # ─── Helpers de IA (Gemini first, Claude fallback) ────────────────────────────
 
 def _gemini_disponivel():
@@ -649,6 +707,15 @@ def init_db():
             email      TEXT UNIQUE NOT NULL,
             whatsapp   TEXT DEFAULT '',
             criado_em  TEXT
+        )
+    ''')
+    conn.execute('''
+        CREATE TABLE IF NOT EXISTS leads (
+            id             SERIAL PRIMARY KEY,
+            nome           TEXT NOT NULL,
+            contato        TEXT NOT NULL,
+            tema_pesquisado TEXT DEFAULT '',
+            criado_em      TEXT
         )
     ''')
     # ─── Índices de performance ────────────────────────────────────────────────
@@ -1809,54 +1876,50 @@ def api_gerar_plano():
     if plano_json is None and _gemini_disponivel():
         try:
             import google.generativeai as genai
-            import google.generativeai.types as gtypes
 
-            gemini_schema = gtypes.Schema(
-                type=gtypes.Type.OBJECT,
-                properties={
-                    'plano_de_aula': gtypes.Schema(
-                        type=gtypes.Type.OBJECT,
-                        properties={
-                            'tema_central':   gtypes.Schema(type=gtypes.Type.STRING),
-                            'disciplina':     gtypes.Schema(type=gtypes.Type.STRING),
-                            'ano_escolar':    gtypes.Schema(type=gtypes.Type.STRING),
-                            'tempo_estimado': gtypes.Schema(type=gtypes.Type.STRING),
-                            'habilidades_bncc': gtypes.Schema(
-                                type=gtypes.Type.ARRAY,
-                                items=gtypes.Schema(
-                                    type=gtypes.Type.OBJECT,
-                                    properties={
-                                        'codigo':    gtypes.Schema(type=gtypes.Type.STRING),
-                                        'descricao': gtypes.Schema(type=gtypes.Type.STRING),
+            gemini_schema = {
+                'type': 'object',
+                'properties': {
+                    'plano_de_aula': {
+                        'type': 'object',
+                        'properties': {
+                            'tema_central':   {'type': 'string'},
+                            'disciplina':     {'type': 'string'},
+                            'ano_escolar':    {'type': 'string'},
+                            'tempo_estimado': {'type': 'string'},
+                            'habilidades_bncc': {
+                                'type': 'array',
+                                'items': {
+                                    'type': 'object',
+                                    'properties': {
+                                        'codigo':    {'type': 'string'},
+                                        'descricao': {'type': 'string'},
                                     }
-                                )
-                            ),
-                            'desenvolvimento': gtypes.Schema(
-                                type=gtypes.Type.ARRAY,
-                                items=gtypes.Schema(
-                                    type=gtypes.Type.OBJECT,
-                                    properties={
-                                        'etapa':                 gtypes.Schema(type=gtypes.Type.STRING),
-                                        'conteudo':              gtypes.Schema(type=gtypes.Type.STRING),
-                                        'estrategias_didaticas': gtypes.Schema(type=gtypes.Type.STRING),
-                                        'recursos_pedagogicos':  gtypes.Schema(
-                                            type=gtypes.Type.ARRAY,
-                                            items=gtypes.Schema(type=gtypes.Type.STRING)
-                                        ),
-                                    }
-                                )
-                            ),
-                            'avaliacao_e_fechamento': gtypes.Schema(
-                                type=gtypes.Type.OBJECT,
-                                properties={
-                                    'metodo':    gtypes.Schema(type=gtypes.Type.STRING),
-                                    'criterios': gtypes.Schema(type=gtypes.Type.STRING),
                                 }
-                            ),
+                            },
+                            'desenvolvimento': {
+                                'type': 'array',
+                                'items': {
+                                    'type': 'object',
+                                    'properties': {
+                                        'etapa':                 {'type': 'string'},
+                                        'conteudo':              {'type': 'string'},
+                                        'estrategias_didaticas': {'type': 'string'},
+                                        'recursos_pedagogicos':  {'type': 'array', 'items': {'type': 'string'}},
+                                    }
+                                }
+                            },
+                            'avaliacao_e_fechamento': {
+                                'type': 'object',
+                                'properties': {
+                                    'metodo':    {'type': 'string'},
+                                    'criterios': {'type': 'string'},
+                                }
+                            },
                         }
-                    )
+                    }
                 }
-            )
+            }
             gm = genai.GenerativeModel(
                 model_name='gemini-2.0-flash',
                 system_instruction=SYSTEM_PROMPT_PLANO,
@@ -1889,7 +1952,7 @@ def api_gerar_plano():
                         'json_schema': {
                             'name': 'plano_de_aula',
                             'strict': True,
-                            'schema': PLANO_AULA_TOOL['input_schema']
+                            'schema': _OAI_PLANO_SCHEMA
                         }
                     },
                     max_tokens=4000
@@ -3678,259 +3741,320 @@ def api_upload_logo_estado():
     return jsonify({'ok': True, 'logo_estado_path': rel})
 
 
-# ─── DOCX via template oficial ───────────────────────────────────────────────
+# ─── DOCX via templates oficiais (docxtpl) ───────────────────────────────────
 
 PLANO_TEMPLATE_PATH = os.path.join(
     os.path.dirname(__file__), 'static', 'templates', 'plano_de_aula.docx'
 )
+ENSINO_TEMPLATE_PATH = os.path.join(
+    os.path.dirname(__file__), 'static', 'templates', 'plano_de_ensino_tpl.docx'
+)
 
-
-def _renderizar_plano_docx(plano: dict, professor: str = '', escola: str = '') -> bytes:
-    """Preenche o template PLANO DE AULA.docx com os dados do plano JSON.
-
-    Estratégia: manipulação direta do XML do DOCX via zipfile + lxml para:
-      1. Substituir placeholders {{ xxx }} nos campos de metadados (Tabela 1)
-      2. Clonar a linha-template da tabela de aulas (Tabela 2) para cada etapa
-         do desenvolvimento, preservando toda a formatação original.
-    """
-    import zipfile, copy
-    from lxml import etree
-
-    # Lê o template como zip em memória
-    with open(PLANO_TEMPLATE_PATH, 'rb') as f:
-        template_bytes = f.read()
-
-    buf_in = io.BytesIO(template_bytes)
-    buf_out = io.BytesIO()
-
-    desenvolvimento = plano.get('desenvolvimento', [])
-    bncc = plano.get('habilidades_bncc', [])
-    avaliacao = plano.get('avaliacao_e_fechamento', {})
-
-    # Monta lista de aulas para preencher a tabela
-    aulas = []
-    for i, et in enumerate(desenvolvimento):
-        recursos = et.get('recursos_pedagogicos', [])
-        recursos_str = ', '.join(recursos) if isinstance(recursos, list) else str(recursos)
-        aulas.append({
-            'data':        '',            # professor preenche depois
-            'conteudo':    (
-                f"{et.get('etapa','')}\n{et.get('conteudo','')}"
-                + ('\n\n' + ' | '.join(f"{h['codigo']}: {h['descricao']}" for h in bncc) if i == 0 and bncc else '')
-            ),
-            'estrategias': et.get('estrategias_didaticas', ''),
-            'recursos':    recursos_str,
-            'avaliacao':   avaliacao.get('metodo', '') if i == len(desenvolvimento) - 1 else '',
-            'verificacao': avaliacao.get('criterios', '') if i == len(desenvolvimento) - 1 else '',
-        })
-
-    # Valores para substituição simples de placeholders
-    substituicoes = {
-        '{{ professor }}':   professor,
-        '{{ disciplina }}':  plano.get('disciplina', ''),
-        '{{ num_aulas }}':   plano.get('tempo_estimado', ''),
-        '{{ turma }}':       plano.get('ano_escolar', ''),
-        '{{ periodo }}':     datetime.now().strftime('%B de %Y'),
-        '{{ data_plano }}':  datetime.now().strftime('%d/%m/%Y'),
-        '{{ escola }}':      escola,
-    }
-
-    NS = 'http://schemas.openxmlformats.org/wordprocessingml/2006/main'
-
-    def texto_el(el):
-        """Retorna todo o texto de um elemento XML."""
-        return ''.join(t.text or '' for t in el.iter(f'{{{NS}}}t'))
-
-    def set_texto_celula(tc, novo_texto):
-        """Substitui o texto de uma célula preservando a formatação da primeira run."""
-        paras = tc.findall(f'.//{{{NS}}}p')
-        if not paras:
-            return
-        # Guarda formatação do primeiro run
-        first_run = paras[0].find(f'.//{{{NS}}}r')
-        rpr = None
-        if first_run is not None:
-            rpr = first_run.find(f'{{{NS}}}rPr')
-
-        # Limpa todos os parágrafos exceto o primeiro
-        for p in paras[1:]:
-            tc.remove(p)
-
-        # Limpa runs do primeiro parágrafo
-        para = paras[0]
-        for r in para.findall(f'{{{NS}}}r'):
-            para.remove(r)
-
-        # Adiciona novo run com o texto
-        new_r = etree.SubElement(para, f'{{{NS}}}r')
-        if rpr is not None:
-            new_r.append(copy.deepcopy(rpr))
-        new_t = etree.SubElement(new_r, f'{{{NS}}}t')
-        new_t.text = novo_texto
-        if novo_texto and (novo_texto[0] == ' ' or novo_texto[-1] == ' '):
-            new_t.set('{http://www.w3.org/XML/1998/namespace}space', 'preserve')
-
-    def subst_placeholders_xml(xml_bytes):
-        """Substitui {{ placeholder }} no XML com valores reais."""
-        text = xml_bytes.decode('utf-8')
-        for k, v in substituicoes.items():
-            text = text.replace(k, v or '')
-        # Remove os tags de loop do docxtpl que não usamos
-        text = re.sub(r'\{%tr?\s+for\s+[^%]+%\}', '', text)
-        text = re.sub(r'\{%tr?\s+endfor\s*%\}', '', text)
-        return text.encode('utf-8')
-
-    with zipfile.ZipFile(buf_in, 'r') as zin:
-        names = zin.namelist()
-        arquivos = {n: zin.read(n) for n in names}
-
-    # Processa word/document.xml
-    doc_xml = arquivos['word/document.xml']
-
-    # Substitui metadados simples
-    doc_xml = subst_placeholders_xml(doc_xml)
-
-    # Parseia XML para manipulação da tabela de aulas
-    root = etree.fromstring(doc_xml)
-
-    # Encontra todas as tabelas (w:tbl)
-    tbls = root.findall(f'.//{{{NS}}}tbl')
-
-    # A tabela de aulas é a última (Tabela 2 no inspeção: header + template row + vazia)
-    if tbls:
-        tbl_aulas = tbls[-1]
-        rows = tbl_aulas.findall(f'{{{NS}}}tr')
-
-        # Identifica a linha-template: aquela que contém texto de placeholder {{ aula.
-        template_row = None
-        template_idx = None
-        for idx, row in enumerate(rows):
-            txt = texto_el(row)
-            if '{{ aula.' in txt or '{%tr' in txt or '{% tr' in txt:
-                template_row = row
-                template_idx = idx
-                break
-
-        if template_row is not None:
-            # Remove linha template original
-            tbl_aulas.remove(template_row)
-
-            # Pega o índice de inserção (após o header)
-            insert_idx = template_idx
-
-            for i, aula in enumerate(aulas):
-                nova_row = copy.deepcopy(template_row)
-                tcs = nova_row.findall(f'.//{{{NS}}}tc')
-
-                mapa = {
-                    0: aula['data'],
-                    1: aula['conteudo'],
-                    2: aula['estrategias'],
-                    3: aula['recursos'],
-                    4: aula['avaliacao'] + ('\n' + aula['verificacao'] if aula['verificacao'] else ''),
+# Ferramenta Claude — gera JSON com as chaves exatas do template PLANO DE AULA.docx
+PLANO_AULA_DOCX_TOOL = {
+    "name": "gerar_plano_aula_docx",
+    "description": (
+        "Gera os dados para preencher o template oficial PLANO DE AULA.docx. "
+        "Retorne as chaves exatas que o template usa: disciplina, num_aulas, turma e aulas[]."
+    ),
+    "input_schema": {
+        "type": "object",
+        "properties": {
+            "disciplina": {"type": "string", "description": "Nome da disciplina"},
+            "num_aulas":  {"type": "string", "description": "Quantidade e duração (ex: '2 aulas de 50 min')"},
+            "turma":      {"type": "string", "description": "Ano, série e turma (ex: '8º Ano B')"},
+            "aulas": {
+                "type": "array",
+                "description": "Cada linha da tabela de desenvolvimento",
+                "items": {
+                    "type": "object",
+                    "properties": {
+                        "data":        {"type": "string", "description": "Data da aula (pode ser vazio)"},
+                        "conteudo":    {"type": "string", "description": "Conteúdo/tema com habilidades BNCC"},
+                        "estrategias": {"type": "string", "description": "Estratégias didáticas e metodologia"},
+                        "recursos":    {"type": "string", "description": "Recursos pedagógicos"},
+                        "avaliacao":   {"type": "string", "description": "Método de avaliação"},
+                        "verificacao": {"type": "string", "description": "Critérios de verificação da aprendizagem"},
+                    },
+                    "required": ["data", "conteudo", "estrategias", "recursos", "avaliacao", "verificacao"]
                 }
-                for col_idx, valor in mapa.items():
-                    if col_idx < len(tcs):
-                        set_texto_celula(tcs[col_idx], valor)
+            }
+        },
+        "required": ["disciplina", "num_aulas", "turma", "aulas"]
+    }
+}
 
-                # Insere antes da linha vazia final
-                rows_atuais = tbl_aulas.findall(f'{{{NS}}}tr')
-                pos = min(insert_idx + i, len(rows_atuais))
-                tbl_aulas.insert(pos, nova_row)
+# Ferramenta Claude — gera JSON com as chaves exatas do template PLANO DE ENSINO.docx
+PLANO_ENSINO_DOCX_TOOL = {
+    "name": "gerar_plano_ensino_docx",
+    "description": (
+        "Gera os dados para preencher o template oficial PLANO DE ENSINO.docx. "
+        "Retorne as chaves exatas que o template usa."
+    ),
+    "input_schema": {
+        "type": "object",
+        "properties": {
+            "disciplina":  {"type": "string"},
+            "num_aulas":   {"type": "string", "description": "Nº de aulas semanais (ex: '2')"},
+            "turma":       {"type": "string", "description": "Ano/Série/Turma (ex: '8º Ano B')"},
+            "objetivos":   {"type": "string", "description": "Objetivos gerais da disciplina no ano"},
+            "obj_b1":      {"type": "string", "description": "Objetos de conhecimento — 1º bimestre"},
+            "obj_b2":      {"type": "string", "description": "Objetos de conhecimento — 2º bimestre"},
+            "obj_b3":      {"type": "string", "description": "Objetos de conhecimento — 3º bimestre"},
+            "obj_b4":      {"type": "string", "description": "Objetos de conhecimento — 4º bimestre"},
+            "comp_b1":     {"type": "string", "description": "Competências e habilidades BNCC — 1º bimestre"},
+            "comp_b2":     {"type": "string", "description": "Competências e habilidades BNCC — 2º bimestre"},
+            "comp_b3":     {"type": "string", "description": "Competências e habilidades BNCC — 3º bimestre"},
+            "comp_b4":     {"type": "string", "description": "Competências e habilidades BNCC — 4º bimestre"},
+            "metodologias":                 {"type": "string"},
+            "competencias_socioemocionais": {"type": "string"},
+            "programas_projetos":           {"type": "string"},
+            "materiais_apoio":              {"type": "string"},
+            "avaliacao":                    {"type": "string"},
+            "recuperacao":                  {"type": "string"},
+            "diagnostico":                  {"type": "string"},
+            "referencias":                  {"type": "string"},
+        },
+        "required": [
+            "disciplina", "num_aulas", "turma", "objetivos",
+            "obj_b1", "obj_b2", "obj_b3", "obj_b4",
+            "comp_b1", "comp_b2", "comp_b3", "comp_b4",
+            "metodologias", "competencias_socioemocionais",
+            "programas_projetos", "materiais_apoio",
+            "avaliacao", "recuperacao", "diagnostico", "referencias"
+        ]
+    }
+}
 
-    # Serializa XML modificado de volta
-    arquivos['word/document.xml'] = etree.tostring(root, xml_declaration=True,
-                                                    encoding='UTF-8', standalone=True)
 
-    # Monta o DOCX final
-    with zipfile.ZipFile(buf_out, 'w', zipfile.ZIP_DEFLATED) as zout:
-        for name, data in arquivos.items():
-            zout.writestr(name, data)
+def _renderizar_docx_tpl(template_path: str, context: dict) -> bytes:
+    """Renderiza qualquer template docxtpl com o contexto fornecido."""
+    from docxtpl import DocxTemplate
+    tpl = DocxTemplate(template_path)
+    tpl.render(context)
+    buf = io.BytesIO()
+    tpl.save(buf)
+    return buf.getvalue()
 
-    return buf_out.getvalue()
+
+def _gerar_plano_aula_docx_interno(tema: str, ano: str, disciplina: str) -> dict:
+    """Chama a IA para gerar o JSON com as chaves exatas do template PLANO DE AULA.docx."""
+    user_prompt = (
+        f"Gere um plano de aula completo para:\n"
+        f"- Tema: {tema}\n- Ano/Série: {ano}\n- Disciplina: {disciplina}\n\n"
+        "Use habilidades BNCC reais. Inclua pelo menos 3 aulas com conteúdo detalhado, "
+        "estratégias ativas e recursos variados."
+    )
+    if os.environ.get('ANTHROPIC_API_KEY'):
+        try:
+            resp = client.messages.create(
+                model='claude-sonnet-4-6', max_tokens=4000,
+                system=SYSTEM_PROMPT_PLANO,
+                tools=[PLANO_AULA_DOCX_TOOL],
+                tool_choice={"type": "tool", "name": "gerar_plano_aula_docx"},
+                messages=[{"role": "user", "content": user_prompt}]
+            )
+            for block in resp.content:
+                if block.type == 'tool_use' and block.name == 'gerar_plano_aula_docx':
+                    return block.input
+        except Exception as e:
+            logger.warning('_gerar_plano_aula_docx_interno Claude falhou: %s', e)
+
+    # Fallback: parseia JSON do texto
+    texto = _llm_cadeia_simples(user_prompt, sistema=SYSTEM_PROMPT_PLANO)
+    m = re.search(r'\{[\s\S]+\}', texto)
+    if m:
+        return json.loads(m.group())
+    raise ValueError('Não foi possível parsear JSON do plano de aula')
+
+
+def _gerar_plano_ensino_docx_interno(disciplina: str, ano: str) -> dict:
+    """Chama a IA para gerar o JSON com as chaves exatas do template PLANO DE ENSINO.docx."""
+    user_prompt = (
+        f"Gere um plano de ensino anual completo para:\n"
+        f"- Disciplina: {disciplina}\n- Ano/Série: {ano}\n\n"
+        "Use habilidades BNCC reais e distribua os objetos de conhecimento nos 4 bimestres."
+    )
+    if os.environ.get('ANTHROPIC_API_KEY'):
+        try:
+            resp = client.messages.create(
+                model='claude-sonnet-4-6', max_tokens=4000,
+                system=SYSTEM_PROMPT_PLANO,
+                tools=[PLANO_ENSINO_DOCX_TOOL],
+                tool_choice={"type": "tool", "name": "gerar_plano_ensino_docx"},
+                messages=[{"role": "user", "content": user_prompt}]
+            )
+            for block in resp.content:
+                if block.type == 'tool_use' and block.name == 'gerar_plano_ensino_docx':
+                    return block.input
+        except Exception as e:
+            logger.warning('_gerar_plano_ensino_docx_interno Claude falhou: %s', e)
+
+    texto = _llm_cadeia_simples(user_prompt, sistema=SYSTEM_PROMPT_PLANO)
+    m = re.search(r'\{[\s\S]+\}', texto)
+    if m:
+        return json.loads(m.group())
+    raise ValueError('Não foi possível parsear JSON do plano de ensino')
 
 
 @app.route('/api/plano-aula/docx', methods=['POST'])
 @login_required
 @limiter.limit('10 per minute')
 def api_plano_aula_docx():
-    """Preenche o template oficial PLANO DE AULA.docx com dados do plano JSON.
+    """Preenche o template oficial PLANO DE AULA.docx via docxtpl.
 
     Aceita dois formatos:
-      A) { "plano_de_aula": { tema_central, disciplina, ... } }  — JSON já gerado
-      B) { "tema", "ano", "disciplina" }  — gera o plano internamente via IA
+      A) { "plano_docx": { disciplina, num_aulas, turma, aulas[] } }  — JSON já no formato do template
+      B) { "tema", "ano", "disciplina" }  — gera o plano via IA com as chaves exatas do template
     """
     if not current_user.assinatura_ativa and not current_user.is_admin:
         if get_geracoes_mes(current_user.id) >= LIMITE_GRATIS:
             return jsonify({'erro': 'limite_atingido', 'cta': '/planos'}), 403
 
     data = request.get_json(force=True) or {}
-    plano = data.get('plano_de_aula')
+    context = data.get('plano_docx')
 
-    if not plano:
+    if not context:
         tema       = str(data.get('tema', '')).strip()[:300]
         ano        = str(data.get('ano', '')).strip()[:50]
         disciplina = str(data.get('disciplina', '')).strip()[:100]
         if not tema or not ano or not disciplina:
-            return jsonify({'erro': 'Forneça plano_de_aula ou tema + ano + disciplina'}), 400
+            return jsonify({'erro': 'Forneça plano_docx ou tema + ano + disciplina'}), 400
         try:
-            plano_resp = _gerar_plano_interno(tema, ano, disciplina)
-            plano = plano_resp.get('plano_de_aula', plano_resp)
+            context = _gerar_plano_aula_docx_interno(tema, ano, disciplina)
         except Exception as e:
             return jsonify({'erro': f'Falha ao gerar plano: {str(e)[:200]}'}), 500
 
-    if not plano:
+    if not context:
         return jsonify({'erro': 'Dados do plano não encontrados'}), 400
     if not os.path.exists(PLANO_TEMPLATE_PATH):
         return jsonify({'erro': 'Template DOCX não encontrado no servidor.'}), 500
 
+    # Adiciona campos gerados pelo servidor
+    context['professor'] = current_user.professor_nome or ''
+    context['data_plano'] = datetime.now().strftime('%d/%m/%Y')
+
     try:
-        docx_bytes = _renderizar_plano_docx(
-            plano,
-            professor=current_user.professor_nome or '',
-            escola=current_user.escola_nome or '',
-        )
-        tema_slug = str(plano.get('tema_central', 'plano'))[:40].replace(' ', '_')
+        docx_bytes = _renderizar_docx_tpl(PLANO_TEMPLATE_PATH, context)
+        slug = str(context.get('disciplina', 'plano'))[:40].replace(' ', '_')
         return send_file(
             io.BytesIO(docx_bytes),
             as_attachment=True,
-            download_name=f'PlanoDeAula_{tema_slug}.docx',
+            download_name=f'PlanoDeAula_{slug}.docx',
             mimetype='application/vnd.openxmlformats-officedocument.wordprocessingml.document'
         )
     except Exception as e:
-        logger.error('_renderizar_plano_docx erro: %s', traceback.format_exc())
+        logger.error('api_plano_aula_docx erro: %s', traceback.format_exc())
         return jsonify({'erro': f'Erro ao preencher template: {str(e)[:200]}'}), 500
 
 
-def _gerar_plano_interno(tema, ano, disciplina):
-    """Reutiliza a lógica de /api/gerar-plano sem passar pelo Flask request."""
-    user_prompt = (
-        f"Gere um plano de aula completo para:\n"
-        f"- Tema: {tema}\n- Ano/Série: {ano}\n- Disciplina: {disciplina}\n\n"
-        "Use habilidades BNCC reais e metodologias ativas."
-    )
-    # Tenta Claude (tool_use) primeiro, depois fallback texto
-    if os.environ.get('ANTHROPIC_API_KEY'):
-        try:
-            resp = client.messages.create(
-                model='claude-sonnet-4-6', max_tokens=4000,
-                system=SYSTEM_PROMPT_PLANO,
-                tools=[PLANO_AULA_TOOL],
-                tool_choice={"type": "tool", "name": "salvar_plano_de_aula"},
-                messages=[{"role": "user", "content": user_prompt}]
-            )
-            for block in resp.content:
-                if block.type == 'tool_use' and block.name == 'salvar_plano_de_aula':
-                    return block.input
-        except Exception as e:
-            logger.warning('_gerar_plano_interno Claude falhou: %s', e)
+@app.route('/api/plano-ensino/docx', methods=['POST'])
+@login_required
+@limiter.limit('10 per minute')
+def api_plano_ensino_docx():
+    """Preenche o template oficial PLANO DE ENSINO.docx via docxtpl.
 
-    # Fallback: chama a cadeia LLM e parseia JSON do texto
-    texto = _llm_cadeia_simples(user_prompt, sistema=SYSTEM_PROMPT_PLANO)
-    m = re.search(r'\{[\s\S]+\}', texto)
-    if m:
-        return json.loads(m.group())
-    raise ValueError('Não foi possível parsear JSON do plano')
+    Aceita dois formatos:
+      A) { "plano_docx": { disciplina, num_aulas, turma, objetivos, obj_b1..b4, comp_b1..b4, ... } }
+      B) { "disciplina", "ano" }  — gera via IA com as chaves exatas do template
+    """
+    if not current_user.assinatura_ativa and not current_user.is_admin:
+        return jsonify({'erro': 'Plano necessário', 'cta': '/planos'}), 403
+
+    data = request.get_json(force=True) or {}
+    context = data.get('plano_docx')
+
+    if not context:
+        disciplina = str(data.get('disciplina', '')).strip()[:100]
+        ano        = str(data.get('ano', '')).strip()[:50]
+        if not disciplina or not ano:
+            return jsonify({'erro': 'Forneça plano_docx ou disciplina + ano'}), 400
+        try:
+            context = _gerar_plano_ensino_docx_interno(disciplina, ano)
+        except Exception as e:
+            return jsonify({'erro': f'Falha ao gerar plano de ensino: {str(e)[:200]}'}), 500
+
+    if not context:
+        return jsonify({'erro': 'Dados do plano de ensino não encontrados'}), 400
+    if not os.path.exists(ENSINO_TEMPLATE_PATH):
+        return jsonify({'erro': 'Template PLANO DE ENSINO não encontrado no servidor.'}), 500
+
+    context['professor'] = current_user.professor_nome or ''
+    context['data_plano'] = datetime.now().strftime('%d/%m/%Y')
+
+    try:
+        docx_bytes = _renderizar_docx_tpl(ENSINO_TEMPLATE_PATH, context)
+        slug = str(context.get('disciplina', 'ensino'))[:40].replace(' ', '_')
+        return send_file(
+            io.BytesIO(docx_bytes),
+            as_attachment=True,
+            download_name=f'PlanoDeEnsino_{slug}.docx',
+            mimetype='application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+        )
+    except Exception as e:
+        logger.error('api_plano_ensino_docx erro: %s', traceback.format_exc())
+        return jsonify({'erro': f'Erro ao preencher template: {str(e)[:200]}'}), 500
+
+
+# ─── Máquina de Leads — Degustação ───────────────────────────────────────────
+
+@app.route('/teste-gratis')
+def teste_gratis():
+    return render_template('teste_gratis.html')
+
+
+@app.route('/api/degustacao', methods=['POST'])
+@limiter.limit('20 per minute')
+def api_degustacao():
+    """Captura lead e retorna 1 aula de degustação via OpenAI gpt-4o-mini."""
+    data = request.get_json(force=True) or {}
+    nome    = str(data.get('nome', '')).strip()[:100]
+    contato = str(data.get('contato', '')).strip()[:200]
+    tema    = str(data.get('tema', '')).strip()[:300]
+    serie   = str(data.get('serie', '')).strip()[:50]
+
+    if not nome or not contato or not tema:
+        return jsonify({'erro': 'nome, contato e tema são obrigatórios'}), 400
+
+    # Salva o lead no banco
+    try:
+        conn = get_db()
+        conn.execute(
+            'INSERT INTO leads (nome, contato, tema_pesquisado, criado_em) VALUES (?, ?, ?, ?)',
+            (nome, contato, tema, datetime.now().isoformat())
+        )
+        conn.commit()
+        conn.close()
+    except Exception as e:
+        logger.warning('api_degustacao — erro ao salvar lead: %s', e)
+
+    # Gera 1 aula via OpenAI gpt-4o-mini (rápido e barato)
+    if not client_openai:
+        return jsonify({'erro': 'Serviço temporariamente indisponível. Tente novamente em breve.'}), 503
+
+    prompt = (
+        f"Você é um assistente pedagógico especialista na BNCC brasileira.\n"
+        f"Gere APENAS UMA linha de plano de aula para o tema '{tema}' no {serie or '8º ano'}.\n"
+        "Retorne EXCLUSIVAMENTE um JSON válido com as chaves:\n"
+        '{"conteudo": "...", "estrategias": "...", "recursos": "..."}\n'
+        "conteudo: título + habilidade BNCC real (ex: EF08HI03)\n"
+        "estrategias: metodologia ativa em 1 frase\n"
+        "recursos: lista de recursos em 1 frase\n"
+        "Nenhum texto adicional fora do JSON."
+    )
+    try:
+        resp = client_openai.chat.completions.create(
+            model='gpt-4o-mini',
+            messages=[{'role': 'user', 'content': prompt}],
+            max_tokens=300,
+            temperature=0.7,
+            response_format={'type': 'json_object'},
+        )
+        aula = json.loads(resp.choices[0].message.content)
+        return jsonify({'ok': True, 'aula': aula, 'tema': tema})
+    except Exception as e:
+        logger.error('api_degustacao — erro IA: %s', e)
+        return jsonify({'erro': 'Erro ao gerar prévia. Tente novamente.'}), 500
 
 
 # ─── Gerador de Provas ────────────────────────────────────────────────────────
@@ -4692,6 +4816,60 @@ PROVA_TOOL = {
     }
 }
 
+# Schema OpenAI para prova (strict=True exige additionalProperties: false; sem minItems/maxItems)
+_OAI_PROVA_SCHEMA = {
+    "type": "object",
+    "additionalProperties": False,
+    "properties": {
+        "prova": {
+            "type": "object",
+            "additionalProperties": False,
+            "properties": {
+                "tema": {"type": "string"},
+                "questoes_verdadeiro_falso": {
+                    "type": "array",
+                    "items": {
+                        "type": "object",
+                        "additionalProperties": False,
+                        "properties": {
+                            "afirmacao": {"type": "string"},
+                            "resposta":  {"type": "string", "enum": ["V", "F"]}
+                        },
+                        "required": ["afirmacao", "resposta"]
+                    }
+                },
+                "questoes_multipla_escolha": {
+                    "type": "array",
+                    "items": {
+                        "type": "object",
+                        "additionalProperties": False,
+                        "properties": {
+                            "pergunta":     {"type": "string"},
+                            "alternativas": {"type": "array", "items": {"type": "string"}},
+                            "correta":      {"type": "string", "enum": ["A", "B", "C", "D"]}
+                        },
+                        "required": ["pergunta", "alternativas", "correta"]
+                    }
+                },
+                "questoes_discursivas": {
+                    "type": "array",
+                    "items": {
+                        "type": "object",
+                        "additionalProperties": False,
+                        "properties": {
+                            "pergunta":          {"type": "string"},
+                            "gabarito_esperado": {"type": "string"}
+                        },
+                        "required": ["pergunta", "gabarito_esperado"]
+                    }
+                }
+            },
+            "required": ["tema", "questoes_verdadeiro_falso", "questoes_multipla_escolha", "questoes_discursivas"]
+        }
+    },
+    "required": ["prova"]
+}
+
 
 @app.route('/api/generate/prova', methods=['POST'])
 @login_required
@@ -4763,47 +4941,49 @@ def api_generate_prova():
     if prova_json is None and _gemini_disponivel():
         try:
             import google.generativeai as genai
-            import google.generativeai.types as gtypes
 
-            item_vf = gtypes.Schema(
-                type=gtypes.Type.OBJECT,
-                properties={
-                    'afirmacao': gtypes.Schema(type=gtypes.Type.STRING),
-                    'resposta':  gtypes.Schema(type=gtypes.Type.STRING),
-                }
-            )
-            item_mc = gtypes.Schema(
-                type=gtypes.Type.OBJECT,
-                properties={
-                    'pergunta':     gtypes.Schema(type=gtypes.Type.STRING),
-                    'alternativas': gtypes.Schema(
-                        type=gtypes.Type.ARRAY,
-                        items=gtypes.Schema(type=gtypes.Type.STRING)
-                    ),
-                    'correta': gtypes.Schema(type=gtypes.Type.STRING),
-                }
-            )
-            item_disc = gtypes.Schema(
-                type=gtypes.Type.OBJECT,
-                properties={
-                    'pergunta':          gtypes.Schema(type=gtypes.Type.STRING),
-                    'gabarito_esperado': gtypes.Schema(type=gtypes.Type.STRING),
-                }
-            )
-            gemini_schema = gtypes.Schema(
-                type=gtypes.Type.OBJECT,
-                properties={
-                    'prova': gtypes.Schema(
-                        type=gtypes.Type.OBJECT,
-                        properties={
-                            'tema':                      gtypes.Schema(type=gtypes.Type.STRING),
-                            'questoes_verdadeiro_falso': gtypes.Schema(type=gtypes.Type.ARRAY, items=item_vf),
-                            'questoes_multipla_escolha': gtypes.Schema(type=gtypes.Type.ARRAY, items=item_mc),
-                            'questoes_discursivas':      gtypes.Schema(type=gtypes.Type.ARRAY, items=item_disc),
+            gemini_schema = {
+                'type': 'object',
+                'properties': {
+                    'prova': {
+                        'type': 'object',
+                        'properties': {
+                            'tema': {'type': 'string'},
+                            'questoes_verdadeiro_falso': {
+                                'type': 'array',
+                                'items': {
+                                    'type': 'object',
+                                    'properties': {
+                                        'afirmacao': {'type': 'string'},
+                                        'resposta':  {'type': 'string'},
+                                    }
+                                }
+                            },
+                            'questoes_multipla_escolha': {
+                                'type': 'array',
+                                'items': {
+                                    'type': 'object',
+                                    'properties': {
+                                        'pergunta':     {'type': 'string'},
+                                        'alternativas': {'type': 'array', 'items': {'type': 'string'}},
+                                        'correta':      {'type': 'string'},
+                                    }
+                                }
+                            },
+                            'questoes_discursivas': {
+                                'type': 'array',
+                                'items': {
+                                    'type': 'object',
+                                    'properties': {
+                                        'pergunta':          {'type': 'string'},
+                                        'gabarito_esperado': {'type': 'string'},
+                                    }
+                                }
+                            },
                         }
-                    )
+                    }
                 }
-            )
+            }
             gm = genai.GenerativeModel(
                 model_name='gemini-2.0-flash',
                 system_instruction=SYSTEM_PROMPT_PROVA,
@@ -4836,7 +5016,7 @@ def api_generate_prova():
                         'json_schema': {
                             'name': 'prova',
                             'strict': True,
-                            'schema': PROVA_TOOL['input_schema']
+                            'schema': _OAI_PROVA_SCHEMA
                         }
                     },
                     max_tokens=4000

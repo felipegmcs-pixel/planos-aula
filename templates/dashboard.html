@@ -149,6 +149,8 @@
     .badge-plano{background:rgba(30,64,175,.15);color:#818cf8}
     .badge-prova{background:rgba(30,64,175,.15);color:#a78bfa}
     .badge-questao{background:rgba(16,185,129,.15);color:#34d399}
+    .activity-empty{text-align:center;padding:32px;color:var(--text2);font-size:.8rem}
+    .activity-empty a{color:#818cf8}
 
     /* Responsive */
     @media(max-width:900px){
@@ -168,6 +170,16 @@
       .activity-section{padding:16px}
       .page-header{padding:16px 16px 0}
     }
+
+    /* Banner de aviso de assinatura */
+    .banner-aviso{
+      margin:24px 32px 0;padding:12px 20px;border-radius:12px;
+      background:rgba(245,158,11,.12);border:1px solid rgba(245,158,11,.3);
+      color:#f59e0b;font-size:.78rem;font-weight:500;
+      display:flex;align-items:center;gap:10px;
+    }
+    .banner-aviso a{color:#f59e0b;font-weight:700;text-decoration:underline}
+    @media(max-width:640px){.banner-aviso{margin:16px 16px 0}}
 
     @keyframes fadeUp{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:translateY(0)}}
     .stat-card{animation:fadeUp .4s cubic-bezier(.16,1,.3,1) both}
@@ -241,6 +253,24 @@
       <div class="topbar-spacer"></div>
     </div>
 
+    {% if current_user.ativo and current_user.valido_ate %}
+    <div class="banner-aviso" id="bannerVencimento" style="display:none">
+      ⚠️ Sua assinatura vence em <strong id="bannerDias"></strong>.
+      <a href="/planos">Renovar agora →</a>
+    </div>
+    <script>
+    (function(){
+      var valido = '{{ current_user.valido_ate | e }}';
+      if (!valido) return;
+      var diff = Math.ceil((new Date(valido + 'T23:59:59') - new Date()) / 86400000);
+      if (diff >= 0 && diff < 7) {
+        document.getElementById('bannerDias').textContent = diff + (diff === 1 ? ' dia' : ' dias');
+        document.getElementById('bannerVencimento').style.display = 'flex';
+      }
+    })();
+    </script>
+    {% endif %}
+
     <div class="page-header">
       <div>
         <div class="page-title">Dashboard</div>
@@ -297,7 +327,7 @@
     <div class="activity-section">
       <div class="section-title">Atividade recente</div>
       <div class="activity-list" id="activityList">
-        <div style="text-align:center;padding:32px;color:var(--text2);font-size:.8rem">Carregando...</div>
+        <div class="activity-empty">Carregando...</div>
       </div>
     </div>
   </div>
@@ -421,7 +451,7 @@ function renderCharts(d) {
 function renderActivity(items) {
   const el = document.getElementById('activityList');
   if (!items.length) {
-    el.innerHTML = '<div style="text-align:center;padding:32px;color:var(--text2);font-size:.8rem">Nenhuma atividade ainda. <a href="/chat" style="color:#818cf8">Gere seu primeiro material →</a></div>';
+    el.innerHTML = '<div class="activity-empty">Nenhuma atividade ainda. <a href="/chat">Gere seu primeiro material →</a></div>';
     return;
   }
   el.innerHTML = items.slice(0,8).map(item => {

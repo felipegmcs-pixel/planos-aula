@@ -38,6 +38,7 @@
     h1 { font-size: clamp(2rem, 5vw, 3rem); font-weight: 900; letter-spacing: -2px; text-transform: uppercase; line-height: 1; margin-bottom: 16px; }
 
     .mensagem { font-size: 0.82rem; color: var(--cinza); line-height: 1.8; margin-bottom: 40px; max-width: 360px; margin-left: auto; margin-right: auto; }
+    .mensagem-nota { font-size: 0.75rem; opacity: 0.75; margin-top: -24px; color: var(--cinza); line-height: 1.8; margin-bottom: 40px; max-width: 360px; margin-left: auto; margin-right: auto; }
 
     .btn { display: inline-flex; align-items: center; gap: 8px; padding: 14px 32px; background: var(--preto); color: var(--branco); border: none; font-size: 0.65rem; font-weight: 900; font-family: 'Inter', sans-serif; letter-spacing: 3px; text-transform: uppercase; text-decoration: none; cursor: pointer; transition: background .2s; }
     .btn:hover { background: var(--azul-academico); color: var(--preto); }
@@ -74,6 +75,9 @@
 
     <h1>{{ titulo }}</h1>
     <p class="mensagem">{{ mensagem }}</p>
+    {% if status == 'sucesso' %}
+    <p class="mensagem-nota">Processamento pode levar alguns minutos. Se não conseguir acessar os recursos, aguarde 1 minuto e recarregue a página.</p>
+    {% endif %}
     <a href="/chat" class="btn">IR PARA O CHAT →</a>
   </div>
 </div>
