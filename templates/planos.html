@@ -198,7 +198,7 @@
         <li>Adaptações NEE <span class="xck">—</span></li>
         <li>Exportar DOCX <span class="xck">—</span></li>
       </ul>
-      <a href="/cadastro" class="btn-plan o">Começar grátis</a>
+      <a href="#" onclick="abrirModalVip();return false;" class="btn-plan o">Começar grátis</a>
     </div>
 
     <!-- BASIC — destaque -->
@@ -267,5 +267,6 @@ window.addEventListener('scroll',function(){
   document.getElementById('nav').classList.toggle('lit',window.scrollY>80);
 });
 </script>
+{% include '_modal_vip.html' %}
 </body>
 </html>

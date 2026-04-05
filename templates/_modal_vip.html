@@ -42,7 +42,7 @@
       <h2 class="vip-title">Você está na Lista VIP!</h2>
       <p class="vip-sub" style="margin-top:10px">
         Seu lugar na Lista VIP e o desconto de
-        <strong style="color:#fbbf24">50%</strong> estão garantidos.<br>
+        <strong style="color:#D4AF37">50%</strong> estão garantidos.<br>
         Avisaremos você em primeira mão no lançamento.
       </p>
       <button class="vip-submit" style="margin-top:28px" onclick="fecharModalVip()">Perfeito!</button>
@@ -68,7 +68,7 @@
 #vipModal{
   position:relative;
   width:100%;max-width:440px;
-  background:rgba(15,23,42,.82);
+  background:rgba(7,26,30,.94);
   border:1px solid rgba(255,255,255,.14);
   backdrop-filter:blur(28px);-webkit-backdrop-filter:blur(28px);
   border-radius:22px;
@@ -91,16 +91,16 @@
 .vip-header{text-align:center;margin-bottom:28px}
 .vip-badge{
   display:inline-flex;align-items:center;gap:7px;
-  background:rgba(251,191,36,.12);
-  border:1px solid rgba(251,191,36,.28);
+  background:rgba(212,175,55,.12);
+  border:1px solid rgba(212,175,55,.28);
   border-radius:100px;padding:5px 15px;
   margin-bottom:16px;
   font-size:.72rem;font-weight:800;
-  color:#fbbf24;letter-spacing:.8px;text-transform:uppercase;
+  color:#D4AF37;letter-spacing:.8px;text-transform:uppercase;
 }
 .vip-dot{
   width:7px;height:7px;border-radius:50%;
-  background:#fbbf24;
+  background:#D4AF37;
   display:inline-block;
   animation:vipPulse 1.8s ease infinite;
 }
@@ -129,22 +129,22 @@
 }
 .vip-input::placeholder{color:rgba(255,255,255,.35)}
 .vip-input:focus{
-  border-color:rgba(99,102,241,.75);
-  background:rgba(99,102,241,.08);
+  border-color:rgba(30,90,99,.75);
+  background:rgba(30,90,99,.08);
 }
 
 /* ── Botão ────────────────────────────────────────────────────────── */
 .vip-submit{
   width:100%;margin-top:6px;
   padding:15px;
-  background:linear-gradient(135deg,#6366f1 0%,#1e40af 100%);
+  background:linear-gradient(135deg,#1E5A63 0%,#164A52 100%);
   border:none;border-radius:10px;
-  color:#fff;font-size:1rem;font-weight:700;
+  color:#FFFFFA;font-size:1rem;font-weight:700;
   cursor:pointer;letter-spacing:.3px;
   transition:opacity .2s,transform .2s,box-shadow .2s;
-  box-shadow:0 8px 24px rgba(30,64,175,.4);
+  box-shadow:0 8px 24px rgba(30,90,99,.4);
 }
-.vip-submit:hover:not(:disabled){opacity:.9;transform:translateY(-1px);box-shadow:0 12px 32px rgba(30,64,175,.55)}
+.vip-submit:hover:not(:disabled){opacity:.9;transform:translateY(-1px);box-shadow:0 12px 32px rgba(30,90,99,.55)}
 .vip-submit:disabled{opacity:.6;cursor:not-allowed;transform:none}
 
 /* ── Erro + Rodapé ──────────────────────────────────────────────── */

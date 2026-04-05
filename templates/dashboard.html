@@ -12,18 +12,18 @@
     :root{
       --bg:#0b0d14;--bg2:#0f1120;--bg3:#131526;
       --text:#e5e7eb;--text2:#9ca3af;--text3:#4b5563;
-      --indigo:#1E40AF;--violet:#1E3A8A;--indigo-l:#818cf8;
+      --indigo:#1E5A63;--violet:#164A52;--indigo-l:#5FBFBF;
       --linha:rgba(255,255,255,.07);--linha-f:rgba(255,255,255,.12);
       --card:rgba(255,255,255,.04);--card-h:rgba(255,255,255,.07);
       --sb-bg:#0a0c18;--sidebar-w:240px;
-      --green:#10b981;--amber:#f59e0b;--red:#ef4444;
+      --green:#10b981;--amber:#D4AF37;--red:#ef4444;
     }
     [data-theme="light"]{
-      --bg:#f8f9ff;--bg2:#ffffff;--bg3:#f1f2f8;
-      --text:#111827;--text2:#6b7280;--text3:#9ca3af;
-      --linha:rgba(17,24,39,.07);--linha-f:rgba(17,24,39,.13);
+      --bg:#FFFFFA;--bg2:#FFFFFA;--bg3:#F4F8F7;
+      --text:#1A2F33;--text2:#4A6470;--text3:#7A9499;
+      --linha:rgba(30,90,99,.07);--linha-f:rgba(30,90,99,.13);
       --card:rgba(255,255,255,.9);--card-h:rgba(255,255,255,1);
-      --sb-bg:#f7f8ff;
+      --sb-bg:#F4F8F7;
     }
     html,body{height:100%;font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);overflow:hidden}
 
@@ -58,15 +58,15 @@
     [data-theme="light"] .nav-item{color:rgba(17,24,39,.5)}
     .nav-item:hover{background:rgba(255,255,255,.06);color:var(--text)}
     [data-theme="light"] .nav-item:hover{background:rgba(17,24,39,.05);color:var(--text)}
-    .nav-item.active{background:rgba(30,64,175,.18);color:#818cf8;font-weight:600}
-    [data-theme="light"] .nav-item.active{background:rgba(30,64,175,.1);color:var(--indigo)}
+    .nav-item.active{background:rgba(30,90,99,.18);color:#5FBFBF;font-weight:600}
+    [data-theme="light"] .nav-item.active{background:rgba(30,90,99,.1);color:var(--indigo)}
     .nav-icon{width:16px;height:16px;stroke:currentColor;fill:none;stroke-linecap:round;stroke-linejoin:round;flex-shrink:0}
     .sidebar-spacer{flex:1}
     .sidebar-footer{padding:12px 8px;border-top:1px solid var(--linha)}
     .user-card{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:10px;text-decoration:none;transition:background .18s}
     .user-card:hover{background:rgba(255,255,255,.06)}
     [data-theme="light"] .user-card:hover{background:rgba(17,24,39,.05)}
-    .user-avatar{width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,#1E40AF,#1E3A8A);display:flex;align-items:center;justify-content:center;font-size:.75rem;font-weight:800;color:#fff;flex-shrink:0}
+    .user-avatar{width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,#1E5A63,#164A52);display:flex;align-items:center;justify-content:center;font-size:.75rem;font-weight:800;color:#fff;flex-shrink:0}
     .user-name{font-size:.78rem;font-weight:600;color:var(--text)}
     .user-plan{font-size:.65rem;color:var(--text2)}
 
@@ -89,7 +89,7 @@
     .page-sub{font-size:.8rem;color:var(--text2);margin-top:4px}
     .period-tabs{display:flex;gap:4px;background:var(--card);border:1px solid var(--linha);border-radius:10px;padding:3px}
     .period-tab{padding:5px 14px;border-radius:7px;font-size:.72rem;font-weight:600;cursor:pointer;border:none;background:transparent;color:var(--text2);transition:all .18s}
-    .period-tab.active{background:linear-gradient(135deg,#1E40AF,#1E3A8A);color:#fff}
+    .period-tab.active{background:linear-gradient(135deg,#1E5A63,#164A52);color:#fff}
 
     /* Stats grid */
     .stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;padding:24px 32px 0}
@@ -99,15 +99,15 @@
     }
     .stat-card::before{
       content:'';position:absolute;inset:0;
-      background:linear-gradient(135deg,rgba(30,64,175,.08),transparent);
+      background:linear-gradient(135deg,rgba(30,90,99,.08),transparent);
       opacity:0;transition:opacity .25s;
     }
-    .stat-card:hover{border-color:rgba(30,64,175,.3);transform:translateY(-2px);box-shadow:0 8px 32px rgba(30,64,175,.15)}
+    .stat-card:hover{border-color:rgba(30,90,99,.3);transform:translateY(-2px);box-shadow:0 8px 32px rgba(30,90,99,.15)}
     .stat-card:hover::before{opacity:1}
     .stat-icon{
       width:40px;height:40px;border-radius:10px;
       display:flex;align-items:center;justify-content:center;margin-bottom:14px;
-      background:linear-gradient(135deg,rgba(30,64,175,.2),rgba(30,64,175,.2));
+      background:linear-gradient(135deg,rgba(30,90,99,.2),rgba(30,90,99,.2));
     }
     .stat-icon svg{width:20px;height:20px;stroke:var(--indigo-l);fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
     .stat-value{font-size:2rem;font-weight:900;letter-spacing:-1.5px;line-height:1}
@@ -135,7 +135,7 @@
       background:var(--card);border:1px solid var(--linha);border-radius:12px;
       transition:all .18s;
     }
-    .activity-item:hover{border-color:rgba(30,64,175,.25);background:var(--card-h)}
+    .activity-item:hover{border-color:rgba(30,90,99,.25);background:var(--card-h)}
     .activity-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
     .activity-dot.plano{background:var(--indigo-l)}
     .activity-dot.prova{background:var(--violet)}
@@ -146,11 +146,11 @@
       padding:3px 9px;border-radius:20px;font-size:.6rem;font-weight:700;
       letter-spacing:.5px;text-transform:uppercase;
     }
-    .badge-plano{background:rgba(30,64,175,.15);color:#818cf8}
-    .badge-prova{background:rgba(30,64,175,.15);color:#a78bfa}
+    .badge-plano{background:rgba(30,90,99,.15);color:#5FBFBF}
+    .badge-prova{background:rgba(30,90,99,.15);color:#a78bfa}
     .badge-questao{background:rgba(16,185,129,.15);color:#34d399}
     .activity-empty{text-align:center;padding:32px;color:var(--text2);font-size:.8rem}
-    .activity-empty a{color:#818cf8}
+    .activity-empty a{color:#5FBFBF}
 
     /* Responsive */
     @media(max-width:900px){
@@ -175,10 +175,10 @@
     .banner-aviso{
       margin:24px 32px 0;padding:12px 20px;border-radius:12px;
       background:rgba(245,158,11,.12);border:1px solid rgba(245,158,11,.3);
-      color:#f59e0b;font-size:.78rem;font-weight:500;
+      color:#D4AF37;font-size:.78rem;font-weight:500;
       display:flex;align-items:center;gap:10px;
     }
-    .banner-aviso a{color:#f59e0b;font-weight:700;text-decoration:underline}
+    .banner-aviso a{color:#D4AF37;font-weight:700;text-decoration:underline}
     @media(max-width:640px){.banner-aviso{margin:16px 16px 0}}
 
     @keyframes fadeUp{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:translateY(0)}}
@@ -405,10 +405,10 @@ function renderCharts(d) {
       datasets: [{
         label: 'Materiais',
         data: vals,
-        borderColor: '#818cf8',
-        backgroundColor: 'rgba(30,64,175,.12)',
+        borderColor: '#5FBFBF',
+        backgroundColor: 'rgba(30,90,99,.12)',
         borderWidth: 2.5,
-        pointBackgroundColor: '#818cf8',
+        pointBackgroundColor: '#5FBFBF',
         pointRadius: 4,
         tension: 0.45,
         fill: true,
@@ -433,7 +433,7 @@ function renderCharts(d) {
       labels: labels.length ? labels : ['Nenhum dado'],
       datasets: [{
         data: values.length ? values : [1],
-        backgroundColor: ['#1E40AF','#1E3A8A','#10b981','#f59e0b'],
+        backgroundColor: ['#1E5A63','#164A52','#10b981','#D4AF37'],
         borderWidth: 0,
         hoverOffset: 6,
       }]
