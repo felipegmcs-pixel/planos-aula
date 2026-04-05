@@ -74,6 +74,20 @@
     .plan-card{padding:40px 32px;border:1px solid var(--line);border-radius:12px;background:var(--bg);transition:all .3s}
     .plan-card:hover{border-color:var(--indigo);box-shadow:0 8px 32px rgba(30,90,99,.1)}
     .plan-card.hot{border-color:#1E5A63;border-width:2px;background:linear-gradient(145deg,rgba(30,90,99,.10),rgba(30,90,99,.04))}
+    .plan-card.pro{background:#1E5A63 !important;border-color:#164A52 !important;border-width:2px !important;box-shadow:0 8px 40px rgba(30,90,99,.35) !important}
+    .plan-card.pro:hover{box-shadow:0 14px 52px rgba(30,90,99,.5) !important;transform:translateY(-3px)}
+    .plan-card.pro .plan-lbl{color:rgba(255,255,250,.6) !important}
+    .plan-card.pro .plan-name{color:#FFFFFA !important}
+    .plan-card.pro .plan-price{color:#FFFFFA !important}
+    .plan-card.pro .plan-price sub{color:rgba(255,255,250,.6) !important}
+    .plan-card.pro .plan-period{color:rgba(255,255,250,.65) !important}
+    .plan-card.pro #txt-pro{color:rgba(255,255,250,.6) !important}
+    .plan-card.pro .plan-feats li{color:rgba(255,255,250,.7) !important;border-bottom-color:rgba(255,255,255,.08) !important}
+    .plan-card.pro .plan-feats li.on{color:#FFFFFA !important}
+    .plan-card.pro .chk{color:#D4AF37 !important}
+    .plan-card.pro .xck{color:rgba(255,255,250,.25) !important}
+    .btn-plan.gold{background:linear-gradient(135deg,#D4AF37,#C5A028) !important;color:#122527 !important;border-color:#D4AF37 !important;font-weight:800 !important}
+    .btn-plan.gold:hover{transform:translateY(-2px);box-shadow:0 8px 28px rgba(212,175,55,.45) !important}
     .plan-badge{font-size:.65rem;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:#FFFFFA;background:#D4AF37;padding:3px 10px;border-radius:100px;display:inline-block;margin-bottom:12px}
     .plan-lbl{font-size:.75rem;font-weight:600;letter-spacing:1px;text-transform:uppercase;color:var(--text2);margin-bottom:12px}
     .plan-name{font-size:1.5rem;font-weight:900;letter-spacing:-.5px;color:var(--text);margin-bottom:12px}
@@ -208,7 +222,7 @@
     </div>
 
     <!-- PRO -->
-    <div class="plan-card">
+    <div class="plan-card pro">
       <div class="plan-lbl">Completo</div>
       <div class="plan-name">Pro</div>
       <div class="plan-price" id="preco-pro"><sup>R$</sup>59<sub>/mês</sub></div>
@@ -222,7 +236,7 @@
         <li class="on">Sem sistema de créditos <span class="chk">✓</span></li>
         <li class="on">Suporte prioritário <span class="chk">✓</span></li>
       </ul>
-      <a href="/stripe/checkout/pro" class="btn-plan o" id="btn-pro">Ativar Conta Anual 🚀</a>
+      <a href="/stripe/checkout/pro" class="btn-plan gold" id="btn-pro">Ativar Conta Anual 🚀</a>
     </div>
   </div>
 </div>
@@ -247,7 +261,7 @@ function alternar(){
     :'Quero pagar mês a mês para testar a automação na minha rotina.';
   // Botões
   document.getElementById('btn-basic').textContent=anual?'Ativar Conta Anual 🚀':'Ativar Conta Mensal ⭐';
-  document.getElementById('btn-pro').textContent=anual?'Ativar Conta Anual 🚀':'Ativar Conta Anual 🚀';
+  document.getElementById('btn-pro').textContent=anual?'Ativar Conta Anual 🚀':'Ativar Conta Mensal 🚀';
 }
 window.addEventListener('scroll',function(){
   document.getElementById('nav').classList.toggle('lit',window.scrollY>80);
