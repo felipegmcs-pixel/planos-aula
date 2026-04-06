@@ -536,6 +536,7 @@ def logout():
     logout_user()
     return redirect(url_for('login'))
 
+@app.route('/cadastro', methods=['GET', 'POST'])
 @app.route('/register', methods=['GET', 'POST'])
 def register():
     if current_user.is_authenticated: return redirect(url_for('painel'))
