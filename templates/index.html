@@ -574,7 +574,7 @@
 <div id="read-progress"></div>
 <nav id="nav">
   <div class="nav-brand">
-    <img src="{{ url_for('static', filename='logo-oficial.png') }}" alt="ProfessorIA" class="nav-logo">
+    <img src="{{ url_for('static', filename='logo-oficial.png') }}" alt="ProfessorIA" class="nav-logo" loading="lazy">
     <span class="nav-name"><span class="nav-name-p">Professor</span><span class="nav-name-ia">IA</span></span>
   </div>
   <div class="nav-links">
@@ -1035,6 +1035,83 @@
   <p class="quote-who">— Professora de História · Rede Pública · São Paulo</p>
 </div>
 
+<!-- FAQ -->
+<section class="faq-sec reveal" id="faq">
+  <div class="faq-inner">
+    <div class="hero-pill"><span class="pill-dot"></span>Dúvidas frequentes</div>
+    <h2 class="faq-title">Perguntas <span class="grad-text">Comuns</span></h2>
+    <div class="faq-grid">
+      <div class="faq-item">
+        <div class="faq-q">O material vem em PDF ou Word?</div>
+        <div class="faq-a">Você escolhe! O ProfessorIA gera arquivos em Word (.docx) totalmente editáveis ou PDFs estruturados prontos para impressão.</div>
+      </div>
+      <div class="faq-item">
+        <div class="faq-q">Serve para Educação Infantil e Fundamental?</div>
+        <div class="faq-a">Sim! Nossa IA é treinada em toda a base da BNCC, desde a Educação Infantil até o Ensino Médio, incluindo modalidades como EJA e Educação Especial.</div>
+      </div>
+      <div class="faq-item">
+        <div class="faq-q">Posso cancelar minha assinatura quando quiser?</div>
+        <div class="faq-a">Com certeza. Não temos fidelidade. Você pode cancelar sua assinatura Pro ou Basic a qualquer momento diretamente pelo seu painel, sem burocracia.</div>
+      </div>
+      <div class="faq-item">
+        <div class="faq-q">Os planos de aula são realmente alinhados à BNCC?</div>
+        <div class="faq-a">Sim. Utilizamos um sistema de blindagem pedagógica que cruza os dados com a base oficial da BNCC 2024, garantindo códigos de habilidades e competências precisos.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- SOCIAL PROOF WIDGET -->
+<div id="social-proof" class="social-proof">
+  <div class="sp-icon">✨</div>
+  <div class="sp-content">
+    <span id="sp-name">Profa. Ana</span> acabou de gerar um <span id="sp-type">Plano de Aula</span> em <span id="sp-city">Curitiba</span>
+  </div>
+</div>
+
+<style>
+  .faq-sec { padding: 100px 24px; background: rgba(5,8,17,0.4); }
+  .faq-inner { max-width: 900px; margin: 0 auto; }
+  .faq-title { font-size: 2.5rem; font-weight: 900; margin: 20px 0 60px; text-align: center; }
+  .faq-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 30px; }
+  .faq-item { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); padding: 30px; border-radius: 20px; transition: transform 0.3s; }
+  .faq-item:hover { transform: translateY(-5px); border-color: var(--amber); }
+  .faq-q { font-weight: 800; color: #fff; margin-bottom: 12px; font-size: 1.1rem; }
+  .faq-a { color: rgba(255,255,255,0.5); font-size: 0.95rem; line-height: 1.6; }
+  @media (max-width: 768px) { .faq-grid { grid-template-columns: 1fr; } .faq-title { font-size: 2rem; } }
+
+  .social-proof {
+    position: fixed; bottom: 30px; left: 30px; z-index: 1000;
+    background: rgba(13,35,39,0.95); border: 1px solid var(--amber);
+    padding: 12px 20px; border-radius: 50px; display: flex; align-items: center; gap: 12px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.5); transform: translateY(150%); transition: transform 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  }
+  .social-proof.show { transform: translateY(0); }
+  .sp-icon { font-size: 1.2rem; }
+  .sp-content { font-size: 0.85rem; color: #fff; font-weight: 500; }
+  #sp-name, #sp-type, #sp-city { font-weight: 800; color: var(--amber); }
+</style>
+
+<script>
+  const names = ["Prof. Carlos", "Profa. Juliana", "Prof. Ricardo", "Profa. Fernanda", "Prof. Marcos", "Profa. Beatriz"];
+  const types = ["Plano de Aula", "Prova de História", "Mapa Mental", "Caça-Palavras", "Atividade NEE", "Planejamento Anual"];
+  const cities = ["São Paulo", "Rio de Janeiro", "Belo Horizonte", "Porto Alegre", "Salvador", "Recife", "Fortaleza", "Brasília"];
+
+  function showSocialProof() {
+    const sp = document.getElementById('social-proof');
+    document.getElementById('sp-name').innerText = names[Math.floor(Math.random() * names.length)];
+    document.getElementById('sp-type').innerText = types[Math.floor(Math.random() * types.length)];
+    document.getElementById('sp-city').innerText = cities[Math.floor(Math.random() * cities.length)];
+    
+    sp.classList.add('show');
+    setTimeout(() => {
+      sp.classList.remove('show');
+      setTimeout(showSocialProof, 15000 + Math.random() * 15000);
+    }, 6000);
+  }
+  setTimeout(showSocialProof, 5000);
+</script>
+
 <!-- CTA -->
 <section class="cta reveal">
   <canvas id="scene3d-2"></canvas>
@@ -1085,7 +1162,7 @@
 
 <footer>
   <a class="f-logo" href="/">
-    <img src="{{ url_for('static', filename='logo-oficial.png') }}" alt="ProfessorIA" class="f-logo-img">
+    <img src="{{ url_for('static', filename='logo-oficial.png') }}" alt="ProfessorIA" class="f-logo-img" loading="lazy">
     <span class="f-logo-p">Professor</span><span class="f-logo-ia">IA</span>
   </a>
   <div class="f-links">

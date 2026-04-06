@@ -151,6 +151,25 @@
     .badge-questao{background:rgba(16,185,129,.15);color:#34d399}
     .activity-empty{text-align:center;padding:32px;color:var(--text2);font-size:.8rem}
     .activity-empty a{color:#5FBFBF}
+    
+    .history-card-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px; margin-top: 12px; }
+    .history-card { 
+      background: #0D2327; border: 1px solid #1E5A63; border-radius: 16px; 
+      padding: 16px; display: flex; align-items: center; gap: 14px; transition: all 0.25s;
+    }
+    .history-card:hover { transform: translateY(-3px); border-color: var(--amber); box-shadow: 0 8px 24px rgba(0,0,0,0.3); }
+    .h-card-icon { width: 44px; height: 44px; border-radius: 12px; background: rgba(255,255,255,0.05); display: flex; align-items: center; justify-content: center; font-size: 1.4rem; flex-shrink: 0; }
+    .h-card-content { flex: 1; min-width: 0; }
+    .h-card-title { font-size: 0.85rem; font-weight: 700; color: #fff; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .h-card-meta { font-size: 0.7rem; color: var(--text3); margin-top: 3px; }
+    .h-card-actions { display: flex; gap: 6px; }
+    .h-card-btn { 
+      width: 32px; height: 32px; border-radius: 8px; display: flex; align-items: center; justify-content: center; 
+      text-decoration: none; border: none; cursor: pointer; font-size: 0.9rem; transition: all 0.2s; background: rgba(255,255,255,0.05);
+    }
+    .h-card-btn.view:hover { background: var(--indigo); color: #fff; }
+    .h-card-btn.nee:hover { background: #8b5cf6; color: #fff; }
+    .h-card-btn.exam:hover { background: var(--amber); color: #fff; }
 
     /* Responsive */
     @media(max-width:900px){
@@ -465,19 +484,30 @@ function renderActivity(items) {
     el.innerHTML = '<div class="activity-empty">Nenhuma atividade ainda. <a href="/chat">Gere seu primeiro material →</a></div>';
     return;
   }
-  el.innerHTML = items.slice(0,8).map(item => {
+  
+  el.innerHTML = `<div class="history-card-grid">` + items.slice(0,8).map(item => {
     const tipo = item.tipo || 'plano_aula';
     const label = {plano_aula:'Plano de Aula',prova:'Prova',questao:'Questão'}[tipo] || tipo;
-    const badgeCls = {plano_aula:'badge-plano',prova:'badge-prova',questao:'badge-questao'}[tipo] || 'badge-plano';
-    const dotCls = {plano_aula:'plano',prova:'prova',questao:'questao'}[tipo] || 'plano';
+    const icon = {plano_aula:'📋',prova:'📝',questao:'🔍'}[tipo] || '📋';
+    
     return `
-      <div class="activity-item">
-        <div class="activity-dot ${dotCls}"></div>
-        <div class="activity-text">${item.titulo || item.disciplina || 'Material gerado'}</div>
-        <div class="activity-meta">${item.data || ''}</div>
-        <span class="activity-badge ${badgeCls}">${label}</span>
+      <div class="history-card">
+        <div class="h-card-icon">${icon}</div>
+        <div class="h-card-content">
+          <div class="h-card-title">${item.titulo || item.disciplina || 'Material gerado'}</div>
+          <div class="h-card-meta">${label} · ${item.data || ''}</div>
+        </div>
+        <div class="h-card-actions">
+          <a href="/historico/${item.id}" class="h-card-btn view" title="Ver Material">👁️</a>
+          <button onclick="readaptar('${item.id}', 'nee')" class="h-card-btn nee" title="Adaptar para NEE">♾️</button>
+          <button onclick="readaptar('${item.id}', 'prova')" class="h-card-btn exam" title="Gerar Prova deste Plano">📝</button>
+        </div>
       </div>`;
-  }).join('');
+  }).join('') + `</div>`;
+}
+
+function readaptar(id, tipo) {
+  window.location.href = `/chat?readaptar=${id}&modo=${tipo}`;
 }
 
 function renderBNCC(stats) {
