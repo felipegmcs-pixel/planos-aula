@@ -611,6 +611,12 @@ def init_db():
     conn.execute("ALTER TABLE usuarios ADD COLUMN IF NOT EXISTS logo_estado_path TEXT DEFAULT ''")
     conn.execute("ALTER TABLE usuarios ADD COLUMN IF NOT EXISTS escola_id INTEGER DEFAULT NULL")
     conn.execute("ALTER TABLE usuarios ADD COLUMN IF NOT EXISTS papel TEXT DEFAULT 'professor'")
+    conn.execute("ALTER TABLE usuarios ADD COLUMN IF NOT EXISTS escola_governo TEXT DEFAULT ''")
+    conn.execute("ALTER TABLE usuarios ADD COLUMN IF NOT EXISTS escola_secretaria TEXT DEFAULT ''")
+    conn.execute("ALTER TABLE usuarios ADD COLUMN IF NOT EXISTS escola_diretoria TEXT DEFAULT ''")
+    conn.execute("ALTER TABLE usuarios ADD COLUMN IF NOT EXISTS escola_endereco TEXT DEFAULT ''")
+    conn.execute("ALTER TABLE usuarios ADD COLUMN IF NOT EXISTS escola_fone TEXT DEFAULT ''")
+    conn.execute("ALTER TABLE usuarios ADD COLUMN IF NOT EXISTS escola_email TEXT DEFAULT ''")
     conn.execute('''
         CREATE TABLE IF NOT EXISTS questions_bank (
             id           SERIAL PRIMARY KEY,
@@ -702,7 +708,10 @@ def init_db():
     conn.commit()
     conn.close()
 
-init_db()
+try:
+    init_db()
+except Exception as _init_err:
+    logger.critical('init_db falhou — servidor iniciando sem DB: %s', _init_err)
 
 # ─── Modelo de usuário ────────────────────────────────────────────────────────
 
@@ -724,8 +733,14 @@ class Usuario(UserMixin):
         self.logo_path = _logo if _logo.startswith('static/logos/') else ''
         _logo_e = row.get('logo_estado_path', '') or ''
         self.logo_estado_path = _logo_e if _logo_e.startswith('static/logos/') else ''
-        self.escola_id       = row.get('escola_id', None)
-        self.papel           = row.get('papel', 'professor') or 'professor'
+        self.escola_id        = row.get('escola_id', None)
+        self.papel            = row.get('papel', 'professor') or 'professor'
+        self.escola_governo   = row.get('escola_governo', '') or ''
+        self.escola_secretaria = row.get('escola_secretaria', '') or ''
+        self.escola_diretoria  = row.get('escola_diretoria', '') or ''
+        self.escola_endereco   = row.get('escola_endereco', '') or ''
+        self.escola_fone       = row.get('escola_fone', '') or ''
+        self.escola_email      = row.get('escola_email', '') or ''
 
     @property
     def assinatura_ativa(self):
@@ -747,8 +762,10 @@ def load_user(user_id):
     row = conn.execute(
         'SELECT id, nome, email, senha, plano, ativo, valido_ate, criado_em,'
         ' escola_nome, professor_nome, logo_path, logo_estado_path,'
-        ' escola_template, onboarding_done, escola_id, papel, default_segment'
-        ' FROM usuarios WHERE id = ?', (user_id,)).fetchone()
+        ' escola_template, onboarding_done, escola_id, papel, default_segment,'
+        ' escola_governo, escola_secretaria, escola_diretoria,'
+        ' escola_endereco, escola_fone, escola_email'
+        ' FROM usuarios WHERE id = %s', (user_id,)).fetchone()
     conn.close()
     return Usuario(row) if row else None
 
