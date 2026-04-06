@@ -211,6 +211,34 @@ def get_db():
     conn = psycopg2.connect(DATABASE_URL)
     return _DbConn(conn)
 
+def _migrar_banco():
+    """Adiciona colunas novas sem quebrar o servidor se já existirem."""
+    colunas = [
+        "ALTER TABLE users ADD COLUMN IF NOT EXISTS escola_governo TEXT DEFAULT ''",
+        "ALTER TABLE users ADD COLUMN IF NOT EXISTS escola_secretaria TEXT DEFAULT ''",
+        "ALTER TABLE users ADD COLUMN IF NOT EXISTS escola_diretoria TEXT DEFAULT ''",
+        "ALTER TABLE users ADD COLUMN IF NOT EXISTS escola_nome TEXT DEFAULT ''",
+        "ALTER TABLE users ADD COLUMN IF NOT EXISTS escola_endereco TEXT DEFAULT ''",
+        "ALTER TABLE users ADD COLUMN IF NOT EXISTS escola_fone TEXT DEFAULT ''",
+        "ALTER TABLE users ADD COLUMN IF NOT EXISTS escola_email TEXT DEFAULT ''",
+    ]
+    db = get_db()
+    try:
+        for sql in colunas:
+            try:
+                db.execute(sql)
+                db.commit()
+            except Exception as e:
+                logger.warning('Migração pulada: %s — %s', sql[:60], e)
+    finally:
+        db.close()
+
+try:
+    _migrar_banco()
+    logger.info('Migrações de banco aplicadas com sucesso.')
+except Exception as e:
+    logger.critical('_migrar_banco falhou: %s', e)
+
 # ─── Rotas e Lógica ───────────────────────────────────────────────────────────
 
 @app.route('/api/generate/image', methods=['POST'])
