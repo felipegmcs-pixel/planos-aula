@@ -110,9 +110,11 @@ if GEMINI_API_KEY:
         logger.warning('Gemini não carregou: %s', _ge)
         _gemini_model = None
 
-SITE_URL    = os.environ.get('SITE_URL', 'http://localhost:5001')
-ADMIN_EMAIL = os.environ.get('ADMIN_EMAIL', '')
-LEADS_PASS  = os.environ.get('LEADS_PASS', 'professoria2026')
+SITE_URL          = os.environ.get('SITE_URL', 'http://localhost:5001')
+ADMIN_EMAIL       = os.environ.get('ADMIN_EMAIL', '')
+LEADS_PASS        = os.environ.get('LEADS_PASS', 'professoria2026')
+META_PIXEL_ID     = '2080536069265217'
+META_CAPI_TOKEN   = os.environ.get('META_CAPI_TOKEN', '')
 
 # ── Validação de chaves na inicialização ──────────────────────────────────────
 _CHAVES_ESPERADAS = {
@@ -125,6 +127,68 @@ _CHAVES_ESPERADAS = {
 for _k, _desc in _CHAVES_ESPERADAS.items():
     if not os.environ.get(_k):
         logger.warning('Chave ausente: %s — %s', _k, _desc)
+
+# ─── Meta Conversions API (server-side) ──────────────────────────────────────
+import hashlib, threading, urllib.request as _urllib_req
+
+def _sha256(value: str) -> str:
+    return hashlib.sha256(value.lower().strip().encode()).hexdigest()
+
+def _capi_event(event_name: str, user_data: dict = None, custom_data: dict = None,
+                event_source_url: str = None):
+    """Envia evento para a Meta Conversions API em background (não bloqueia o request)."""
+    if not META_CAPI_TOKEN:
+        return
+
+    ud = {}
+    if user_data:
+        if user_data.get('email'):
+            ud['em'] = [_sha256(user_data['email'])]
+        if user_data.get('phone'):
+            phone = re.sub(r'\D', '', user_data['phone'])
+            if phone and not phone.startswith('55'):
+                phone = '55' + phone
+            ud['ph'] = [_sha256(phone)]
+        if user_data.get('name'):
+            parts = user_data['name'].strip().lower().split()
+            ud['fn'] = [_sha256(parts[0])]
+            if len(parts) > 1:
+                ud['ln'] = [_sha256(parts[-1])]
+
+    # Tenta pegar IP e user-agent do request atual
+    try:
+        ud['client_ip_address'] = request.headers.get('X-Forwarded-For', request.remote_addr or '').split(',')[0].strip()
+        ud['client_user_agent']  = request.headers.get('User-Agent', '')
+        if not event_source_url:
+            event_source_url = request.url
+    except RuntimeError:
+        pass  # fora de request context
+
+    payload = json.dumps({
+        'data': [{
+            'event_name':       event_name,
+            'event_time':       int(datetime.now().timestamp()),
+            'event_source_url': event_source_url or SITE_URL,
+            'action_source':    'website',
+            'user_data':        ud,
+            'custom_data':      custom_data or {},
+        }]
+    }).encode()
+
+    url = f'https://graph.facebook.com/v19.0/{META_PIXEL_ID}/events?access_token={META_CAPI_TOKEN}'
+
+    def _send():
+        try:
+            req = _urllib_req.Request(url, data=payload,
+                                      headers={'Content-Type': 'application/json'},
+                                      method='POST')
+            _urllib_req.urlopen(req, timeout=5)
+            logger.info('CAPI %s enviado', event_name)
+        except Exception as e:
+            logger.warning('CAPI erro (%s): %s', event_name, e)
+
+    threading.Thread(target=_send, daemon=True).start()
+
 
 SMTP_HOST  = os.environ.get('SMTP_HOST', '')
 SMTP_PORT  = int(os.environ.get('SMTP_PORT', 587))
@@ -1308,6 +1372,7 @@ def cadastro():
             row = conn.execute('SELECT * FROM usuarios WHERE email = ?', (email,)).fetchone()
             conn.close()
             login_user(Usuario(row))
+            _capi_event('CompleteRegistration', user_data={'email': email, 'name': nome})
             return redirect(url_for('chat'))
         except Exception as e:
             conn.close()
@@ -1414,6 +1479,10 @@ def stripe_checkout(plano_id):
             cancel_url=f"{SITE_URL}/planos",
             allow_promotion_codes=True,
         )
+        _capi_event('InitiateCheckout',
+                    user_data={'email': current_user.email, 'name': current_user.nome},
+                    custom_data={'content_name': plano_id,
+                                 'value': PLANOS[plano_id]['preco'], 'currency': 'BRL'})
         return redirect(session.url, code=303)
     except Exception as e:
         logger.error('Stripe checkout erro: %s', e)
@@ -1437,6 +1506,11 @@ def stripe_sucesso():
                 conn.close()
                 if row:
                     login_user(Usuario(row))
+                preco = PLANOS.get(plano_id, {}).get('preco', 0)
+                _capi_event('Purchase',
+                            user_data={'email': current_user.email, 'name': current_user.nome},
+                            custom_data={'content_name': plano_id,
+                                         'value': preco, 'currency': 'BRL'})
         except Exception as e:
             logger.warning('Stripe sucesso: erro ao verificar sessão %s — %s', session_id, e)
     return render_template('pagamento_status.html',
@@ -4580,6 +4654,8 @@ def api_gerar_gratis():
         conn.commit()
         conn.close()
         logger.info('Novo lead grátis: %s <%s> %s', nome, email, whatsapp)
+        _capi_event('Lead', user_data={'email': email, 'phone': whatsapp, 'name': nome},
+                    custom_data={'content_name': 'geracao_gratis'})
     except Exception as e:
         logger.warning('Erro ao salvar lead grátis: %s', e)
 
@@ -4627,6 +4703,8 @@ def lista_vip():
         conn.commit()
         conn.close()
         logger.info('Novo lead VIP: %s <%s>', nome, email)
+        _capi_event('Lead', user_data={'email': email, 'phone': whatsapp, 'name': nome},
+                    custom_data={'content_name': 'lista_vip'})
         return jsonify({'ok': True})
     except Exception as e:
         if 'unique' in str(e).lower():
