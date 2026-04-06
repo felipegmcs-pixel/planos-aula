@@ -1,6 +1,7 @@
-/* ProfessorIA — 3D Particle Background (Three.js r158 CDN)
+/* ProfessorIA — Noites de Alexandria Background
+   Constelações sóbrias: turquesa profundo (#1E5A63) + dourado envelhecido (#D4AF37).
+   Movimento lento e majestoso — estrelas, não dados.
    Drop <canvas id="bg3d"></canvas> + <script src="/static/bg3d.js"></script>
-   into any page. Automatically adapts to dark/light theme.
 */
 (function () {
   'use strict';
@@ -34,8 +35,8 @@
     var camera = new THREE.PerspectiveCamera(60, W / H, 0.1, 1000);
     camera.position.z = 80;
 
-    /* ── Floating particles ── */
-    var COUNT = 320;
+    /* ── Constelação principal (turquesa profundo) ── */
+    var COUNT = 280;
     var geo = new THREE.BufferGeometry();
     var pos = new Float32Array(COUNT * 3);
     var vel = new Float32Array(COUNT * 3);
@@ -45,47 +46,78 @@
       pos[i * 3]     = (Math.random() - 0.5) * 200;
       pos[i * 3 + 1] = (Math.random() - 0.5) * 200;
       pos[i * 3 + 2] = (Math.random() - 0.5) * 120;
-      vel[i * 3]     = (Math.random() - 0.5) * 0.012;
-      vel[i * 3 + 1] = (Math.random() - 0.5) * 0.012;
-      vel[i * 3 + 2] = (Math.random() - 0.5) * 0.006;
-      sizes[i] = Math.random() * 2.2 + 0.4;
+      vel[i * 3]     = (Math.random() - 0.5) * 0.006;  // 50% mais lento que antes
+      vel[i * 3 + 1] = (Math.random() - 0.5) * 0.006;
+      vel[i * 3 + 2] = (Math.random() - 0.5) * 0.003;
+      sizes[i] = Math.random() * 2.0 + 0.3;
     }
 
     geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
     geo.setAttribute('size', new THREE.BufferAttribute(sizes, 1));
 
-    /* ── Connecting lines (icosahedron wireframe) ── */
+    /* ── Estrelas douradas esparsas (poeira de papiro) ── */
+    var GOLD = 65;
+    var geoGold = new THREE.BufferGeometry();
+    var posGold = new Float32Array(GOLD * 3);
+    var velGold = new Float32Array(GOLD * 3);
+    var sizesGold = new Float32Array(GOLD);
+
+    for (var j = 0; j < GOLD; j++) {
+      posGold[j * 3]     = (Math.random() - 0.5) * 200;
+      posGold[j * 3 + 1] = (Math.random() - 0.5) * 200;
+      posGold[j * 3 + 2] = (Math.random() - 0.5) * 120;
+      velGold[j * 3]     = (Math.random() - 0.5) * 0.004;
+      velGold[j * 3 + 1] = (Math.random() - 0.5) * 0.004;
+      velGold[j * 3 + 2] = (Math.random() - 0.5) * 0.002;
+      sizesGold[j] = Math.random() * 1.8 + 0.9;
+    }
+
+    geoGold.setAttribute('position', new THREE.BufferAttribute(posGold, 3));
+    geoGold.setAttribute('size', new THREE.BufferAttribute(sizesGold, 1));
+
+    /* ── Arcos de constelação (wireframe turquesa) ── */
     var icoGeo = new THREE.IcosahedronGeometry(38, 2);
     var icoMat = new THREE.MeshBasicMaterial({
-      color: isDark() ? 0x4338ca : 0x1E40AF,
+      color: isDark() ? 0x1E5A63 : 0x164A52,
       wireframe: true,
       transparent: true,
-      opacity: isDark() ? 0.12 : 0.45
+      opacity: isDark() ? 0.07 : 0.18
     });
     var ico = new THREE.Mesh(icoGeo, icoMat);
     scene.add(ico);
 
-    /* ── Torus ring ── */
-    var torusGeo = new THREE.TorusGeometry(55, 0.4, 8, 80);
+    /* ── Anel celestial (dourado envelhecido) ── */
+    var torusGeo = new THREE.TorusGeometry(55, 0.35, 8, 80);
     var torusMat = new THREE.MeshBasicMaterial({
-      color: isDark() ? 0x7c3aed : 0x1E40AF,
+      color: isDark() ? 0xD4AF37 : 0xB8932A,
       transparent: true,
-      opacity: isDark() ? 0.09 : 0.35
+      opacity: isDark() ? 0.055 : 0.14
     });
     var torus = new THREE.Mesh(torusGeo, torusMat);
     torus.rotation.x = Math.PI / 3;
     scene.add(torus);
 
-    /* ── Particle material ── */
+    /* ── Material partículas turquesa ── */
     var ptMat = new THREE.PointsMaterial({
-      color: isDark() ? 0x818cf8 : 0x1E40AF,
-      size: 1.1,
+      color: isDark() ? 0x1E5A63 : 0x164A52,
+      size: 1.0,
       transparent: true,
-      opacity: isDark() ? 0.55 : 0.5,
+      opacity: 0.35,
       sizeAttenuation: true
     });
     var pts = new THREE.Points(geo, ptMat);
     scene.add(pts);
+
+    /* ── Material partículas douradas ── */
+    var ptGoldMat = new THREE.PointsMaterial({
+      color: isDark() ? 0xD4AF37 : 0xB8932A,
+      size: 1.5,
+      transparent: true,
+      opacity: 0.22,
+      sizeAttenuation: true
+    });
+    var ptsGold = new THREE.Points(geoGold, ptGoldMat);
+    scene.add(ptsGold);
 
     /* ── Mouse parallax ── */
     var mouse = { x: 0, y: 0 };
@@ -105,12 +137,12 @@
     /* ── Theme change ── */
     var observer = new MutationObserver(function () {
       var dark = isDark();
-      icoMat.color.set(dark ? 0x4338ca : 0x1E40AF);
-      icoMat.opacity = dark ? 0.12 : 0.45;
-      torusMat.color.set(dark ? 0x7c3aed : 0x1E40AF);
-      torusMat.opacity = dark ? 0.09 : 0.35;
-      ptMat.color.set(dark ? 0x818cf8 : 0x1E40AF);
-      ptMat.opacity = dark ? 0.55 : 0.5;
+      icoMat.color.set(dark ? 0x1E5A63 : 0x164A52);
+      icoMat.opacity = dark ? 0.07 : 0.18;
+      torusMat.color.set(dark ? 0xD4AF37 : 0xB8932A);
+      torusMat.opacity = dark ? 0.055 : 0.14;
+      ptMat.color.set(dark ? 0x1E5A63 : 0x164A52);
+      ptGoldMat.color.set(dark ? 0xD4AF37 : 0xB8932A);
     });
     observer.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
 
@@ -118,31 +150,48 @@
     var t = 0;
     function animate() {
       requestAnimationFrame(animate);
-      t += 0.005;
+      t += 0.0025;  // 50% mais lento (era 0.005)
 
-      // Particle drift
+      // Drift lento das estrelas turquesa
       for (var i = 0; i < COUNT; i++) {
         pos[i * 3]     += vel[i * 3];
         pos[i * 3 + 1] += vel[i * 3 + 1];
         pos[i * 3 + 2] += vel[i * 3 + 2];
-        // Wrap around
         if (Math.abs(pos[i * 3])     > 100) vel[i * 3]     *= -1;
         if (Math.abs(pos[i * 3 + 1]) > 100) vel[i * 3 + 1] *= -1;
         if (Math.abs(pos[i * 3 + 2]) > 60)  vel[i * 3 + 2] *= -1;
       }
       geo.attributes.position.needsUpdate = true;
 
-      // Slow rotation + mouse parallax
-      ico.rotation.x = t * 0.08 + mouse.y * 0.06;
-      ico.rotation.y = t * 0.12 + mouse.x * 0.06;
-      torus.rotation.z = t * 0.04;
-      torus.rotation.y = mouse.x * 0.04;
-      pts.rotation.y = t * 0.018;
-      pts.rotation.x = t * 0.009;
+      // Drift lento das estrelas douradas
+      for (var jj = 0; jj < GOLD; jj++) {
+        posGold[jj * 3]     += velGold[jj * 3];
+        posGold[jj * 3 + 1] += velGold[jj * 3 + 1];
+        posGold[jj * 3 + 2] += velGold[jj * 3 + 2];
+        if (Math.abs(posGold[jj * 3])     > 100) velGold[jj * 3]     *= -1;
+        if (Math.abs(posGold[jj * 3 + 1]) > 100) velGold[jj * 3 + 1] *= -1;
+        if (Math.abs(posGold[jj * 3 + 2]) > 60)  velGold[jj * 3 + 2] *= -1;
+      }
+      geoGold.attributes.position.needsUpdate = true;
 
-      // Camera subtle drift
-      camera.position.x += (mouse.x * 4 - camera.position.x) * 0.03;
-      camera.position.y += (-mouse.y * 3 - camera.position.y) * 0.03;
+      // Rotação lenta e majestosa — céu noturno, não data center
+      ico.rotation.x = t * 0.04 + mouse.y * 0.03;
+      ico.rotation.y = t * 0.06 + mouse.x * 0.03;
+      torus.rotation.z = t * 0.02;
+      torus.rotation.y = mouse.x * 0.02;
+      pts.rotation.y    = t * 0.009;
+      pts.rotation.x    = t * 0.0045;
+      ptsGold.rotation.y = t * 0.006;
+      ptsGold.rotation.x = t * 0.003;
+
+      // Respiração orgânica — constelações pulsam suavemente (~8s/ciclo)
+      var breath = Math.sin(t * 0.8) * 0.5 + 0.5;  // 0..1
+      ptMat.opacity     = 0.20 + breath * 0.20;     // 0.20 → 0.40
+      ptGoldMat.opacity = 0.10 + breath * 0.18;     // 0.10 → 0.28
+
+      // Camera drift suave — paralaxe mais serena
+      camera.position.x += (mouse.x * 3 - camera.position.x) * 0.018;
+      camera.position.y += (-mouse.y * 2 - camera.position.y) * 0.018;
       camera.lookAt(scene.position);
 
       renderer.render(scene, camera);
