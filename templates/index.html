@@ -139,10 +139,10 @@
     .social-strip-star{color:#f59e0b;letter-spacing:1px}
     /* TICKER */
     .ticker{margin-top:50px;height:40px;background:linear-gradient(90deg,#0D2B2F,#0B2428);border-bottom:1px solid rgba(30,90,99,.22);overflow:hidden;display:flex;align-items:center}
-    .tick-track{display:flex;white-space:nowrap;animation:tick 32s linear infinite}
+    .tick-track{display:flex;white-space:nowrap;animation:tick 32s linear infinite;will-change:transform;transform:translateZ(0);backface-visibility:hidden;perspective:1000px;-webkit-font-smoothing:antialiased}
     .tick-i{font-size:.68rem;font-weight:600;letter-spacing:2px;text-transform:uppercase;color:rgba(212,175,55,.6);padding:0 20px}
     .tick-d{color:var(--amber);font-size:.4rem}
-    @keyframes tick{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+    @keyframes tick{from{transform:translate3d(0,0,0)}to{transform:translate3d(-50%,0,0)}}
 
     /* HERO */
     .hero{position:relative;min-height:100vh;display:flex;align-items:center;justify-content:center;background:var(--hero);overflow:hidden}
