@@ -334,7 +334,8 @@ def api_plano_aula_docx():
     elif hasattr(current_user, 'school_data') and current_user.is_authenticated:
         context.update(current_user.school_data)
 
-    doc = DocxTemplate("/home/ubuntu/planos-aula/static/templates/plano_de_aula.docx")
+    _template_path = os.path.join(os.path.dirname(__file__), 'static', 'templates', 'plano_de_aula.docx')
+    doc = DocxTemplate(_template_path)
     doc.render(context)
     
     # Salvar em buffer e enviar
@@ -424,12 +425,19 @@ class User(UserMixin):
 def load_user(user_id):
     db = get_db()
     try:
-        user_data = db.execute(
-            "SELECT id, email, nome, is_premium, stripe_customer_id, "
-            "escola_governo, escola_secretaria, escola_diretoria, "
-            "escola_nome, escola_endereco, escola_fone, escola_email "
-            "FROM users WHERE id = ?", (user_id,)
-        ).fetchone()
+        # Tenta carregar com campos de escola; se não existirem, carrega sem eles
+        try:
+            user_data = db.execute(
+                "SELECT id, email, nome, is_premium, stripe_customer_id, "
+                "escola_governo, escola_secretaria, escola_diretoria, "
+                "escola_nome, escola_endereco, escola_fone, escola_email "
+                "FROM users WHERE id = ?", (user_id,)
+            ).fetchone()
+        except Exception:
+            user_data = db.execute(
+                "SELECT id, email, nome, is_premium, stripe_customer_id "
+                "FROM users WHERE id = ?", (user_id,)
+            ).fetchone()
         if user_data:
             return User(**user_data)
     finally:
@@ -569,6 +577,10 @@ def conta_escola():
              escola_endereco, escola_fone, escola_email, current_user.id)
         )
         db.commit()
+        # Recarregar o usuário para atualizar os dados em memória
+        updated_user = load_user(current_user.id)
+        if updated_user:
+            login_user(updated_user)
         flash('Dados da escola atualizados com sucesso!', 'ok')
     except Exception as e:
         logger.error("Erro ao atualizar escola: %s", e)
