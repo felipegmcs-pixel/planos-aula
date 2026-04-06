@@ -3236,6 +3236,13 @@ def gerar_plano_aula_docx(texto, meta=None, logo_estado_path=None):
     professor  = meta.get('professor', '').strip()
     disciplina = meta.get('disciplina', '').strip()
     estado     = meta.get('estado', '').strip()
+    # Campos completos do cabecalho escolar
+    escola_governo    = meta.get('escola_governo', '').strip()
+    escola_secretaria = meta.get('escola_secretaria', '').strip() or 'SECRETARIA DE ESTADO DA EDUCAÇÃO'
+    escola_diretoria  = meta.get('escola_diretoria', '').strip()
+    escola_endereco   = meta.get('escola_endereco', '').strip()
+    escola_fone       = meta.get('escola_fone', '').strip()
+    escola_email      = meta.get('escola_email', '').strip()
 
     meta_extra, aulas = _parse_plano_aula(texto)
     num_aulas  = meta_extra.get('num_aulas', '3 semanais')
@@ -3284,21 +3291,58 @@ def gerar_plano_aula_docx(texto, meta=None, logo_estado_path=None):
     mp.paragraph_format.space_before = Pt(0)
     mp.paragraph_format.space_after  = Pt(1)
 
-    estado_txt = f'GOVERNO DO ESTADO DE {estado.upper()}' if estado else 'GOVERNO DO ESTADO'
+    # Governo (usa campo personalizado ou fallback)
+    if escola_governo:
+        estado_txt = escola_governo.upper()
+    elif estado:
+        estado_txt = f'GOVERNO DO ESTADO DE {estado.upper()}'
+    else:
+        estado_txt = 'GOVERNO DO ESTADO'
     _pr(mp, estado_txt, bold=True, size=9, color='0a0a0a')
 
+    # Secretaria
     mp2 = mid.add_paragraph()
     mp2.alignment = WD_ALIGN_PARAGRAPH.CENTER
     mp2.paragraph_format.space_before = Pt(0)
     mp2.paragraph_format.space_after  = Pt(0)
-    _pr(mp2, 'SECRETARIA DE ESTADO DA EDUCAÇÃO', bold=True, size=8, color='222222')
+    _pr(mp2, escola_secretaria.upper(), bold=True, size=8, color='222222')
 
+    # Diretoria de Ensino
+    if escola_diretoria:
+        mp_dir = mid.add_paragraph()
+        mp_dir.alignment = WD_ALIGN_PARAGRAPH.CENTER
+        mp_dir.paragraph_format.space_before = Pt(0)
+        mp_dir.paragraph_format.space_after  = Pt(0)
+        _pr(mp_dir, escola_diretoria.upper(), bold=False, size=8, color='222222')
+
+    # Nome da escola (negrito, maior)
     if escola:
         mp3 = mid.add_paragraph()
         mp3.alignment = WD_ALIGN_PARAGRAPH.CENTER
         mp3.paragraph_format.space_before = Pt(2)
         mp3.paragraph_format.space_after  = Pt(0)
         _pr(mp3, escola.upper(), bold=True, size=10, color='0a0a0a')
+
+    # Endereco da escola
+    if escola_endereco:
+        mp_end = mid.add_paragraph()
+        mp_end.alignment = WD_ALIGN_PARAGRAPH.CENTER
+        mp_end.paragraph_format.space_before = Pt(0)
+        mp_end.paragraph_format.space_after  = Pt(0)
+        _pr(mp_end, escola_endereco, bold=False, size=7, color='444444')
+
+    # Fone e email na mesma linha
+    fone_email_parts = []
+    if escola_fone:
+        fone_email_parts.append(f'Fone {escola_fone}')
+    if escola_email:
+        fone_email_parts.append(f'Email: {escola_email}')
+    if fone_email_parts:
+        mp_fe = mid.add_paragraph()
+        mp_fe.alignment = WD_ALIGN_PARAGRAPH.CENTER
+        mp_fe.paragraph_format.space_before = Pt(0)
+        mp_fe.paragraph_format.space_after  = Pt(0)
+        _pr(mp_fe, '  |  '.join(fone_email_parts), bold=False, size=7, color='444444')
 
     # Coluna direita: watermark ProfessorIA
     rp = hdr.cell(0, 2).paragraphs[0]
@@ -3695,6 +3739,13 @@ def api_chat_download():
         'bimestre':   data.get('bimestre', '').strip(),
         'serie':      data.get('serie', '').strip(),
         'estado':     data.get('estado', '').strip(),
+        # Campos completos da escola (preenchidos na pagina Minha Conta)
+        'escola_governo':    data.get('escola_governo', getattr(current_user, 'escola_governo', '')).strip(),
+        'escola_secretaria': data.get('escola_secretaria', getattr(current_user, 'escola_secretaria', '')).strip(),
+        'escola_diretoria':  data.get('escola_diretoria', getattr(current_user, 'escola_diretoria', '')).strip(),
+        'escola_endereco':   data.get('escola_endereco', getattr(current_user, 'escola_endereco', '')).strip(),
+        'escola_fone':       data.get('escola_fone', getattr(current_user, 'escola_fone', '')).strip(),
+        'escola_email':      data.get('escola_email', getattr(current_user, 'escola_email', '')).strip(),
     }
 
     logo_abs = None
@@ -3745,14 +3796,30 @@ def api_config_escola():
             'professor_nome':   current_user.professor_nome,
             'logo_path':        current_user.logo_path,
             'logo_estado_path': current_user.logo_estado_path,
+            'escola_governo':    getattr(current_user, 'escola_governo', ''),
+            'escola_secretaria': getattr(current_user, 'escola_secretaria', ''),
+            'escola_diretoria':  getattr(current_user, 'escola_diretoria', ''),
+            'escola_endereco':   getattr(current_user, 'escola_endereco', ''),
+            'escola_fone':       getattr(current_user, 'escola_fone', ''),
+            'escola_email':      getattr(current_user, 'escola_email', ''),
         })
     data = request.json or {}
     escola   = data.get('escola_nome', '').strip()[:200]
     prof     = data.get('professor_nome', '').strip()[:200]
+    # Campos completos do cabecalho escolar
+    gov      = data.get('escola_governo', '').strip()[:200]
+    sec      = data.get('escola_secretaria', '').strip()[:200]
+    dire     = data.get('escola_diretoria', '').strip()[:200]
+    ender    = data.get('escola_endereco', '').strip()[:300]
+    fone     = data.get('escola_fone', '').strip()[:50]
+    email_e  = data.get('escola_email', '').strip()[:200]
     conn = get_db()
     conn.execute(
-        "UPDATE usuarios SET escola_nome=?, professor_nome=? WHERE id=?",
-        (escola, prof, current_user.id)
+        "UPDATE usuarios SET escola_nome=?, professor_nome=?,"
+        " escola_governo=?, escola_secretaria=?, escola_diretoria=?,"
+        " escola_endereco=?, escola_fone=?, escola_email=?"
+        " WHERE id=?",
+        (escola, prof, gov, sec, dire, ender, fone, email_e, current_user.id)
     )
     conn.commit(); conn.close()
     return jsonify({'ok': True})
