@@ -50,7 +50,16 @@ from reportlab.lib.enums import TA_CENTER, TA_LEFT
 from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer
 from pdf_generator import gerar_plano_pdf
 # ─── Configuração de Estilo de Imagem (Frente 4) ──────────────────────────────
-IMAGE_STYLE_MODIFIER = "Estilo: Traço Acadêmico-Inclusivo. Ilustração digital moderna, textura sutil de aquarela, linhas limpas, visual minimalista. PROIBIDO inserir textos, palavras ou letras dentro da imagem. Apenas a arte temática."
+IMAGE_STYLE_MODIFIER = (
+    "Estilo: Aquarela digital moderna, acadêmica e limpa, fundo 100% branco sólido. "
+    "Composição: Ilustração central temática rica em detalhes históricos ou científicos, cercada por ramificações orgânicas "
+    "que conectam a ícones icônicos ou banners textuais curtos. "
+    "Estética: Sabedoria, acolhimento e design premium (estilo infográfico educacional de alta gama). "
+    "OBRIGATÓRIO: No canto inferior direito, insira a assinatura da marca: "
+    "Um símbolo geométrico minimalista formado por dois círculos perfeitos entrelaçados horizontalmente, "
+    "acompanhado do texto 'ProfessorIA™' em Azul Acadêmico. "
+    "PROIBIDO: Inserir textos longos, parágrafos ou frases complexas dentro da imagem. Foque na arte e na assinatura."
+)
 
 # ─── App ──────────────────────────────────────────────────────────────────────
 
@@ -316,22 +325,32 @@ Responda sempre em português brasileiro. Seja prático, objetivo e direto."""
 # ─── Plano de Aula — Structured Output ────────────────────────────────────────
 
 SYSTEM_PROMPT_PLANO = (
-    "Você é um especialista em planejamento pedagógico alinhado à BNCC. "
+    "Você é um Engenheiro de Planejamento Pedagógico Sênior e Especialista em BNCC. "
+    "Sua missão é gerar planos de aula de elite que serão exportados para documentos oficiais (.docx e .pdf). "
     "Retorne EXATAMENTE o seguinte formato JSON, sem adicionar texto extra ou markdown fora do JSON:\n"
     '{\n'
     '  "tema": "Tema da Aula",\n'
     '  "habilidades_bncc": ["Código 1 - Descrição", "Código 2 - Descrição"],\n'
     '  "objetivos": ["Objetivo 1", "Objetivo 2"],\n'
     '  "conteudo_programatico": "Resumo do que será ensinado",\n'
-    '  "metodologia": "Passo a passo de como a aula será conduzida",\n'
+    '  "metodologia": "Passo a passo de como a aula será conduzida (metodologias ativas)",\n'
     '  "recursos_didaticos": ["Recurso 1", "Recurso 2"],\n'
     '  "avaliacao": "Como o aprendizado será medido"\n'
     "}\n"
     "REGRAS ABSOLUTAS: "
     "1) Resposta DEVE começar com { e terminar com }, sem nenhuma palavra fora do JSON. "
-    "2) PROIBIDO ALUCINAR BNCC: Os códigos alfanuméricos (ex: EF08HI01) devem ser 100% reais. "
-    "3) habilidades_bncc: cada item é uma string no formato 'CÓDIGO - Descrição'. "
-    "4) Metodologias devem ser ativas e práticas, fuja do clichê expositivo."
+    "2) PROIBIDO ALUCINAR BNCC: Os códigos alfanuméricos (ex: EF08HI01) devem ser 100% reais e existentes. "
+    "3) habilidades_bncc: cada item é uma string no formato 'CÓDIGO - Descrição completa'. "
+    "4) Metodologias devem ser ativas e práticas — rotação por estações, sala de aula invertida, PBL, etc. "
+    "5) Linguagem acadêmica, objetivos mensuráveis com verbos de Bloom, conteúdo rico e detalhado."
+)
+
+SYSTEM_PROMPT_COORDENADOR = (
+    "Você é o Coordenador Pedagógico Sênior do ProfessorIA. Sua função é revisar o plano de aula gerado, "
+    "garantindo que a linguagem seja acadêmica, os objetivos estejam claros e mensuráveis, "
+    "o alinhamento à BNCC seja impecável e a metodologia seja genuinamente ativa. "
+    "Corrija qualquer imprecisão didática, enriqueça a metodologia se estiver genérica, "
+    "e retorne o JSON completo revisado — no mesmo formato, sem nenhuma palavra fora do JSON."
 )
 
 PLANO_AULA_TOOL = {
@@ -1916,6 +1935,24 @@ def api_gerar_plano():
             'erro': 'Todos os motores de IA falharam. Verifique as chaves de API.',
             'detalhes': erro_motores
         }), 503
+
+    # ── Coordenador Pedagógico Sênior: revisão e refinamento do plano ──────────
+    try:
+        plano_bruto_str = json.dumps(plano_json, ensure_ascii=False)
+        plano_refinado_str = _llm_cadeia_simples(
+            f"Revise e melhore este plano de aula, retornando o JSON completo revisado:\n{plano_bruto_str}",
+            sistema=SYSTEM_PROMPT_COORDENADOR,
+            max_tokens=4000
+        )
+        # Extrai o JSON da resposta do Coordenador
+        m = re.search(r'\{[\s\S]+\}', plano_refinado_str)
+        if m:
+            plano_refinado = json.loads(m.group())
+            plano_json = plano_refinado
+            logger.info('api_gerar_plano — Coordenador revisou o plano com sucesso.')
+    except Exception as e:
+        # Se o Coordenador falhar, mantém o plano original sem quebrar
+        logger.warning('api_gerar_plano — Coordenador falhou (plano original mantido): %s', e)
 
     # Garante que disciplina e ano estejam no JSON para o PDF
     plano_json.setdefault('disciplina', disciplina)
