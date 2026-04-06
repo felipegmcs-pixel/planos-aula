@@ -4510,6 +4510,65 @@ def api_onboarding_completar():
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
+# GERAÇÃO GRÁTIS (lead capture + 1 plano completo)
+# ═══════════════════════════════════════════════════════════════════════════════
+
+@app.route('/gratis')
+def gratis():
+    return render_template('gratis.html')
+
+@app.route('/api/gerar-gratis', methods=['POST'])
+@limiter.limit('5 per hour')
+def api_gerar_gratis():
+    """Captura lead (nome + email + whatsapp) e gera 1 plano de aula completo."""
+    data      = request.get_json(force=True) or {}
+    nome      = str(data.get('nome', '')).strip()[:100]
+    email     = str(data.get('email', '')).strip().lower()[:254]
+    whatsapp  = str(data.get('whatsapp', '')).strip()[:20]
+    tema      = str(data.get('tema', '')).strip()[:300]
+    serie     = str(data.get('serie', '')).strip()[:50]
+    disciplina = str(data.get('disciplina', 'Não informada')).strip()[:100]
+
+    if not nome or not (email or whatsapp) or not tema:
+        return jsonify({'erro': 'Nome, contato (email ou WhatsApp) e tema são obrigatórios'}), 400
+
+    # Salva o lead
+    try:
+        conn = get_db()
+        conn.execute(
+            'INSERT INTO lista_vip (nome, email, whatsapp, criado_em) VALUES (%s, %s, %s, %s)',
+            (nome, email or '', whatsapp, datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
+        )
+        conn.commit()
+        conn.close()
+        logger.info('Novo lead grátis: %s <%s> %s', nome, email, whatsapp)
+    except Exception as e:
+        logger.warning('Erro ao salvar lead grátis: %s', e)
+
+    # Gera o plano completo via cadeia de fallback
+    prompt = (
+        f"Gere um plano de aula completo e detalhado em português brasileiro para:\n"
+        f"Tema: {tema}\n"
+        f"Série/Ano: {serie or 'não informado'}\n"
+        f"Disciplina: {disciplina}\n\n"
+        "O plano deve conter:\n"
+        "1. Título da aula\n"
+        "2. Habilidades BNCC (códigos reais)\n"
+        "3. Objetivos de aprendizagem\n"
+        "4. Desenvolvimento da aula (passo a passo)\n"
+        "5. Recursos didáticos\n"
+        "6. Avaliação\n\n"
+        "Seja específico, prático e alinhado à BNCC. Responda em português brasileiro."
+    )
+    try:
+        resultado = _llm_cadeia_simples(prompt, sistema=SYSTEM_PROMPT, max_tokens=2000)
+        return jsonify({'ok': True, 'plano': resultado, 'nome': nome})
+    except Exception as e:
+        logger.error('api_gerar_gratis — erro IA: %s', e)
+        return jsonify({'erro': 'Serviço temporariamente indisponível. Tente novamente em instantes.'}), 503
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
 # LISTA VIP
 # ═══════════════════════════════════════════════════════════════════════════════
 
