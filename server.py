@@ -4708,6 +4708,132 @@ def api_generate_image():
         return jsonify({'erro': f'Erro ao gerar imagem: {err[:200]}'}), 500
 
 
+@app.route('/api/generate/mapa-mental', methods=['POST'])
+@login_required
+@limiter.limit('5 per minute')
+def api_generate_mapa_mental():
+    """Gera uma ilustração visual de mapa mental via DALL-E 3.
+    Entrada: { tema }
+    Saída:   { url }
+    """
+    if not client_openai:
+        return jsonify({'erro': 'OPENAI_API_KEY não configurada.'}), 503
+
+    data = request.get_json(force=True) or {}
+    tema = str(data.get('tema', '')).strip()[:300]
+    if not tema:
+        return jsonify({'erro': 'Campo obrigatório: tema'}), 400
+
+    prompt_final = (
+        f"Mapa mental educacional sobre '{tema}', estilo aquarela digital moderna, "
+        "fundo 100% branco sólido, composição radial com tema central e ramos conectados "
+        "a subtópicos ilustrados com ícones acadêmicos. "
+        "Design premium, cores pastéis acadêmicas, sem texto longo dentro da imagem. "
+        "No canto inferior direito: logotipo minimalista 'ProfessorIA™' em azul acadêmico. "
+        + IMAGE_STYLE_MODIFIER
+    )
+
+    try:
+        resp = client_openai.images.generate(
+            model='dall-e-3',
+            prompt=prompt_final[:4000],
+            size='1792x1024',
+            quality='standard',
+            n=1
+        )
+        url = resp.data[0].url
+        logger.info('Mapa mental visual gerado para usuario %s: %s', current_user.id, tema[:50])
+        return jsonify({'url': url})
+    except Exception as e:
+        err = str(e)
+        logger.error('DALL-E mapa-mental erro: %s', err[:300])
+        return jsonify({'erro': f'Erro ao gerar mapa mental: {err[:200]}'}), 500
+
+
+@app.route('/api/prova/docx', methods=['POST'])
+@login_required
+def api_prova_docx():
+    """Gera DOCX de prova a partir dos dados estruturados.
+    Entrada: { prova_dados: { titulo_prova, objetivos_bncc, questoes_multipla_escolha, questoes_dissertativas, gabarito_geral } }
+    Saída:   arquivo .docx
+    """
+    data = request.get_json(force=True) or {}
+    prova = data.get('prova_dados') or {}
+
+    titulo     = str(prova.get('titulo_prova', 'Prova ProfessorIA'))[:200]
+    objetivos  = prova.get('objetivos_bncc', [])
+    mc         = prova.get('questoes_multipla_escolha', [])
+    disc       = prova.get('questoes_dissertativas', [])
+    gabarito   = str(prova.get('gabarito_geral', ''))
+
+    from docx import Document
+    from docx.shared import Pt, RGBColor, Cm
+    from docx.enum.text import WD_ALIGN_PARAGRAPH
+
+    doc = Document()
+    section = doc.sections[0]
+    section.page_height = Cm(29.7)
+    section.page_width  = Cm(21.0)
+    section.left_margin = section.right_margin = Cm(2.5)
+    section.top_margin  = section.bottom_margin = Cm(2.0)
+
+    def heading(text, level=1):
+        p = doc.add_paragraph()
+        p.alignment = WD_ALIGN_PARAGRAPH.LEFT
+        run = p.add_run(text)
+        run.bold = True
+        run.font.size = Pt(14 if level == 1 else 12)
+        run.font.color.rgb = RGBColor(0x1E, 0x5A, 0x63)
+        return p
+
+    def body(text):
+        p = doc.add_paragraph(text)
+        p.runs[0].font.size = Pt(11) if p.runs else None
+        return p
+
+    heading(titulo)
+    doc.add_paragraph(f"Nome: ___________________________   Turma: _______   Data: ___/___/______")
+    doc.add_paragraph()
+
+    if objetivos:
+        heading('Habilidades BNCC', 2)
+        for obj in objetivos:
+            body(f"• {obj}")
+        doc.add_paragraph()
+
+    if mc:
+        heading('Questões de Múltipla Escolha', 2)
+        letras = ['A', 'B', 'C', 'D', 'E']
+        for i, q in enumerate(mc, 1):
+            body(f"{i}. {q.get('pergunta', '')}")
+            for j, alt in enumerate(q.get('alternativas', [])):
+                body(f"   {letras[j] if j < len(letras) else j+1}) {alt}")
+            doc.add_paragraph()
+
+    if disc:
+        heading('Questões Dissertativas', 2)
+        offset = len(mc)
+        for i, q in enumerate(disc, 1):
+            body(f"{offset + i}. {q.get('pergunta', '')}")
+            for _ in range(4):
+                body("_______________________________________________")
+            doc.add_paragraph()
+
+    if gabarito:
+        heading('Gabarito (uso do professor)', 2)
+        body(gabarito)
+
+    buf = io.BytesIO()
+    doc.save(buf)
+    buf.seek(0)
+    return send_file(
+        buf,
+        as_attachment=True,
+        download_name=f"Prova_{titulo[:40].replace(' ','_')}.docx",
+        mimetype='application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+    )
+
+
 # ─── Download PDF do Plano de Aula ───────────────────────────────────────────
 
 @app.route('/api/plano-de-aula/pdf', methods=['POST'])
