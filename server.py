@@ -242,7 +242,7 @@ except Exception as e:
 # ─── Rotas e Lógica ───────────────────────────────────────────────────────────
 
 @app.route('/api/generate/image', methods=['POST'])
-# @login_required
+@login_required
 def api_generate_image():
     data = request.get_json(force=True) or {}
     prompt = str(data.get('prompt', '')).strip()[:4000]
@@ -259,7 +259,7 @@ def api_generate_image():
         return jsonify({'erro': str(e)}), 500
 
 @app.route('/api/gerar-plano', methods=['POST'])
-# @login_required
+@login_required
 def api_gerar_plano():
     data = request.get_json(force=True) or {}
     tema, ano, disciplina = data.get('tema'), data.get('ano'), data.get('disciplina')
@@ -291,7 +291,7 @@ def api_gerar_plano():
         return jsonify({'erro': str(e)}), 500
 
 @app.route("/api/plano-aula/pdf", methods=["POST"])
-# @login_required
+@login_required
 def api_plano_aula_pdf():
     data = request.get_json(force=True) or {}
     plano = data.get("plano_de_aula")
@@ -311,7 +311,7 @@ def api_plano_aula_pdf():
 
 
 @app.route("/api/plano-aula/docx", methods=["POST"])
-# @login_required
+@login_required
 def api_plano_aula_docx():
     data = request.get_json(force=True) or {}
     plano = data.get('plano_de_aula')
@@ -376,7 +376,7 @@ def api_plano_aula_docx():
     )
 
 @app.route('/api/meus-planos', methods=['GET'])
-# @login_required
+@login_required
 def api_meus_planos():
     db = get_db()
     try:
@@ -389,7 +389,7 @@ def api_meus_planos():
         db.close()
 
 @app.route('/api/salvar-plano', methods=['POST'])
-# @login_required
+@login_required
 def api_salvar_plano():
     data = request.get_json(force=True) or {}
     titulo = data.get('titulo')
