@@ -45,6 +45,13 @@
       --sb-line: rgba(255,255,255,.07);
       --card-bg: #0E2327;
     }
+    .logo-circular-blindada {
+      border-radius: 50% !important;
+      overflow: hidden !important;
+      object-fit: cover !important;
+      background-color: transparent !important;
+      display: inline-block !important;
+    }
     html, body { height: 100%; font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); overflow: hidden; }
     ::selection { background: rgba(212,175,55,.25); color: var(--indigo); }
 
@@ -1116,7 +1123,7 @@
   <div id="oraculoOverlay" class="oraculo-overlay">
     <div class="oraculo-container" onclick="toggleOraculo()">
       <div class="oraculo-core">
-        <img src="{{ url_for('static', filename='logo-oficial.png') }}" alt="ProfessorIA">
+        <img src="{{ url_for('static', filename='logo-oficial.png') }}" alt="ProfessorIA" class="logo-circular-blindada">
       </div>
     </div>
     <div class="oraculo-status" id="oraculoStatus">O ProfessorIA está falando...</div>
@@ -1277,7 +1284,7 @@
     <div class="sidebar-header">
       <a class="logo" href="/">
         <span class="pia-mark" id="piaMark">
-          <img src="{{ url_for('static', filename='logo-oficial.png') }}" alt="ProfessorIA" class="pia-mark-img">
+          <img src="{{ url_for('static', filename='logo-oficial.png') }}" alt="ProfessorIA" class="pia-mark-img logo-circular-blindada">
         </span>
         <span class="logo-p">Professor</span><span class="logo-ia">IA</span>
       </a>
@@ -1348,7 +1355,7 @@
         <span></span><span></span><span></span>
       </button>
       <a class="topbar-logo" href="/chat">
-        <img src="{{ url_for('static', filename='logo-oficial.png') }}" alt="ProfessorIA" class="topbar-logo-img">
+        <img src="{{ url_for('static', filename='logo-oficial.png') }}" alt="ProfessorIA" class="topbar-logo-img logo-circular-blindada">
         <span class="tp">Professor</span><span class="tia">IA</span>
       </a>
       <a class="topbar-user" href="/perfil" title="Minha conta">{{ current_user.nome[0].upper() }}</a>
@@ -1574,7 +1581,7 @@
     content.appendChild(bubble);
 
     div.innerHTML = `<div class="msg-avatar" id="currentAvatar" title="ProfessorIA">
-      <img src="/static/logo-oficial.png" class="avatar-logo" alt="ProfessorIA">
+      <img src="/static/logo-oficial.png" class="avatar-logo logo-circular-blindada" alt="ProfessorIA">
     </div>`;
     div.appendChild(content);
     messagesInner.appendChild(div);

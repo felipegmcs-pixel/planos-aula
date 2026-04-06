@@ -79,6 +79,13 @@
     .dm-toggle .icon-sun{display:none}
     body.dark-land .dm-toggle .icon-moon{display:none}
     body.dark-land .dm-toggle .icon-sun{display:block}
+    .logo-circular-blindada {
+      border-radius: 50% !important;
+      overflow: hidden !important;
+      object-fit: cover !important;
+      background-color: transparent !important;
+      display: inline-block !important;
+    }
     /* PROGRESS BAR */
     #read-progress{position:fixed;top:0;left:0;height:3px;width:0%;z-index:9999;background:linear-gradient(90deg,#D4AF37,#1E5A63,#5FC4C4);transition:width .1s linear;border-radius:0 2px 2px 0}
     /* NAV */
@@ -574,7 +581,7 @@
 <div id="read-progress"></div>
 <nav id="nav">
   <div class="nav-brand">
-    <img src="{{ url_for('static', filename='logo-oficial.png') }}" alt="ProfessorIA" class="nav-logo" loading="lazy">
+    <img src="{{ url_for('static', filename='logo-oficial.png') }}" alt="ProfessorIA" class="nav-logo logo-circular-blindada" loading="lazy">
     <span class="nav-name"><span class="nav-name-p">Professor</span><span class="nav-name-ia">IA</span></span>
   </div>
   <div class="nav-links">
@@ -1162,7 +1169,7 @@
 
 <footer>
   <a class="f-logo" href="/">
-    <img src="{{ url_for('static', filename='logo-oficial.png') }}" alt="ProfessorIA" class="f-logo-img" loading="lazy">
+    <img src="{{ url_for('static', filename='logo-oficial.png') }}" alt="ProfessorIA" class="f-logo-img logo-circular-blindada" loading="lazy">
     <span class="f-logo-p">Professor</span><span class="f-logo-ia">IA</span>
   </a>
   <div class="f-links">

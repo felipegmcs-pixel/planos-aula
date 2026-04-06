@@ -25,6 +25,13 @@
       --card:rgba(255,255,255,.9);--card-h:rgba(255,255,255,1);
       --sb-bg:#F4F8F7;
     }
+    .logo-circular-blindada {
+      border-radius: 50% !important;
+      overflow: hidden !important;
+      object-fit: cover !important;
+      background-color: transparent !important;
+      display: inline-block !important;
+    }
     html,body{height:100%;font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);overflow:hidden}
 
     /* 3D canvas */
@@ -219,7 +226,7 @@
     <div class="sidebar-header">
       <a class="logo" href="/">
         <span class="pia-mark">
-          <img src="{{ url_for('static', filename='logo-oficial.png') }}" alt="ProfessorIA" style="height: 32px; width: 32px; border-radius: 50%; object-fit: cover; border: 1px solid #1E5A63; transform: scale(1.1);">
+          <img src="{{ url_for('static', filename='logo-oficial.png') }}" alt="ProfessorIA" class="logo-circular-blindada" style="height: 32px; width: 32px; border: 1px solid #1E5A63; transform: scale(1.1);">
         </span>
         <span class="logo-p">Professor</span><span class="logo-ia">IA</span>
       </a>

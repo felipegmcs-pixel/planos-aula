@@ -7,6 +7,13 @@
   <link rel="icon" type="image/svg+xml" href="/static/logo-oficial.png"/>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet"/>
   <style>
+    .logo-circular-blindada {
+      border-radius: 50% !important;
+      overflow: hidden !important;
+      object-fit: cover !important;
+      background-color: transparent !important;
+      display: inline-block !important;
+    }
     *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
     :root{
       --bg:#FFFFFA;--text:#1A2F33;--text2:#4A6470;--text3:#7A9499;
@@ -107,7 +114,7 @@
 <canvas id="bg3d"></canvas>
 <nav>
   <a class="logo" href="/">
-    <img src="{{ url_for('static', filename='logo-oficial.png') }}" alt="ProfessorIA" style="height: 32px; width: auto; flex-shrink: 0;">
+    <img src="{{ url_for('static', filename='logo-oficial.png') }}" alt="ProfessorIA" class="logo-circular-blindada" style="height: 32px; width: 32px;">
     <span class="logo-p">Professor</span><span class="logo-ia">IA</span>
     
   </a>

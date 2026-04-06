@@ -7,6 +7,13 @@
   <link rel="icon" type="image/svg+xml" href="/static/logo-oficial.png"/>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet"/>
   <style>
+    .logo-circular-blindada {
+      border-radius: 50% !important;
+      overflow: hidden !important;
+      object-fit: cover !important;
+      background-color: transparent !important;
+      display: inline-block !important;
+    }
     *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
     :root{
       --bg:#f7f8ff;--card:#fff;--text:#111827;--text2:#6b7280;--text3:#9ca3af;
@@ -128,7 +135,7 @@
 <nav>
   <a class="nav-logo" href="/">
     <span class="nav-mark">
-      <img src="{{ url_for('static', filename='logo-oficial.png') }}" alt="ProfessorIA" style="height: 32px; width: auto; flex-shrink: 0; object-fit: contain;">
+      <img src="{{ url_for('static', filename='logo-oficial.png') }}" alt="ProfessorIA" class="logo-circular-blindada" style="height: 32px; width: 32px;">
     </span>
     ProfessorIA&nbsp;·&nbsp;Admin
   </a>
