@@ -10,43 +10,43 @@
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     :root {
-      --bg: #ffffff;
-      --text: #111827;
-      --text2: #6b7280;
-      --text3: #9ca3af;
+      --bg: #FFFFFA;
+      --text: #1A2F33;
+      --text2: #4A6470;
+      --text3: #7A9499;
       --indigo: #1E5A63;
       --violet: #164A52;
-      --amber: #f59e0b;
-      --linha: rgba(17,24,39,.08);
-      --linha-f: rgba(17,24,39,.14);
-      --hover-bg: rgba(17,24,39,.04);
-      --pre-bg: #f1f2f8;
-      --sb-bg: #f7f8ff;
-      --sb-fg: #111827;
-      --sb-text: rgba(17,24,39,.45);
+      --amber: #D4AF37;
+      --linha: rgba(30,90,99,.08);
+      --linha-f: rgba(30,90,99,.14);
+      --hover-bg: rgba(30,90,99,.04);
+      --pre-bg: #EEF6F6;
+      --sb-bg: #F4F8F7;
+      --sb-fg: #1A2F33;
+      --sb-text: rgba(30,90,99,.5);
       --sb-active: rgba(30,90,99,.09);
-      --sb-line: rgba(17,24,39,.07);
+      --sb-line: rgba(30,90,99,.08);
       --sidebar-w: 240px;
-      --card-bg: #ffffff;
+      --card-bg: #FFFFFA;
     }
     [data-theme="dark"] {
-      --bg: #0b0d14;
-      --text: #e5e7eb;
-      --text2: #9ca3af;
-      --text3: #6b7280;
+      --bg: #0D2327;
+      --text: #EAF2F3;
+      --text2: #7AABB4;
+      --text3: #4A7A85;
       --linha: rgba(255,255,255,.07);
       --linha-f: rgba(255,255,255,.12);
       --hover-bg: rgba(255,255,255,.04);
       --pre-bg: rgba(255,255,255,.06);
-      --sb-bg: #0a0c18;
-      --sb-fg: #ffffff;
-      --sb-text: rgba(255,255,255,.5);
-      --sb-active: rgba(30,90,99,.2);
+      --sb-bg: #071A1E;
+      --sb-fg: #EAF2F3;
+      --sb-text: rgba(234,242,243,.5);
+      --sb-active: rgba(30,90,99,.25);
       --sb-line: rgba(255,255,255,.07);
-      --card-bg: #1a1c2e;
+      --card-bg: #0E2327;
     }
     html, body { height: 100%; font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); overflow: hidden; }
-    ::selection { background: #ede9fe; color: var(--indigo); }
+    ::selection { background: rgba(212,175,55,.25); color: var(--indigo); }
 
     /* ════════════════════════════════════════
        KEYFRAMES
@@ -168,7 +168,7 @@
       font-size: 1rem; font-weight: 600; letter-spacing: -.3px;
       color: #5FBFBF;
     }
-    [data-theme="dark"] .logo-ia { color: #a5b4fc; }
+    [data-theme="dark"] .logo-ia { color: #D4AF37; }
 
     /* ─── ProfessorIA icon mark (estilo Apple) ─── */
     .pia-mark {
@@ -379,7 +379,7 @@
       animation: welcomeIn .55s .15s both;
     }
     .welcome h1 .wname {
-      background: linear-gradient(135deg, #1E5A63, #164A52, #60a5fa, #1E5A63);
+      background: linear-gradient(135deg, #1E5A63, #D4AF37, #1E5A63, #164A52);
       background-size: 300% 300%;
       -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
       animation: gradShift 5s ease infinite;
@@ -684,7 +684,7 @@
     .nee-opt:hover { background: rgba(30,90,99,.1); border-color: rgba(30,90,99,.3); }
     .nee-opt.sel  { background: rgba(30,90,99,.18); border-color: rgba(30,90,99,.5); }
     .nee-opt-title { font-size: .72rem; font-weight: 700; color: #f0f0ec; }
-    .nee-opt.sel .nee-opt-title { color: #a5b4fc; }
+    .nee-opt.sel .nee-opt-title { color: #5FBFBF; }
     .nee-opt-desc { font-size: .62rem; color: rgba(255,255,255,.35); margin-top: 3px; }
     .nee-footer { display: flex; gap: 8px; justify-content: flex-end; }
     .nee-btn { padding: 10px 20px; border-radius: 8px; font-size: .72rem; font-weight: 700; cursor: pointer; font-family: 'Inter', sans-serif; transition: all .15s; border: none; }
@@ -722,7 +722,7 @@
       font-size: .8rem; color: rgba(255,255,255,.55); line-height: 1.65; margin-bottom: 28px;
     }
     .paywall-price {
-      font-size: 1.8rem; font-weight: 900; color: #a5b4fc;
+      font-size: 1.8rem; font-weight: 900; color: #5FBFBF;
       letter-spacing: -1px; margin-bottom: 4px;
     }
     .paywall-price-sub { font-size: .7rem; color: rgba(255,255,255,.35); margin-bottom: 24px; }
@@ -837,7 +837,7 @@
       border-radius: 8px; outline: none; transition: border-color .2s;
     }
     .dl-input:focus, .dl-select:focus { border-color: rgba(30,90,99,.5); }
-    .dl-select option { background: #1a1c2e; }
+    .dl-select option { background: #0E2327; }
     .dl-file-row { display: flex; align-items: center; gap: 10px; }
     .dl-file-label {
       padding: 8px 14px; background: rgba(255,255,255,.06);
@@ -928,7 +928,7 @@
       color: rgba(255,255,255,.55); font-size: .75rem; font-weight: 600;
       cursor: pointer; font-family: 'Inter', sans-serif; transition: all .15s;
     }
-    .ob-seg:hover { background: rgba(30,90,99,.08); border-color: rgba(30,90,99,.3); color: #a5b4fc; }
+    .ob-seg:hover { background: rgba(30,90,99,.08); border-color: rgba(30,90,99,.3); color: #5FBFBF; }
     .ob-seg.sel { background: rgba(30,90,99,.18); border-color: rgba(30,90,99,.5); color: #5FBFBF; }
     /* Progress dots */
     .ob-dots { display: flex; gap: 6px; justify-content: center; margin-bottom: 28px; }
@@ -1579,9 +1579,9 @@
       }
       const planoJson = await r1.json();
 
-      // Injeta escola se preenchida
-      if (escola && planoJson.plano_de_aula) {
-        planoJson.plano_de_aula._escola_override = escola;
+      // Injeta escola se preenchida (schema flat)
+      if (escola) {
+        planoJson._escola_override = escola;
       }
 
       // 2. Converte JSON em PDF

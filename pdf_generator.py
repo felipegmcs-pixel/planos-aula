@@ -130,17 +130,14 @@ def _blank(label, estilos):
 
 def gerar_plano_pdf(plano_json: dict, display_name: str = '', school_name: str = '') -> bytes:
     """
-    Converte o JSON estruturado do plano de aula em bytes de um PDF profissional.
+    Converte o JSON plano de aula (schema flat) em bytes de um PDF profissional.
 
-    Args:
-        plano_json:   Dicionário com a chave 'plano_de_aula' (saída do /api/gerar-plano).
-        display_name: Nome do professor (do perfil global). Se vazio, exibe linha em branco.
-        school_name:  Nome da escola   (do perfil global). Se vazio, exibe linha em branco.
-
-    Returns:
-        bytes do PDF gerado.
+    Schema esperado (flat):
+        tema, habilidades_bncc, objetivos, conteudo_programatico,
+        metodologia, recursos_didaticos, avaliacao
+        (+ disciplina e ano_escolar injetados pelo back-end)
     """
-    plano = plano_json.get('plano_de_aula', plano_json)  # aceita com ou sem wrapper
+    plano = plano_json  # schema flat, sem wrapper
 
     buf = io.BytesIO()
     doc = SimpleDocTemplate(
@@ -172,10 +169,10 @@ def gerar_plano_pdf(plano_json: dict, display_name: str = '', school_name: str =
     story.append(Spacer(1, 8))
 
     # ── 2. TÍTULO PRINCIPAL ───────────────────────────────────────────────────
-    disciplina = plano.get('disciplina', '')
+    disciplina  = plano.get('disciplina', '')
     ano_escolar = plano.get('ano_escolar', '')
-    tema = plano.get('tema_central', '')
-    titulo_txt = f"PLANO DE AULA  ·  {disciplina.upper()}  |  {ano_escolar}"
+    tema        = plano.get('tema', '')
+    titulo_txt  = f"PLANO DE AULA  ·  {disciplina.upper()}  |  {ano_escolar}"
     t_titulo = Table(
         [[Paragraph(titulo_txt, st['titulo_banner'])]],
         colWidths=[w]
@@ -190,10 +187,9 @@ def gerar_plano_pdf(plano_json: dict, display_name: str = '', school_name: str =
     story.append(Spacer(1, 8))
 
     # ── 3. FICHA DE IDENTIFICAÇÃO ─────────────────────────────────────────────
-    tempo = plano.get('tempo_estimado', '')
     ficha_rows = [
-        [_info_par("Tema Central",    tema,       st), _info_par("Tempo Estimado", tempo, st)],
-        [_info_par("Disciplina",      disciplina, st), _info_par("Ano / Série",    ano_escolar, st)],
+        [_info_par("Tema",       tema,       st), _info_par("Ano / Série", ano_escolar, st)],
+        [_info_par("Disciplina", disciplina, st), _info_par("", "", st)],
     ]
     if display_name:
         ficha_rows.append([_info_par("Professor(a)", display_name, st),
@@ -213,6 +209,7 @@ def gerar_plano_pdf(plano_json: dict, display_name: str = '', school_name: str =
     story.append(Spacer(1, 10))
 
     # ── 4. HABILIDADES BNCC ───────────────────────────────────────────────────
+    # Cada item é uma string "CÓDIGO - Descrição"
     habilidades = plano.get('habilidades_bncc', [])
     if habilidades:
         story.append(_tabela_banner("  HABILIDADES BNCC", w))
@@ -220,11 +217,13 @@ def gerar_plano_pdf(plano_json: dict, display_name: str = '', school_name: str =
 
         bncc_rows = []
         for h in habilidades:
-            codigo = h.get('codigo', '')
-            descricao = h.get('descricao', '')
+            if ' - ' in h:
+                codigo, descricao = h.split(' - ', 1)
+            else:
+                codigo, descricao = '', h
             bncc_rows.append([
-                Paragraph(codigo, st['bncc_codigo']),
-                Paragraph(descricao, st['bncc_desc'])
+                Paragraph(codigo.strip(), st['bncc_codigo']),
+                Paragraph(descricao.strip(), st['bncc_desc'])
             ])
 
         t_bncc = Table(bncc_rows, colWidths=[2.2 * rcm, w - 2.2 * rcm])
@@ -240,57 +239,62 @@ def gerar_plano_pdf(plano_json: dict, display_name: str = '', school_name: str =
         story.append(t_bncc)
         story.append(Spacer(1, 10))
 
-    # ── 5. DESENVOLVIMENTO ────────────────────────────────────────────────────
-    desenvolvimento = plano.get('desenvolvimento', [])
-    if desenvolvimento:
+    # ── 5. OBJETIVOS ──────────────────────────────────────────────────────────
+    objetivos = plano.get('objetivos', [])
+    if objetivos:
+        story.append(_tabela_banner("  OBJETIVOS DE APRENDIZAGEM", w, cor_bg=AZUL_ESCURO))
+        story.append(Spacer(1, 4))
+        obj_rows = [[Paragraph(f'• {o}', st['corpo'])] for o in objetivos]
+        t_obj = Table(obj_rows, colWidths=[w])
+        t_obj.setStyle(TableStyle([
+            ('GRID',          (0, 0), (-1, -1), 0.4, BORDA),
+            ('TOPPADDING',    (0, 0), (-1, -1), 5),
+            ('BOTTOMPADDING', (0, 0), (-1, -1), 5),
+            ('LEFTPADDING',   (0, 0), (-1, -1), 10),
+            ('BACKGROUND',    (0, 0), (-1, -1), AMARELO_BG),
+        ]))
+        story.append(t_obj)
+        story.append(Spacer(1, 10))
+
+    # ── 6. DESENVOLVIMENTO DA AULA ────────────────────────────────────────────
+    conteudo    = plano.get('conteudo_programatico', '')
+    metodologia = plano.get('metodologia', '')
+    recursos    = plano.get('recursos_didaticos', [])
+
+    if conteudo or metodologia or recursos:
         story.append(_tabela_banner("  DESENVOLVIMENTO DA AULA", w))
         story.append(Spacer(1, 6))
 
-        for idx, etapa in enumerate(desenvolvimento):
-            nome_etapa  = etapa.get('etapa', f'Etapa {idx + 1}')
-            conteudo    = etapa.get('conteudo', '')
-            estrategias = etapa.get('estrategias_didaticas', '')
-            recursos    = etapa.get('recursos_pedagogicos', [])
+        dev_rows = [
+            [Paragraph('<b>Conteúdo Programático</b>', st['label']),
+             Paragraph(conteudo, st['corpo'])],
+            [Paragraph('<b>Metodologia</b>', st['label']),
+             Paragraph(metodologia, st['corpo'])],
+            [Paragraph('<b>Recursos Didáticos</b>', st['label']),
+             Paragraph(', '.join(recursos) if recursos else '—', st['corpo'])],
+        ]
+        t_dev = Table(dev_rows, colWidths=[3.8 * rcm, w - 3.8 * rcm])
+        t_dev.setStyle(TableStyle([
+            ('GRID',          (0, 0), (-1, -1), 0.4, BORDA),
+            ('TOPPADDING',    (0, 0), (-1, -1), 6),
+            ('BOTTOMPADDING', (0, 0), (-1, -1), 6),
+            ('LEFTPADDING',   (0, 0), (-1, -1), 8),
+            ('RIGHTPADDING',  (0, 0), (-1, -1), 8),
+            ('VALIGN',        (0, 0), (-1, -1), 'TOP'),
+            ('BACKGROUND',    (0, 0), (0, -1), AZUL_CLARO),
+            ('BACKGROUND',    (1, 0), (1, -1), VERDE_CLARO),
+        ]))
+        story.append(t_dev)
+        story.append(Spacer(1, 10))
 
-            # Sub-banner de etapa
-            cor_etapa = AZUL_ESCURO if idx % 2 == 0 else colors.HexColor('#374151')
-            story.append(_tabela_banner(f"  {nome_etapa.upper()}", w, cor_bg=cor_etapa))
-            story.append(Spacer(1, 4))
-
-            det_rows = [
-                [Paragraph('<b>Conteúdo</b>', st['label']),
-                 Paragraph(conteudo, st['corpo'])],
-                [Paragraph('<b>Estratégias Didáticas</b>', st['label']),
-                 Paragraph(estrategias, st['corpo'])],
-                [Paragraph('<b>Recursos Pedagógicos</b>', st['label']),
-                 Paragraph(', '.join(recursos) if recursos else '—', st['corpo'])],
-            ]
-            t_det = Table(det_rows, colWidths=[3.8 * rcm, w - 3.8 * rcm])
-            bg = VERDE_CLARO if idx % 2 == 0 else AMARELO_BG
-            t_det.setStyle(TableStyle([
-                ('GRID',          (0, 0), (-1, -1), 0.4, BORDA),
-                ('TOPPADDING',    (0, 0), (-1, -1), 6),
-                ('BOTTOMPADDING', (0, 0), (-1, -1), 6),
-                ('LEFTPADDING',   (0, 0), (-1, -1), 8),
-                ('RIGHTPADDING',  (0, 0), (-1, -1), 8),
-                ('VALIGN',        (0, 0), (-1, -1), 'TOP'),
-                ('BACKGROUND',    (0, 0), (0, -1), AZUL_CLARO),
-                ('BACKGROUND',    (1, 0), (1, -1), bg),
-            ]))
-            story.append(t_det)
-            story.append(Spacer(1, 6))
-
-    # ── 6. AVALIAÇÃO E FECHAMENTO ─────────────────────────────────────────────
-    avaliacao = plano.get('avaliacao_e_fechamento', {})
+    # ── 7. AVALIAÇÃO ──────────────────────────────────────────────────────────
+    avaliacao = plano.get('avaliacao', '')
     if avaliacao:
-        story.append(_tabela_banner("  AVALIAÇÃO E FECHAMENTO", w, cor_bg=colors.HexColor('#065f46')))
+        story.append(_tabela_banner("  AVALIAÇÃO", w, cor_bg=colors.HexColor('#065f46')))
         story.append(Spacer(1, 4))
 
-        metodo   = avaliacao.get('metodo', '')
-        criterios = avaliacao.get('criterios', '')
         aval_rows = [
-            [Paragraph('<b>Método</b>',    st['label']), Paragraph(metodo,    st['corpo'])],
-            [Paragraph('<b>Critérios</b>', st['label']), Paragraph(criterios, st['corpo'])],
+            [Paragraph('<b>Critérios e Método</b>', st['label']), Paragraph(avaliacao, st['corpo'])],
         ]
         t_aval = Table(aval_rows, colWidths=[3.0 * rcm, w - 3.0 * rcm])
         t_aval.setStyle(TableStyle([

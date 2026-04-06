@@ -316,15 +316,22 @@ Responda sempre em português brasileiro. Seja prático, objetivo e direto."""
 # ─── Plano de Aula — Structured Output ────────────────────────────────────────
 
 SYSTEM_PROMPT_PLANO = (
-    "Você é o ProfessorIA, um assistente pedagógico de elite especializado no currículo "
-    "educacional brasileiro. Sua missão é estruturar planos de aula impecáveis e alinhados à BNCC. "
+    "Você é um especialista em planejamento pedagógico alinhado à BNCC. "
+    "Retorne EXATAMENTE o seguinte formato JSON, sem adicionar texto extra ou markdown fora do JSON:\n"
+    '{\n'
+    '  "tema": "Tema da Aula",\n'
+    '  "habilidades_bncc": ["Código 1 - Descrição", "Código 2 - Descrição"],\n'
+    '  "objetivos": ["Objetivo 1", "Objetivo 2"],\n'
+    '  "conteudo_programatico": "Resumo do que será ensinado",\n'
+    '  "metodologia": "Passo a passo de como a aula será conduzida",\n'
+    '  "recursos_didaticos": ["Recurso 1", "Recurso 2"],\n'
+    '  "avaliacao": "Como o aprendizado será medido"\n'
+    "}\n"
     "REGRAS ABSOLUTAS: "
-    "1) O retorno deve ser EXCLUSIVAMENTE um objeto JSON válido. "
+    "1) Resposta DEVE começar com { e terminar com }, sem nenhuma palavra fora do JSON. "
     "2) PROIBIDO ALUCINAR BNCC: Os códigos alfanuméricos (ex: EF08HI01) devem ser 100% reais. "
-    "3) Metodologias devem ser ativas e práticas, fuja do clichê expositivo. "
-    "4) REGRA DE FORMATAÇÃO: É ESTRITAMENTE PROIBIDO gerar tabelas em Markdown, blocos de texto "
-    "explicativo ou qualquer tipo de formatação visual. Sua resposta DEVE começar com { e terminar "
-    "com }, contendo EXCLUSIVAMENTE o objeto JSON puro. Nenhuma palavra a mais, nenhuma tabela."
+    "3) habilidades_bncc: cada item é uma string no formato 'CÓDIGO - Descrição'. "
+    "4) Metodologias devem ser ativas e práticas, fuja do clichê expositivo."
 )
 
 PLANO_AULA_TOOL = {
@@ -333,53 +340,16 @@ PLANO_AULA_TOOL = {
     "input_schema": {
         "type": "object",
         "properties": {
-            "plano_de_aula": {
-                "type": "object",
-                "properties": {
-                    "tema_central":    {"type": "string"},
-                    "disciplina":      {"type": "string"},
-                    "ano_escolar":     {"type": "string"},
-                    "tempo_estimado":  {"type": "string"},
-                    "habilidades_bncc": {
-                        "type": "array",
-                        "items": {
-                            "type": "object",
-                            "properties": {
-                                "codigo":    {"type": "string"},
-                                "descricao": {"type": "string"}
-                            },
-                            "required": ["codigo", "descricao"]
-                        }
-                    },
-                    "desenvolvimento": {
-                        "type": "array",
-                        "items": {
-                            "type": "object",
-                            "properties": {
-                                "etapa":                {"type": "string"},
-                                "conteudo":             {"type": "string"},
-                                "estrategias_didaticas":{"type": "string"},
-                                "recursos_pedagogicos": {"type": "array", "items": {"type": "string"}}
-                            },
-                            "required": ["etapa", "conteudo", "estrategias_didaticas", "recursos_pedagogicos"]
-                        }
-                    },
-                    "avaliacao_e_fechamento": {
-                        "type": "object",
-                        "properties": {
-                            "metodo":   {"type": "string"},
-                            "criterios":{"type": "string"}
-                        },
-                        "required": ["metodo", "criterios"]
-                    }
-                },
-                "required": [
-                    "tema_central", "disciplina", "ano_escolar", "tempo_estimado",
-                    "habilidades_bncc", "desenvolvimento", "avaliacao_e_fechamento"
-                ]
-            }
+            "tema":                  {"type": "string"},
+            "habilidades_bncc":      {"type": "array", "items": {"type": "string"}},
+            "objetivos":             {"type": "array", "items": {"type": "string"}},
+            "conteudo_programatico": {"type": "string"},
+            "metodologia":           {"type": "string"},
+            "recursos_didaticos":    {"type": "array", "items": {"type": "string"}},
+            "avaliacao":             {"type": "string"}
         },
-        "required": ["plano_de_aula"]
+        "required": ["tema", "habilidades_bncc", "objetivos", "conteudo_programatico",
+                     "metodologia", "recursos_didaticos", "avaliacao"]
     }
 }
 
@@ -1880,44 +1850,13 @@ def api_gerar_plano():
             gemini_schema = {
                 'type': 'object',
                 'properties': {
-                    'plano_de_aula': {
-                        'type': 'object',
-                        'properties': {
-                            'tema_central':   {'type': 'string'},
-                            'disciplina':     {'type': 'string'},
-                            'ano_escolar':    {'type': 'string'},
-                            'tempo_estimado': {'type': 'string'},
-                            'habilidades_bncc': {
-                                'type': 'array',
-                                'items': {
-                                    'type': 'object',
-                                    'properties': {
-                                        'codigo':    {'type': 'string'},
-                                        'descricao': {'type': 'string'},
-                                    }
-                                }
-                            },
-                            'desenvolvimento': {
-                                'type': 'array',
-                                'items': {
-                                    'type': 'object',
-                                    'properties': {
-                                        'etapa':                 {'type': 'string'},
-                                        'conteudo':              {'type': 'string'},
-                                        'estrategias_didaticas': {'type': 'string'},
-                                        'recursos_pedagogicos':  {'type': 'array', 'items': {'type': 'string'}},
-                                    }
-                                }
-                            },
-                            'avaliacao_e_fechamento': {
-                                'type': 'object',
-                                'properties': {
-                                    'metodo':    {'type': 'string'},
-                                    'criterios': {'type': 'string'},
-                                }
-                            },
-                        }
-                    }
+                    'tema':                  {'type': 'string'},
+                    'habilidades_bncc':      {'type': 'array', 'items': {'type': 'string'}},
+                    'objetivos':             {'type': 'array', 'items': {'type': 'string'}},
+                    'conteudo_programatico': {'type': 'string'},
+                    'metodologia':           {'type': 'string'},
+                    'recursos_didaticos':    {'type': 'array', 'items': {'type': 'string'}},
+                    'avaliacao':             {'type': 'string'},
                 }
             }
             gm = genai.GenerativeModel(
@@ -1934,7 +1873,7 @@ def api_gerar_plano():
             erro_motores.append(f'Gemini: {e}')
             logger.warning('api_gerar_plano — Gemini falhou: %s', e)
 
-    # ── Fallback: OpenAI com json_schema ──
+    # ── Fallback: OpenAI com json_object ──
     if plano_json is None:
         try:
             oai_key = os.environ.get('OPENAI_API_KEY')
@@ -1947,14 +1886,7 @@ def api_gerar_plano():
                         {'role': 'system',  'content': SYSTEM_PROMPT_PLANO},
                         {'role': 'user',    'content': user_prompt}
                     ],
-                    response_format={
-                        'type': 'json_schema',
-                        'json_schema': {
-                            'name': 'plano_de_aula',
-                            'strict': True,
-                            'schema': _OAI_PLANO_SCHEMA
-                        }
-                    },
+                    response_format={'type': 'json_object'},
                     max_tokens=4000
                 )
                 plano_json = json.loads(resp_o.choices[0].message.content)
@@ -1967,6 +1899,10 @@ def api_gerar_plano():
             'erro': 'Todos os motores de IA falharam. Verifique as chaves de API.',
             'detalhes': erro_motores
         }), 503
+
+    # Garante que disciplina e ano estejam no JSON para o PDF
+    plano_json.setdefault('disciplina', disciplina)
+    plano_json.setdefault('ano_escolar', ano)
 
     # Contabiliza geração
     conn = get_db()
@@ -4712,14 +4648,14 @@ def api_plano_pdf():
     """
     data = request.get_json(force=True) or {}
 
-    # Aceita { plano_de_aula: {...} } ou o objeto plano direto
-    plano_json = data if 'plano_de_aula' in data else {'plano_de_aula': data}
-    if not plano_json.get('plano_de_aula'):
+    # Schema plano: JSON plano direto (flat)
+    plano_json = data
+    if not plano_json.get('tema'):
         return jsonify({'erro': 'JSON do plano de aula não encontrado no body'}), 400
 
     display_name = current_user.professor_nome or ''
     # Aceita escola temporária enviada pelo front-end (sem sobrescrever o perfil global)
-    escola_override = plano_json.get('plano_de_aula', {}).pop('_escola_override', None)
+    escola_override = plano_json.pop('_escola_override', None)
     school_name = escola_override or current_user.escola_nome or ''
 
     try:
@@ -4728,7 +4664,7 @@ def api_plano_pdf():
         logger.error('Erro ao gerar PDF do plano: %s', e)
         return jsonify({'erro': f'Falha ao gerar PDF: {str(e)[:200]}'}), 500
 
-    tema = plano_json['plano_de_aula'].get('tema_central', 'plano')
+    tema = plano_json.get('tema', 'plano')
     nome_arquivo = f"PlanoDeAula_{tema[:40].replace(' ', '_')}.pdf"
 
     return send_file(
