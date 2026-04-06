@@ -212,7 +212,41 @@ def get_db():
     return _DbConn(conn)
 
 def _migrar_banco():
-    """Adiciona colunas novas sem quebrar o servidor se já existirem."""
+    """Cria tabelas se não existirem e adiciona colunas novas."""
+    schema = [
+        """CREATE TABLE IF NOT EXISTS users (
+            id SERIAL PRIMARY KEY,
+            nome TEXT NOT NULL,
+            email TEXT UNIQUE NOT NULL,
+            password_hash TEXT NOT NULL,
+            is_premium BOOLEAN DEFAULT FALSE,
+            stripe_customer_id TEXT,
+            escola_governo TEXT DEFAULT '',
+            escola_secretaria TEXT DEFAULT '',
+            escola_diretoria TEXT DEFAULT '',
+            escola_nome TEXT DEFAULT '',
+            escola_endereco TEXT DEFAULT '',
+            escola_fone TEXT DEFAULT '',
+            escola_email TEXT DEFAULT '',
+            data_criacao TIMESTAMP DEFAULT NOW()
+        )""",
+        """CREATE TABLE IF NOT EXISTS planos_aula (
+            id SERIAL PRIMARY KEY,
+            user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+            titulo TEXT,
+            disciplina TEXT,
+            ano_serie TEXT,
+            plano_json TEXT,
+            data_criacao TIMESTAMP DEFAULT NOW()
+        )""",
+        """CREATE TABLE IF NOT EXISTS lista_vip (
+            id SERIAL PRIMARY KEY,
+            nome TEXT NOT NULL,
+            email TEXT NOT NULL,
+            whatsapp TEXT,
+            criado_em TIMESTAMP DEFAULT NOW()
+        )""",
+    ]
     colunas = [
         "ALTER TABLE users ADD COLUMN IF NOT EXISTS escola_governo TEXT DEFAULT ''",
         "ALTER TABLE users ADD COLUMN IF NOT EXISTS escola_secretaria TEXT DEFAULT ''",
@@ -224,6 +258,12 @@ def _migrar_banco():
     ]
     db = get_db()
     try:
+        for sql in schema:
+            try:
+                db.execute(sql)
+                db.commit()
+            except Exception as e:
+                logger.warning('Schema pulado: %s — %s', sql[:60], e)
         for sql in colunas:
             try:
                 db.execute(sql)
