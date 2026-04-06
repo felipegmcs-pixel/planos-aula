@@ -1084,14 +1084,14 @@
 <body>
 <canvas id="bg3d" class="bg3d-canvas"></canvas>
 
-  <!-- Oráculo de Áudio Overlay -->
+  <!-- ProfessorIA Áudio Overlay -->
   <div id="oraculoOverlay" class="oraculo-overlay">
     <div class="oraculo-container" onclick="toggleOraculo()">
       <div class="oraculo-core">
         <img src="{{ url_for('static', filename='logo-oficial.png') }}" alt="ProfessorIA">
       </div>
     </div>
-    <div class="oraculo-status" id="oraculoStatus">O Oráculo está falando...</div>
+    <div class="oraculo-status" id="oraculoStatus">O ProfessorIA está falando...</div>
     <div class="oraculo-hint">Clique no círculo para pausar ou retomar a mentoria</div>
     <button class="msg-btn" style="margin-top: 30px; border-color: #D4AF37; color: #D4AF37;" onclick="ouvirTexto('', document.querySelector('.msg-btn.ouvir.playing'))">Encerrar Mentoria</button>
   </div>
@@ -1689,10 +1689,10 @@
     if (!tema || !ano || !disc) { alert('Preencha Tema, Ano e Disciplina.'); return; }
 
     btn.textContent = '⏳ Gerando...'; btn.disabled = true;
-    // Feedback visual do Oráculo
+    // Feedback visual do ProfessorIA
     const statusOriginal = btn.textContent;
     const intervalOraculo = setInterval(() => {
-      const msgs = ['⏳ Gerando...', '✨ O Oráculo está revisando...', '📚 Garantindo perfeição pedagógica...', '🛡️ Validando BNCC...'];
+      const msgs = ['⏳ Gerando...', '✨ O ProfessorIA está revisando...', '📚 Garantindo perfeição pedagógica...', '🛡️ Validando BNCC...'];
       btn.textContent = msgs[Math.floor(Math.random() * msgs.length)];
     }, 3000);
 
@@ -1853,10 +1853,10 @@
     if (piaMark) piaMark.classList.add('typing');
     if (curAvatar) curAvatar.classList.add('typing');
     
-    // Feedback visual do Oráculo no Chat
+    // Feedback visual do ProfessorIA no Chat
     const oraculoStatus = document.createElement('div');
     oraculoStatus.className = 'oraculo-chat-status';
-    oraculoStatus.innerHTML = '✨ O Oráculo está processando...';
+    oraculoStatus.innerHTML = '✨ O ProfessorIA está processando...';
     document.getElementById('messages').appendChild(oraculoStatus);
     scroll();
 
@@ -1989,10 +1989,10 @@
     if (audioAtual.paused) {
       audioAtual.play();
       if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
-      document.getElementById('oraculoStatus').textContent = 'O Oráculo está falando...';
+      document.getElementById('oraculoStatus').textContent = 'O ProfessorIA está falando...';
     } else {
       audioAtual.pause();
-      document.getElementById('oraculoStatus').textContent = 'Oráculo em silêncio';
+      document.getElementById('oraculoStatus').textContent = 'ProfessorIA em silêncio';
     }
   }
 
@@ -2010,7 +2010,7 @@
       if (btn.dataset.playing === '1') return;
     }
 
-    btn.textContent = '⏳ Invocando Oráculo...';
+    btn.textContent = '⏳ Invocando ProfessorIA...';
     btn.classList.add('playing');
     btn.dataset.playing = '1';
 
@@ -2029,14 +2029,14 @@
       // Mostrar Overlay do Oráculo
       const overlay = document.getElementById('oraculoOverlay');
       overlay.classList.add('active');
-      document.getElementById('oraculoStatus').textContent = 'O Oráculo está falando...';
+      document.getElementById('oraculoStatus').textContent = 'O ProfessorIA está falando...';
       
       audioAtual.play().then(() => {
         initOraculoVisual();
         animarOraculo();
       });
 
-      btn.textContent = '⏸ Pausar Oráculo';
+      btn.textContent = '⏸ Pausar ProfessorIA';
 
       audioAtual.onended = () => {
         btn.textContent = '▶ Ouvir';
@@ -2058,7 +2058,7 @@
       btn.textContent = '▶ Ouvir';
       btn.classList.remove('playing');
       btn.dataset.playing = '0';
-      alert('O Oráculo não pôde ser invocado no momento.');
+      alert('O ProfessorIA não pôde ser invocado no momento.');
     }
   }
 
