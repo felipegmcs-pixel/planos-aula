@@ -5,17 +5,26 @@
   <script>!function(){var t=localStorage.getItem("pia-theme")||"light",a="system"===t?(window.matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light"):t;document.documentElement.setAttribute("data-theme",a),document.documentElement.style.colorScheme=a}();</script>
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>{{ titulo }} — ProfessorIA</title>
-  <link rel="icon" href="{{ url_for('static', filename='favicon.ico') }}" type="image/x-icon">
+  <title>ProfessorIA — Sabedoria e Tempo para Você</title>
+  <link rel="icon" href="{{ url_for('static', filename='logooficial.png') }}" type="image/png">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet"/>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-    :root { --preto: #1A2F33; --branco: #FFFFFA; --azul-academico: #1E5A63; --cinza: #4A6470; --linha: rgba(30,90,99,0.09); --verde: #16a34a; --vermelho: #dc2626; }
-    body { font-family: 'Inter', sans-serif; background: var(--branco); color: var(--preto); min-height: 100vh; display: flex; flex-direction: column; }
+    :root { 
+      --preto: #0D2327; 
+      --branco: #FFFFFA; 
+      --azul-academico: #1E5A63; 
+      --dourado: #D4AF37;
+      --cinza: #7A9499; 
+      --linha: rgba(30,90,99,0.15); 
+      --verde: #34D399; 
+      --vermelho: #EF4444; 
+    }
+    body { font-family: 'Inter', sans-serif; background: var(--preto); color: var(--branco); min-height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
     ::selection { background: var(--azul-academico); color: var(--preto); }
 
-    nav { padding: 0 40px; height: 56px; display: flex; align-items: center; border-bottom: 1px solid var(--linha); background: rgba(255,255,255,0.97); backdrop-filter: blur(12px); }
-    .nav-logo { font-size: 0.72rem; font-weight: 900; letter-spacing: 3px; text-transform: uppercase; color: var(--preto); text-decoration: none; display: flex; align-items: center; gap: 10px; }
+    nav { padding: 0 40px; height: 64px; display: flex; align-items: center; border-bottom: 1px solid var(--linha); background: rgba(13, 35, 39, 0.8); backdrop-filter: blur(12px); }
+    .nav-logo { font-size: 0.8rem; font-weight: 900; letter-spacing: 3px; text-transform: uppercase; color: var(--branco); text-decoration: none; display: flex; align-items: center; gap: 12px; }
     .nav-logo .tm { font-size: 0.5rem; vertical-align: super; opacity: 0.4; font-weight: 400; }
 
     .container { flex: 1; display: flex; align-items: center; justify-content: center; padding: 40px 20px; position: relative; overflow: hidden; }
@@ -24,12 +33,13 @@
     .box { width: 100%; max-width: 480px; text-align: center; position: relative; z-index: 1; }
 
     .status-mark {
-      width: 64px; height: 64px; margin: 0 auto 32px;
+      width: 80px; height: 80px; margin: 0 auto 32px;
       display: flex; align-items: center; justify-content: center;
-      font-size: 1.8rem; font-weight: 900;
-      border: 1px solid;
+      font-size: 2.2rem; font-weight: 900;
+      border: 2px solid;
+      border-radius: 50%;
     }
-    .mark-sucesso { border-color: rgba(52,211,153,0.4); color: var(--verde); background: rgba(52,211,153,0.06); }
+    .mark-sucesso { border-color: var(--dourado); color: var(--dourado); background: rgba(212, 175, 55, 0.1); box-shadow: 0 0 20px rgba(212, 175, 55, 0.2); }
     .mark-pendente { border-color: rgba(30,90,99,0.4); color: var(--azul-academico); background: rgba(30,90,99,0.06); }
     .mark-falha { border-color: rgba(239,68,68,0.4); color: var(--vermelho); background: rgba(239,68,68,0.06); }
 
@@ -40,8 +50,8 @@
     .mensagem { font-size: 0.82rem; color: var(--cinza); line-height: 1.8; margin-bottom: 40px; max-width: 360px; margin-left: auto; margin-right: auto; }
     .mensagem-nota { font-size: 0.75rem; opacity: 0.75; margin-top: -24px; color: var(--cinza); line-height: 1.8; margin-bottom: 40px; max-width: 360px; margin-left: auto; margin-right: auto; }
 
-    .btn { display: inline-flex; align-items: center; gap: 8px; padding: 14px 32px; background: var(--azul-academico); color: #FFFFFA; border: none; font-size: 0.65rem; font-weight: 900; font-family: 'Inter', sans-serif; letter-spacing: 3px; text-transform: uppercase; text-decoration: none; cursor: pointer; transition: background .2s; }
-    .btn:hover { background: #164A52; color: #FFFFFA; }
+    .btn { display: inline-flex; align-items: center; gap: 12px; padding: 18px 40px; background: var(--dourado); color: var(--preto); border: none; font-size: 0.75rem; font-weight: 900; font-family: 'Inter', sans-serif; letter-spacing: 2px; text-transform: uppercase; text-decoration: none; cursor: pointer; transition: all 0.3s ease; border-radius: 4px; }
+    .btn:hover { background: #E5C05B; transform: translateY(-2px); box-shadow: 0 8px 24px rgba(212, 175, 55, 0.3); }
 
     .diag { position: fixed; inset: 0; pointer-events: none; }
     .diag svg { width: 100%; height: 100%; opacity: 0.04; }
@@ -64,7 +74,7 @@
   <div class="box">
     {% if status == 'sucesso' %}
       <div class="status-mark mark-sucesso">✓</div>
-      <div class="status-num">PAGAMENTO CONFIRMADO</div>
+      <div class="status-num" style="color: var(--dourado)">PAGAMENTO CONFIRMADO</div>
     {% elif status == 'pendente' %}
       <div class="status-mark mark-pendente">⏱</div>
       <div class="status-num">AGUARDANDO CONFIRMAÇÃO</div>
@@ -74,11 +84,12 @@
     {% endif %}
 
     <h1>{{ titulo }}</h1>
-    <p class="mensagem">{{ mensagem }}</p>
+    <p class="mensagem" style="color: var(--cinza)">{{ mensagem }}</p>
     {% if status == 'sucesso' %}
-    <p class="mensagem-nota">Processamento pode levar alguns minutos. Se não conseguir acessar os recursos, aguarde 1 minuto e recarregue a página.</p>
+    <p class="mensagem" style="font-size: 1.1rem; color: var(--branco); font-weight: 500;">Seja bem-vindo, Professor. O Oráculo está à sua disposição.</p>
+    <p class="mensagem-nota" style="color: var(--cinza)">O processamento pode levar alguns instantes. Se necessário, recarregue o painel em 1 minuto.</p>
     {% endif %}
-    <a href="/chat" class="btn">IR PARA O CHAT →</a>
+    <a href="/chat" class="btn">ACESSAR PAINEL →</a>
   </div>
 </div>
 <script src="/static/theme.js"></script>

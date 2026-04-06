@@ -3,9 +3,8 @@
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>ProfessorIA</title>
-  <link rel="icon" href="{{ url_for('static', filename='favicon.png') }}" type="image/png">
-  <link rel="icon" href="{{ url_for('static', filename='favicon.ico') }}" type="image/x-icon" sizes="any">
+  <title>ProfessorIA — Sabedoria e Tempo para Você</title>
+  <link rel="icon" href="{{ url_for('static', filename='logooficial.png') }}" type="image/png">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet"/>
   <style>
     *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
@@ -38,7 +37,12 @@
     .sticky-cta.visible{opacity:1;transform:translateY(0) scale(1);pointer-events:auto}
     .sticky-cta:hover{box-shadow:0 12px 44px rgba(30,90,99,.6);transform:translateY(-2px) scale(1.02)}
     .sticky-cta svg{width:16px;height:16px;fill:#fff;flex-shrink:0}
-    @media(max-width:600px){.sticky-cta{bottom:16px;right:16px;padding:11px 18px;font-size:.8rem}}
+    @media(max-width:600px){
+      .sticky-cta{bottom:16px;right:16px;padding:11px 18px;font-size:.8rem;max-width:calc(100% - 32px);text-align:center;justify-content:center}
+      .hero h1{font-size:2.4rem;letter-spacing:-1.5px}
+      .hero-btns{flex-direction:column;width:100%;max-width:300px;margin:0 auto}
+      .btn-primary,.btn-ghost-d{width:100%;justify-content:center}
+    }
 
     /* DARK MODE LANDING */
     body.dark-land{--bg:#0E2327;--bg2:#112B30;--bg3:#173238;--text:#EAF2F3;--text2:#7AABB4;--text3:#4A7A84;--line:rgba(255,255,255,.07);--line2:rgba(255,255,255,.12)}
@@ -579,7 +583,7 @@
     <a class="nav-user" href="/chat"><span class="nav-udot"></span>Olá, {{ current_user.nome.split()[0] }}</a>
     {% else %}
     <a class="nav-a" href="/login">Entrar</a>
-    <a class="btn-nav" href="#" onclick="abrirModalVip();return false;">Começar grátis</a>
+    <a class="btn-nav" href="/cadastro">Começar grátis</a>
     {% endif %}
     <button class="dm-toggle" id="dmToggle" aria-label="Alternar modo escuro" title="Modo escuro">
       <svg class="icon-moon" viewBox="0 0 24 24"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/></svg>
@@ -679,7 +683,7 @@
             <a href="/chat" class="btn-ghost-d">Explorar grátis</a>
           {% endif %}
         {% else %}
-          <a href="#" onclick="abrirModalVip();return false;" class="btn-primary">Começar grátis →</a>
+          <a href="/cadastro" class="btn-primary">Começar grátis →</a>
           <a href="/login" class="btn-ghost-d">Já tenho conta</a>
         {% endif %}
       </div>
@@ -970,7 +974,7 @@
         <li>Adaptações NEE <span class="xck">—</span></li>
         <li>Exportar DOCX <span class="xck">—</span></li>
       </ul>
-      <a href="#" onclick="abrirModalVip();return false;" class="btn-plan o">Começar grátis</a>
+      <a href="/cadastro" class="btn-plan o">Começar grátis</a>
       <div class="plan-sc"></div>
     </div>
     <div class="plan-card hot">
@@ -1074,7 +1078,7 @@
         <a href="/planos" class="btn-primary btn-primary-lg">Ver planos →</a>
       {% endif %}
     {% else %}
-      <a href="#" onclick="abrirModalVip();return false;" class="btn-primary btn-primary-lg">Criar conta grátis →</a>
+      <a href="/cadastro" class="btn-primary btn-primary-lg">Criar conta grátis →</a>
     {% endif %}
   </div>
 </section>
@@ -1096,7 +1100,7 @@
 
 <!-- STICKY CTA -->
 {% if not current_user.is_authenticated %}
-<a class="sticky-cta" id="stickyCta" href="#" onclick="abrirModalVip();return false;">
+<a class="sticky-cta" id="stickyCta" href="/cadastro">
   <svg viewBox="0 0 24 24"><path d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
   Começar grátis
 </a>

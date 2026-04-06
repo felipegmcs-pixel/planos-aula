@@ -16,13 +16,56 @@ try:
 except ImportError:
     pass
 
-# ─── Logging estruturado ──────────────────────────────────────────────────────
+# ─── Logging estruturado # ──────────────────────────────────────────────────────
 logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s [%(levelname)s] %(message)s',
     datefmt='%Y-%m-%d %H:%M:%S'
 )
 logger = logging.getLogger('professorIA')
+
+def alertar_falha_ia(motor, erro, usuario_id=None, contexto=None):
+    """
+    Registra falhas críticas de IA e prepara para envio de alertas.
+    Em produção, isso pode ser conectado ao Sentry, Slack ou E-mail.
+    """
+    msg_erro = f"🚨 FALHA CRÍTICA IA [{motor}]"
+    if usuario_id: msg_erro += f" | Usuário: {usuario_id}"
+    if contexto:   msg_erro += f" | Contexto: {contexto}"
+    msg_erro += f"\nErro: {str(erro)[:500]}"
+    
+    logger.error(msg_erro)
+    
+    # Exemplo de integração futura com Sentry ou Webhook
+    # if os.environ.get('SENTRY_DSN'):
+    #     import sentry_sdk
+    #     sentry_sdk.capture_message(msg_erro, level="error")
+    
+    # Alerta via E-mail se configurado
+    admin_email = os.environ.get('ADMIN_EMAIL')
+    if admin_email and os.environ.get('SMTP_PASS'):
+        try:
+            enviar_email_alerta(admin_email, "ALERTA: Falha de IA no ProfessorIA", msg_erro)
+        except Exception as e:
+            logger.warning("Falha ao enviar e-mail de alerta: %s", e)
+
+def enviar_email_alerta(destinatario, assunto, corpo):
+    smtp_server = os.environ.get('SMTP_SERVER', 'smtp.gmail.com')
+    smtp_port = int(os.environ.get('SMTP_PORT', 587))
+    smtp_user = os.environ.get('SMTP_USER')
+    smtp_pass = os.environ.get('SMTP_PASS')
+    
+    if not all([smtp_user, smtp_pass]): return
+
+    msg = MIMEText(corpo)
+    msg['Subject'] = assunto
+    msg['From'] = f"ProfessorIA Alertas <{smtp_user}>"
+    msg['To'] = destinatario
+
+    with smtplib.SMTP(smtp_server, smtp_port) as server:
+        server.starttls()
+        server.login(smtp_user, smtp_pass)
+        server.send_message(msg)
 import psycopg2
 import psycopg2.extras
 from datetime import datetime, timedelta
@@ -52,7 +95,7 @@ from pdf_generator import gerar_plano_pdf
 # ─── Configuração de Estilo de Imagem (Frente 4) ──────────────────────────────
 IMAGE_STYLE_MODIFIER = "Estilo: Traço Acadêmico-Inclusivo. Ilustração digital moderna, textura sutil de aquarela, linhas limpas, visual minimalista. PROIBIDO inserir textos, palavras ou letras dentro da imagem. Apenas a arte temática."
 
-# ─── App ──────────────────────────────────────────────────────────────────────
+# ─── App # ──────────────────────────────────────────────────────────────────────
 
 app = Flask(__name__)
 _secret = os.environ.get('SECRET_KEY', '')
@@ -82,7 +125,7 @@ limiter = Limiter(
 
 client = Anthropic(api_key=os.environ.get('ANTHROPIC_API_KEY'), timeout=120.0)
 
-# ── OpenAI (Motor Duplo) ──────────────────────────────────────────────────────
+# ── OpenAI (Motor Duplo) # ──────────────────────────────────────────────────────
 OPENAI_API_KEY = os.environ.get('OPENAI_API_KEY', '')
 client_openai = OpenAI(api_key=os.environ.get('OPENAI_API_KEY')) if os.environ.get('OPENAI_API_KEY') else None
 MOTOR_IA = os.environ.get('MOTOR_IA', 'claude').lower()  # 'claude' ou 'openai'
@@ -327,6 +370,18 @@ SYSTEM_PROMPT_PLANO = (
     "com }, contendo EXCLUSIVAMENTE o objeto JSON puro. Nenhuma palavra a mais, nenhuma tabela."
 )
 
+SYSTEM_PROMPT_COORDENADOR = (
+    "Você é o Coordenador Pedagógico Sênior do ProfessorIA. Sua missão é revisar e refinar "
+    "planos de aula e provas gerados por outros agentes para garantir perfeição pedagógica e "
+    "alinhamento total à BNCC. "
+    "DIRETRIZES DE REVISÃO: "
+    "1) Verifique se as habilidades BNCC são adequadas para o ano/série. "
+    "2) Garanta que a linguagem seja apropriada para a faixa etária. "
+    "3) Melhore estratégias didáticas que pareçam genéricas ou pouco práticas. "
+    "4) Corrija qualquer erro estrutural no JSON. "
+    "5) O retorno deve ser EXCLUSIVAMENTE o JSON corrigido e finalizado, sem comentários."
+)
+
 PLANO_AULA_TOOL = {
     "name": "salvar_plano_de_aula",
     "description": "Salva o plano de aula estruturado gerado pelo assistente pedagógico.",
@@ -540,7 +595,7 @@ def chamar_ia_simples(prompt):
     return _llm_cadeia_simples(prompt)
 
 
-# ─── Banco de dados ───────────────────────────────────────────────────────────
+# ─── Banco de dados # ───────────────────────────────────────────────────────────
 
 DATABASE_URL = os.environ.get('DATABASE_URL', '').replace('postgres://', 'postgresql://', 1)
 
@@ -718,7 +773,18 @@ def init_db():
             criado_em      TEXT
         )
     ''')
-    # ─── Índices de performance ────────────────────────────────────────────────
+    conn.execute('''
+        CREATE TABLE IF NOT EXISTS analytics_bncc (
+            id           SERIAL PRIMARY KEY,
+            usuario_id   INTEGER NOT NULL,
+            material_id  INTEGER,
+            tipo_material TEXT,
+            codigo_bncc  TEXT NOT NULL,
+            descricao    TEXT,
+            criado_em    TEXT
+        )
+    ''')
+    # ─── Índices de performance # ────────────────────────────────────────────────
     conn.execute('CREATE INDEX IF NOT EXISTS idx_historico_usuario ON historico(usuario_id)')
     conn.execute('CREATE INDEX IF NOT EXISTS idx_chat_messages_usuario ON chat_messages(usuario_id)')
     conn.execute('CREATE INDEX IF NOT EXISTS idx_questions_bank_usuario ON questions_bank(usuario_id)')
@@ -729,12 +795,14 @@ def init_db():
     conn.execute('CREATE INDEX IF NOT EXISTS idx_usuarios_email ON usuarios(email)')
     conn.execute('CREATE INDEX IF NOT EXISTS idx_historico_data ON historico(data)')
     conn.execute('CREATE INDEX IF NOT EXISTS idx_chat_messages_criado_em ON chat_messages(criado_em)')
+    conn.execute('CREATE INDEX IF NOT EXISTS idx_analytics_bncc_usuario ON analytics_bncc(usuario_id)')
+    conn.execute('CREATE INDEX IF NOT EXISTS idx_analytics_bncc_codigo ON analytics_bncc(codigo_bncc)')
     conn.commit()
     conn.close()
 
 init_db()
 
-# ─── Modelo de usuário ────────────────────────────────────────────────────────
+# ─── Modelo de usuário # ────────────────────────────────────────────────────────
 
 class Usuario(UserMixin):
     def __init__(self, row):
@@ -782,7 +850,7 @@ def load_user(user_id):
     conn.close()
     return Usuario(row) if row else None
 
-# ─── Helper: ativar assinatura ────────────────────────────────────────────────
+# ─── Helper: ativar assinatura # ────────────────────────────────────────────────
 
 def ativar_assinatura(usuario_id, plano_id):
     """Ativa ou renova assinatura de um usuário. Usado por todos os gateways."""
@@ -801,7 +869,7 @@ def ativar_assinatura(usuario_id, plano_id):
     logger.info('Assinatura ativada: usuário %s → plano %s até %s', usuario_id, plano_id, valido_ate)
     return True
 
-# ─── Helper: verificar assinatura ─────────────────────────────────────────────
+# ─── Helper: verificar assinatura # ─────────────────────────────────────────────
 
 def assinatura_required(f):
     from functools import wraps
@@ -814,7 +882,7 @@ def assinatura_required(f):
         return f(*args, **kwargs)
     return decorated
 
-# ─── Helper: verificar admin ──────────────────────────────────────────────────
+# ─── Helper: verificar admin # ──────────────────────────────────────────────────
 
 def admin_required(f):
     from functools import wraps
@@ -827,7 +895,7 @@ def admin_required(f):
         return f(*args, **kwargs)
     return decorated
 
-# ─── Handler 429 (rate limit) ─────────────────────────────────────────────────
+# ─── Handler 429 (rate limit) # ─────────────────────────────────────────────────
 
 @app.errorhandler(429)
 def ratelimit_handler(e):
@@ -841,7 +909,7 @@ def ratelimit_handler(e):
     flash('Muitas tentativas em pouco tempo. Aguarde um momento e tente novamente.', 'erro')
     return redirect(request.referrer or url_for('login'))
 
-# ─── Email helper ─────────────────────────────────────────────────────────────
+# ─── Email helper # ─────────────────────────────────────────────────────────────
 
 def enviar_email(to, subject, body_html):
     if not SMTP_HOST or not SMTP_USER or not SMTP_PASS:
@@ -859,7 +927,7 @@ def enviar_email(to, subject, body_html):
         logger.error('Falha ao enviar email para %s: %s', to, e)
         return False
 
-# ─── PDF (reportlab) ──────────────────────────────────────────────────────────
+# ─── PDF (reportlab) # ──────────────────────────────────────────────────────────
 
 AZUL        = colors.HexColor('#2b4fc7')
 AZUL_ESCURO = colors.HexColor('#1a3399')
@@ -995,7 +1063,7 @@ def criar_pdf(dados_form, aulas_ia):
     buf.seek(0)
     return buf
 
-# ─── PDF extrator ──────────────────────────────────────────────────────────────
+# ─── PDF extrator # ──────────────────────────────────────────────────────────────
 
 def extrair_pdf(url):
     try:
@@ -1015,7 +1083,7 @@ def extrair_pdf(url):
     except Exception:
         return None
 
-# ─── IA ───────────────────────────────────────────────────────────────────────
+# ─── IA # ───────────────────────────────────────────────────────────────────────
 
 def gerar_conteudo_ia(disciplina, turma, temas, periodo, datas, aula_inicio=1, conteudo_pdf=None):
     referencia_pdf = ""
@@ -1057,7 +1125,7 @@ Gere {len(temas)} aulas, uma para cada tema. A primeira aula é número {aula_in
             texto = texto[4:]
     return json.loads(texto.strip())
 
-# ─── DOCX ─────────────────────────────────────────────────────────────────────
+# ─── DOCX # ─────────────────────────────────────────────────────────────────────
 
 def hex_to_rgb(hex_color):
     hex_color = hex_color.lstrip('#')
@@ -1239,7 +1307,7 @@ def criar_docx(dados_form, aulas_ia):
     buf.seek(0)
     return buf
 
-# ─── Auth ─────────────────────────────────────────────────────────────────────
+# ─── Auth # ─────────────────────────────────────────────────────────────────────
 
 @app.route('/login', methods=['GET', 'POST'])
 @limiter.limit('10 per minute', methods=['POST'])
@@ -1309,7 +1377,7 @@ def cadastro():
             return render_template('cadastro.html')
     return render_template('cadastro.html')
 
-# ─── Recuperação de senha ─────────────────────────────────────────────────────
+# ─── Recuperação de senha # ─────────────────────────────────────────────────────
 
 @app.route('/esqueci-senha', methods=['GET', 'POST'])
 @limiter.limit('5 per minute', methods=['POST'])
@@ -1371,7 +1439,7 @@ def redefinir_senha(token):
     finally:
         conn.close()
 
-# ─── Planos e Pagamento ───────────────────────────────────────────────────────
+# ─── Planos e Pagamento # ───────────────────────────────────────────────────────
 
 @app.route('/planos')
 @login_required
@@ -1381,7 +1449,7 @@ def planos():
                            valido_ate=current_user.valido_ate,
                            plano_atual=current_user.plano)
 
-# ─── Stripe ───────────────────────────────────────────────────────────────────
+# ─── Stripe # ───────────────────────────────────────────────────────────────────
 
 @app.route('/stripe/checkout/<plano_id>')
 @login_required
@@ -1500,7 +1568,7 @@ def stripe_webhook():
     return '', 200
 
 
-# ─── Admin ────────────────────────────────────────────────────────────────────
+# ─── Admin # ────────────────────────────────────────────────────────────────────
 
 @app.route('/admin')
 @admin_required
@@ -1563,7 +1631,7 @@ def admin_update():
     return jsonify({'ok': True, 'ativo': row['ativo'], 'plano': row['plano'],
                     'valido_ate': row['valido_ate'] or ''})
 
-# ─── Conta / Perfil ───────────────────────────────────────────────────────────
+# ─── Conta / Perfil # ───────────────────────────────────────────────────────────
 
 @app.route('/perfil')
 @login_required
@@ -1651,7 +1719,7 @@ def api_profile():
     return jsonify({'ok': True})
 
 
-# ─── Rotas principais ─────────────────────────────────────────────────────────
+# ─── Rotas principais # ─────────────────────────────────────────────────────────
 
 @app.route('/')
 def index():
@@ -1958,15 +2026,45 @@ def api_gerar_plano():
                     max_tokens=4000
                 )
                 plano_json = json.loads(resp_o.choices[0].message.content)
-        except Exception as e:
-            erro_motores.append(f'OpenAI: {e}')
-            logger.warning('api_gerar_plano — OpenAI falhou: %s', e)
+    except Exception as e:
+        erro_motores.append(f'OpenAI: {e}')
+        alertar_falha_ia('OpenAI', e, current_user.id, 'api_gerar_plano')
 
     if plano_json is None:
         return jsonify({
             'erro': 'Todos os motores de IA falharam. Verifique as chaves de API.',
             'detalhes': erro_motores
         }), 503
+
+    # ─── REVISÃO DO COORDENADOR PEDAGÓGICO (Multi-Agente) ───
+    try:
+        logger.info('Iniciando revisão do Coordenador Pedagógico para usuário %s', current_user.id)
+        coordenador_prompt = (
+            f"Revise o seguinte plano de aula para o {ano} de {disciplina}. "
+            f"Garanta que as habilidades BNCC e a complexidade do conteúdo estejam perfeitas para esta série.\n\n"
+            f"JSON ATUAL:\n{json.dumps(plano_json, ensure_ascii=False)}"
+        )
+        
+        resp_coord = client_openai.chat.completions.create(
+            model='gpt-4o-mini',
+            messages=[
+                {'role': 'system', 'content': SYSTEM_PROMPT_COORDENADOR},
+                {'role': 'user',   'content': coordenador_prompt}
+            ],
+            response_format={
+                'type': 'json_schema',
+                'json_schema': {
+                    'name': 'plano_de_aula_revisado',
+                    'strict': True,
+                    'schema': _OAI_PLANO_SCHEMA
+                }
+            },
+            max_tokens=4000
+        )
+        plano_json = json.loads(resp_coord.choices[0].message.content)
+        logger.info('Plano de aula revisado e finalizado pelo Coordenador.')
+    except Exception as e_coord:
+        logger.warning('Falha na revisão do Coordenador (usando versão original): %s', e_coord)
 
     # Contabiliza geração
     conn = get_db()
@@ -1982,7 +2080,7 @@ def api_gerar_plano():
     return jsonify(plano_json)
 
 
-# ─── Helpers de plano ─────────────────────────────────────────────────────────
+# ─── Helpers de plano # ─────────────────────────────────────────────────────────
 
 def get_geracoes_mes(usuario_id):
     mes_atual = datetime.now().strftime('%Y-%m')
@@ -1994,7 +2092,7 @@ def get_geracoes_mes(usuario_id):
     conn.close()
     return row['total'] if row else 0
 
-# ─── Chat ──────────────────────────────────────────────────────────────────────
+# ─── Chat # ──────────────────────────────────────────────────────────────────────
 
 @app.route('/api/salvar-template', methods=['POST'])
 @login_required
@@ -2258,11 +2356,37 @@ def api_chat():
             yield "data: [DONE]\n\n"
             resposta = ''.join(chunks)
             conn2 = get_db()
-            conn2.execute(
-                "INSERT INTO chat_messages (usuario_id, role, content, criado_em) VALUES (?, ?, ?, ?)",
+            cur = conn2.execute(
+                "INSERT INTO chat_messages (usuario_id, role, content, criado_em) VALUES (?, ?, ?, ?) RETURNING id",
                 (usuario_id, 'assistant', resposta, datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
             )
+            msg_id = cur.fetchone()['id']
             conn2.commit(); conn2.close()
+
+            # ─── Analytics BNCC (Extração em Background) ───
+            try:
+                # Prompt para extrair códigos BNCC da resposta gerada
+                prompt_bncc = f"Analise o seguinte material pedagógico e extraia APENAS os códigos das habilidades da BNCC mencionadas (ex: EF01HI01, EM13CHS101). Retorne um JSON no formato: {{\"habilidades\": [ {{\"codigo\": \"...\", \"descricao\": \"...\"}} ] }}. Se não houver códigos explícitos, identifique as habilidades mais prováveis com base no conteúdo.\n\nCONTEÚDO:\n{resposta[:4000]}"
+                
+                # Chamada síncrona simples para extração (usando gpt-4o-mini para velocidade/custo)
+                res_bncc = client_openai.chat.completions.create(
+                    model="gpt-4o-mini",
+                    messages=[{"role": "system", "content": "Você é um extrator de metadados pedagógicos BNCC. Retorne apenas JSON."},
+                              {"role": "user", "content": prompt_bncc}],
+                    response_format={ "type": "json_object" }
+                )
+                dados_bncc = json.loads(res_bncc.choices[0].message.content)
+                
+                conn3 = get_db()
+                for hab in dados_bncc.get('habilidades', []):
+                    conn3.execute(
+                        "INSERT INTO analytics_bncc (usuario_id, material_id, tipo_material, codigo_bncc, descricao, criado_em) VALUES (?, ?, ?, ?, ?, ?)",
+                        (usuario_id, msg_id, 'chat_message', hab.get('codigo'), hab.get('descricao'), datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
+                    )
+                conn3.commit(); conn3.close()
+                logger.info(f"Analytics BNCC: {len(dados_bncc.get('habilidades', []))} habilidades extraídas para usuário {usuario_id}")
+            except Exception as e_bncc:
+                logger.warning(f"Falha ao extrair Analytics BNCC: {e_bncc}")
 
         except Exception as e:
             logger.error('Erro no streaming de IA: %s', traceback.format_exc())
@@ -2694,7 +2818,7 @@ def gerar_mapa_mental_docx(texto, meta=None):
     doc.styles['Normal'].font.name = 'Arial'
     doc.styles['Normal'].font.size = Pt(10)
 
-    # ── HEADER ──────────────────────────────────────────────────────────
+    # ── HEADER # ──────────────────────────────────────────────────────────
     if escola or professor:
         hp = doc.add_paragraph()
         hp.alignment = WD_ALIGN_PARAGRAPH.CENTER
@@ -2708,7 +2832,7 @@ def gerar_mapa_mental_docx(texto, meta=None):
         run.font.size = Pt(8)
         run.font.color.rgb = RGBColor(0x88, 0x88, 0x88)
 
-    # ── CENTRAL TITLE BOX ───────────────────────────────────────────────
+    # ── CENTRAL TITLE BOX # ───────────────────────────────────────────────
     title_tbl = doc.add_table(rows=1, cols=1)
     _pia_no_borders(title_tbl)
     tc = title_tbl.cell(0, 0)
@@ -2807,7 +2931,7 @@ def gerar_mapa_mental_docx(texto, meta=None):
 
         doc.add_paragraph().paragraph_format.space_after = Pt(4)
 
-    # ── FOOTER ──────────────────────────────────────────────────────────
+    # ── FOOTER # ──────────────────────────────────────────────────────────
     _pia_hrule(doc, thick=False, color='aaaaaa')
     pf = doc.add_paragraph()
     pf.alignment = WD_ALIGN_PARAGRAPH.CENTER
@@ -3190,7 +3314,7 @@ def gerar_plano_aula_docx(texto, meta=None, logo_estado_path=None):
     doc.styles['Normal'].font.name = 'Arial'
     doc.styles['Normal'].font.size = Pt(9)
 
-    # ── CABEÇALHO OFICIAL ──────────────────────────────────────────────
+    # ── CABEÇALHO OFICIAL # ──────────────────────────────────────────────
     hdr = doc.add_table(rows=1, cols=3)
     _pia_no_borders(hdr)
     hdr.columns[0].width = Cm(3.0)
@@ -3243,7 +3367,7 @@ def gerar_plano_aula_docx(texto, meta=None, logo_estado_path=None):
 
     doc.add_paragraph().paragraph_format.space_after = Pt(2)
 
-    # ── TÍTULO E METADADOS ──────────────────────────────────────────────
+    # ── TÍTULO E METADADOS # ──────────────────────────────────────────────
     titulo_p = doc.add_paragraph()
     titulo_p.alignment = WD_ALIGN_PARAGRAPH.CENTER
     titulo_p.paragraph_format.space_before = Pt(2)
@@ -3351,7 +3475,7 @@ def gerar_plano_aula_docx(texto, meta=None, logo_estado_path=None):
             if ci == 0:
                 run.font.bold = True
 
-    # ── RODAPÉ ──────────────────────────────────────────────────────────
+    # ── RODAPÉ # ──────────────────────────────────────────────────────────
     ep2 = doc.add_paragraph()
     ep2.paragraph_format.space_after = Pt(2)
     _pia_hrule(doc, thick=False, color='aaaaaa')
@@ -3404,7 +3528,7 @@ def gerar_docx_pia(texto, meta=None, logo_path=None):
     doc.styles['Normal'].font.name = 'Arial'
     doc.styles['Normal'].font.size = Pt(10)
 
-    # ── CABEÇALHO ESCOLAR ──────────────────────────────────────────────────
+    # ── CABEÇALHO ESCOLAR # ──────────────────────────────────────────────────
     # Tabela: [LOGO | DADOS DA ESCOLA | ProfessorIA™ watermark]
     hdr = doc.add_table(rows=1, cols=3)
     _pia_no_borders(hdr)
@@ -3501,7 +3625,7 @@ def gerar_docx_pia(texto, meta=None, logo_path=None):
     # Linha separadora grossa
     _pia_hrule(doc, thick=True)
 
-    # ── CAMPOS DO ALUNO ────────────────────────────────────────────────────
+    # ── CAMPOS DO ALUNO # ────────────────────────────────────────────────────
     # Formato: Nome:___ Data:__/__/__ Ano:
     pn = doc.add_paragraph()
     pn.paragraph_format.space_before = Pt(4)
@@ -3515,7 +3639,7 @@ def gerar_docx_pia(texto, meta=None, logo_path=None):
 
     _pia_hrule(doc, thick=False, color='555555')
 
-    # ── CONTEÚDO MARKDOWN ─────────────────────────────────────────────────
+    # ── CONTEÚDO MARKDOWN # ─────────────────────────────────────────────────
     lines = texto.split('\n')
     i = 0
     while i < len(lines):
@@ -3599,7 +3723,7 @@ def gerar_docx_pia(texto, meta=None, logo_path=None):
 
         i += 1
 
-    # ── RODAPÉ ────────────────────────────────────────────────────────────
+    # ── RODAPÉ # ────────────────────────────────────────────────────────────
     doc.add_paragraph()
     _pia_hrule(doc, thick=False, color='aaaaaa')
     pf = doc.add_paragraph()
@@ -3996,7 +4120,7 @@ def api_plano_ensino_docx():
         return jsonify({'erro': f'Erro ao preencher template: {str(e)[:200]}'}), 500
 
 
-# ─── Máquina de Leads — Degustação ───────────────────────────────────────────
+# ─── Máquina de Leads — Degustação # ───────────────────────────────────────────
 
 @app.route('/teste-gratis')
 def teste_gratis():
@@ -4057,7 +4181,7 @@ def api_degustacao():
         return jsonify({'erro': 'Erro ao gerar prévia. Tente novamente.'}), 500
 
 
-# ─── Gerador de Provas ────────────────────────────────────────────────────────
+# ─── Gerador de Provas # ────────────────────────────────────────────────────────
 
 @app.route('/prova')
 @login_required
@@ -4072,7 +4196,7 @@ def prova_page():
                            tem_plano=tem_plano)
 
 
-# ─── Planejamento Anual ────────────────────────────────────────────────────────
+# ─── Planejamento Anual # ────────────────────────────────────────────────────────
 
 @app.route('/planejamento')
 @login_required
@@ -4133,7 +4257,7 @@ Formato: texto estruturado e claro, pronto para entregar à coordenação."""
     return jsonify({'conteudo': conteudo})
 
 
-# ─── Termos e Privacidade ─────────────────────────────────────────────────────
+# ─── Termos e Privacidade # ─────────────────────────────────────────────────────
 
 @app.route('/termos')
 def termos():
@@ -4143,7 +4267,7 @@ def termos():
 def privacidade():
     return render_template('privacidade.html')
 
-# ─── Error handlers ────────────────────────────────────────────────────────────
+# ─── Error handlers # ────────────────────────────────────────────────────────────
 
 @app.errorhandler(404)
 def nao_encontrado(e):
@@ -4357,6 +4481,25 @@ def api_dashboard_stats():
         por_semana_vals.insert(0, 0)
     # Tipo distribution
     por_tipo = {'plano_aula': total_materiais, 'questao': int(total_questoes)}
+    # Analytics BNCC
+    bncc_stats = conn.execute(
+        """SELECT codigo_bncc, COUNT(*) as total, MAX(descricao) as descricao
+           FROM analytics_bncc WHERE usuario_id = ?
+           GROUP BY codigo_bncc ORDER BY total DESC LIMIT 5""",
+        (current_user.id,)
+    ).fetchall()
+    
+    # Sugestões de reforço (habilidades menos trabalhadas ou não trabalhadas no tema atual)
+    # Aqui fazemos uma lógica simples: se ele trabalhou muito certas habilidades, sugerimos outras correlatas (mock por enquanto)
+    sugestoes = []
+    if bncc_stats:
+        top_hab = bncc_stats[0]['codigo_bncc']
+        # Lógica de recomendação simples via LLM ou heurística
+        sugestoes = [
+            {"titulo": "Diversificar Avaliação", "desc": f"Você focou muito em {top_hab}. Que tal explorar habilidades de análise crítica?"},
+            {"titulo": "Reforço Interdisciplinar", "desc": "Considere integrar temas de tecnologia e sociedade nos próximos planos."}
+        ]
+
     # Recent
     recentes = conn.execute(
         """SELECT id, data, disciplina, turma, num_aulas FROM historico
@@ -4373,6 +4516,8 @@ def api_dashboard_stats():
         'semanas': [s[-2:] if s else 'S?' for s in semanas],
         'por_semana': por_semana_vals,
         'por_tipo': por_tipo,
+        'bncc_stats': [dict(r) for r in bncc_stats],
+        'sugestoes': sugestoes,
         'recentes': [{'titulo': f"{r['disciplina']} — {r['turma']}", 'data': r['data'], 'tipo': 'plano_aula'} for r in recentes]
     })
 
@@ -4646,7 +4791,7 @@ tr:hover td{{background:#f8fafc}}
     return html
 
 
-# ─── Geração de Imagens — DALL-E 3 ──────────────────────────────────────────
+# ─── Geração de Imagens — DALL-E 3 # ──────────────────────────────────────────
 
 @app.route('/api/generate/image', methods=['POST'])
 @login_required
@@ -4696,7 +4841,7 @@ def api_generate_image():
         return jsonify({'erro': f'Erro ao gerar imagem: {err[:200]}'}), 500
 
 
-# ─── Download PDF do Plano de Aula ───────────────────────────────────────────
+# ─── Download PDF do Plano de Aula # ───────────────────────────────────────────
 
 @app.route('/api/plano-de-aula/pdf', methods=['POST'])
 @login_required
@@ -4739,19 +4884,31 @@ def api_plano_pdf():
     )
 
 
-# ─── Gerador de Prova Estruturada ─────────────────────────────────────────────
+# ─── Gerador de Prova Estruturada ───
+
+_OAI_MAPA_MENTAL_SCHEMA = {
+    "type": "object",
+    "additionalProperties": False,
+    "properties": {
+        "titulo_central": {"type": "string"},
+        "subtopicos": {
+            "type": "array",
+            "items": {"type": "string"}
+        }
+    },
+    "required": ["titulo_central", "subtopicos"]
+}
+# ──────────────────────────────────────────
 
 SYSTEM_PROMPT_PROVA = (
-    "Você é o ProfessorIA, um elaborador de exames de elite especializado no currículo "
-    "educacional brasileiro. Sua missão é criar provas rigorosas, claras e pedagogicamente sólidas. "
-    "REGRAS ABSOLUTAS: "
-    "1) O retorno deve ser EXCLUSIVAMENTE um objeto JSON válido. "
-    "2) É ESTRITAMENTE PROIBIDO usar tabelas Markdown, blocos de texto explicativo ou qualquer "
-    "formatação visual. Sua resposta DEVE começar com { e terminar com }, contendo EXCLUSIVAMENTE "
-    "o objeto JSON puro. Nenhuma palavra a mais, nenhuma tabela. "
-    "3) Questões de múltipla escolha devem ter exatamente 4 alternativas (A, B, C, D). "
-    "4) Os gabaritos devem ser precisos e pedagogicamente justificáveis. "
-    "5) As questões discursivas devem ter gabarito esperado claro e objetivo."
+    "Você é um Engenheiro de Avaliação Educacional Sênior e Especialista em BNCC (Base Nacional Comum Curricular). "
+    "Sua missão é elaborar avaliações de alto nível, equilibradas e pedagogicamente profundas para o PROFESSORIA SaaS. "
+    "DIRETRIZES ESTRITAS: "
+    "1) ALINHAMENTO BNCC: Identifique e liste explicitamente os códigos das habilidades da BNCC contempladas. "
+    "2) ESTRUTURA: Gere uma prova com questões de múltipla escolha (4 alternativas: A, B, C, D) e questões dissertativas. "
+    "3) QUALIDADE: Evite questões rasas. Use textos de apoio, contextos reais e exija profundidade analítica. "
+    "4) FORMATO: Retorne ESTRITAMENTE um objeto JSON seguindo o schema fornecido. "
+    "5) GABARITO: Forneça respostas precisas para múltipla escolha e expectativas de resposta detalhadas para dissertativas."
 )
 
 PROVA_TOOL = {
@@ -4821,53 +4978,48 @@ _OAI_PROVA_SCHEMA = {
     "type": "object",
     "additionalProperties": False,
     "properties": {
-        "prova": {
-            "type": "object",
-            "additionalProperties": False,
-            "properties": {
-                "tema": {"type": "string"},
-                "questoes_verdadeiro_falso": {
-                    "type": "array",
-                    "items": {
-                        "type": "object",
-                        "additionalProperties": False,
-                        "properties": {
-                            "afirmacao": {"type": "string"},
-                            "resposta":  {"type": "string", "enum": ["V", "F"]}
-                        },
-                        "required": ["afirmacao", "resposta"]
-                    }
+        "titulo_prova": {"type": "string"},
+        "objetivos_bncc": {
+            "type": "array",
+            "items": {"type": "string"}
+        },
+        "questoes_multipla_escolha": {
+            "type": "array",
+            "items": {
+                "type": "object",
+                "additionalProperties": False,
+                "properties": {
+                    "pergunta": {"type": "string"},
+                    "alternativas": {
+                        "type": "array",
+                        "items": {"type": "string"}
+                    },
+                    "resposta_correta": {"type": "string", "enum": ["A", "B", "C", "D"]}
                 },
-                "questoes_multipla_escolha": {
-                    "type": "array",
-                    "items": {
-                        "type": "object",
-                        "additionalProperties": False,
-                        "properties": {
-                            "pergunta":     {"type": "string"},
-                            "alternativas": {"type": "array", "items": {"type": "string"}},
-                            "correta":      {"type": "string", "enum": ["A", "B", "C", "D"]}
-                        },
-                        "required": ["pergunta", "alternativas", "correta"]
-                    }
+                "required": ["pergunta", "alternativas", "resposta_correta"]
+            }
+        },
+        "questoes_dissertativas": {
+            "type": "array",
+            "items": {
+                "type": "object",
+                "additionalProperties": False,
+                "properties": {
+                    "pergunta": {"type": "string"},
+                    "expectativa_resposta": {"type": "string"}
                 },
-                "questoes_discursivas": {
-                    "type": "array",
-                    "items": {
-                        "type": "object",
-                        "additionalProperties": False,
-                        "properties": {
-                            "pergunta":          {"type": "string"},
-                            "gabarito_esperado": {"type": "string"}
-                        },
-                        "required": ["pergunta", "gabarito_esperado"]
-                    }
-                }
-            },
-            "required": ["tema", "questoes_verdadeiro_falso", "questoes_multipla_escolha", "questoes_discursivas"]
-        }
+                "required": ["pergunta", "expectativa_resposta"]
+            }
+        },
+        "gabarito_geral": {"type": "string"}
     },
-    "required": ["prova"]
+    "required": [
+        "titulo_prova",
+        "objetivos_bncc",
+        "questoes_multipla_escolha",
+        "questoes_dissertativas",
+        "gabarito_geral"
+    ]
 }
 
 
@@ -4875,11 +5027,10 @@ _OAI_PROVA_SCHEMA = {
 @login_required
 @limiter.limit('10 per minute')
 def api_generate_prova():
-    """Gera uma prova estruturada via JSON Schema.
+    """Gera uma prova estruturada via JSON Schema (OpenAI Strict).
 
-    Entrada: { tema, ano, disciplina, num_vf?, num_mc?, num_disc? }
-    Saída:   { prova: { tema, questoes_verdadeiro_falso, questoes_multipla_escolha,
-                        questoes_discursivas } }
+    Entrada: { tema, ano, disciplina, num_mc?, num_disc? }
+    Saída:   { titulo_prova, objetivos_bncc, questoes_multipla_escolha, questoes_dissertativas, gabarito_geral }
     """
     if not current_user.assinatura_ativa and not current_user.is_admin:
         geracoes = get_geracoes_mes(current_user.id)
@@ -4899,9 +5050,8 @@ def api_generate_prova():
     if not tema or not ano or not disciplina:
         return jsonify({'erro': 'Campos obrigatórios: tema, ano, disciplina'}), 400
 
-    num_vf   = max(1, min(int(data.get('num_vf',   5)), 10))
     num_mc   = max(1, min(int(data.get('num_mc',   5)), 10))
-    num_disc = max(1, min(int(data.get('num_disc', 3)), 5))
+    num_disc = max(1, min(int(data.get('num_disc', 2)), 5))
 
     user_prompt = (
         f"Elabore uma prova completa para:\n"
@@ -4909,128 +5059,76 @@ def api_generate_prova():
         f"- Ano/Série: {ano}\n"
         f"- Disciplina: {disciplina}\n\n"
         f"Quantidade de questões:\n"
-        f"- Verdadeiro ou Falso: {num_vf}\n"
         f"- Múltipla Escolha (4 alternativas A/B/C/D): {num_mc}\n"
-        f"- Discursivas (com gabarito esperado): {num_disc}\n\n"
+        f"- Discursivas (com expectativa de resposta): {num_disc}\n\n"
         "Garanta que as questões estejam alinhadas à BNCC e sejam adequadas ao nível escolar."
     )
 
     prova_json   = None
     erro_motores = []
 
-    # ── Claude (tool_use — schema garantido) ──────────────────────────────────
+    # ── OpenAI (json_schema - Strict Mode) ────────────────────────────────────
     try:
-        if os.environ.get('ANTHROPIC_API_KEY'):
-            resp = client.messages.create(
-                model='claude-sonnet-4-6',
-                max_tokens=4000,
-                system=SYSTEM_PROMPT_PROVA,
-                tools=[PROVA_TOOL],
-                tool_choice={"type": "tool", "name": "salvar_prova"},
-                messages=[{"role": "user", "content": user_prompt}]
-            )
-            for block in resp.content:
-                if block.type == 'tool_use' and block.name == 'salvar_prova':
-                    prova_json = block.input
-                    break
-    except Exception as e:
-        erro_motores.append(f'Claude: {e}')
-        logger.warning('api_generate_prova — Claude falhou: %s', e)
-
-    # ── Gemini (response_schema) ──────────────────────────────────────────────
-    if prova_json is None and _gemini_disponivel():
-        try:
-            import google.generativeai as genai
-
-            gemini_schema = {
-                'type': 'object',
-                'properties': {
-                    'prova': {
-                        'type': 'object',
-                        'properties': {
-                            'tema': {'type': 'string'},
-                            'questoes_verdadeiro_falso': {
-                                'type': 'array',
-                                'items': {
-                                    'type': 'object',
-                                    'properties': {
-                                        'afirmacao': {'type': 'string'},
-                                        'resposta':  {'type': 'string'},
-                                    }
-                                }
-                            },
-                            'questoes_multipla_escolha': {
-                                'type': 'array',
-                                'items': {
-                                    'type': 'object',
-                                    'properties': {
-                                        'pergunta':     {'type': 'string'},
-                                        'alternativas': {'type': 'array', 'items': {'type': 'string'}},
-                                        'correta':      {'type': 'string'},
-                                    }
-                                }
-                            },
-                            'questoes_discursivas': {
-                                'type': 'array',
-                                'items': {
-                                    'type': 'object',
-                                    'properties': {
-                                        'pergunta':          {'type': 'string'},
-                                        'gabarito_esperado': {'type': 'string'},
-                                    }
-                                }
-                            },
-                        }
+        oai_key = os.environ.get('OPENAI_API_KEY')
+        if oai_key:
+            import openai as _oai
+            oai_client = _oai.OpenAI(api_key=oai_key)
+            resp_o = oai_client.chat.completions.create(
+                model='gpt-4o-mini',
+                messages=[
+                    {'role': 'system', 'content': SYSTEM_PROMPT_PROVA},
+                    {'role': 'user',   'content': user_prompt}
+                ],
+                response_format={
+                    'type': 'json_schema',
+                    'json_schema': {
+                        'name': 'prova_avaliacao',
+                        'strict': True,
+                        'schema': _OAI_PROVA_SCHEMA
                     }
-                }
-            }
-            gm = genai.GenerativeModel(
-                model_name='gemini-2.0-flash',
-                system_instruction=SYSTEM_PROMPT_PROVA,
-                generation_config=genai.GenerationConfig(
-                    response_mime_type='application/json',
-                    response_schema=gemini_schema
-                )
+                },
+                max_tokens=4000
             )
-            resp_g = gm.generate_content(user_prompt)
-            prova_json = json.loads(resp_g.text)
-        except Exception as e:
-            erro_motores.append(f'Gemini: {e}')
-            logger.warning('api_generate_prova — Gemini falhou: %s', e)
-
-    # ── OpenAI (json_schema) ──────────────────────────────────────────────────
-    if prova_json is None:
-        try:
-            oai_key = os.environ.get('OPENAI_API_KEY')
-            if oai_key:
-                import openai as _oai
-                oai_client = _oai.OpenAI(api_key=oai_key)
-                resp_o = oai_client.chat.completions.create(
-                    model='gpt-4o-mini',
-                    messages=[
-                        {'role': 'system', 'content': SYSTEM_PROMPT_PROVA},
-                        {'role': 'user',   'content': user_prompt}
-                    ],
-                    response_format={
-                        'type': 'json_schema',
-                        'json_schema': {
-                            'name': 'prova',
-                            'strict': True,
-                            'schema': _OAI_PROVA_SCHEMA
-                        }
-                    },
-                    max_tokens=4000
-                )
-                prova_json = json.loads(resp_o.choices[0].message.content)
-        except Exception as e:
-            erro_motores.append(f'OpenAI: {e}')
-            logger.warning('api_generate_prova — OpenAI falhou: %s', e)
+            prova_json = json.loads(resp_o.choices[0].message.content)
+    except Exception as e:
+        erro_motores.append(f'OpenAI: {e}')
+        alertar_falha_ia('OpenAI', e, current_user.id, 'api_generate_prova')
 
     if prova_json is None:
         return jsonify({
             'erro': 'Todos os motores de IA falharam. Verifique as chaves de API.',
             'detalhes': erro_motores
         }), 503
+
+    # ─── REVISÃO DO COORDENADOR PEDAGÓGICO (Multi-Agente) ───
+    try:
+        logger.info('Iniciando revisão do Coordenador Pedagógico (Prova) para usuário %s', current_user.id)
+        coordenador_prompt = (
+            f"Revise a seguinte prova/avaliação. Garanta que as questões de múltipla escolha e dissertativas "
+            f"estejam equilibradas e pedagogicamente corretas para o tema solicitado.\n\n"
+            f"JSON ATUAL:\n{json.dumps(prova_json, ensure_ascii=False)}"
+        )
+        
+        resp_coord = client_openai.chat.completions.create(
+            model='gpt-4o-mini',
+            messages=[
+                {'role': 'system', 'content': SYSTEM_PROMPT_COORDENADOR},
+                {'role': 'user',   'content': coordenador_prompt}
+            ],
+            response_format={
+                'type': 'json_schema',
+                'json_schema': {
+                    'name': 'prova_revisada',
+                    'strict': True,
+                    'schema': _OAI_PROVA_SCHEMA
+                }
+            },
+            max_tokens=4000
+        )
+        prova_json = json.loads(resp_coord.choices[0].message.content)
+        logger.info('Prova revisada e finalizada pelo Coordenador.')
+    except Exception as e_coord:
+        logger.warning('Falha na revisão do Coordenador (usando versão original): %s', e_coord)
 
     # Contabiliza geração
     conn = get_db()
@@ -5045,8 +5143,104 @@ def api_generate_prova():
 
     return jsonify(prova_json)
 
+@app.route('/api/prova/docx', methods=['POST'])
+@login_required
+def api_prova_docx():
+    """Gera o arquivo DOCX da prova usando o template premium."""
+    if not current_user.assinatura_ativa and not current_user.is_admin:
+        return jsonify({'erro': 'Assinatura necessária'}), 403
+        
+    data = request.get_json(force=True) or {}
+    context = data.get('prova_dados')
+    
+    if not context:
+        return jsonify({'erro': 'Dados da prova não fornecidos'}), 400
+        
+    try:
+        template_path = os.path.join(os.path.dirname(__file__), 'static', 'templates', 'prova_template.docx')
+        docx_bytes = _renderizar_docx_tpl(template_path, context)
+        
+        return send_file(
+            io.BytesIO(docx_bytes),
+            mimetype='application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+            as_attachment=True,
+            download_name=f"Prova_{context.get('titulo_prova', 'ProfessorIA')}.docx"
+        )
+    except Exception as e:
+        logger.error(f"Erro ao gerar DOCX da prova: {e}")
+        return jsonify({'erro': 'Erro interno ao gerar documento'}), 500
+
 
 # ESTE BLOCO ABAIXO DEVE SER O FINAL ABSOLUTO DO ARQUIVO
+
+@app.route('/api/generate/mapa-mental', methods=['POST'])
+@login_required
+@limiter.limit('3 per minute')
+def api_generate_mapa_mental():
+    """Pipeline Duplo: Texto (OpenAI Strict) -> Imagem (DALL-E 3)."""
+    if not current_user.assinatura_ativa and not current_user.is_admin:
+        return jsonify({'erro': 'Assinatura necessária'}), 403
+
+    data = request.get_json(force=True) or {}
+    tema = str(data.get('tema', '')).strip()[:200]
+    if not tema:
+        return jsonify({'erro': 'Tema obrigatório'}), 400
+
+    # --- ETAPA 1: O Cérebro Textual (OpenAI Strict) ---
+    try:
+        oai_client = OpenAI(api_key=os.environ.get('OPENAI_API_KEY'))
+        resp_t = oai_client.chat.completions.create(
+            model='gpt-4o-mini',
+            messages=[
+                {'role': 'system', 'content': 'Você é um especialista em síntese educacional. Gere um mapa mental ultra-conciso. Título e subtópicos devem ter no máximo 3 palavras cada.'},
+                {'role': 'user', 'content': f'Gere a estrutura de um mapa mental sobre: {tema}'}
+            ],
+            response_format={
+                'type': 'json_schema',
+                'json_schema': {
+                    'name': 'mapa_mental_textual',
+                    'strict': True,
+                    'schema': _OAI_MAPA_MENTAL_SCHEMA
+                }
+            }
+        )
+        mapa_json = json.loads(resp_t.choices[0].message.content)
+    except Exception as e:
+        logger.error(f'Erro Etapa 1 Mapa Mental: {e}')
+        return jsonify({'erro': 'Falha na síntese textual do mapa'}), 500
+
+    # --- ETAPA 2: O Artista Visual (DALL-E 3) ---
+    titulo = mapa_json['titulo_central']
+    subtopicos = ", ".join(mapa_json['subtopicos'])
+    
+    super_prompt = (
+        f"Ilustração educacional em aquarela digital moderna sobre '{titulo}', fundo 100% branco sólido. "
+        f"O centro contém o título '{titulo}'. Ramificações puxam para banners textuais com os temas: {subtopicos}. "
+        f"Estética que remeta à sabedoria e acolhimento. "
+        f"OBRIGATÓRIO: No canto inferior direito, insira a assinatura da marca: um símbolo geométrico minimalista "
+        f"formado por dois círculos perfeitos entrelaçados horizontalmente, acompanhado do texto ProfessorIA™ em Azul Acadêmico."
+    )
+
+    try:
+        resp_v = oai_client.images.generate(
+            model='dall-e-3',
+            prompt=super_prompt,
+            size='1024x1024',
+            quality='standard',
+            n=1
+        )
+        url_imagem = resp_v.data[0].url
+        return jsonify({
+            'ok': True,
+            'url': url_imagem,
+            'titulo': titulo,
+            'subtopicos': mapa_json['subtopicos']
+        })
+    except Exception as e:
+        logger.error(f'Erro Etapa 2 Mapa Mental: {e}')
+        return jsonify({'erro': 'Falha na geração visual do mapa'}), 500
+
+
 if __name__ == '__main__':
     port = int(os.environ.get("PORT", 5001))
     app.run(debug=False, host='0.0.0.0', port=port)
