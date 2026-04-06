@@ -24,7 +24,7 @@
       --sb-bg: #F4F8F7;
       --sb-fg: #1A2F33;
       --sb-text: rgba(30,90,99,.5);
-      --sb-active: rgba(30,90,99,.09);
+      --sb-active: rgba(212,175,55,.13);
       --sb-line: rgba(30,90,99,.08);
       --sidebar-w: 240px;
       --card-bg: #FFFFFA;
@@ -38,10 +38,10 @@
       --linha-f: rgba(255,255,255,.12);
       --hover-bg: rgba(255,255,255,.04);
       --pre-bg: rgba(255,255,255,.06);
-      --sb-bg: #071A1E;
+      --sb-bg: #0D2327;
       --sb-fg: #EAF2F3;
-      --sb-text: rgba(234,242,243,.5);
-      --sb-active: rgba(30,90,99,.25);
+      --sb-text: #1E5A63;
+      --sb-active: rgba(212,175,55,.18);
       --sb-line: rgba(255,255,255,.07);
       --card-bg: #0E2327;
     }
@@ -198,12 +198,14 @@
       transition: background .15s, color .15s, box-shadow .15s;
       border: none; background: none; width: 100%; text-align: left;
     }
-    .nav-item:hover { background: var(--hover-bg); color: var(--sb-fg); }
-    .nav-item.active { background: var(--sb-active); color: var(--indigo); box-shadow: inset 3px 0 0 #5FBFBF; }
-    [data-theme="dark"] .nav-item:hover { background: rgba(255,255,255,.07); color: #fff; }
-    [data-theme="dark"] .nav-item.active { color: #fff; }
+    .nav-item:hover { background: rgba(212,175,55,.10); color: #D4AF37; }
+    .nav-item.active { background: var(--sb-active); color: #D4AF37; font-weight: 600; box-shadow: inset 3px 0 0 #D4AF37; }
+    [data-theme="dark"] .nav-item:hover { background: rgba(212,175,55,.10); color: #D4AF37; }
+    [data-theme="dark"] .nav-item.active { color: #D4AF37; }
+    [data-theme="light"] .nav-item:hover { color: #B8932A; }
+    [data-theme="light"] .nav-item.active { color: #B8932A; box-shadow: inset 3px 0 0 #B8932A; }
     .nav-icon { width: 15px; height: 15px; flex-shrink: 0; stroke: currentColor; fill: none; }
-    .nav-item-dot { width: 5px; height: 5px; border-radius: 50%; background: #5FBFBF; flex-shrink: 0; margin-left: auto; }
+    .nav-item-dot { width: 5px; height: 5px; border-radius: 50%; background: #D4AF37; flex-shrink: 0; margin-left: auto; }
 
     .sidebar-spacer { flex: 1; }
     .sidebar-footer { padding: 12px; border-top: 1px solid var(--sb-line); flex-shrink: 0; }
