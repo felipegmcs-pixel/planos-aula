@@ -1412,6 +1412,7 @@ def stripe_checkout(plano_id):
             metadata={'usuario_id': str(current_user.id), 'plano_id': plano_id},
             success_url=f"{SITE_URL}/stripe/sucesso?session_id={{CHECKOUT_SESSION_ID}}",
             cancel_url=f"{SITE_URL}/planos",
+            allow_promotion_codes=True,
         )
         return redirect(session.url, code=303)
     except Exception as e:
