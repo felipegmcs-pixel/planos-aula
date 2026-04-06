@@ -4,8 +4,8 @@
   <meta charset="UTF-8"/>
   <script>!function(){var t=localStorage.getItem("pia-theme")||"dark",a="system"===t?(window.matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light"):t;document.documentElement.setAttribute("data-theme",a)}();</script>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>ProfessorIA — Dashboard</title>
-  <link rel="icon" type="image/svg+xml" href="/static/logo-oficial.png"/>
+  <title>ProfessorIA — Sabedoria e Tempo para Você</title>
+  <link rel="icon" href="{{ url_for('static', filename='logooficial.png') }}" type="image/png">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet"/>
   <style>
     *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
@@ -24,6 +24,13 @@
       --linha:rgba(30,90,99,.07);--linha-f:rgba(30,90,99,.13);
       --card:rgba(255,255,255,.9);--card-h:rgba(255,255,255,1);
       --sb-bg:#F4F8F7;
+    }
+    .logo-circular-blindada {
+      border-radius: 50% !important;
+      overflow: hidden !important;
+      object-fit: cover !important;
+      background-color: transparent !important;
+      display: inline-block !important;
     }
     html,body{height:100%;font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);overflow:hidden}
 
@@ -94,7 +101,7 @@
     /* Stats grid */
     .stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;padding:24px 32px 0}
     .stat-card{
-      background:var(--card);border:1px solid var(--linha);border-radius:16px;
+      background:#0D2327;border:1px solid #1E5A63;border-radius:16px;
       padding:20px;transition:all .25s;cursor:default;position:relative;overflow:hidden;
     }
     .stat-card::before{
@@ -102,16 +109,16 @@
       background:linear-gradient(135deg,rgba(30,90,99,.08),transparent);
       opacity:0;transition:opacity .25s;
     }
-    .stat-card:hover{border-color:rgba(30,90,99,.3);transform:translateY(-2px);box-shadow:0 8px 32px rgba(30,90,99,.15)}
+    .stat-card:hover{border-color:#D4AF37;transform:translateY(-2px);box-shadow:0 0 20px rgba(212,175,55,.3)}
     .stat-card:hover::before{opacity:1}
     .stat-icon{
       width:40px;height:40px;border-radius:10px;
       display:flex;align-items:center;justify-content:center;margin-bottom:14px;
       background:linear-gradient(135deg,rgba(30,90,99,.2),rgba(30,90,99,.2));
     }
-    .stat-icon svg{width:20px;height:20px;stroke:var(--indigo-l);fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
-    .stat-value{font-size:2rem;font-weight:900;letter-spacing:-1.5px;line-height:1}
-    .stat-label{font-size:.72rem;color:var(--text2);margin-top:6px;font-weight:500}
+    .stat-icon svg{width:20px;height:20px;stroke:#D4AF37;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;filter:drop-shadow(0 0 2px rgba(212,175,55,0.3))}
+    .stat-value{font-size:2rem;font-weight:900;letter-spacing:-1.5px;line-height:1;color:#FFFFFF}
+    .stat-label{font-size:.72rem;color:#7A9499;margin-top:6px;font-weight:500;font-family:'Inter',sans-serif}
     .stat-delta{font-size:.65rem;font-weight:700;margin-top:8px;display:flex;align-items:center;gap:4px}
     .stat-delta.up{color:var(--green)}
     .stat-delta.down{color:var(--red)}
@@ -151,6 +158,25 @@
     .badge-questao{background:rgba(16,185,129,.15);color:#34d399}
     .activity-empty{text-align:center;padding:32px;color:var(--text2);font-size:.8rem}
     .activity-empty a{color:#5FBFBF}
+    
+    .history-card-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px; margin-top: 12px; }
+    .history-card { 
+      background: #0D2327; border: 1px solid #1E5A63; border-radius: 16px; 
+      padding: 16px; display: flex; align-items: center; gap: 14px; transition: all 0.25s;
+    }
+    .history-card:hover { transform: translateY(-3px); border-color: var(--amber); box-shadow: 0 8px 24px rgba(0,0,0,0.3); }
+    .h-card-icon { width: 44px; height: 44px; border-radius: 12px; background: rgba(255,255,255,0.05); display: flex; align-items: center; justify-content: center; font-size: 1.4rem; flex-shrink: 0; }
+    .h-card-content { flex: 1; min-width: 0; }
+    .h-card-title { font-size: 0.85rem; font-weight: 700; color: #fff; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .h-card-meta { font-size: 0.7rem; color: var(--text3); margin-top: 3px; }
+    .h-card-actions { display: flex; gap: 6px; }
+    .h-card-btn { 
+      width: 32px; height: 32px; border-radius: 8px; display: flex; align-items: center; justify-content: center; 
+      text-decoration: none; border: none; cursor: pointer; font-size: 0.9rem; transition: all 0.2s; background: rgba(255,255,255,0.05);
+    }
+    .h-card-btn.view:hover { background: var(--indigo); color: #fff; }
+    .h-card-btn.nee:hover { background: #8b5cf6; color: #fff; }
+    .h-card-btn.exam:hover { background: var(--amber); color: #fff; }
 
     /* Responsive */
     @media(max-width:900px){
@@ -200,7 +226,7 @@
     <div class="sidebar-header">
       <a class="logo" href="/">
         <span class="pia-mark">
-          <img src="{{ url_for('static', filename='logo-oficial.png') }}" alt="ProfessorIA" style="height: 32px; width: auto; flex-shrink: 0;">
+          <img src="{{ url_for('static', filename='logo-oficial.png') }}" alt="ProfessorIA" class="logo-circular-blindada" style="height: 32px; width: 32px; border: 1px solid #1E5A63; transform: scale(1.1);">
         </span>
         <span class="logo-p">Professor</span><span class="logo-ia">IA</span>
       </a>
@@ -318,8 +344,17 @@
         <canvas class="chart" id="chartLine" height="200"></canvas>
       </div>
       <div class="chart-card">
-        <div class="chart-title">Por tipo <span class="chart-sub">distribuição</span></div>
-        <canvas class="chart" id="chartDoughnut" height="200"></canvas>
+        <div class="chart-title">Habilidades BNCC <span class="chart-sub">mais trabalhadas</span></div>
+        <div id="bnccList" style="margin-top: 10px; display: flex; flex-direction: column; gap: 10px;">
+          <div class="activity-empty">Nenhum dado BNCC ainda.</div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Insights & Sugestões -->
+    <div class="activity-section" id="insightsSection" style="display:none; padding-top: 0;">
+      <div class="section-title">Insights do ProfessorIA</div>
+      <div class="stats-grid" style="padding: 0; grid-template-columns: repeat(2, 1fr); margin-top: 10px;" id="sugestoesGrid">
       </div>
     </div>
 
@@ -374,6 +409,8 @@ async function loadDashboard() {
 
     renderCharts(d);
     renderActivity(d.recentes || []);
+    renderBNCC(d.bncc_stats || []);
+    renderSugestoes(d.sugestoes || []);
   } catch(e) {
     // Fallback demo data
     renderCharts({
@@ -454,19 +491,64 @@ function renderActivity(items) {
     el.innerHTML = '<div class="activity-empty">Nenhuma atividade ainda. <a href="/chat">Gere seu primeiro material →</a></div>';
     return;
   }
-  el.innerHTML = items.slice(0,8).map(item => {
+  
+  el.innerHTML = `<div class="history-card-grid">` + items.slice(0,8).map(item => {
     const tipo = item.tipo || 'plano_aula';
     const label = {plano_aula:'Plano de Aula',prova:'Prova',questao:'Questão'}[tipo] || tipo;
-    const badgeCls = {plano_aula:'badge-plano',prova:'badge-prova',questao:'badge-questao'}[tipo] || 'badge-plano';
-    const dotCls = {plano_aula:'plano',prova:'prova',questao:'questao'}[tipo] || 'plano';
+    const icon = {plano_aula:'📋',prova:'📝',questao:'🔍'}[tipo] || '📋';
+    
     return `
-      <div class="activity-item">
-        <div class="activity-dot ${dotCls}"></div>
-        <div class="activity-text">${item.titulo || item.disciplina || 'Material gerado'}</div>
-        <div class="activity-meta">${item.data || ''}</div>
-        <span class="activity-badge ${badgeCls}">${label}</span>
+      <div class="history-card">
+        <div class="h-card-icon">${icon}</div>
+        <div class="h-card-content">
+          <div class="h-card-title">${item.titulo || item.disciplina || 'Material gerado'}</div>
+          <div class="h-card-meta">${label} · ${item.data || ''}</div>
+        </div>
+        <div class="h-card-actions">
+          <a href="/historico/${item.id}" class="h-card-btn view" title="Ver Material">👁️</a>
+          <button onclick="readaptar('${item.id}', 'nee')" class="h-card-btn nee" title="Adaptar para NEE">♾️</button>
+          <button onclick="readaptar('${item.id}', 'prova')" class="h-card-btn exam" title="Gerar Prova deste Plano">📝</button>
+        </div>
       </div>`;
-  }).join('');
+  }).join('') + `</div>`;
+}
+
+function readaptar(id, tipo) {
+  window.location.href = `/chat?readaptar=${id}&modo=${tipo}`;
+}
+
+function renderBNCC(stats) {
+  const el = document.getElementById('bnccList');
+  if (!stats.length) {
+    el.innerHTML = '<div class="activity-empty">Gere materiais para ver o mapa de habilidades.</div>';
+    return;
+  }
+  el.innerHTML = stats.map(s => `
+    <div style="display: flex; align-items: center; gap: 12px; padding: 8px; background: rgba(255,255,255,0.03); border-radius: 8px; border: 1px solid rgba(30,90,99,0.2);">
+      <div style="background: #D4AF37; color: #0D2327; font-size: 0.6rem; font-weight: 800; padding: 4px 8px; border-radius: 4px;">${s.codigo_bncc}</div>
+      <div style="flex: 1; font-size: 0.7rem; color: #7A9499; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${s.descricao || 'Habilidade BNCC'}</div>
+      <div style="font-size: 0.75rem; font-weight: 800; color: #FFFFFF;">${s.total}x</div>
+    </div>
+  `).join('');
+}
+
+function renderSugestoes(sugestoes) {
+  const section = document.getElementById('insightsSection');
+  const grid = document.getElementById('sugestoesGrid');
+  if (!sugestoes.length) {
+    section.style.display = 'none';
+    return;
+  }
+  section.style.display = 'block';
+  grid.innerHTML = sugestoes.map(s => `
+    <div class="stat-card" style="padding: 16px; animation: none;">
+      <div style="color: #D4AF37; font-size: 0.75rem; font-weight: 800; margin-bottom: 6px; display: flex; align-items: center; gap: 6px;">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/></svg>
+        ${s.titulo}
+      </div>
+      <div style="font-size: 0.7rem; color: #7A9499; line-height: 1.5;">${s.desc}</div>
+    </div>
+  `).join('');
 }
 
 loadDashboard();

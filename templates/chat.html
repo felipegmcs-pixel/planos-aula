@@ -4,8 +4,8 @@
   <meta charset="UTF-8"/>
   <script>!function(){var t=localStorage.getItem("pia-theme")||"light",a="system"===t?(window.matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light"):t;document.documentElement.setAttribute("data-theme",a),document.documentElement.style.colorScheme=a}();</script>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>ProfessorIA — Chat</title>
-  <link rel="icon" href="{{ url_for('static', filename='favicon.ico') }}" type="image/x-icon">
+  <title>ProfessorIA — Sabedoria e Tempo para Você</title>
+  <link rel="icon" href="{{ url_for('static', filename='logooficial.png') }}" type="image/png">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet"/>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -44,6 +44,13 @@
       --sb-active: rgba(212,175,55,.18);
       --sb-line: rgba(255,255,255,.07);
       --card-bg: #0E2327;
+    }
+    .logo-circular-blindada {
+      border-radius: 50% !important;
+      overflow: hidden !important;
+      object-fit: cover !important;
+      background-color: transparent !important;
+      display: inline-block !important;
     }
     html, body { height: 100%; font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); overflow: hidden; }
     ::selection { background: rgba(212,175,55,.25); color: var(--indigo); }
@@ -172,13 +179,14 @@
 
     /* ─── ProfessorIA icon mark (estilo Apple) ─── */
     .pia-mark {
-      width: 32px; height: 32px; border-radius: 8px; flex-shrink: 0;
-      background: #ffffff !important; /* Container branco obrigatório */
-      padding: 4px;
+      width: 32px; height: 32px; border-radius: 50%; flex-shrink: 0;
+      background: #0D2327 !important;
+      border: 1px solid #1E5A63;
+      overflow: hidden;
       display: flex; align-items: center; justify-content: center;
       transition: filter .3s, transform .3s;
-      
     }
+    .pia-mark-img { width: 100%; height: 100%; object-fit: cover; transform: scale(1.1); }
     .pia-mark svg g { stroke: currentColor; }
     .pia-mark svg g circle { fill: #0f172a !important; }
     .pia-mark svg g path { stroke: #0f172a !important; }
@@ -282,7 +290,7 @@
     .topbar-logo { font-size: .88rem; font-weight: 800; letter-spacing: -.3px; text-decoration: none; display: flex; align-items: center; gap: 8px; }
     .topbar-logo .tp  { color: var(--sb-fg); }
     .topbar-logo .tia { color: var(--indigo); font-weight: 600; }
-    .topbar-logo-img { height: 32px; width: auto; object-fit: contain; flex-shrink: 0; }
+    .topbar-logo-img { height: 32px; width: 32px; border-radius: 50%; object-fit: cover; border: 1px solid #1E5A63; transform: scale(1.1); }
     .topbar-spacer { width: 44px; flex-shrink: 0; }
     .topbar-user {
       width: 44px; height: 44px; border-radius: 50%; flex-shrink: 0;
@@ -401,8 +409,8 @@
       animation: welcomeIn .5s .35s both;
     }
     .feature-card {
-      background: var(--bg); padding: 16px 14px;
-      border: 1.5px solid var(--linha-f); border-radius: 12px;
+      background: #0D2327; padding: 16px 14px;
+      border: 1px solid #1E5A63; border-radius: 12px;
       cursor: pointer; text-align: left;
       transition: transform .22s cubic-bezier(.16,1,.3,1), box-shadow .22s, border-color .22s;
       position: relative; overflow: hidden;
@@ -425,18 +433,22 @@
       transition: transform .28s ease;
       border-radius: 0 0 12px 12px;
     }
-    .feature-card:hover { transform: translateY(-3px); box-shadow: 0 10px 28px rgba(30,90,99,.13); border-color: rgba(30,90,99,.35); }
+    .feature-card:hover { 
+      transform: translateY(-2px); 
+      box-shadow: 0 0 15px rgba(212,175,55,.3); 
+      border-color: #D4AF37; 
+    }
     .feature-card:hover::before { background-position: -100% 0; }
     .feature-card:hover::after  { transform: scaleX(1); }
-    [data-theme="dark"] .feature-card { background: rgba(255,255,255,.03); border-color: rgba(255,255,255,.08); }
-    [data-theme="dark"] .feature-card:hover { background: rgba(30,90,99,.07); border-color: rgba(30,90,99,.32); box-shadow: 0 10px 28px rgba(30,90,99,.22); }
+    [data-theme="dark"] .feature-card { background: #0D2327; border-color: #1E5A63; }
+    [data-theme="dark"] .feature-card:hover { background: #0D2327; border-color: #D4AF37; box-shadow: 0 0 20px rgba(212,175,55,.4); }
 
-    .feature-icon { font-size: 1.1rem; margin-bottom: 8px; line-height: 1; }
-    .feature-card-num   { font-size: .58rem; font-weight: 700; letter-spacing: 1px; color: var(--indigo); margin-bottom: 5px; opacity: .65; }
-    .feature-card-title { font-size: .78rem; font-weight: 700; color: var(--text); margin-bottom: 3px; }
-    .feature-card-desc  { font-size: .63rem; color: var(--text2); line-height: 1.5; }
-    .feature-card.nee-card .feature-icon { font-size: 1.3rem; }
-    .feature-card.nee-card .feature-card-num { color: var(--amber); opacity: 1; }
+    .feature-icon { font-size: 1.1rem; margin-bottom: 8px; line-height: 1; color: #D4AF37; filter: drop-shadow(0 0 2px rgba(212,175,55,0.3)); }
+    .feature-card-num   { font-size: .58rem; font-weight: 700; letter-spacing: 1px; color: #D4AF37; margin-bottom: 5px; opacity: .8; }
+    .feature-card-title { font-size: .78rem; font-weight: 700; color: #FFFFFF; margin-bottom: 3px; font-family: 'Inter', sans-serif; }
+    .feature-card-desc  { font-size: .63rem; color: #7A9499; line-height: 1.5; font-family: 'Inter', sans-serif; }
+    .feature-card.nee-card .feature-icon { font-size: 1.3rem; color: #D4AF37; }
+    .feature-card.nee-card .feature-card-num { color: #D4AF37; opacity: 1; }
 
     /* ════════════════════════════════════════
        MESSAGE BUBBLES
@@ -459,8 +471,7 @@
       0%,100% { box-shadow: 0 0 0 3px rgba(30,90,99,.3), 0 0 0 6px rgba(30,90,99,.1); transform: scale(1); }
       50%     { box-shadow: 0 0 0 4px rgba(30,90,99,.5), 0 0 18px rgba(30,90,99,.4); transform: scale(1.08); }
     }
-    .msg-avatar.typing { animation: avatarPulse 1.2s ease-in-out infinite; }
-    .avatar-logo { width: 22px; height: 22px; object-fit: contain; border-radius: 3px; display: block; }
+    .msg-avatar.typing { animation: avatarPulse 1.2s ease-in-out infinite; }    .avatar-logo { width: 24px; height: 24px; border-radius: 50%; object-fit: cover; border: 1px solid rgba(212,175,55,0.3); }object-fit: contain; border-radius: 3px; display: block; }
     .msg-avatar.typing .avatar-logo { animation: logoPulse 1.2s ease-in-out infinite; }
     @keyframes logoPulse {
       0%,100% { opacity: 1; transform: scale(1); filter: brightness(1); }
@@ -955,15 +966,140 @@
     .pia-mark-img { height: 32px; width: auto; object-fit: contain; }
 
     /* ════════════════════════════════════════
+       ORÁCULO DE ÁUDIO (EXPERIÊNCIA IMERSIVA)
+    ════════════════════════════════════════ */
+    .oraculo-overlay {
+      display: none; position: fixed; inset: 0; z-index: 1000;
+      background: rgba(13, 35, 39, 0.85); backdrop-filter: blur(10px) brightness(0.7);
+      align-items: center; justify-content: center; flex-direction: column;
+      transition: opacity 0.4s ease; opacity: 0;
+    }
+    .oraculo-overlay.active { display: flex; opacity: 1; }
+    
+    .oraculo-container {
+      position: relative; width: 200px; height: 200px;
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer;
+    }
+    
+    .oraculo-core {
+      width: 100px; height: 100px; border-radius: 50%;
+      background: #0D2327; position: relative; z-index: 10;
+      display: flex; align-items: center; justify-content: center;
+      box-shadow: 0 0 30px rgba(212, 175, 55, 0.4);
+      transition: transform 0.2s ease;
+      overflow: hidden;
+      border: 2px solid #1E5A63;
+    }
+    .oraculo-core:hover { transform: scale(1.05); }
+    .oraculo-core img { width: 100%; height: 100%; object-fit: cover; transform: scale(1.1); }
+    
+     .oraculo-ripple {
+      position: absolute;
+      border: 2px solid #1E5A63;
+      border-radius: 50%;
+      pointer-events: none;
+    }
+    .oraculo-chat-status {
+      font-size: 0.75rem;
+      color: #D4AF37;
+      font-weight: 600;
+      margin: 10px 0;
+      text-align: center;
+      font-style: italic;
+      animation: pulse 2s infinite;
+    }
+    @keyframes pulse {
+      0% { opacity: 0.5; }
+      50% { opacity: 1; }
+      100% { opacity: 0.5; }
+    }
+    
+    @keyframes breathing {
+      0%, 100% { transform: scale(1); box-shadow: 0 0 20px rgba(30, 90, 99, 0.4); }
+      50% { transform: scale(1.05); box-shadow: 0 0 40px rgba(30, 90, 99, 0.7); }
+    }
+    
+    .oraculo-core.loading {
+      animation: breathing 2s ease-in-out infinite;
+      border-color: #5FBFBF;
+    }
+    
+    /* WhatsApp Support Button */
+    .whatsapp-support {
+      position: fixed;
+      bottom: 20px;
+      left: 20px;
+      width: 50px;
+      height: 50px;
+      background-color: #0D2327;
+      color: #D4AF37;
+      border: 1px solid #1E5A63;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+      z-index: 1000;
+      transition: all 0.3s ease;
+      cursor: pointer;
+    }
+    .whatsapp-support:hover {
+      transform: scale(1.1) translateY(-5px);
+      background-color: #1E5A63;
+      color: #FFFFFF;
+      box-shadow: 0 0 15px rgba(212, 175, 55, 0.4);
+      border-color: #D4AF37;
+    }
+    .whatsapp-support svg {
+      width: 28px;
+      height: 28px;
+    }
+    @media (max-width: 768px) {
+      .whatsapp-support {
+        bottom: 80px; /* Acima da barra de input no mobile se necessário */
+        left: 15px;
+        width: 44px;
+        height: 44px;
+      }
+    }
+    
+    .oraculo-status {
+      margin-top: 40px; color: #D4AF37; font-family: 'Inter', sans-serif;
+      font-size: 0.75rem; font-weight: 700; letter-spacing: 3px;
+      text-transform: uppercase; text-align: center;
+    }
+    .oraculo-hint {
+      margin-top: 10px; color: #7A9499; font-size: 0.65rem;
+      font-weight: 500; text-align: center;
+    }
+
+    /* ════════════════════════════════════════
        RESPONSIVE
     ════════════════════════════════════════ */
     @media (max-width: 768px) {
       .sidebar { position: fixed; left: 0; top: 0; bottom: 0; transform: translateX(-100%); }
       .sidebar.open { transform: translateX(0); }
       .overlay.open { display: block; }
-      .topbar { display: flex; }
-      .input-area { padding: 12px 16px 20px; }
-      .messages { padding: 20px 0; }
+      .topbar { display: flex; }    .input-area {
+      padding: 12px 16px 20px;
+      display: flex; flex-direction: column; gap: 8px;
+    }
+    .state-selector-wrap {
+      display: flex; align-items: center; gap: 8px;
+      padding: 0 4px;
+    }
+    .state-label {
+      font-size: 0.6rem; font-weight: 700; color: var(--text3);
+      text-transform: uppercase; letter-spacing: 0.05em;
+    }
+    .state-select {
+      background: var(--card-bg); border: 1px solid var(--linha);
+      border-radius: 6px; padding: 3px 8px; font-size: 0.7rem;
+      color: var(--text2); cursor: pointer; outline: none;
+      transition: border-color 0.2s; font-family: 'Inter', sans-serif;
+    }
+    .state-select:focus { border-color: var(--amber); }.messages { padding: 20px 0; }
       .messages-inner { padding: 0 16px; }
       .feature-grid { grid-template-columns: repeat(2, 1fr); }
       .welcome h1 { font-size: 2rem; }
@@ -983,7 +1119,19 @@
 <body>
 <canvas id="bg3d" class="bg3d-canvas"></canvas>
 
-<!-- Modal Download DOCX -->
+  <!-- ProfessorIA Áudio Overlay -->
+  <div id="oraculoOverlay" class="oraculo-overlay">
+    <div class="oraculo-container" onclick="toggleOraculo()">
+      <div class="oraculo-core">
+        <img src="{{ url_for('static', filename='logo-oficial.png') }}" alt="ProfessorIA" class="logo-circular-blindada">
+      </div>
+    </div>
+    <div class="oraculo-status" id="oraculoStatus">O ProfessorIA está falando...</div>
+    <div class="oraculo-hint">Clique no círculo para pausar ou retomar a mentoria</div>
+    <button class="msg-btn" style="margin-top: 30px; border-color: #D4AF37; color: #D4AF37;" onclick="ouvirTexto('', document.querySelector('.msg-btn.ouvir.playing'))">Encerrar Mentoria</button>
+  </div>
+
+  <!-- Modal Download DOCX -->
 <div id="downloadModal" class="dl-overlay" onclick="if(event.target===this)fecharDownloadModal()">
   <div class="dl-modal">
     <div class="dl-modal-tag">Baixar como DOCX</div>
@@ -1118,7 +1266,17 @@
   </div>
 </div>
 
-<div class="overlay" id="overlay" onclick="fecharSidebar()"></div>
+  <div class="overlay" id="overlay" onclick="fecharSidebar()"></div>
+
+  <!-- Botão de Suporte WhatsApp -->
+  <a href="https://wa.me/5511999999999?text=Olá,%20preciso%20de%20ajuda%20com%20o%20ProfessorIA" 
+     target="_blank" 
+     class="whatsapp-support" 
+     title="Falar com o Suporte">
+    <svg viewBox="0 0 24 24" fill="currentColor">
+      <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
+    </svg>
+  </a>
 
 <div class="app">
   <!-- ═══════ SIDEBAR ═══════ -->
@@ -1126,7 +1284,7 @@
     <div class="sidebar-header">
       <a class="logo" href="/">
         <span class="pia-mark" id="piaMark">
-          <img src="{{ url_for('static', filename='logo-oficial.png') }}" alt="ProfessorIA" class="pia-mark-img">
+          <img src="{{ url_for('static', filename='logo-oficial.png') }}" alt="ProfessorIA" class="pia-mark-img logo-circular-blindada">
         </span>
         <span class="logo-p">Professor</span><span class="logo-ia">IA</span>
       </a>
@@ -1197,7 +1355,7 @@
         <span></span><span></span><span></span>
       </button>
       <a class="topbar-logo" href="/chat">
-        <img src="{{ url_for('static', filename='logo-oficial.png') }}" alt="ProfessorIA" class="topbar-logo-img">
+        <img src="{{ url_for('static', filename='logo-oficial.png') }}" alt="ProfessorIA" class="topbar-logo-img logo-circular-blindada">
         <span class="tp">Professor</span><span class="tia">IA</span>
       </a>
       <a class="topbar-user" href="/perfil" title="Minha conta">{{ current_user.nome[0].upper() }}</a>
@@ -1308,6 +1466,24 @@
 
     <!-- Input -->
     <div class="input-area">
+      <div class="state-selector-wrap">
+        <label for="stateSelector" class="state-label">Currículo Regional:</label>
+        <select id="stateSelector" class="state-select">
+          <option value="Nacional (BNCC)">Nacional (BNCC)</option>
+          <option value="São Paulo (Currículo Paulista)">São Paulo (Currículo Paulista)</option>
+          <option value="Rio de Janeiro">Rio de Janeiro</option>
+          <option value="Minas Gerais">Minas Gerais</option>
+          <option value="Rio Grande do Sul">Rio Grande do Sul</option>
+          <option value="Paraná">Paraná</option>
+          <option value="Santa Catarina">Santa Catarina</option>
+          <option value="Bahia">Bahia</option>
+          <option value="Ceará">Ceará</option>
+          <option value="Pernambuco">Pernambuco</option>
+          <option value="Goiás">Goiás</option>
+          <option value="Distrito Federal">Distrito Federal</option>
+          <option value="Outro">Outro</option>
+        </select>
+      </div>
       <div class="input-wrap">
         <div class="anexo-preview" id="anexoPreview">
           <div id="anexoThumbWrap"></div>
@@ -1405,7 +1581,7 @@
     content.appendChild(bubble);
 
     div.innerHTML = `<div class="msg-avatar" id="currentAvatar" title="ProfessorIA">
-      <img src="/static/logo-oficial.png" class="avatar-logo" alt="ProfessorIA">
+      <img src="/static/logo-oficial.png" class="avatar-logo logo-circular-blindada" alt="ProfessorIA">
     </div>`;
     div.appendChild(content);
     messagesInner.appendChild(div);
@@ -1566,6 +1742,13 @@
     if (!tema || !ano || !disc) { alert('Preencha Tema, Ano e Disciplina.'); return; }
 
     btn.textContent = '⏳ Gerando...'; btn.disabled = true;
+    // Feedback visual do ProfessorIA
+    const statusOriginal = btn.textContent;
+    const intervalOraculo = setInterval(() => {
+      const msgs = ['⏳ Gerando...', '✨ O ProfessorIA está revisando...', '📚 Garantindo perfeição pedagógica...', '🛡️ Validando BNCC...'];
+      btn.textContent = msgs[Math.floor(Math.random() * msgs.length)];
+    }, 3000);
+
     try {
       // 1. Gera o JSON estruturado do plano
       const r1 = await fetch('/api/gerar-plano', {
@@ -1600,7 +1783,10 @@
       a.click(); URL.revokeObjectURL(url);
       fecharPdfPlanoModal();
     } catch(e) { alert('Erro ao gerar PDF. Tente novamente.'); }
-    finally { btn.textContent = '↓ Gerar e Baixar PDF'; btn.disabled = false; }
+    finally { 
+      clearInterval(intervalOraculo);
+      btn.textContent = '↓ Gerar e Baixar PDF'; btn.disabled = false; 
+    }
   }
 
   function previewLogo(input) {
@@ -1706,8 +1892,13 @@
   }
 
   async function enviar() {
-    const texto = inputEl.value.trim();
+    const state = document.getElementById('stateSelector').value;
+    let texto = inputEl.value.trim();
     if ((!texto && !anexoAtual) || enviando) return;
+    
+    if (state !== 'Nacional (BNCC)') {
+      texto = `[Contexto Regional: ${state}] ${texto}`;
+    }
     enviando = true; btnEnviar.disabled = true; inputEl.disabled = true;
     inputEl.value = ''; inputEl.style.height = 'auto';
     const textoEnviado = texto || (anexoAtual ? `Analise este arquivo (${anexoAtual.nome}) e use como base para criar o material.` : '');
@@ -1719,6 +1910,14 @@
     const curAvatar = document.getElementById('currentAvatar');
     if (piaMark) piaMark.classList.add('typing');
     if (curAvatar) curAvatar.classList.add('typing');
+    
+    // Feedback visual do ProfessorIA no Chat
+    const oraculoStatus = document.createElement('div');
+    oraculoStatus.className = 'oraculo-chat-status';
+    oraculoStatus.innerHTML = '✨ O ProfessorIA está processando...';
+    document.getElementById('messages').appendChild(oraculoStatus);
+    scroll();
+
     try {
       const resp = await fetch('/api/chat',{ method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({messages:historico,anexo:anexoEnvio}) });
       if (resp.status===403) { stream.setHtml('Limite de gerações atingido.'); stream.done(); abrirPaywall(); return; }
@@ -1753,6 +1952,7 @@
       renderizarMermaid();
     } catch(err) { stream.add('Erro de conexão. Verifique sua internet e tente novamente.'); stream.done(); }
     finally {
+      if (oraculoStatus) oraculoStatus.remove();
       const pm = document.getElementById('piaMark');
       if (pm) pm.classList.remove('typing');
       const ca = document.getElementById('currentAvatar');
@@ -1784,19 +1984,171 @@
   }
   document.getElementById('neeModal').addEventListener('click',function(e){if(e.target===this)fecharNEE();});
 
-  // TTS
+  // TTS & ORÁCULO
   let vozAtual=localStorage.getItem('ProfessorIA_voz')||'nova', audioAtual=null;
-  async function ouvirTexto(texto,btn) {
-    if (audioAtual) { audioAtual.pause(); audioAtual=null; document.querySelectorAll('.msg-btn.ouvir').forEach(b=>{b.textContent='▶ Ouvir';b.classList.remove('playing');b.dataset.playing='0';}); if(btn.dataset.playing==='1')return; }
-    btn.textContent='⏳ Gerando...'; btn.classList.add('playing'); btn.dataset.playing='1';
+  let audioCtx=null, analyser=null, dataArray=null, animationId=null, sourceNode=null;
+
+  function initOraculoVisual() {
     try {
-      const r=await fetch('/api/tts',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({texto,voz:vozAtual})});
-      if(!r.ok) throw new Error();
-      const blob=await r.blob(), url=URL.createObjectURL(blob);
-      audioAtual=new Audio(url); audioAtual.play(); btn.textContent='⏸ Pausar';
-      audioAtual.onended=()=>{btn.textContent='▶ Ouvir';btn.classList.remove('playing');btn.dataset.playing='0';URL.revokeObjectURL(url);audioAtual=null;};
-      audioAtual.onerror=()=>{btn.textContent='▶ Ouvir';btn.classList.remove('playing');btn.dataset.playing='0';};
-    } catch(e){btn.textContent='▶ Ouvir';btn.classList.remove('playing');btn.dataset.playing='0';alert('Erro ao gerar áudio.');}
+      if (!audioCtx) {
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      }
+      
+      if (audioCtx.state === 'suspended') {
+        audioCtx.resume();
+      }
+
+      if (!analyser) {
+        analyser = audioCtx.createAnalyser();
+        analyser.fftSize = 256;
+        analyser.connect(audioCtx.destination);
+        dataArray = new Uint8Array(analyser.frequencyBinCount);
+      }
+
+      // Sempre reconectar a fonte se o áudio mudar
+      if (sourceNode) {
+        sourceNode.disconnect();
+      }
+      
+      if (audioAtual) {
+        sourceNode = audioCtx.createMediaElementSource(audioAtual);
+        sourceNode.connect(analyser);
+      }
+    } catch (e) {
+      console.error("Erro ao inicializar Web Audio API:", e);
+    }
+  }
+
+  function animarOraculo() {
+    if (!analyser) return;
+    animationId = requestAnimationFrame(animarOraculo);
+    analyser.getByteFrequencyData(dataArray);
+    
+    let sum = 0;
+    for (let i = 0; i < dataArray.length; i++) sum += dataArray[i];
+    const average = sum / dataArray.length;
+    const intensity = average / 128; // 0 a 2 aprox
+    
+    const core = document.querySelector('.oraculo-core');
+    if (core) {
+      core.style.transform = `scale(${1 + intensity * 0.15})`;
+      core.style.boxShadow = `0 0 ${30 + intensity * 50}px rgba(212, 175, 55, ${0.3 + intensity * 0.5})`;
+    }
+    
+    // Ripple effect baseado em picos de volume
+    if (average > 40 && Math.random() > 0.8) {
+      criarRipple(intensity);
+    }
+  }
+
+  function criarRipple(intensity) {
+    const container = document.querySelector('.oraculo-container');
+    if (!container) return;
+    const ripple = document.createElement('div');
+    ripple.className = 'oraculo-ripple';
+    const size = 100;
+    ripple.style.width = size + 'px';
+    ripple.style.height = size + 'px';
+    ripple.style.borderColor = intensity > 0.8 ? '#D4AF37' : '#1E5A63';
+    container.appendChild(ripple);
+    
+    ripple.animate([
+      { transform: 'scale(1)', opacity: 0.6 },
+      { transform: `scale(${2 + intensity * 2})`, opacity: 0 }
+    ], {
+      duration: 1500,
+      easing: 'cubic-bezier(0, 0, 0.2, 1)'
+    }).onfinish = () => ripple.remove();
+  }
+
+  function toggleOraculo() {
+    if (!audioAtual) return;
+    if (audioAtual.paused) {
+      audioAtual.play();
+      if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
+      document.getElementById('oraculoStatus').textContent = 'O ProfessorIA está falando...';
+    } else {
+      audioAtual.pause();
+      document.getElementById('oraculoStatus').textContent = 'ProfessorIA em silêncio';
+    }
+  }
+
+  async function ouvirTexto(texto, btn) {
+    if (audioAtual) {
+      audioAtual.pause();
+      audioAtual = null;
+      cancelAnimationFrame(animationId);
+      document.getElementById('oraculoOverlay').classList.remove('active');
+      document.querySelectorAll('.msg-btn.ouvir').forEach(b => {
+        b.textContent = '▶ Ouvir';
+        b.classList.remove('playing');
+        b.dataset.playing = '0';
+      });
+      if (btn.dataset.playing === '1') return;
+    }
+
+    btn.textContent = '⏳ Invocando ProfessorIA...';
+    btn.classList.add('playing');
+    btn.dataset.playing = '1';
+    
+    // Feedback de carregamento no Oráculo
+    const overlay = document.getElementById('oraculoOverlay');
+    const core = document.querySelector('.oraculo-core');
+    overlay.classList.add('active');
+    core.classList.add('loading');
+    document.getElementById('oraculoStatus').textContent = 'O ProfessorIA está pensando...';
+
+    try {
+      const r = await fetch('/api/tts', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ texto, voz: vozAtual })
+      });
+      if (!r.ok) throw new Error();
+      const blob = await r.blob(), url = URL.createObjectURL(blob);
+      
+      audioAtual = new Audio(url);
+      audioAtual.crossOrigin = "anonymous";
+      
+      // Mostrar Overlay do Oráculo
+      const overlay = document.getElementById('oraculoOverlay');
+      overlay.classList.add('active');
+      document.getElementById('oraculoStatus').textContent = 'O ProfessorIA está falando...';
+      
+      audioAtual.play().then(() => {
+        core.classList.remove('loading');
+        initOraculoVisual();
+        animarOraculo();
+      }).catch(e => {
+        console.error("Erro ao tocar áudio:", e);
+        // Tentar novamente após interação se falhar
+        if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
+      });
+
+      btn.textContent = '⏸ Pausar ProfessorIA';
+
+      audioAtual.onended = () => {
+        btn.textContent = '▶ Ouvir';
+        btn.classList.remove('playing');
+        btn.dataset.playing = '0';
+        overlay.classList.remove('active');
+        cancelAnimationFrame(animationId);
+        URL.revokeObjectURL(url);
+        audioAtual = null;
+      };
+      
+      audioAtual.onerror = () => {
+        btn.textContent = '▶ Ouvir';
+        btn.classList.remove('playing');
+        btn.dataset.playing = '0';
+        overlay.classList.remove('active');
+      };
+    } catch (e) {
+      btn.textContent = '▶ Ouvir';
+      btn.classList.remove('playing');
+      btn.dataset.playing = '0';
+      alert('O ProfessorIA não pôde ser invocado no momento.');
+    }
   }
 
   // ── Mic / Gravação de Voz ─────────────────────────────────────────────────
@@ -1938,6 +2290,27 @@
     if (!blocos.length) return;
     for (const el of blocos) {
       try {
+        // Se for um mindmap, vamos oferecer a opção de gerar a versão visual premium
+        if (el.textContent.includes('mindmap')) {
+          const temaMatch = el.textContent.match(/root\(\((.*?)\)\)/);
+          const tema = temaMatch ? temaMatch[1] : 'Mapa Mental';
+          
+          const container = document.createElement('div');
+          container.className = 'mindmap-visual-container';
+          container.style.marginTop = '15px';
+          container.innerHTML = `
+            <button class="btn-action" onclick="gerarMapaMentalVisual('${tema.replace(/'/g, "\\'")}', this)" 
+                    style="background: #D4AF37; color: #0D2327; border: none; padding: 8px 15px; border-radius: 8px; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 8px; font-family: 'Inter', sans-serif;">
+              <span>🎨 Gerar Mapa Mental Visual Premium</span>
+            </button>
+            <div class="mapa-visual-result" style="margin-top: 15px; display: none;">
+              <img src="" alt="Mapa Mental Visual" style="width: 100%; border-radius: 12px; border: 1px solid rgba(255,255,255,0.1); box-shadow: 0 10px 30px rgba(0,0,0,0.3);">
+              <a href="" download="Mapa_Mental_${tema}.png" class="btn-action" style="margin-top: 10px; display: inline-block; font-size: 0.75rem; text-decoration: underline; color: #D4AF37;">Baixar Imagem</a>
+            </div>
+          `;
+          el.parentNode.insertBefore(container, el.nextSibling);
+        }
+
         const { svg } = await m.render('mermaid-' + Math.random().toString(36).slice(2), el.textContent);
         el.innerHTML = svg;
         el.setAttribute('data-processed', '1');
@@ -1945,6 +2318,40 @@
       } catch(e) {
         console.warn('Mermaid render error:', e);
       }
+    }
+  }
+
+  async function gerarMapaMentalVisual(tema, btn) {
+    const container = btn.closest('.mindmap-visual-container');
+    const resultDiv = container.querySelector('.mapa-visual-result');
+    const img = resultDiv.querySelector('img');
+    const downloadLink = resultDiv.querySelector('a');
+    
+    const originalContent = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = '<span>⏳ Pintando Aquarela...</span>';
+    
+    try {
+      const resp = await fetch('/api/generate/mapa-mental', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ tema })
+      });
+      
+      const data = await resp.json();
+      if (!resp.ok) throw new Error(data.erro || 'Erro ao gerar mapa');
+      
+      img.src = data.url;
+      downloadLink.href = data.url;
+      resultDiv.style.display = 'block';
+      btn.style.display = 'none';
+      
+      // Scroll suave para a imagem
+      resultDiv.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    } catch (e) {
+      alert(e.message);
+      btn.disabled = false;
+      btn.innerHTML = originalContent;
     }
   }
 </script>

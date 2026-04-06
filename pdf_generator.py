@@ -1,15 +1,11 @@
 """
 pdf_generator.py — ProfessorIA
-Converte o JSON estruturado do Plano de Aula em um PDF profissional usando ReportLab.
-
-Uso:
-    from pdf_generator import gerar_plano_pdf
-    pdf_bytes = gerar_plano_pdf(plano_json, display_name="Ana Silva", school_name="E.E. Dom Pedro")
+Converte o JSON estruturado do Plano de Aula em um PDF de ELITE usando ReportLab.
+Espelha o layout premium do DOCX oficial.
 """
 
 import io
 from datetime import datetime
-
 from reportlab.lib import colors
 from reportlab.lib.pagesizes import A4
 from reportlab.lib.units import cm as rcm
@@ -19,304 +15,202 @@ from reportlab.platypus import (
     SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer, HRFlowable
 )
 
-# ── Paleta de cores (idêntica ao criar_pdf do server.py) ──────────────────────
-AZUL        = colors.HexColor('#2b4fc7')
-AZUL_ESCURO = colors.HexColor('#1a3399')
-AZUL_CLARO  = colors.HexColor('#eef2ff')
-VERDE_CLARO = colors.HexColor('#f0fdf4')
-AMARELO_BG  = colors.HexColor('#fffbeb')
-BRANCO      = colors.white
-TEXTO       = colors.HexColor('#1a1a2e')
-CINZA       = colors.HexColor('#6b7280')
-CINZA_CLARO = colors.HexColor('#f3f4f6')
-BORDA       = colors.HexColor('#c0c8e8')
-
-
-# ── Estilos reutilizáveis ─────────────────────────────────────────────────────
+# ── Paleta Noites de Alexandria ──────────────────────────────────────────────
+TURQUESA_PROFUNDO = colors.HexColor('#0D2327')
+TURQUESA_MEDIO    = colors.HexColor('#1E5A63')
+DOURADO           = colors.HexColor('#D4AF37')
+BRANCO            = colors.white
+TEXTO             = colors.HexColor('#1a1a2e')
+CINZA_SUAVE       = colors.HexColor('#7A9499')
+CINZA_BG          = colors.HexColor('#EEF2FF')
+BORDA             = colors.HexColor('#1E5A63')
 
 def _estilos():
     return {
-        'centro_bold': ParagraphStyle(
-            'cb', fontName='Helvetica-Bold', fontSize=10,
-            alignment=TA_CENTER, textColor=TEXTO, leading=14
+        'header_escola': ParagraphStyle(
+            'he', fontName='Helvetica-Bold', fontSize=11,
+            alignment=TA_CENTER, textColor=BRANCO, leading=14
         ),
-        'centro': ParagraphStyle(
-            'c', fontName='Helvetica', fontSize=9,
-            alignment=TA_CENTER, textColor=TEXTO, leading=13
-        ),
-        'centro_pequeno': ParagraphStyle(
-            'cp', fontName='Helvetica', fontSize=8,
-            alignment=TA_CENTER, textColor=CINZA, leading=12
+        'header_sec': ParagraphStyle(
+            'hs', fontName='Helvetica', fontSize=8,
+            alignment=TA_CENTER, textColor=colors.HexColor('#BFDBFE'), leading=10
         ),
         'titulo_banner': ParagraphStyle(
-            'tb', fontName='Helvetica-Bold', fontSize=13,
+            'tb', fontName='Helvetica-Bold', fontSize=12,
             alignment=TA_CENTER, textColor=BRANCO, leading=16
         ),
+        'label_tabela': ParagraphStyle(
+            'lt', fontName='Helvetica-Bold', fontSize=9,
+            textColor=TURQUESA_PROFUNDO, leading=12
+        ),
+        'valor_tabela': ParagraphStyle(
+            'vt', fontName='Helvetica', fontSize=9,
+            textColor=TEXTO, leading=12
+        ),
         'secao_header': ParagraphStyle(
-            'sh', fontName='Helvetica-Bold', fontSize=9,
-            alignment=TA_LEFT, textColor=BRANCO, leading=13
-        ),
-        'label': ParagraphStyle(
-            'lb', fontName='Helvetica-Bold', fontSize=8.5,
-            textColor=AZUL, leading=13
-        ),
-        'valor': ParagraphStyle(
-            'vl', fontName='Helvetica', fontSize=8.5,
-            textColor=TEXTO, leading=13
+            'sh', fontName='Helvetica-Bold', fontSize=10,
+            alignment=TA_CENTER, textColor=BRANCO, leading=14
         ),
         'corpo': ParagraphStyle(
-            'co', fontName='Helvetica', fontSize=8.5,
+            'co', fontName='Helvetica', fontSize=9,
             textColor=TEXTO, leading=13, alignment=TA_JUSTIFY
-        ),
-        'bncc_codigo': ParagraphStyle(
-            'bc', fontName='Helvetica-Bold', fontSize=8,
-            textColor=AZUL, leading=12
-        ),
-        'bncc_desc': ParagraphStyle(
-            'bd', fontName='Helvetica', fontSize=8,
-            textColor=TEXTO, leading=12, alignment=TA_JUSTIFY
-        ),
-        'etapa_titulo': ParagraphStyle(
-            'et', fontName='Helvetica-Bold', fontSize=9,
-            textColor=AZUL_ESCURO, leading=13
         ),
         'rodape': ParagraphStyle(
             'ro', fontName='Helvetica-Oblique', fontSize=7,
-            alignment=TA_CENTER, textColor=CINZA, leading=10
-        ),
-        'blank_label': ParagraphStyle(
-            'bl', fontName='Helvetica', fontSize=8.5,
-            textColor=CINZA, leading=13
-        ),
+            alignment=TA_CENTER, textColor=CINZA_SUAVE, leading=10
+        )
     }
 
-
-def _tabela_banner(texto, largura, cor_bg=None):
-    """Cria uma linha colorida de título (estilo banner)."""
-    cor = cor_bg or AZUL
-    st = ParagraphStyle(
-        'bn', fontName='Helvetica-Bold', fontSize=10,
-        alignment=TA_LEFT, textColor=BRANCO, leading=14
-    )
+def _tabela_secao(texto, largura, cor_bg=TURQUESA_MEDIO):
+    st = _estilos()['secao_header']
     t = Table([[Paragraph(texto, st)]], colWidths=[largura])
     t.setStyle(TableStyle([
-        ('BACKGROUND',    (0, 0), (-1, -1), cor),
-        ('TOPPADDING',    (0, 0), (-1, -1), 6),
-        ('BOTTOMPADDING', (0, 0), (-1, -1), 6),
-        ('LEFTPADDING',   (0, 0), (-1, -1), 10),
-        ('RIGHTPADDING',  (0, 0), (-1, -1), 10),
+        ('BACKGROUND', (0, 0), (-1, -1), cor_bg),
+        ('TOPPADDING', (0, 0), (-1, -1), 4),
+        ('BOTTOMPADDING', (0, 0), (-1, -1), 4),
+        ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
     ]))
     return t
 
-
-def _info_par(label, valor, estilos):
-    """Parágrafo do tipo 'Label: valor'."""
-    return Paragraph(
-        f'<font color="#2b4fc7"><b>{label}:</b></font>  {valor or ""}',
-        estilos['valor']
-    )
-
-
-def _blank(label, estilos):
-    """Parágrafo com campo em branco para preenchimento manual."""
-    return Paragraph(
-        f'<font color="#6b7280">{label}:</font>  '
-        '<font color="#9ca3af">__________________________________</font>',
-        estilos['blank_label']
-    )
-
-
-# ── Função principal ──────────────────────────────────────────────────────────
-
-def gerar_plano_pdf(plano_json: dict, display_name: str = '', school_name: str = '') -> bytes:
+def gerar_plano_pdf(plano_json: dict, display_name: str = '', school_data: dict = None) -> bytes:
     """
-    Converte o JSON plano de aula (schema flat) em bytes de um PDF profissional.
-
-    Schema esperado (flat):
-        tema, habilidades_bncc, objetivos, conteudo_programatico,
-        metodologia, recursos_didaticos, avaliacao
-        (+ disciplina e ano_escolar injetados pelo back-end)
+    Gera um PDF de elite espelhando o layout do DOCX.
     """
-    plano = plano_json  # schema flat, sem wrapper
-
+    plano = plano_json.get('plano_de_aula', plano_json)
+    
     buf = io.BytesIO()
     doc = SimpleDocTemplate(
         buf, pagesize=A4,
-        leftMargin=1.8 * rcm, rightMargin=1.8 * rcm,
-        topMargin=1.5 * rcm, bottomMargin=1.5 * rcm
+        leftMargin=2.0 * rcm, rightMargin=2.0 * rcm,
+        topMargin=1.8 * rcm, bottomMargin=1.8 * rcm
     )
     w = doc.width
     st = _estilos()
     story = []
 
-    # ── 1. CABEÇALHO INSTITUCIONAL ────────────────────────────────────────────
-    story.append(Paragraph("GOVERNO DO ESTADO DE SÃO PAULO", st['centro_bold']))
-    story.append(Paragraph("SECRETARIA DE ESTADO DA EDUCAÇÃO", st['centro']))
-    story.append(Spacer(1, 3))
+    # ── 1. CABEÇALHO (BANNER AZUL) ────────────────────────────────────────────
+    school_data = school_data or {}
+    escola_governo = school_data.get("escola_governo", "GOVERNO DO ESTADO DE SÃO PAULO")
+    escola_secretaria = school_data.get("escola_secretaria", "SECRETARIA DE ESTADO DA EDUCAÇÃO")
+    escola_diretoria = school_data.get("escola_diretoria", "DIRETORIA DE ENSINO – REGIÃO")
+    escola_nome = school_data.get("escola_nome", "ESCOLA ESTADUAL")
+    escola_endereco = school_data.get("escola_endereco", "Endereço da Escola")
+    escola_fone = school_data.get("escola_fone", "Telefone da Escola")
+    escola_email = school_data.get("escola_email", "email@escola.com.br")
 
-    if school_name:
-        story.append(Paragraph(school_name.upper(), st['centro_bold']))
-    else:
-        story.append(_blank("Escola", st))
-
-    story.append(Spacer(1, 4))
-
-    if display_name:
-        story.append(Paragraph(f"Prof(a). {display_name}", st['centro']))
-    else:
-        story.append(_blank("Professor(a)", st))
-
-    story.append(Spacer(1, 8))
-
-    # ── 2. TÍTULO PRINCIPAL ───────────────────────────────────────────────────
-    disciplina  = plano.get('disciplina', '')
-    ano_escolar = plano.get('ano_escolar', '')
-    tema        = plano.get('tema', '')
-    titulo_txt  = f"PLANO DE AULA  ·  {disciplina.upper()}  |  {ano_escolar}"
-    t_titulo = Table(
-        [[Paragraph(titulo_txt, st['titulo_banner'])]],
-        colWidths=[w]
-    )
-    t_titulo.setStyle(TableStyle([
-        ('BACKGROUND',    (0, 0), (-1, -1), AZUL),
-        ('TOPPADDING',    (0, 0), (-1, -1), 10),
-        ('BOTTOMPADDING', (0, 0), (-1, -1), 10),
-        ('LEFTPADDING',   (0, 0), (-1, -1), 12),
+    header_content = [
+        [Paragraph(escola_governo, st["header_escola"])],
+        [Paragraph(escola_secretaria, st["header_sec"])],
+        [Paragraph(escola_diretoria, st["header_sec"])],
+        [Paragraph(escola_nome, st["header_escola"])],
+        [Paragraph(escola_endereco, st["header_sec"])],
+        [Paragraph(escola_fone, st["header_sec"])],
+        [Paragraph(escola_email, st["header_sec"])]
+    ]
+    t_header = Table(header_content, colWidths=[w])
+    t_header.setStyle(TableStyle([
+        ('BACKGROUND', (0, 0), (-1, -1), TURQUESA_PROFUNDO),
+        ('TOPPADDING', (0, 0), (-1, -1), 6),
+        ('BOTTOMPADDING', (0, 0), (-1, -1), 6),
+        ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
     ]))
+    story.append(t_header)
+    story.append(Spacer(1, 10))
+
+    # ── 2. TÍTULO ─────────────────────────────────────────────────────────────
+    t_titulo = _tabela_secao("PLANO DE AULA", w, cor_bg=TURQUESA_PROFUNDO)
     story.append(t_titulo)
-    story.append(Spacer(1, 8))
+    story.append(Spacer(1, 10))
 
     # ── 3. FICHA DE IDENTIFICAÇÃO ─────────────────────────────────────────────
-    ficha_rows = [
-        [_info_par("Tema",       tema,       st), _info_par("Ano / Série", ano_escolar, st)],
-        [_info_par("Disciplina", disciplina, st), _info_par("", "", st)],
+    info_data = [
+        [Paragraph("Tema / Conteúdo", st['label_tabela']), Paragraph(plano.get('tema_central', ''), st['valor_tabela'])],
+        [Paragraph("Disciplina", st['label_tabela']), Paragraph(plano.get('disciplina', ''), st['valor_tabela'])],
+        [Paragraph("Ano / Série", st['label_tabela']), Paragraph(plano.get('ano_escolar', ''), st['valor_tabela'])],
+        [Paragraph("Tempo Estimado", st['label_tabela']), Paragraph(plano.get('tempo_estimado', ''), st['valor_tabela'])],
     ]
-    if display_name:
-        ficha_rows.append([_info_par("Professor(a)", display_name, st),
-                           _info_par("Escola", school_name, st)])
-
-    t_ficha = Table(ficha_rows, colWidths=[w * 0.6, w * 0.4])
-    t_ficha.setStyle(TableStyle([
-        ('GRID',          (0, 0), (-1, -1), 0.5, BORDA),
-        ('TOPPADDING',    (0, 0), (-1, -1), 6),
-        ('BOTTOMPADDING', (0, 0), (-1, -1), 6),
-        ('LEFTPADDING',   (0, 0), (-1, -1), 8),
-        ('RIGHTPADDING',  (0, 0), (-1, -1), 8),
-        ('VALIGN',        (0, 0), (-1, -1), 'MIDDLE'),
-        ('ROWBACKGROUNDS', (0, 0), (-1, -1), [AZUL_CLARO, BRANCO]),
+    t_info = Table(info_data, colWidths=[4*rcm, w-4*rcm])
+    t_info.setStyle(TableStyle([
+        ('GRID', (0, 0), (-1, -1), 0.5, BORDA),
+        ('BACKGROUND', (0, 0), (0, -1), CINZA_BG),
+        ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+        ('TOPPADDING', (0, 0), (-1, -1), 5),
+        ('BOTTOMPADDING', (0, 0), (-1, -1), 5),
     ]))
-    story.append(t_ficha)
+    story.append(t_info)
     story.append(Spacer(1, 10))
 
     # ── 4. HABILIDADES BNCC ───────────────────────────────────────────────────
-    # Cada item é uma string "CÓDIGO - Descrição"
+    story.append(_tabela_secao("HABILIDADES BNCC", w))
     habilidades = plano.get('habilidades_bncc', [])
-    if habilidades:
-        story.append(_tabela_banner("  HABILIDADES BNCC", w))
-        story.append(Spacer(1, 4))
+    bncc_txt = "  |  ".join([f"<b>{h['codigo']}</b>: {h['descricao']}" for h in habilidades])
+    t_bncc = Table([[Paragraph(bncc_txt, st['corpo'])]], colWidths=[w])
+    t_bncc.setStyle(TableStyle([
+        ('GRID', (0, 0), (-1, -1), 0.5, BORDA),
+        ('TOPPADDING', (0, 0), (-1, -1), 8),
+        ('BOTTOMPADDING', (0, 0), (-1, -1), 8),
+    ]))
+    story.append(t_bncc)
+    story.append(Spacer(1, 10))
 
-        bncc_rows = []
-        for h in habilidades:
-            if ' - ' in h:
-                codigo, descricao = h.split(' - ', 1)
-            else:
-                codigo, descricao = '', h
-            bncc_rows.append([
-                Paragraph(codigo.strip(), st['bncc_codigo']),
-                Paragraph(descricao.strip(), st['bncc_desc'])
-            ])
+    # ── 5. AULAS ──────────────────────────────────────────────────────────────
+    story.append(_tabela_secao("AULAS", w))
+    aulas_header = [
+        [Paragraph("Data", st["header_escola"]), Paragraph("Conteúdo", st["header_escola"]), 
+         Paragraph("Estratégias", st["header_escola"]), Paragraph("Recursos", st["header_escola"]), 
+         Paragraph("Avaliação", st["header_escola"]), Paragraph("Verificação", st["header_escola"])]
+    ]
+    t_aulas_h = Table(aulas_header, colWidths=[w*0.1, w*0.2, w*0.2, w*0.2, w*0.15, w*0.15])
+    t_aulas_h.setStyle(TableStyle([
+        ("BACKGROUND", (0, 0), (-1, -1), TURQUESA_MEDIO),
+        ("GRID", (0, 0), (-1, -1), 0.5, BRANCO),
+        ("ALIGN", (0, 0), (-1, -1), "CENTER"),
+    ]))
+    story.append(t_aulas_h)
 
-        t_bncc = Table(bncc_rows, colWidths=[2.2 * rcm, w - 2.2 * rcm])
-        t_bncc.setStyle(TableStyle([
-            ('GRID',          (0, 0), (-1, -1), 0.4, BORDA),
-            ('TOPPADDING',    (0, 0), (-1, -1), 5),
-            ('BOTTOMPADDING', (0, 0), (-1, -1), 5),
-            ('LEFTPADDING',   (0, 0), (-1, -1), 6),
-            ('RIGHTPADDING',  (0, 0), (-1, -1), 6),
-            ('VALIGN',        (0, 0), (-1, -1), 'TOP'),
-            ('ROWBACKGROUNDS', (0, 0), (-1, -1), [AZUL_CLARO, BRANCO]),
-        ]))
-        story.append(t_bncc)
-        story.append(Spacer(1, 10))
+    aulas_rows = []
+    for aula in plano.get("aulas", []):
+        aulas_rows.append([
+            Paragraph(aula.get("data", ""), st["valor_tabela"]),
+            Paragraph(aula.get("conteudo", ""), st["valor_tabela"]),
+            Paragraph(aula.get("estrategias", ""), st["valor_tabela"]),
+            Paragraph(aula.get("recursos", ""), st["valor_tabela"]),
+            Paragraph(aula.get("avaliacao", ""), st["valor_tabela"]),
+            Paragraph(aula.get("verificacao", ""), st["valor_tabela"])
+        ])
+    
+    t_aulas = Table(aulas_rows, colWidths=[w*0.1, w*0.2, w*0.2, w*0.2, w*0.15, w*0.15])
+    t_aulas.setStyle(TableStyle([
+        ("GRID", (0, 0), (-1, -1), 0.5, BORDA),
+        ("VALIGN", (0, 0), (-1, -1), "TOP"),
+        ("TOPPADDING", (0, 0), (-1, -1), 5),
+        ("BOTTOMPADDING", (0, 0), (-1, -1), 5),
+    ]))
+    story.append(t_aulas)
+    story.append(Spacer(1, 10))
 
-    # ── 5. OBJETIVOS ──────────────────────────────────────────────────────────
-    objetivos = plano.get('objetivos', [])
-    if objetivos:
-        story.append(_tabela_banner("  OBJETIVOS DE APRENDIZAGEM", w, cor_bg=AZUL_ESCURO))
-        story.append(Spacer(1, 4))
-        obj_rows = [[Paragraph(f'• {o}', st['corpo'])] for o in objetivos]
-        t_obj = Table(obj_rows, colWidths=[w])
-        t_obj.setStyle(TableStyle([
-            ('GRID',          (0, 0), (-1, -1), 0.4, BORDA),
-            ('TOPPADDING',    (0, 0), (-1, -1), 5),
-            ('BOTTOMPADDING', (0, 0), (-1, -1), 5),
-            ('LEFTPADDING',   (0, 0), (-1, -1), 10),
-            ('BACKGROUND',    (0, 0), (-1, -1), AMARELO_BG),
-        ]))
-        story.append(t_obj)
-        story.append(Spacer(1, 10))
-
-    # ── 6. DESENVOLVIMENTO DA AULA ────────────────────────────────────────────
-    conteudo    = plano.get('conteudo_programatico', '')
-    metodologia = plano.get('metodologia', '')
-    recursos    = plano.get('recursos_didaticos', [])
-
-    if conteudo or metodologia or recursos:
-        story.append(_tabela_banner("  DESENVOLVIMENTO DA AULA", w))
-        story.append(Spacer(1, 6))
-
-        dev_rows = [
-            [Paragraph('<b>Conteúdo Programático</b>', st['label']),
-             Paragraph(conteudo, st['corpo'])],
-            [Paragraph('<b>Metodologia</b>', st['label']),
-             Paragraph(metodologia, st['corpo'])],
-            [Paragraph('<b>Recursos Didáticos</b>', st['label']),
-             Paragraph(', '.join(recursos) if recursos else '—', st['corpo'])],
-        ]
-        t_dev = Table(dev_rows, colWidths=[3.8 * rcm, w - 3.8 * rcm])
-        t_dev.setStyle(TableStyle([
-            ('GRID',          (0, 0), (-1, -1), 0.4, BORDA),
-            ('TOPPADDING',    (0, 0), (-1, -1), 6),
-            ('BOTTOMPADDING', (0, 0), (-1, -1), 6),
-            ('LEFTPADDING',   (0, 0), (-1, -1), 8),
-            ('RIGHTPADDING',  (0, 0), (-1, -1), 8),
-            ('VALIGN',        (0, 0), (-1, -1), 'TOP'),
-            ('BACKGROUND',    (0, 0), (0, -1), AZUL_CLARO),
-            ('BACKGROUND',    (1, 0), (1, -1), VERDE_CLARO),
-        ]))
-        story.append(t_dev)
-        story.append(Spacer(1, 10))
-
-    # ── 7. AVALIAÇÃO ──────────────────────────────────────────────────────────
-    avaliacao = plano.get('avaliacao', '')
-    if avaliacao:
-        story.append(_tabela_banner("  AVALIAÇÃO", w, cor_bg=colors.HexColor('#065f46')))
-        story.append(Spacer(1, 4))
-
-        aval_rows = [
-            [Paragraph('<b>Critérios e Método</b>', st['label']), Paragraph(avaliacao, st['corpo'])],
-        ]
-        t_aval = Table(aval_rows, colWidths=[3.0 * rcm, w - 3.0 * rcm])
-        t_aval.setStyle(TableStyle([
-            ('GRID',          (0, 0), (-1, -1), 0.4, BORDA),
-            ('TOPPADDING',    (0, 0), (-1, -1), 6),
-            ('BOTTOMPADDING', (0, 0), (-1, -1), 6),
-            ('LEFTPADDING',   (0, 0), (-1, -1), 8),
-            ('RIGHTPADDING',  (0, 0), (-1, -1), 8),
-            ('VALIGN',        (0, 0), (-1, -1), 'TOP'),
-            ('BACKGROUND',    (0, 0), (0, -1), AZUL_CLARO),
-            ('BACKGROUND',    (1, 0), (1, -1), VERDE_CLARO),
-        ]))
-        story.append(t_aval)
-        story.append(Spacer(1, 12))
+    # ── 6. AVALIAÇÃO ──────────────────────────────────────────────────────────
+    story.append(_tabela_secao("AVALIAÇÃO E FECHAMENTO", w))
+    av = plano.get('avaliacao_e_fechamento', {})
+    av_data = [
+        [Paragraph("<b>Método:</b> " + av.get('metodo', ''), st['corpo']),
+         Paragraph("<b>Critérios:</b> " + av.get('criterios', ''), st['corpo'])]
+    ]
+    t_av = Table(av_data, colWidths=[w*0.5, w*0.5])
+    t_av.setStyle(TableStyle([
+        ('GRID', (0, 0), (-1, -1), 0.5, BORDA),
+        ('TOPPADDING', (0, 0), (-1, -1), 8),
+        ('BOTTOMPADDING', (0, 0), (-1, -1), 8),
+    ]))
+    story.append(t_av)
+    story.append(Spacer(1, 15))
 
     # ── 7. RODAPÉ ─────────────────────────────────────────────────────────────
-    story.append(HRFlowable(width='100%', thickness=0.5, color=BORDA))
-    story.append(Spacer(1, 4))
-    rodape_parts = ['Gerado por ProfessorIA™', datetime.now().strftime('%d/%m/%Y')]
-    if school_name:
-        rodape_parts.append(school_name)
-    story.append(Paragraph('  ·  '.join(rodape_parts), st['rodape']))
+    story.append(HRFlowable(width='100%', thickness=0.5, color=TURQUESA_MEDIO))
+    story.append(Spacer(1, 5))
+    prof = display_name or "ProfessorIA"
+    data_txt = datetime.now().strftime('%d/%m/%Y')
+    story.append(Paragraph(f"Gerado por ProfessorIA™  ·  Prof(a). {prof}  ·  {data_txt}", st['rodape']))
 
     doc.build(story)
     buf.seek(0)

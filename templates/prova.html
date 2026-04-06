@@ -4,8 +4,8 @@
   <meta charset="UTF-8"/>
   <script>!function(){var t=localStorage.getItem("pia-theme")||"dark",a="system"===t?(window.matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light"):t;document.documentElement.setAttribute("data-theme",a),document.documentElement.style.colorScheme=a}();</script>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Gerador de Provas — ProfessorIA</title>
-  <link rel="icon" href="{{ url_for('static', filename='favicon.ico') }}" type="image/x-icon">
+  <title>ProfessorIA — Sabedoria e Tempo para Você</title>
+  <link rel="icon" href="{{ url_for('static', filename='logooficial.png') }}" type="image/png">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet"/>
   <style>
     *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
@@ -214,16 +214,12 @@
     <div class="form-title" style="margin-top:20px">Quantidade de questões</div>
     <div style="display:flex;flex-direction:column;gap:8px">
       <div class="num-group">
-        <span class="num-label">Verdadeiro ou Falso</span>
-        <input id="f-vf" type="number" class="num-input" value="5" min="1" max="10"/>
-      </div>
-      <div class="num-group">
         <span class="num-label">Múltipla Escolha (A / B / C / D)</span>
         <input id="f-mc" type="number" class="num-input" value="5" min="1" max="10"/>
       </div>
       <div class="num-group">
         <span class="num-label">Discursivas (com gabarito)</span>
-        <input id="f-disc" type="number" class="num-input" value="3" min="1" max="5"/>
+        <input id="f-disc" type="number" class="num-input" value="2" min="1" max="5"/>
       </div>
     </div>
 
@@ -246,13 +242,14 @@
       </div>
       <div class="result-actions">
         <button class="btn-copiar" onclick="copiarTudo()">Copiar tudo</button>
+        <button class="btn-copiar" id="btn-download-docx" onclick="baixarDocx()" style="background: var(--indigo); color: #fff; border-color: var(--indigo);">Baixar Word Premium</button>
       </div>
     </div>
 
-    <!-- Seção V/F -->
-    <div class="secao secao-vf">
-      <div class="secao-titulo">&#10003; Verdadeiro ou Falso</div>
-      <div id="lista-vf"></div>
+    <!-- Seção BNCC -->
+    <div class="secao secao-mc">
+      <div class="secao-titulo" style="background:rgba(212,175,55,.1);color:var(--gold-old)">&#9733; Alinhamento BNCC</div>
+      <div id="lista-vf" style="padding: 10px 18px; background: var(--card); border: 1px solid var(--linha); border-radius: 12px;"></div>
     </div>
 
     <!-- Seção Múltipla Escolha -->
@@ -277,9 +274,8 @@
     const tema = document.getElementById('f-tema').value.trim();
     const disc = document.getElementById('f-disciplina').value.trim();
     const ano  = document.getElementById('f-ano').value.trim();
-    const numVf   = parseInt(document.getElementById('f-vf').value)   || 5;
     const numMc   = parseInt(document.getElementById('f-mc').value)   || 5;
-    const numDisc = parseInt(document.getElementById('f-disc').value) || 3;
+    const numDisc = parseInt(document.getElementById('f-disc').value) || 2;
 
     if (!tema || !disc || !ano) {
       alert('Preencha Tema, Disciplina e Ano para continuar.');
@@ -295,7 +291,7 @@
       const resp = await fetch('/api/generate/prova', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ tema, disciplina: disc, ano, num_vf: numVf, num_mc: numMc, num_disc: numDisc })
+        body: JSON.stringify({ tema, disciplina: disc, ano, num_mc: numMc, num_disc: numDisc })
       });
 
       if (resp.status === 403) {
@@ -310,7 +306,7 @@
       }
 
       const data = await resp.json();
-      _provaDados = data.prova;
+      _provaDados = data;
       renderizarProva(_provaDados);
 
     } catch(e) {
@@ -323,19 +319,16 @@
 
   function renderizarProva(prova) {
     if (!prova) return;
-    document.getElementById('result-nome').textContent = prova.tema || 'Prova';
+    document.getElementById('result-nome').textContent = prova.titulo_prova || 'Prova';
 
-    // V/F
+    // BNCC
     const listaVf = document.getElementById('lista-vf');
     listaVf.innerHTML = '';
-    (prova.questoes_verdadeiro_falso || []).forEach((q, i) => {
+    (prova.objetivos_bncc || []).forEach(obj => {
       const div = document.createElement('div');
-      div.className = 'questao';
-      div.innerHTML = `
-        <div class="questao-num">Questão ${i + 1}</div>
-        <div class="questao-texto">${escapeHtml(q.afirmacao)}</div>
-        <div class="questao-gabarito">${q.resposta === 'V' ? 'Verdadeiro' : 'Falso'}</div>
-      `;
+      div.className = 'questao-texto';
+      div.style.marginBottom = '8px';
+      div.textContent = '• ' + obj;
       listaVf.appendChild(div);
     });
 
@@ -345,8 +338,8 @@
     (prova.questoes_multipla_escolha || []).forEach((q, i) => {
       const letras = ['A', 'B', 'C', 'D'];
       const alts = (q.alternativas || []).map((alt, idx) => {
-        const letra = letras[idx] || String.fromCharCode(65 + idx);
-        const isCorreta = letra === q.correta;
+        const letra = letras[idx];
+        const isCorreta = letra === q.resposta_correta;
         return `<li class="alternativa${isCorreta ? ' correta' : ''}"><span class="alternativa-letra">${letra})</span>${escapeHtml(alt)}</li>`;
       }).join('');
       const div = document.createElement('div');
@@ -362,15 +355,15 @@
     // Discursivas
     const listaDi = document.getElementById('lista-disc');
     listaDi.innerHTML = '';
-    (prova.questoes_discursivas || []).forEach((q, i) => {
+    (prova.questoes_dissertativas || []).forEach((q, i) => {
       const div = document.createElement('div');
       div.className = 'questao';
       div.innerHTML = `
-        <div class="questao-num">Questão ${i + 1}</div>
+        <div class="questao-num">Questão ${i + 1 + (prova.questoes_multipla_escolha?.length || 0)}</div>
         <div class="questao-texto">${escapeHtml(q.pergunta)}</div>
         <div class="gabarito-box">
-          <div class="gabarito-box-label">Gabarito esperado</div>
-          <div class="gabarito-box-text">${escapeHtml(q.gabarito_esperado)}</div>
+          <div class="gabarito-box-label">Expectativa de resposta</div>
+          <div class="gabarito-box-text">${escapeHtml(q.expectativa_resposta)}</div>
         </div>
       `;
       listaDi.appendChild(div);
@@ -380,28 +373,56 @@
     document.getElementById('resultArea').scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
 
+  async function baixarDocx() {
+    if (!_provaDados) return;
+    const btn = document.getElementById('btn-download-docx');
+    const originalText = btn.textContent;
+    btn.disabled = true;
+    btn.textContent = '⏳ Preparando...';
+    
+    try {
+      const resp = await fetch('/api/prova/docx', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ prova_dados: _provaDados })
+      });
+      
+      if (!resp.ok) throw new Error('Erro ao baixar arquivo');
+      
+      const blob = await resp.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `Prova_${_provaDados.titulo_prova || 'ProfessorIA'}.docx`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+    } catch (e) {
+      alert('Erro ao gerar o arquivo Word. Tente novamente.');
+    } finally {
+      btn.disabled = false;
+      btn.textContent = originalText;
+    }
+  }
+
   function copiarTudo() {
     if (!_provaDados) return;
-    let txt = `PROVA: ${_provaDados.tema || ''}\n\n`;
-
-    txt += '== VERDADEIRO OU FALSO ==\n';
-    (_provaDados.questoes_verdadeiro_falso || []).forEach((q, i) => {
-      txt += `${i+1}. ${q.afirmacao}\nGabarito: ${q.resposta === 'V' ? 'Verdadeiro' : 'Falso'}\n\n`;
-    });
-
-    txt += '== MÚLTIPLA ESCOLHA ==\n';
+    let txt = `PROVA: ${_provaDados.titulo_prova || ''}\n\n`;
+    txt += '== OBJETIVOS BNCC ==\n';
+    (_provaDados.objetivos_bncc || []).forEach(obj => { txt += `• ${obj}\n`; });
+    txt += '\n== MÚLTIPLA ESCOLHA ==\n';
     const letras = ['A','B','C','D'];
     (_provaDados.questoes_multipla_escolha || []).forEach((q, i) => {
       txt += `${i+1}. ${q.pergunta}\n`;
-      (q.alternativas || []).forEach((a, j) => { txt += `   ${letras[j]||j+1}) ${a}\n`; });
-      txt += `Gabarito: ${q.correta}\n\n`;
+      (q.alternativas || []).forEach((a, j) => { txt += `   ${letras[j]}) ${a}\n`; });
+      txt += `Gabarito: ${q.resposta_correta}\n\n`;
     });
-
     txt += '== DISCURSIVAS ==\n';
-    (_provaDados.questoes_discursivas || []).forEach((q, i) => {
-      txt += `${i+1}. ${q.pergunta}\nGabarito: ${q.gabarito_esperado}\n\n`;
+    (_provaDados.questoes_dissertativas || []).forEach((q, i) => {
+      txt += `${i+1}. ${q.pergunta}\nExpectativa: ${q.expectativa_resposta}\n\n`;
     });
-
+    txt += `== GABARITO GERAL ==\n${_provaDados.gabarito_geral}\n`;
+    
     navigator.clipboard.writeText(txt).then(() => {
       const btn = document.querySelector('.btn-copiar');
       btn.textContent = 'Copiado ✓';
