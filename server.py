@@ -2806,17 +2806,58 @@ def _hex_to_rgb(h):
     return RGBColor(int(h[0:2], 16), int(h[2:4], 16), int(h[4:6], 16))
 
 
+def _mm_set_cell_margins(cell, top=80, bottom=80, left=120, right=120):
+    """Define margens internas de uma célula (em twips: 1pt ≈ 20twips)."""
+    tc   = cell._tc
+    tcPr = tc.get_or_add_tcPr()
+    tcMar = OxmlElement('w:tcMar')
+    for side, val in [('top', str(top)), ('left', str(left)),
+                      ('bottom', str(bottom)), ('right', str(right))]:
+        el = OxmlElement(f'w:{side}')
+        el.set(qn('w:w'), val)
+        el.set(qn('w:type'), 'dxa')
+        tcMar.append(el)
+    tcPr.append(tcMar)
+
+
+def _mm_set_cell_borders(cell, color, thick=False):
+    """Define bordas coloridas em uma célula."""
+    sz = '12' if thick else '6'
+    tc   = cell._tc
+    tcPr = tc.get_or_add_tcPr()
+    tcB  = OxmlElement('w:tcBorders')
+    for side in ('top', 'left', 'bottom', 'right'):
+        el = OxmlElement(f'w:{side}')
+        el.set(qn('w:val'), 'single')
+        el.set(qn('w:sz'), sz)
+        el.set(qn('w:color'), color)
+        tcB.append(el)
+    tcPr.append(tcB)
+
+
+# Paleta Descomplica: cor sólida (header) + cor clara (conteúdo)
+_MM_PALETTE_VIVID = [
+    ('c0392b', 'fdf2f0'),   # vermelho
+    ('1a5276', 'eaf2fb'),   # azul marinho
+    ('b7770d', 'fef9e7'),   # âmbar
+    ('1e8449', 'eafaf1'),   # verde
+    ('6c3483', 'f5eef8'),   # roxo
+    ('b03a2e', 'fdedec'),   # terracota
+]
+
+
 def gerar_mapa_mental_docx(texto, meta=None):
     """Gera DOCX visual de mapa mental no estilo infográfico Descomplica.
-    Suporta formato legado (## 🧠) e Mermaid mindmap."""
+    Suporta formato Mermaid mindmap e legado (## 🧠).
+    Layout: grid 3 colunas com header sólido colorido + área de itens clara."""
     import re
     if meta is None:
         meta = {}
-    escola    = meta.get('escola', '').strip()
-    professor = meta.get('professor', '').strip()
+    escola     = meta.get('escola', '').strip()
+    professor  = meta.get('professor', '').strip()
     disciplina = meta.get('disciplina', '').strip()
 
-    # Detecta qual formato e faz o parse correto
+    # ── Parse do formato correto ─────────────────────────────────────────
     if _extrair_mermaid(texto):
         titulo, categorias = _parse_mermaid_mindmap(texto)
     else:
@@ -2826,135 +2867,139 @@ def gerar_mapa_mental_docx(texto, meta=None):
     for sec in doc.sections:
         sec.page_height   = Cm(29.7)
         sec.page_width    = Cm(21.0)
-        sec.top_margin    = Cm(1.5)
-        sec.bottom_margin = Cm(1.5)
+        sec.top_margin    = Cm(1.2)
+        sec.bottom_margin = Cm(1.2)
         sec.left_margin   = Cm(1.5)
         sec.right_margin  = Cm(1.5)
 
     doc.styles['Normal'].font.name = 'Arial'
     doc.styles['Normal'].font.size = Pt(10)
 
-    # ── HEADER ──────────────────────────────────────────────────────────
+    # ── Cabeçalho escola (pequeno) ───────────────────────────────────────
     if escola or professor:
         hp = doc.add_paragraph()
         hp.alignment = WD_ALIGN_PARAGRAPH.CENTER
         hp.paragraph_format.space_before = Pt(0)
-        hp.paragraph_format.space_after  = Pt(2)
+        hp.paragraph_format.space_after  = Pt(4)
         parts = []
-        if escola: parts.append(escola)
-        if professor: parts.append(f'Prof(a). {professor}')
+        if escola:     parts.append(escola)
+        if professor:  parts.append(f'Prof(a). {professor}')
         if disciplina: parts.append(disciplina)
         run = hp.add_run('  ·  '.join(parts))
         run.font.size = Pt(8)
-        run.font.color.rgb = RGBColor(0x88, 0x88, 0x88)
+        run.font.color.rgb = RGBColor(0x77, 0x77, 0x77)
 
-    # ── CENTRAL TITLE BOX ───────────────────────────────────────────────
-    title_tbl = doc.add_table(rows=1, cols=1)
-    _pia_no_borders(title_tbl)
-    tc = title_tbl.cell(0, 0)
-    # Dark indigo background for title
-    set_cell_bg(tc, '312e81')
-    # Add colored top stripe feel via border
-    tcPr = tc._tc.get_or_add_tcPr()
-    tcBorders = OxmlElement('w:tcBorders')
-    for side in ('top', 'left', 'bottom', 'right'):
-        el = OxmlElement(f'w:{side}')
-        el.set(qn('w:val'), 'single')
-        el.set(qn('w:sz'), '6')
-        el.set(qn('w:color'), '4338ca')
-        tcBorders.append(el)
-    tcPr.append(tcBorders)
+    # ── Banner título principal ──────────────────────────────────────────
+    ttbl = doc.add_table(rows=1, cols=1)
+    _pia_no_borders(ttbl)
+    tc = ttbl.cell(0, 0)
+    set_cell_bg(tc, '1a2744')
+    _mm_set_cell_margins(tc, top=160, bottom=160, left=200, right=200)
+    _mm_set_cell_borders(tc, '2e4a8a', thick=True)
 
     tp = tc.paragraphs[0]
     tp.alignment = WD_ALIGN_PARAGRAPH.CENTER
-    tp.paragraph_format.space_before = Pt(10)
-    tp.paragraph_format.space_after  = Pt(10)
     tr = tp.add_run(titulo)
     tr.font.bold  = True
-    tr.font.size  = Pt(18)
+    tr.font.size  = Pt(24)
     tr.font.name  = 'Arial'
     tr.font.color.rgb = RGBColor(0xFF, 0xFF, 0xFF)
 
-    doc.add_paragraph().paragraph_format.space_after = Pt(6)
+    # Subtítulo "MAPA MENTAL" abaixo do título
+    tp2 = ttbl.cell(0, 0).add_paragraph()
+    tp2.alignment = WD_ALIGN_PARAGRAPH.CENTER
+    tp2.paragraph_format.space_before = Pt(0)
+    tp2.paragraph_format.space_after  = Pt(6)
+    sub = tp2.add_run('MAPA MENTAL')
+    sub.font.size  = Pt(9)
+    sub.font.name  = 'Arial'
+    sub.font.bold  = False
+    sub.font.color.rgb = RGBColor(0xAA, 0xBB, 0xCC)
 
-    # ── CATEGORY GRID: 2 columns ─────────────────────────────────────────
-    # Fill in pairs; if odd, last row has 1 cell spanning
-    n = len(categorias)
-    pairs = [(categorias[i], categorias[i+1] if i+1 < n else None)
-             for i in range(0, n, 2)]
+    sp = doc.add_paragraph()
+    sp.paragraph_format.space_before = Pt(0)
+    sp.paragraph_format.space_after  = Pt(10)
 
-    for left_cat, right_cat in pairs:
-        row_tbl = doc.add_table(rows=1, cols=2)
-        _pia_no_borders(row_tbl)
-        row_tbl.columns[0].width = Cm(8.5)
-        row_tbl.columns[1].width = Cm(8.5)
+    # ── Grid de categorias ───────────────────────────────────────────────
+    n    = len(categorias)
+    cols = 3 if n >= 5 else (2 if n >= 3 else 1)
+    # Largura utilizável: 21cm - 1.5cm*2 = 18cm; gap entre colunas = 0.2cm
+    gap    = Cm(0.25)
+    col_w  = Cm((18.0 - 0.25 * (cols - 1)) / cols)
 
-        for col_i, cat in enumerate([left_cat, right_cat]):
-            cell = row_tbl.cell(0, col_i)
-            if cat is None:
-                continue
-            fg, bg = _MM_PALETTE[cat['cor_idx'] % len(_MM_PALETTE)]
+    for grp_start in range(0, n, cols):
+        group = categorias[grp_start: grp_start + cols]
+        actual_cols = len(group)
 
-            # Background of card
-            set_cell_bg(cell, bg)
+        # ── Tabela de headers (linha de títulos coloridos) ─────────────
+        hdr_tbl = doc.add_table(rows=1, cols=cols)
+        _pia_no_borders(hdr_tbl)
 
-            # Card borders
-            tc2  = cell._tc
-            tcP2 = tc2.get_or_add_tcPr()
-            tcB2 = OxmlElement('w:tcBorders')
-            for side in ('top', 'left', 'bottom', 'right'):
-                el = OxmlElement(f'w:{side}')
-                el.set(qn('w:val'), 'single')
-                el.set(qn('w:sz'), '8')
-                el.set(qn('w:color'), fg)
-                tcB2.append(el)
-            tcP2.append(tcB2)
+        for j in range(cols):
+            cell = hdr_tbl.rows[0].cells[j]
+            cell.width = col_w
+            if j < actual_cols:
+                cat    = group[j]
+                fg, bg = _MM_PALETTE_VIVID[cat['cor_idx'] % len(_MM_PALETTE_VIVID)]
+                set_cell_bg(cell, fg)
+                _mm_set_cell_margins(cell, top=120, bottom=120, left=160, right=160)
+                _mm_set_cell_borders(cell, fg, thick=True)
 
-            # Cell left margin via inner table padding
-            tcMar = OxmlElement('w:tcMar')
-            for m_side, val in [('top','80'),('left','120'),('bottom','80'),('right','120')]:
-                m_el = OxmlElement(f'w:{m_side}')
-                m_el.set(qn('w:w'), val)
-                m_el.set(qn('w:type'), 'dxa')
-                tcMar.append(m_el)
-            tcP2.append(tcMar)
+                p = cell.paragraphs[0]
+                p.alignment = WD_ALIGN_PARAGRAPH.CENTER
+                run = p.add_run(cat['titulo'])
+                run.font.bold  = True
+                run.font.size  = Pt(15)
+                run.font.name  = 'Arial'
+                run.font.color.rgb = RGBColor(0xFF, 0xFF, 0xFF)
+            else:
+                set_cell_bg(cell, 'f0f0f0')
 
-            # Category title
-            title_p = cell.paragraphs[0]
-            title_p.paragraph_format.space_before = Pt(4)
-            title_p.paragraph_format.space_after  = Pt(4)
-            t_run = title_p.add_run(cat['titulo'])
-            t_run.font.bold  = True
-            t_run.font.size  = Pt(10)
-            t_run.font.name  = 'Arial'
-            t_run.font.color.rgb = _hex_to_rgb(fg)
+        # ── Tabela de conteúdo (itens de cada categoria) ───────────────
+        ctt_tbl = doc.add_table(rows=1, cols=cols)
+        _pia_no_borders(ctt_tbl)
 
-            # Items
-            for item in cat['itens']:
-                item_p = cell.add_paragraph()
-                item_p.paragraph_format.space_before = Pt(1)
-                item_p.paragraph_format.space_after  = Pt(1)
-                bullet = item_p.add_run('▸ ')
-                bullet.font.size  = Pt(8)
-                bullet.font.color.rgb = _hex_to_rgb(fg)
-                i_run = item_p.add_run(item)
-                i_run.font.size  = Pt(8.5)
-                i_run.font.name  = 'Arial'
-                i_run.font.color.rgb = RGBColor(0x1a, 0x20, 0x2c)
+        for j in range(cols):
+            cell = ctt_tbl.rows[0].cells[j]
+            cell.width = col_w
+            if j < actual_cols:
+                cat    = group[j]
+                fg, bg = _MM_PALETTE_VIVID[cat['cor_idx'] % len(_MM_PALETTE_VIVID)]
+                set_cell_bg(cell, bg)
+                _mm_set_cell_margins(cell, top=100, bottom=100, left=160, right=120)
+                _mm_set_cell_borders(cell, fg, thick=False)
 
-            item_p = cell.add_paragraph()
-            item_p.paragraph_format.space_after = Pt(2)
+                for k, item in enumerate(cat['itens']):
+                    p = cell.paragraphs[0] if k == 0 else cell.add_paragraph()
+                    p.paragraph_format.space_before = Pt(3)
+                    p.paragraph_format.space_after  = Pt(3)
+                    bullet = p.add_run('▸ ')
+                    bullet.font.size  = Pt(9)
+                    bullet.font.bold  = True
+                    bullet.font.color.rgb = _hex_to_rgb(fg)
+                    i_run = p.add_run(item)
+                    i_run.font.size  = Pt(10)
+                    i_run.font.name  = 'Arial'
+                    i_run.font.color.rgb = RGBColor(0x1a, 0x1a, 0x2e)
 
-        doc.add_paragraph().paragraph_format.space_after = Pt(4)
+                pad = cell.add_paragraph()
+                pad.paragraph_format.space_after = Pt(2)
+            else:
+                set_cell_bg(cell, 'f0f0f0')
 
-    # ── FOOTER ──────────────────────────────────────────────────────────
-    _pia_hrule(doc, thick=False, color='aaaaaa')
+        # Espaço entre grupos de linhas
+        sp2 = doc.add_paragraph()
+        sp2.paragraph_format.space_before = Pt(0)
+        sp2.paragraph_format.space_after  = Pt(10)
+
+    # ── Rodapé ──────────────────────────────────────────────────────────
+    _pia_hrule(doc, thick=False, color='cccccc')
     pf = doc.add_paragraph()
     pf.alignment = WD_ALIGN_PARAGRAPH.CENTER
-    pf.paragraph_format.space_before = Pt(0)
-    parts_f = ['Gerado por ProfessorIA™', datetime.now().strftime('%d/%m/%Y')]
+    pf.paragraph_format.space_before = Pt(2)
+    parts_f = ['Gerado por ProfessorIA\u2122', datetime.now().strftime('%d/%m/%Y')]
     if escola: parts_f.append(escola)
-    _pr(pf, '  ·  '.join(parts_f), size=7, color='888880')
+    _pr(pf, '  \u00b7  '.join(parts_f), size=7, color='888888')
 
     return doc
 
