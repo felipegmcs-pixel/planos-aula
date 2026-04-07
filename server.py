@@ -2680,10 +2680,16 @@ def _detect_doc_type(texto):
     if ('🧠 tema central' in t or '## 🧠' in t or
             (('### 🔴' in t or '### 🔵' in t) and '## 🧠' in t)):
         return 'mapa_mental'
-    signals = ['### aula', '**conteúdo e objetivos', '**estratégias didáticas',
-               '**recursos pedagógicos', 'planejamento da aula', '**avaliação:',
-               'planejamento de aula', '# planejamento da aula', 'componente curricular']
-    return 'plano_aula' if sum(1 for s in signals if s in t) >= 2 else 'outro'
+    # Sinais fortes — qualquer UM já indica plano de aula
+    strong = ['### aula', '# planejamento da aula', '# planejamento de aula',
+              'planejamento da aula —', 'planejamento de aula —']
+    if any(s in t for s in strong):
+        return 'plano_aula'
+    # Sinais fracos — precisa de 2+
+    weak = ['**conteúdo e objetivos', '**estratégias didáticas',
+            '**recursos pedagógicos', '**avaliação:', 'componente curricular',
+            'habilidades bncc', 'metodologia ativa']
+    return 'plano_aula' if sum(1 for s in weak if s in t) >= 2 else 'outro'
 
 
 def _parse_mapa_mental(texto):
@@ -2929,6 +2935,19 @@ def _parse_plano_aula(texto):
             'recursos':    extract_field(corpo, ['recursos pedagógicos', 'recursos']),
             'avaliacao':   extract_field(corpo, ['avaliação', 'verificar se']),
         })
+
+    # Fallback: sem seções ### AULA N — trata o texto inteiro como uma única aula
+    if not aulas:
+        aulas.append({
+            'titulo':      'Aula',
+            'conteudo':    extract_field(texto, ['conteúdo e objetivos de aprendizagem', 'conteúdo e objetivos', 'objetivos de aprendizagem', 'conteúdo', 'objetivos']),
+            'estrategias': extract_field(texto, ['estratégias didáticas', 'estratégias', 'metodologia']),
+            'recursos':    extract_field(texto, ['recursos pedagógicos', 'recursos didáticos', 'recursos']),
+            'avaliacao':   extract_field(texto, ['avaliação', 'verificar se']),
+        })
+        # Se nem os campos estruturados existem, usa o texto completo como conteúdo
+        if not any(aulas[0].values()):
+            aulas[0]['conteudo'] = texto.strip()
 
     return meta_extra, aulas
 
@@ -3227,10 +3246,31 @@ def gerar_plano_aula_docx(texto, meta=None, logo_estado_path=None):
     """
     Gera DOCX no formato oficial da Secretaria de Educação Estadual.
     Estrutura: cabeçalho gov + tabela 5 colunas (Aula | Conteúdo | Estratégias | Recursos | Avaliação)
+
+    CONTRATO DE FLUXO:
+    - Chamada por: api_chat_download → gerar_docx_pia (quando _detect_doc_type == 'plano_aula')
+    - Entrada esperada: texto Markdown com ### AULA N gerado pelo SYSTEM_PROMPT (chat)
+    - NÃO usar com JSON do /api/gerar-plano — esse fluxo vai para gerar_plano_pdf()
     """
     import re
     if meta is None:
         meta = {}
+
+    # Proteção: se receber JSON em vez de Markdown, converte para texto legível
+    if texto.strip().startswith('{'):
+        try:
+            d = json.loads(texto)
+            linhas = [f"# PLANEJAMENTO DA AULA — {d.get('tema', '')}"]
+            linhas.append(f"\n**Habilidades BNCC:** {', '.join(d.get('habilidades_bncc', []))}")
+            linhas.append(f"\n**Objetivos:** {' '.join(d.get('objetivos', []))}")
+            linhas.append(f"\n### AULA 1 — {d.get('tema', '')}")
+            linhas.append(f"\n**Conteúdo e Objetivos de Aprendizagem:**\n{d.get('conteudo_programatico', '')}")
+            linhas.append(f"\n**Estratégias Didáticas:**\n{d.get('metodologia', '')}")
+            linhas.append(f"\n**Recursos Pedagógicos:**\n{', '.join(d.get('recursos_didaticos', []))}")
+            linhas.append(f"\n**Avaliação:**\n{d.get('avaliacao', '')}")
+            texto = '\n'.join(linhas)
+        except Exception:
+            pass
 
     escola     = meta.get('escola', '').strip()
     professor  = meta.get('professor', '').strip()
