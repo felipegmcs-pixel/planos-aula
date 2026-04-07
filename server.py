@@ -370,20 +370,29 @@ Responda sempre em português brasileiro. Seja prático, objetivo e direto."""
 # ─── Plano de Aula — Structured Output ────────────────────────────────────────
 
 SYSTEM_PROMPT_PLANO = (
-    "Você é um Engenheiro de Planejamento Pedagógico Sênior e Especialista em BNCC. "
-    "Sua missão é gerar planos de aula de elite no formato Markdown estruturado. "
+    "Você é um Especialista Sênior em Planejamento Pedagógico voltado para professores da rede pública "
+    "do Estado de São Paulo. Seu público é o professor da escola pública paulista que precisa de planos "
+    "práticos, alinhados ao currículo oficial e prontos para uso em sala de aula. "
+    "Use linguagem técnico-pedagógica de elite, precisa e objetiva — sem rodeios, sem texto decorativo.\n\n"
+    "CONTEXTO CURRICULAR OBRIGATÓRIO (São Paulo):\n"
+    "- Alinhe SEMPRE ao Currículo Paulista e ao Escopo-Sequência 2025 da SEDUC-SP. "
+    "Cite nominalmente o Escopo-Sequência 2025 na seção de habilidades prévias.\n"
+    "- Mencione a Prova Paulista como instrumento de diagnóstico e avaliação externa quando pertinente.\n"
+    "- Use os descritores da Prova Paulista para calibrar os objetivos de aprendizagem.\n"
+    "- Inclua habilidades BNCC com códigos alfanuméricos reais (ex: EF09HI01) em cada aula.\n\n"
     "REGRAS OBRIGATÓRIAS — VIOLÁ-LAS QUEBRA A EXPORTAÇÃO DOCX:\n"
     "0) INÍCIO DIRETO — TRAVA ABSOLUTA: NUNCA inicie a resposta com frases de cortesia como "
     "'Aqui está', 'Claro!', 'Com prazer', 'Segue abaixo', 'Certamente', 'Olá' ou qualquer outra introdução. "
     "A primeira linha da resposta DEVE ser exatamente '# PLANEJAMENTO DA AULA — [DISCIPLINA] | [SÉRIE]' "
     "ou '### AULA 1 — [Título]'. Qualquer texto antes dessa linha quebra o parser do DOCX.\n"
-    "1) CÓDIGOS BNCC: Cada aula DEVE conter códigos alfanuméricos reais (ex: EF09HI01) integrados ao conteúdo.\n"
-    "2) SEÇÃO HABILIDADES PRÉVIAS: Sempre inclua uma seção final intitulada "
+    "1) CÓDIGOS BNCC: Cada aula DEVE conter códigos alfanuméricos reais integrados ao conteúdo.\n"
+    "2) SEÇÃO HABILIDADES PRÉVIAS: Sempre inclua ao final a seção "
     "'### DAS HABILIDADES NECESSÁRIAS DE CONHECIMENTO PRÉVIO' contendo:\n"
-    "   - Referência ao ESCOPO-SEQUÊNCIA 2025.\n"
-    "   - AVALIAÇÃO DIAGNÓSTICA e PROVA PAULISTA.\n"
-    "   - Estratégias de RECOMPOR / RECUPERAR / APROFUNDAR.\n"
-    "3) CONTEÚDO CONCISO: Máximo de 3 linhas por célula da tabela para garantir legibilidade no DOCX.\n"
+    "   - Referência explícita ao Escopo-Sequência 2025 (SEDUC-SP).\n"
+    "   - Relação com a AVALIAÇÃO DIAGNÓSTICA e a PROVA PAULISTA.\n"
+    "   - Estratégias diferenciadas: RECOMPOR (defasagem grave), RECUPERAR (defasagem leve), "
+    "APROFUNDAR (alunos avançados).\n"
+    "3) CONTEÚDO CONCISO: Máximo de 3 linhas por campo para garantir legibilidade no DOCX.\n"
     "4) ESTRUTURA EXATA DO PARSER — use estes rótulos palavra por palavra:\n"
     "   - Separador entre aulas: linha contendo apenas '---'\n"
     "   - Título de cada aula: '### AULA N — [Título da Aula]' (ex: ### AULA 1 — Introdução ao Tema)\n"
@@ -1679,6 +1688,40 @@ def conta_senha():
     conn.close()
     flash('Senha atualizada com sucesso!', 'ok')
     return redirect(url_for('conta'))
+
+
+@app.route('/conta/escola', methods=['POST'])
+@login_required
+def conta_escola():
+    """Salva os dados da escola enviados pelo formulário HTML da página Minha Conta."""
+    f = request.form
+    escola   = f.get('escola_nome', '').strip()[:200]
+    prof     = f.get('professor_nome', current_user.professor_nome or '').strip()[:200]
+    gov      = f.get('escola_governo', '').strip()[:200]
+    sec      = f.get('escola_secretaria', '').strip()[:200]
+    dire     = f.get('escola_diretoria', '').strip()[:200]
+    ender    = f.get('escola_endereco', '').strip()[:300]
+    fone     = f.get('escola_fone', '').strip()[:50]
+    email_e  = f.get('escola_email', '').strip()[:200]
+    conn = get_db()
+    conn.execute(
+        "UPDATE usuarios SET escola_nome=?, professor_nome=?,"
+        " escola_governo=?, escola_secretaria=?, escola_diretoria=?,"
+        " escola_endereco=?, escola_fone=?, escola_email=?"
+        " WHERE id=?",
+        (escola, prof, gov, sec, dire, ender, fone, email_e, current_user.id)
+    )
+    conn.commit()
+    conn.close()
+    flash('Dados da escola salvos com sucesso!', 'ok')
+    return redirect(url_for('conta'))
+
+
+@app.route('/conta/senha', methods=['POST'])
+@login_required
+def conta_senha_alias():
+    """Alias de /perfil/senha para compatibilidade com o formulário da página Minha Conta."""
+    return conta_senha()
 
 
 @app.route('/api/profile', methods=['GET', 'PUT'])
