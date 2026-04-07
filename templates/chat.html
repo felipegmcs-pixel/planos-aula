@@ -1687,9 +1687,9 @@
   function baixarDocx(texto) {
     _dlTexto = texto;
 
-    // Mapa mental → PDF direto, sem modal
-    if (/##\s*🧠\s*TEMA CENTRAL/i.test(texto)) {
-      _baixarDireto('mapa-mental-ProfessorIA.pdf');
+    // Mapa mental → DOCX direto, sem modal
+    if (/##\s*🧠\s*TEMA CENTRAL/i.test(texto) || /```mermaid[\s\S]*?mindmap/i.test(texto)) {
+      _baixarDireto('mapa-mental-ProfessorIA.docx');
       return;
     }
 

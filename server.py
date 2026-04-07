@@ -2645,6 +2645,77 @@ def _extrair_mermaid(texto):
     return m.group(1).strip() if m else None
 
 
+def _parse_mermaid_mindmap(texto):
+    """
+    Parseia um bloco Mermaid mindmap e retorna (titulo, categorias)
+    no mesmo formato de _parse_mapa_mental.
+    Formato esperado:
+        mindmap
+          root((TITULO))
+            Categoria1
+              - item1
+              - item2
+            Categoria2
+              item1
+    """
+    codigo = _extrair_mermaid(texto)
+    if not codigo:
+        return 'MAPA MENTAL', []
+
+    lines = codigo.split('\n')
+    titulo = 'MAPA MENTAL'
+    # Extrai título do root((...))
+    for line in lines:
+        m = re.search(r'root\s*\(\((.+?)\)\)', line, re.IGNORECASE)
+        if m:
+            titulo = m.group(1).strip().upper()
+            break
+
+    # Determina indentação do root para calcular nível relativo
+    root_indent = None
+    for line in lines:
+        if re.search(r'root\s*\(\(', line, re.IGNORECASE):
+            root_indent = len(line) - len(line.lstrip())
+            break
+    if root_indent is None:
+        root_indent = 2
+
+    categoria_indent = root_indent + 2  # nível imediatamente abaixo do root
+    item_indent = categoria_indent + 2  # nível dos itens
+
+    categorias = []
+    cat_atual = None
+    ci = 0
+
+    for line in lines:
+        stripped = line.strip()
+        if not stripped or stripped.lower().startswith('mindmap') or re.search(r'root\s*\(\(', line, re.IGNORECASE):
+            continue
+        indent = len(line) - len(line.lstrip())
+        # Remove sintaxe Mermaid: ::, (), [], {}, parênteses especiais
+        clean = re.sub(r'\[{1,2}.*?\]{1,2}|\({1,2}.*?\){1,2}|\{{1,2}.*?\}{1,2}|:::\w+', '', stripped)
+        clean = re.sub(r'^[-•*]\s*', '', clean).strip()
+        clean = re.sub(r'\*\*([^*]+)\*\*', r'\1', clean).strip()
+        if not clean:
+            continue
+
+        if indent <= categoria_indent:
+            # Nova categoria
+            if cat_atual and cat_atual['itens']:
+                categorias.append(cat_atual)
+            cat_atual = {'titulo': clean.upper(), 'cor_idx': ci, 'itens': []}
+            ci += 1
+        else:
+            # Item da categoria atual
+            if cat_atual is not None:
+                cat_atual['itens'].append(clean)
+
+    if cat_atual and cat_atual['itens']:
+        categorias.append(cat_atual)
+
+    return titulo, categorias
+
+
 def _mermaid_para_png(codigo_mermaid):
     """Converte código Mermaid em bytes PNG usando a API pública mermaid.ink.
     Retorna bytes da imagem ou None em caso de falha."""
@@ -2736,7 +2807,8 @@ def _hex_to_rgb(h):
 
 
 def gerar_mapa_mental_docx(texto, meta=None):
-    """Gera DOCX visual de mapa mental no estilo infográfico Descomplica."""
+    """Gera DOCX visual de mapa mental no estilo infográfico Descomplica.
+    Suporta formato legado (## 🧠) e Mermaid mindmap."""
     import re
     if meta is None:
         meta = {}
@@ -2744,7 +2816,11 @@ def gerar_mapa_mental_docx(texto, meta=None):
     professor = meta.get('professor', '').strip()
     disciplina = meta.get('disciplina', '').strip()
 
-    titulo, categorias = _parse_mapa_mental(texto)
+    # Detecta qual formato e faz o parse correto
+    if _extrair_mermaid(texto):
+        titulo, categorias = _parse_mermaid_mindmap(texto)
+    else:
+        titulo, categorias = _parse_mapa_mental(texto)
 
     doc = Document()
     for sec in doc.sections:
@@ -3796,17 +3872,11 @@ def api_chat_download():
     meta['logo_estado_path'] = logo_estado_abs
 
     try:
-        # Mapa mental → PDF visual
-        if _detect_doc_type(texto) == 'mapa_mental':
-            pdf_bytes = gerar_mapa_mental_pdf(texto, meta=meta)
-            return send_file(
-                io.BytesIO(pdf_bytes), as_attachment=True,
-                download_name='mapa-mental-ProfessorIA.pdf',
-                mimetype='application/pdf'
-            )
-
         doc_type = _detect_doc_type(texto)
-        if doc_type == 'plano_aula':
+        if doc_type == 'mapa_mental':
+            doc = gerar_mapa_mental_docx(texto, meta=meta)
+            download_name = 'mapa-mental-ProfessorIA.docx'
+        elif doc_type == 'plano_aula':
             doc = gerar_plano_aula_docx(texto, meta=meta, logo_estado_path=logo_estado_abs)
             download_name = 'plano-de-aula-ProfessorIA.docx'
         else:
