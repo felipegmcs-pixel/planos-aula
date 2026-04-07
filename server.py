@@ -390,23 +390,16 @@ Responda sempre em português brasileiro. Seja prático, objetivo e direto."""
 
 SYSTEM_PROMPT_PLANO = (
     "Você é um Engenheiro de Planejamento Pedagógico Sênior e Especialista em BNCC. "
-    "Sua missão é gerar planos de aula de elite que serão exportados para documentos oficiais (.docx e .pdf). "
-    "Retorne EXATAMENTE o seguinte formato JSON, sem adicionar texto extra ou markdown fora do JSON:\n"
-    '{\n'
-    '  "tema": "Tema da Aula",\n'
-    '  "habilidades_bncc": ["Código 1 - Descrição", "Código 2 - Descrição"],\n'
-    '  "objetivos": ["Objetivo 1", "Objetivo 2"],\n'
-    '  "conteudo_programatico": "Resumo do que será ensinado",\n'
-    '  "metodologia": "Passo a passo de como a aula será conduzida (metodologias ativas)",\n'
-    '  "recursos_didaticos": ["Recurso 1", "Recurso 2"],\n'
-    '  "avaliacao": "Como o aprendizado será medido"\n'
-    "}\n"
-    "REGRAS ABSOLUTAS: "
-    "1) Resposta DEVE começar com { e terminar com }, sem nenhuma palavra fora do JSON. "
-    "2) PROIBIDO ALUCINAR BNCC: Os códigos alfanuméricos (ex: EF08HI01) devem ser 100% reais e existentes. "
-    "3) habilidades_bncc: cada item é uma string no formato 'CÓDIGO - Descrição completa'. "
-    "4) Metodologias devem ser ativas e práticas — rotação por estações, sala de aula invertida, PBL, etc. "
-    "5) Linguagem acadêmica, objetivos mensuráveis com verbos de Bloom, conteúdo rico e detalhado."
+    "Sua missão é gerar planos de aula de elite no formato Markdown estruturado. "
+    "REGRAS OBRIGATÓRIAS:\n"
+    "1) CÓDIGOS BNCC: Cada aula DEVE conter códigos alfanuméricos reais (ex: EF09HI01) integrados ao conteúdo.\n"
+    "2) SEÇÃO HABILIDADES PRÉVIAS: Sempre inclua uma seção final intitulada "
+    "'### DAS HABILIDADES NECESSÁRIAS DE CONHECIMENTO PRÉVIO' contendo:\n"
+    "   - Referência ao ESCOPO-SEQUÊNCIA 2025.\n"
+    "   - AVALIAÇÃO DIAGNÓSTICA e PROVA PAULISTA.\n"
+    "   - Estratégias de RECOMPOR / RECUPERAR / APROFUNDAR.\n"
+    "3) CONTEÚDO CONCISO: Máximo de 3 linhas por célula da tabela para garantir legibilidade no DOCX.\n"
+    "4) FORMATO: Use títulos '### AULA 1', '### AULA 2', etc., para que o parser funcione corretamente."
 )
 
 SYSTEM_PROMPT_COORDENADOR = (
@@ -3812,13 +3805,19 @@ def api_chat_download():
                 mimetype='application/pdf'
             )
 
-        doc = gerar_docx_pia(texto, meta=meta, logo_path=logo_abs)
+        doc_type = _detect_doc_type(texto)
+        if doc_type == 'plano_aula':
+            doc = gerar_plano_aula_docx(texto, meta=meta, logo_estado_path=logo_estado_abs)
+            download_name = 'plano-de-aula-ProfessorIA.docx'
+        else:
+            doc = gerar_docx_pia(texto, meta=meta, logo_path=logo_abs)
+            download_name = 'material-ProfessorIA.docx'
         buf = io.BytesIO()
         doc.save(buf)
         buf.seek(0)
         return send_file(
             buf, as_attachment=True,
-            download_name='material-ProfessorIA.docx',
+            download_name=download_name,
             mimetype='application/vnd.openxmlformats-officedocument.wordprocessingml.document'
         )
     except Exception as e:
