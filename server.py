@@ -286,61 +286,42 @@ Exemplo de grade (dentro de bloco de código):
   4  _  _  _  _  _
 ```
 
-MAPA MENTAL — geração com Mermaid.js:
-Quando pedirem um mapa mental, retorne EXCLUSIVAMENTE um bloco de código Mermaid no formato abaixo.
-NÃO adicione texto antes ou depois do bloco.
+MAPA MENTAL — formato obrigatório PT-BR:
+⚠️ IDIOMA — TRAVA ABSOLUTA: TODOS os textos do mapa mental (título, categorias, itens) devem estar em PORTUGUÊS DO BRASIL. É EXPRESSAMENTE PROIBIDO gerar qualquer palavra em inglês, espanhol ou outro idioma. Se o tema for "Primeira Guerra Mundial", o título DEVE ser "PRIMEIRA GUERRA MUNDIAL" — JAMAIS "World War I", "First War" ou qualquer variação em inglês.
+⚠️ FORMATO — TRAVA ABSOLUTA: Retorne APENAS o texto estruturado abaixo, em Markdown puro. É PROIBIDO usar blocos de código (```), sintaxe Mermaid, JSON ou qualquer outra formatação especial. Retorne texto Markdown limpo, sem cercas de código.
 
-```mermaid
-mindmap
-  root((TEMA CENTRAL))
-    Categoria 1
-      item 1
-      item 2
-      item 3
-    Categoria 2
-      item 1
-      item 2
-```
+## 🧠 TEMA CENTRAL: [TEMA EM MAIÚSCULAS EM PT-BR]
 
-Regras obrigatórias para mapa mental Mermaid:
-- Use exatamente a sintaxe mindmap com root((TEMA))
-- 4 a 6 categorias por mapa
-- 3 a 5 itens por categoria
-- Máximo 5 palavras por item (palavras-chave, não frases longas)
-- NÃO use emojis dentro do código Mermaid
-- O nó raiz root((...)) deve conter o tema em maiúsculas
-
-[FORMATO LEGADO — apenas para compatibilidade, não use em respostas novas]
-## 🧠 TEMA CENTRAL: [TEMA EM MAIÚSCULAS]
-
-### 🔴 [CATEGORIA 1 — ex: NÚMEROS / DATAS / CAUSAS]
-- item curto e direto
-- item curto e direto
-- item curto e direto
+### 🔴 [CATEGORIA 1 — ex: CAUSAS / DATAS / NÚMEROS]
+- item curto em português
+- item curto em português
+- item curto em português
 
 ### 🔵 [CATEGORIA 2 — ex: PERSONAGENS / ANTECEDENTES]
-- item curto e direto
-- item curto e direto
+- item curto em português
+- item curto em português
 
 ### 🟡 [CATEGORIA 3 — ex: CONSEQUÊNCIAS / ALIANÇAS]
-- item curto e direto
-- item curto e direto
+- item curto em português
+- item curto em português
 
 ### 🟢 [CATEGORIA 4]
-- item curto e direto
+- item curto em português
 
 ### 🟣 [CATEGORIA 5]
-- item curto e direto
+- item curto em português
 
 ### 🟠 [CATEGORIA 6 — opcional]
-- item curto e direto
+- item curto em português
 
 Regras obrigatórias para mapa mental:
+- IDIOMA: 100% Português do Brasil — nenhuma palavra em inglês ou outro idioma
 - Máximo 5-7 palavras por item (palavras-chave, não frases longas)
 - 5 a 7 categorias temáticas, cada uma com 3-6 itens
 - Use emojis de cor antes de cada ### (🔴🔵🟡🟢🟣🟠) para categorias
 - O título ## deve sempre começar com "🧠 TEMA CENTRAL:"
 - NÃO use Unicode de árvore (├ └ │) — só listas com -
+- PROIBIDO usar blocos de código (```), Mermaid, JSON ou HTML na resposta
 
 PLANO DE AULA — formato oficial para exportação DOCX:
 Quando o professor pedir um plano de aula, use EXATAMENTE esta estrutura para que o sistema possa exportar no formato oficial da Secretaria de Educação:
@@ -389,17 +370,38 @@ Responda sempre em português brasileiro. Seja prático, objetivo e direto."""
 # ─── Plano de Aula — Structured Output ────────────────────────────────────────
 
 SYSTEM_PROMPT_PLANO = (
-    "Você é um Engenheiro de Planejamento Pedagógico Sênior e Especialista em BNCC. "
-    "Sua missão é gerar planos de aula de elite no formato Markdown estruturado. "
-    "REGRAS OBRIGATÓRIAS:\n"
-    "1) CÓDIGOS BNCC: Cada aula DEVE conter códigos alfanuméricos reais (ex: EF09HI01) integrados ao conteúdo.\n"
-    "2) SEÇÃO HABILIDADES PRÉVIAS: Sempre inclua uma seção final intitulada "
+    "Você é um Especialista Sênior em Planejamento Pedagógico voltado para professores da rede pública "
+    "do Estado de São Paulo. Seu público é o professor da escola pública paulista que precisa de planos "
+    "práticos, alinhados ao currículo oficial e prontos para uso em sala de aula. "
+    "Use linguagem técnico-pedagógica de elite, precisa e objetiva — sem rodeios, sem texto decorativo.\n\n"
+    "CONTEXTO CURRICULAR OBRIGATÓRIO (São Paulo):\n"
+    "- Alinhe SEMPRE ao Currículo Paulista e ao Escopo-Sequência 2025 da SEDUC-SP. "
+    "Cite nominalmente o Escopo-Sequência 2025 na seção de habilidades prévias.\n"
+    "- Mencione a Prova Paulista como instrumento de diagnóstico e avaliação externa quando pertinente.\n"
+    "- Use os descritores da Prova Paulista para calibrar os objetivos de aprendizagem.\n"
+    "- Inclua habilidades BNCC com códigos alfanuméricos reais (ex: EF09HI01) em cada aula.\n\n"
+    "REGRAS OBRIGATÓRIAS — VIOLÁ-LAS QUEBRA A EXPORTAÇÃO DOCX:\n"
+    "0) INÍCIO DIRETO — TRAVA ABSOLUTA: NUNCA inicie a resposta com frases de cortesia como "
+    "'Aqui está', 'Claro!', 'Com prazer', 'Segue abaixo', 'Certamente', 'Olá' ou qualquer outra introdução. "
+    "A primeira linha da resposta DEVE ser exatamente '# PLANEJAMENTO DA AULA — [DISCIPLINA] | [SÉRIE]' "
+    "ou '### AULA 1 — [Título]'. Qualquer texto antes dessa linha quebra o parser do DOCX.\n"
+    "1) CÓDIGOS BNCC: Cada aula DEVE conter códigos alfanuméricos reais integrados ao conteúdo.\n"
+    "2) SEÇÃO HABILIDADES PRÉVIAS: Sempre inclua ao final a seção "
     "'### DAS HABILIDADES NECESSÁRIAS DE CONHECIMENTO PRÉVIO' contendo:\n"
-    "   - Referência ao ESCOPO-SEQUÊNCIA 2025.\n"
-    "   - AVALIAÇÃO DIAGNÓSTICA e PROVA PAULISTA.\n"
-    "   - Estratégias de RECOMPOR / RECUPERAR / APROFUNDAR.\n"
-    "3) CONTEÚDO CONCISO: Máximo de 3 linhas por célula da tabela para garantir legibilidade no DOCX.\n"
-    "4) FORMATO: Use títulos '### AULA 1', '### AULA 2', etc., para que o parser funcione corretamente."
+    "   - Referência explícita ao Escopo-Sequência 2025 (SEDUC-SP).\n"
+    "   - Relação com a AVALIAÇÃO DIAGNÓSTICA e a PROVA PAULISTA.\n"
+    "   - Estratégias diferenciadas: RECOMPOR (defasagem grave), RECUPERAR (defasagem leve), "
+    "APROFUNDAR (alunos avançados).\n"
+    "3) CONTEÚDO CONCISO: Máximo de 3 linhas por campo para garantir legibilidade no DOCX.\n"
+    "4) ESTRUTURA EXATA DO PARSER — use estes rótulos palavra por palavra:\n"
+    "   - Separador entre aulas: linha contendo apenas '---'\n"
+    "   - Título de cada aula: '### AULA N — [Título da Aula]' (ex: ### AULA 1 — Introdução ao Tema)\n"
+    "   - Campo 1: '**Conteúdo e Objetivos de Aprendizagem:**' seguido de texto na próxima linha\n"
+    "   - Campo 2: '**Estratégias Didáticas:**' seguido de texto na próxima linha\n"
+    "   - Campo 3: '**Recursos Pedagógicos:**' seguido de texto na próxima linha\n"
+    "   - Campo 4: '**Avaliação:**' seguido de texto na próxima linha\n"
+    "   Esses rótulos são lidos por regex — qualquer variação (maiúscula diferente, acento faltando, "
+    "ausência de **) faz o campo aparecer vazio no DOCX exportado."
 )
 
 SYSTEM_PROMPT_COORDENADOR = (
@@ -1688,6 +1690,40 @@ def conta_senha():
     return redirect(url_for('conta'))
 
 
+@app.route('/conta/escola', methods=['POST'])
+@login_required
+def conta_escola():
+    """Salva os dados da escola enviados pelo formulário HTML da página Minha Conta."""
+    f = request.form
+    escola   = f.get('escola_nome', '').strip()[:200]
+    prof     = f.get('professor_nome', current_user.professor_nome or '').strip()[:200]
+    gov      = f.get('escola_governo', '').strip()[:200]
+    sec      = f.get('escola_secretaria', '').strip()[:200]
+    dire     = f.get('escola_diretoria', '').strip()[:200]
+    ender    = f.get('escola_endereco', '').strip()[:300]
+    fone     = f.get('escola_fone', '').strip()[:50]
+    email_e  = f.get('escola_email', '').strip()[:200]
+    conn = get_db()
+    conn.execute(
+        "UPDATE usuarios SET escola_nome=?, professor_nome=?,"
+        " escola_governo=?, escola_secretaria=?, escola_diretoria=?,"
+        " escola_endereco=?, escola_fone=?, escola_email=?"
+        " WHERE id=?",
+        (escola, prof, gov, sec, dire, ender, fone, email_e, current_user.id)
+    )
+    conn.commit()
+    conn.close()
+    flash('Dados da escola salvos com sucesso!', 'ok')
+    return redirect(url_for('conta'))
+
+
+@app.route('/conta/senha', methods=['POST'])
+@login_required
+def conta_senha_alias():
+    """Alias de /perfil/senha para compatibilidade com o formulário da página Minha Conta."""
+    return conta_senha()
+
+
 @app.route('/api/profile', methods=['GET', 'PUT'])
 @login_required
 def api_profile():
@@ -2638,6 +2674,26 @@ _MM_PALETTE = [
 ]
 
 
+def _limpar_codigo_sujo(texto: str) -> str:
+    """Remove blocos de código Mermaid/JSON vazados que a IA pode emitir indevidamente.
+    Usado como filtro de entrada antes de parsear mapas mentais e planos de aula.
+    Preserva o conteúdo do bloco para formatos que precisam do código raw (Mermaid).
+    Se o bloco inteiro é Mermaid mindmap, devolve o bloco tal qual (para _extrair_mermaid).
+    Para outros blocos de código (json, python, etc.) remove as cercas mas mantém o texto."""
+    # Se o texto já é um bloco Mermaid puro (único bloco, sem texto antes/depois), retorna intacto
+    puro = re.fullmatch(r'\s*```mermaid[\s\S]+?```\s*', texto, re.IGNORECASE)
+    if puro:
+        return texto.strip()
+    # Remove cercas de código json / genéricas — mantém o conteúdo interno
+    texto = re.sub(r'```(?:json|javascript|js|python|py|text|txt)?\s*\n([\s\S]+?)\n```',
+                   r'\1', texto, flags=re.IGNORECASE)
+    # Remove blocos Mermaid que vazaram dentro de uma resposta maior (não é o bloco principal)
+    texto = re.sub(r'```mermaid[\s\S]+?```', '', texto, flags=re.IGNORECASE)
+    # Remove cercas de código sozinhas (``` sem linguagem no final do texto)
+    texto = re.sub(r'```\s*\n?', '', texto)
+    return texto.strip()
+
+
 def _extrair_mermaid(texto):
     """Extrai o código Mermaid de um bloco ```mermaid ... ```.
     Retorna a string do código ou None se não encontrado."""
@@ -2762,6 +2818,7 @@ def _parse_mapa_mental(texto):
     Returns (str, list of {'titulo': str, 'cor_idx': int, 'itens': [str]})
     """
     import re
+    texto = _limpar_codigo_sujo(texto)
     titulo = 'MAPA MENTAL'
     m = re.search(r'##\s+🧠\s+TEMA\s+CENTRAL\s*:\s*(.+)', texto, re.IGNORECASE)
     if m:
@@ -3004,12 +3061,37 @@ def gerar_mapa_mental_docx(texto, meta=None):
     return doc
 
 
+_PREAMBLE_PLANO_RE = re.compile(
+    r'^[\s\S]*?(?=(?:#\s+PLANEJAMENTO|###\s+AULA\s+\d))',
+    re.IGNORECASE
+)
+_PREAMBLE_FRASES = re.compile(
+    r'^\s*(?:aqui\s+est[aá]|claro\s*[!,]|com\s+prazer|segue\s+(?:abaixo|o|um)|'
+    r'certamente|ol[aá]\s*[!,]|vou\s+gerar|abaixo\s+(?:est[aá]|segue)|'
+    r'segue\s+o\s+plano|preparei\s+o)[^\n]*\n+',
+    re.IGNORECASE
+)
+
+
+def _limpar_preamble_plano(texto: str) -> str:
+    """Remove frases de cortesia e preambles que a IA insere antes do conteúdo estruturado.
+    O parser depende de ### AULA N ou # PLANEJAMENTO na primeira linha útil."""
+    # Remove linhas de cortesia no início
+    texto = _PREAMBLE_FRASES.sub('', texto)
+    # Avança até o primeiro marcador estrutural esperado
+    m = re.search(r'(?:^|\n)(#\s+PLANEJAMENTO|###\s+AULA\s+\d)', texto, re.IGNORECASE)
+    if m:
+        texto = texto[m.start():].lstrip('\n')
+    return texto.strip()
+
+
 def _parse_plano_aula(texto):
     """
     Extrai metadados e seções de aula do texto estruturado gerado pela IA.
     Retorna (meta_extra, aulas) onde aulas é lista de dicts.
     """
     import re
+    texto = _limpar_preamble_plano(texto)
     meta_extra = {}
 
     for pattern, key in [
@@ -5061,8 +5143,12 @@ def api_generate_mapa_mental():
     if not tema:
         return jsonify({'erro': 'Campo obrigatório: tema'}), 400
 
+    # Garante que o tema está em PT-BR no prompt enviado ao DALL-E
+    # (evita que a IA alucie títulos em inglês na imagem gerada)
     prompt_final = (
-        f"Mapa mental educacional sobre '{tema}', estilo aquarela digital moderna, "
+        f"Mapa mental educacional em PORTUGUÊS DO BRASIL sobre '{tema}'. "
+        f"O título central e todos os rótulos dos ramos DEVEM estar em português, "
+        f"nunca em inglês. Estilo aquarela digital moderna, "
         "fundo 100% branco sólido, composição radial com tema central e ramos conectados "
         "a subtópicos ilustrados com ícones acadêmicos. "
         "Design premium, cores pastéis acadêmicas, sem texto longo dentro da imagem. "

@@ -3,6 +3,13 @@
   var KEY = 'pia-theme';
   var current = localStorage.getItem(KEY) || 'light';
 
+  /* Migração: usuários que tinham 'dark' salvo passam para 'system',
+     que respeita a preferência do SO sem o botão lua removido. */
+  if (current === 'dark') {
+    current = 'system';
+    localStorage.setItem(KEY, 'system');
+  }
+
   function actual(t) {
     return t === 'system'
       ? (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light')
@@ -26,8 +33,7 @@
     wrap.id = 'theme-toggle';
     wrap.innerHTML =
       '<button data-v="light"  title="Claro">&#9728;</button>' +
-      '<button data-v="system" title="Sistema">&#11041;</button>' +
-      '<button data-v="dark"   title="Escuro">&#9790;</button>';
+      '<button data-v="system" title="Sistema">&#11041;</button>';
 
     function sync() {
       wrap.querySelectorAll('button').forEach(function (b) {

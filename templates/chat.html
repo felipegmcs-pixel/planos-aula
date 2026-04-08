@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8"/>
   <script>!function(){var t=localStorage.getItem("pia-theme")||"light",a="system"===t?(window.matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light"):t;document.documentElement.setAttribute("data-theme",a),document.documentElement.style.colorScheme=a}();</script>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
   <title>ProfessorIA — Sabedoria e Tempo para Você</title>
   <link rel="icon" href="{{ url_for('static', filename='logooficial.png') }}" type="image/png">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet"/>
@@ -139,7 +139,7 @@
     /* ════════════════════════════════════════
        APP LAYOUT
     ════════════════════════════════════════ */
-    .app { display: flex; height: 100vh; }
+    .app { display: flex; height: 100vh; height: 100dvh; }
 
     /* ════════════════════════════════════════
        SIDEBAR — themed
@@ -340,7 +340,7 @@
     ════════════════════════════════════════ */
     .welcome {
       display: flex; flex-direction: column; align-items: flex-start;
-      justify-content: center; min-height: calc(100vh - 200px);
+      justify-content: center; min-height: calc(100dvh - 200px);
       padding: 40px 0; position: relative; overflow: hidden;
     }
 
@@ -602,7 +602,7 @@
     [data-theme="dark"] .input-box:focus-within { background: rgba(255,255,255,.06); }
     #input {
       flex: 1; border: none; outline: none;
-      font-family: 'Inter', sans-serif; font-size: .9rem;
+      font-family: 'Inter', sans-serif; font-size: 1rem;
       resize: none; background: transparent; color: var(--text);
       max-height: 160px; line-height: 1.7;
     }
@@ -1025,45 +1025,6 @@
       border-color: #5FBFBF;
     }
     
-    /* WhatsApp Support Button */
-    .whatsapp-support {
-      position: fixed;
-      bottom: 20px;
-      left: 20px;
-      width: 50px;
-      height: 50px;
-      background-color: #0D2327;
-      color: #D4AF37;
-      border: 1px solid #1E5A63;
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
-      z-index: 1000;
-      transition: all 0.3s ease;
-      cursor: pointer;
-    }
-    .whatsapp-support:hover {
-      transform: scale(1.1) translateY(-5px);
-      background-color: #1E5A63;
-      color: #FFFFFF;
-      box-shadow: 0 0 15px rgba(212, 175, 55, 0.4);
-      border-color: #D4AF37;
-    }
-    .whatsapp-support svg {
-      width: 28px;
-      height: 28px;
-    }
-    @media (max-width: 768px) {
-      .whatsapp-support {
-        bottom: 80px; /* Acima da barra de input no mobile se necessário */
-        left: 15px;
-        width: 44px;
-        height: 44px;
-      }
-    }
-    
     .oraculo-status {
       margin-top: 40px; color: #D4AF37; font-family: 'Inter', sans-serif;
       font-size: 0.75rem; font-weight: 700; letter-spacing: 3px;
@@ -1083,35 +1044,95 @@
       .overlay.open { display: block; }
       .topbar { display: flex; }    .input-area {
       padding: 12px 16px 20px;
+      padding-bottom: calc(20px + env(safe-area-inset-bottom, 0px));
       display: flex; flex-direction: column; gap: 8px;
     }
     .state-selector-wrap {
-      display: flex; align-items: center; gap: 8px;
-      padding: 0 4px;
+      display: flex; align-items: center; gap: 6px; padding: 2px 4px;
     }
     .state-label {
-      font-size: 0.6rem; font-weight: 700; color: var(--text3);
-      text-transform: uppercase; letter-spacing: 0.05em;
+      font-size: 0.58rem; font-weight: 700; letter-spacing: 1px;
+      text-transform: uppercase; color: var(--text3); white-space: nowrap;
+    }
+    .state-select-box {
+      position: relative; display: inline-flex; align-items: center;
     }
     .state-select {
-      background: var(--card-bg); border: 1px solid var(--linha);
-      border-radius: 6px; padding: 3px 8px; font-size: 0.7rem;
+      appearance: none; -webkit-appearance: none;
+      background: transparent;
+      border: 1.5px solid var(--linha-f); border-radius: 20px;
+      padding: 4px 26px 4px 10px;
+      font-size: 0.65rem; font-weight: 600; letter-spacing: 0.2px;
       color: var(--text2); cursor: pointer; outline: none;
-      transition: border-color 0.2s; font-family: 'Inter', sans-serif;
+      font-family: 'Inter', sans-serif;
+      transition: border-color .2s, box-shadow .2s;
     }
-    .state-select:focus { border-color: var(--amber); }.messages { padding: 20px 0; }
+    .state-select:hover { border-color: var(--indigo); }
+    .state-select:focus {
+      border-color: var(--indigo);
+      box-shadow: 0 0 0 3px rgba(30,90,99,.1);
+    }
+    .state-chevron {
+      position: absolute; right: 8px; pointer-events: none;
+      color: var(--text3); width: 10px; height: 10px; flex-shrink: 0;
+    }
+    [data-theme="dark"] .state-select { background: rgba(255,255,255,.03); }.messages { padding: 20px 0; }
       .messages-inner { padding: 0 16px; }
       .feature-grid { grid-template-columns: repeat(2, 1fr); }
-      .welcome h1 { font-size: 2rem; }
+      /* Welcome: sem min-height forçado em mobile, padding reduzido */
+      .welcome { min-height: unset; padding: 16px 0 8px; justify-content: flex-start; }
+      .welcome h1 { font-size: 1.7rem; }
+      .welcome-sub { font-size: .8rem; margin-bottom: 16px; }
       .welcome-3d { display: none; }
-      /* Touch targets 44px */
+      /* Touch targets 44px + elimina delay 300ms e micro-zoom em browsers antigos */
       .btn-send { width: 44px; height: 44px; }
       .btn-attach, .btn-mic { width: 44px; height: 44px; }
       .btn-anexo-remover { min-width: 44px; min-height: 44px; display: flex; align-items: center; justify-content: center; }
+      .btn-send, .btn-attach, .btn-mic, .btn-anexo-remover,
+      .feature-card, #stateSelector, .state-select { touch-action: manipulation; }
     }
     @media (max-width: 400px) {
       .feature-grid { grid-template-columns: 1fr 1fr; }
       .feature-card { padding: 12px 10px; }
+    }
+
+    /* ═══════════════════════════════════════
+       MAPA MENTAL — exibição de imagem no chat
+       ═══════════════════════════════════════ */
+    .mapa-mental-resultado { display: flex; flex-direction: column; gap: 12px; padding: 4px 0; }
+    .mapa-mental-tag {
+      font-size: .58rem; font-weight: 700; letter-spacing: 2px;
+      text-transform: uppercase; color: var(--text3);
+      display: flex; align-items: center; gap: 6px;
+    }
+    .mapa-mental-tag::before { content: ''; width: 12px; height: 2px; background: var(--indigo); border-radius: 2px; }
+    .mapa-mental-img {
+      width: 100%; max-width: 100%; border-radius: 12px;
+      border: 1px solid var(--linha-f);
+      box-shadow: 0 4px 24px rgba(0,0,0,.08);
+      display: block; cursor: zoom-in;
+      transition: box-shadow .2s, transform .2s;
+    }
+    .mapa-mental-img:hover { box-shadow: 0 8px 40px rgba(0,0,0,.15); transform: scale(1.01); }
+    .mapa-mental-acoes { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 2px; }
+    .btn-dl-mapa {
+      display: inline-flex; align-items: center; gap: 5px;
+      padding: 6px 14px; border-radius: 8px; font-size: .68rem; font-weight: 700;
+      text-decoration: none; cursor: pointer;
+      background: var(--tag-bg); color: var(--text2);
+      border: 1.5px solid var(--linha-f); font-family: 'Inter', sans-serif;
+      transition: all .2s;
+    }
+    .btn-dl-mapa:hover { border-color: var(--indigo); color: var(--indigo); background: rgba(30,90,99,.06); }
+    .mapa-gerar-loading {
+      display: flex; flex-direction: column; align-items: center;
+      gap: 14px; padding: 32px 16px; text-align: center;
+    }
+    .mapa-gerar-loading p { font-size: .8rem; color: var(--text2); line-height: 1.6; }
+    .mapa-gerar-spinner {
+      width: 36px; height: 36px; flex-shrink: 0;
+      border: 3px solid var(--linha-f); border-top-color: var(--indigo);
+      border-radius: 50%; animation: btnSpin .8s linear infinite;
     }
   </style>
   <link rel="stylesheet" href="/static/theme.css"/>
@@ -1286,15 +1307,6 @@
   <div class="overlay" id="overlay" onclick="fecharSidebar()"></div>
 
   <!-- Botão de Suporte WhatsApp -->
-  <a href="https://wa.me/5511999999999?text=Olá,%20preciso%20de%20ajuda%20com%20o%20ProfessorIA" 
-     target="_blank" 
-     class="whatsapp-support" 
-     title="Falar com o Suporte">
-    <svg viewBox="0 0 24 24" fill="currentColor">
-      <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
-    </svg>
-  </a>
-
 <div class="app">
   <!-- ═══════ SIDEBAR ═══════ -->
   <aside class="sidebar" id="sidebar">
@@ -1484,22 +1496,28 @@
     <!-- Input -->
     <div class="input-area">
       <div class="state-selector-wrap">
-        <label for="stateSelector" class="state-label">Currículo Regional:</label>
-        <select id="stateSelector" class="state-select">
-          <option value="Nacional (BNCC)">Nacional (BNCC)</option>
-          <option value="São Paulo (Currículo Paulista)">São Paulo (Currículo Paulista)</option>
-          <option value="Rio de Janeiro">Rio de Janeiro</option>
-          <option value="Minas Gerais">Minas Gerais</option>
-          <option value="Rio Grande do Sul">Rio Grande do Sul</option>
-          <option value="Paraná">Paraná</option>
-          <option value="Santa Catarina">Santa Catarina</option>
-          <option value="Bahia">Bahia</option>
-          <option value="Ceará">Ceará</option>
-          <option value="Pernambuco">Pernambuco</option>
-          <option value="Goiás">Goiás</option>
-          <option value="Distrito Federal">Distrito Federal</option>
-          <option value="Outro">Outro</option>
-        </select>
+        <span class="state-label">Estado:</span>
+        <div class="state-select-box">
+          <select id="stateSelector" class="state-select">
+            <option value="Nacional (BNCC)">Nacional (BNCC)</option>
+            <option value="São Paulo (Currículo Paulista)">São Paulo</option>
+            <option value="Rio de Janeiro">Rio de Janeiro</option>
+            <option value="Minas Gerais">Minas Gerais</option>
+            <option value="Rio Grande do Sul">Rio Grande do Sul</option>
+            <option value="Paraná">Paraná</option>
+            <option value="Santa Catarina">Santa Catarina</option>
+            <option value="Bahia">Bahia</option>
+            <option value="Ceará">Ceará</option>
+            <option value="Pernambuco">Pernambuco</option>
+            <option value="Goiás">Goiás</option>
+            <option value="Distrito Federal">Distrito Federal</option>
+            <option value="Outro">Outro</option>
+          </select>
+          <svg class="state-chevron" viewBox="0 0 24 24" fill="none"
+               stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="6 9 12 15 18 9"/>
+          </svg>
+        </div>
       </div>
       <div class="input-wrap">
         <div class="anexo-preview" id="anexoPreview">
@@ -1658,6 +1676,10 @@
 
         content.appendChild(actions);
         return texto;
+      },
+      replaceBubble(html) {
+        bubble.innerHTML = html;
+        scroll();
       }
     };
   }
@@ -1922,6 +1944,62 @@
     addMsgUser(textoEnviado, anexoAtual);
     historico.push({ role:'user', content:textoEnviado });
     const anexoEnvio = anexoAtual; removerAnexo();
+
+    // ── MAPA MENTAL: intercepta ANTES de chamar a IA ──────────────────────
+    // Se o usuário pede mapa mental, vai direto para DALL-E (sem streaming de texto)
+    const _isMapaMental = !anexoEnvio && /mapa\s*mental|infogr[áa]fico|mind\s*map/i.test(textoEnviado);
+    if (_isMapaMental) {
+      let _tema = textoEnviado
+        .replace(/\[Contexto Regional:[^\]]*\]\s*/i, '')
+        .replace(/.*(?:mapa\s*mental|infogr[áa]fico|mind\s*map)\s*/i, '')
+        .replace(/^(?:sobre|de|do|da|dos|das|para|a|o|um|uma|:)\s+/i, '')
+        .replace(/[.!?,;]+$/g, '').trim();
+      if (!_tema || _tema.length < 2) _tema = textoEnviado.replace(/\[Contexto Regional:[^\]]*\]\s*/i, '').replace(/^(?:crie|gere|faça|criar|gerar|fazer|me|um|uma)\s+/gi, '').replace(/mapa\s*mental\s*/i, '').trim();
+
+      const stream = addMsgIA();
+      const piaMark = document.getElementById('piaMark');
+      const curAvatar = document.getElementById('currentAvatar');
+      if (piaMark) piaMark.classList.add('typing');
+      if (curAvatar) curAvatar.classList.add('typing');
+
+      stream.setHtml(`
+        <div class="mapa-gerar-loading">
+          <div class="mapa-gerar-spinner"></div>
+          <p>Gerando mapa mental de <strong>${escapeHtml(_tema)}</strong>…<br>
+             <span style="font-size:.72rem;opacity:.6">Isso pode levar alguns segundos.</span></p>
+        </div>
+      `);
+      scroll();
+
+      try {
+        const resp = await fetch('/api/generate/mapa-mental', {
+          method: 'POST', headers: {'Content-Type':'application/json'},
+          body: JSON.stringify({tema: _tema})
+        });
+        const data = await resp.json();
+        if (!resp.ok || !data.url) throw new Error(data.erro || 'Erro ao gerar imagem');
+
+        stream.replaceBubble(`
+          <div class="mapa-mental-resultado">
+            <img src="${data.url}" class="mapa-mental-img" alt="Mapa Mental: ${escapeHtml(_tema)}"
+                 loading="lazy" onclick="window.open(this.src,'_blank')">
+            <div class="mapa-mental-acoes">
+              <a href="${data.url}" download="mapa-mental.png" target="_blank" class="btn-dl-mapa">⬇ Baixar Imagem</a>
+            </div>
+          </div>
+        `);
+        historico.push({role:'assistant', content: `[Mapa mental visual gerado: ${_tema}]`});
+      } catch(e) {
+        stream.replaceBubble(`<p style="color:var(--text2)">⚠️ ${escapeHtml(e.message || 'Não foi possível gerar o mapa mental. Tente novamente.')}</p>`);
+      } finally {
+        if (piaMark) piaMark.classList.remove('typing');
+        if (curAvatar) { curAvatar.classList.remove('typing'); curAvatar.removeAttribute('id'); }
+        enviando=false; btnEnviar.disabled=false; inputEl.disabled=false; inputEl.focus();
+      }
+      return;
+    }
+
+    // ── FLUXO NORMAL: streaming de texto via /api/chat ────────────────────
     const stream = addMsgIA();
     const piaMark = document.getElementById('piaMark');
     const curAvatar = document.getElementById('currentAvatar');
