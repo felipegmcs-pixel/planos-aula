@@ -1944,6 +1944,62 @@
     addMsgUser(textoEnviado, anexoAtual);
     historico.push({ role:'user', content:textoEnviado });
     const anexoEnvio = anexoAtual; removerAnexo();
+
+    // ── MAPA MENTAL: intercepta ANTES de chamar a IA ──────────────────────
+    // Se o usuário pede mapa mental, vai direto para DALL-E (sem streaming de texto)
+    const _isMapaMental = !anexoEnvio && /mapa\s*mental|infogr[áa]fico|mind\s*map/i.test(textoEnviado);
+    if (_isMapaMental) {
+      let _tema = textoEnviado
+        .replace(/\[Contexto Regional:[^\]]*\]\s*/i, '')
+        .replace(/.*(?:mapa\s*mental|infogr[áa]fico|mind\s*map)\s*/i, '')
+        .replace(/^(?:sobre|de|do|da|dos|das|para|a|o|um|uma|:)\s+/i, '')
+        .replace(/[.!?,;]+$/g, '').trim();
+      if (!_tema || _tema.length < 2) _tema = textoEnviado.replace(/\[Contexto Regional:[^\]]*\]\s*/i, '').replace(/^(?:crie|gere|faça|criar|gerar|fazer|me|um|uma)\s+/gi, '').replace(/mapa\s*mental\s*/i, '').trim();
+
+      const stream = addMsgIA();
+      const piaMark = document.getElementById('piaMark');
+      const curAvatar = document.getElementById('currentAvatar');
+      if (piaMark) piaMark.classList.add('typing');
+      if (curAvatar) curAvatar.classList.add('typing');
+
+      stream.setHtml(`
+        <div class="mapa-gerar-loading">
+          <div class="mapa-gerar-spinner"></div>
+          <p>Gerando mapa mental de <strong>${escapeHtml(_tema)}</strong>…<br>
+             <span style="font-size:.72rem;opacity:.6">Isso pode levar alguns segundos.</span></p>
+        </div>
+      `);
+      scroll();
+
+      try {
+        const resp = await fetch('/api/generate/mapa-mental', {
+          method: 'POST', headers: {'Content-Type':'application/json'},
+          body: JSON.stringify({tema: _tema})
+        });
+        const data = await resp.json();
+        if (!resp.ok || !data.url) throw new Error(data.erro || 'Erro ao gerar imagem');
+
+        stream.replaceBubble(`
+          <div class="mapa-mental-resultado">
+            <img src="${data.url}" class="mapa-mental-img" alt="Mapa Mental: ${escapeHtml(_tema)}"
+                 loading="lazy" onclick="window.open(this.src,'_blank')">
+            <div class="mapa-mental-acoes">
+              <a href="${data.url}" download="mapa-mental.png" target="_blank" class="btn-dl-mapa">⬇ Baixar Imagem</a>
+            </div>
+          </div>
+        `);
+        historico.push({role:'assistant', content: `[Mapa mental visual gerado: ${_tema}]`});
+      } catch(e) {
+        stream.replaceBubble(`<p style="color:var(--text2)">⚠️ ${escapeHtml(e.message || 'Não foi possível gerar o mapa mental. Tente novamente.')}</p>`);
+      } finally {
+        if (piaMark) piaMark.classList.remove('typing');
+        if (curAvatar) { curAvatar.classList.remove('typing'); curAvatar.removeAttribute('id'); }
+        enviando=false; btnEnviar.disabled=false; inputEl.disabled=false; inputEl.focus();
+      }
+      return;
+    }
+
+    // ── FLUXO NORMAL: streaming de texto via /api/chat ────────────────────
     const stream = addMsgIA();
     const piaMark = document.getElementById('piaMark');
     const curAvatar = document.getElementById('currentAvatar');
@@ -1989,14 +2045,6 @@
       const textoFinal = stream.done();
       historico.push({role:'assistant', content: textoFinal || fullText});
       renderizarMermaid();
-
-      // Auto-gerar mapa mental como imagem DALL-E quando a IA retorna um mapa
-      const _txt = textoFinal || fullText;
-      const _mapaMatch = _txt.match(/##\s*🧠\s*TEMA CENTRAL[:\s]+([^\n*`]+)/i);
-      if (_mapaMatch) {
-        const _tema = _mapaMatch[1].replace(/[*_`]/g, '').trim();
-        autoGerarMapaMental(_tema, stream, _txt);
-      }
     } catch(err) { stream.add('Erro de conexão. Verifique sua internet e tente novamente.'); stream.done(); }
     finally {
       if (oraculoStatus) oraculoStatus.remove();
@@ -2006,47 +2054,6 @@
       if (ca) { ca.classList.remove('typing'); ca.removeAttribute('id'); }
       enviando=false; btnEnviar.disabled=false; inputEl.disabled=false; inputEl.focus();
     }
-  }
-
-  // ── AUTO-GERAÇÃO DO MAPA MENTAL COMO IMAGEM ──────────────────────────────
-  async function autoGerarMapaMental(tema, stream, textoFallback) {
-    stream.replaceBubble(`
-      <div class="mapa-gerar-loading">
-        <div class="mapa-gerar-spinner"></div>
-        <p>Pintando o mapa mental de <strong>${escapeHtml(tema)}</strong>…<br>
-           <span style="font-size:.72rem;opacity:.7">Isso pode levar alguns segundos.</span></p>
-      </div>
-    `);
-    scroll();
-    try {
-      const resp = await fetch('/api/generate/mapa-mental', {
-        method: 'POST',
-        headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({tema})
-      });
-      const data = await resp.json();
-      if (!resp.ok || !data.url) throw new Error(data.erro || 'Erro ao gerar imagem');
-
-      const temaEsc = escapeHtml(tema);
-      stream.replaceBubble(`
-        <div class="mapa-mental-resultado">
-          <div class="mapa-mental-tag">Mapa Mental</div>
-          <img src="${data.url}" class="mapa-mental-img" alt="Mapa Mental: ${temaEsc}"
-               loading="lazy" onclick="window.open('${data.url}','_blank')">
-          <div class="mapa-mental-acoes">
-            <a href="${data.url}" download="mapa-mental-${temaEsc}.jpg" target="_blank"
-               class="btn-dl-mapa">⬇ Baixar Imagem</a>
-            <button class="btn-dl-mapa" onclick="baixarDocx(${JSON.stringify(textoFallback)})">
-              📄 Baixar DOCX
-            </button>
-          </div>
-        </div>
-      `);
-    } catch(e) {
-      // Fallback: exibe o texto original do mapa
-      stream.replaceBubble(renderMD(textoFallback));
-    }
-    scroll();
   }
 
   function scroll() { const el=document.getElementById('messages'); el.scrollTop=el.scrollHeight; }
