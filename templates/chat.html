@@ -1086,20 +1086,35 @@
       display: flex; flex-direction: column; gap: 8px;
     }
     .state-selector-wrap {
-      display: flex; align-items: center; gap: 8px;
-      padding: 0 4px;
+      display: flex; align-items: center; gap: 6px; padding: 2px 4px;
     }
     .state-label {
-      font-size: 0.6rem; font-weight: 700; color: var(--text3);
-      text-transform: uppercase; letter-spacing: 0.05em;
+      font-size: 0.58rem; font-weight: 700; letter-spacing: 1px;
+      text-transform: uppercase; color: var(--text3); white-space: nowrap;
+    }
+    .state-select-box {
+      position: relative; display: inline-flex; align-items: center;
     }
     .state-select {
-      background: var(--card-bg); border: 1px solid var(--linha);
-      border-radius: 6px; padding: 3px 8px; font-size: 0.7rem;
+      appearance: none; -webkit-appearance: none;
+      background: transparent;
+      border: 1.5px solid var(--linha-f); border-radius: 20px;
+      padding: 4px 26px 4px 10px;
+      font-size: 0.65rem; font-weight: 600; letter-spacing: 0.2px;
       color: var(--text2); cursor: pointer; outline: none;
-      transition: border-color 0.2s; font-family: 'Inter', sans-serif;
+      font-family: 'Inter', sans-serif;
+      transition: border-color .2s, box-shadow .2s;
     }
-    .state-select:focus { border-color: var(--amber); }.messages { padding: 20px 0; }
+    .state-select:hover { border-color: var(--indigo); }
+    .state-select:focus {
+      border-color: var(--indigo);
+      box-shadow: 0 0 0 3px rgba(30,90,99,.1);
+    }
+    .state-chevron {
+      position: absolute; right: 8px; pointer-events: none;
+      color: var(--text3); width: 10px; height: 10px; flex-shrink: 0;
+    }
+    [data-theme="dark"] .state-select { background: rgba(255,255,255,.03); }.messages { padding: 20px 0; }
       .messages-inner { padding: 0 16px; }
       .feature-grid { grid-template-columns: repeat(2, 1fr); }
       .welcome h1 { font-size: 2rem; }
@@ -1484,22 +1499,28 @@
     <!-- Input -->
     <div class="input-area">
       <div class="state-selector-wrap">
-        <label for="stateSelector" class="state-label">Currículo Regional:</label>
-        <select id="stateSelector" class="state-select">
-          <option value="Nacional (BNCC)">Nacional (BNCC)</option>
-          <option value="São Paulo (Currículo Paulista)">São Paulo (Currículo Paulista)</option>
-          <option value="Rio de Janeiro">Rio de Janeiro</option>
-          <option value="Minas Gerais">Minas Gerais</option>
-          <option value="Rio Grande do Sul">Rio Grande do Sul</option>
-          <option value="Paraná">Paraná</option>
-          <option value="Santa Catarina">Santa Catarina</option>
-          <option value="Bahia">Bahia</option>
-          <option value="Ceará">Ceará</option>
-          <option value="Pernambuco">Pernambuco</option>
-          <option value="Goiás">Goiás</option>
-          <option value="Distrito Federal">Distrito Federal</option>
-          <option value="Outro">Outro</option>
-        </select>
+        <span class="state-label">Estado:</span>
+        <div class="state-select-box">
+          <select id="stateSelector" class="state-select">
+            <option value="Nacional (BNCC)">Nacional (BNCC)</option>
+            <option value="São Paulo (Currículo Paulista)">São Paulo</option>
+            <option value="Rio de Janeiro">Rio de Janeiro</option>
+            <option value="Minas Gerais">Minas Gerais</option>
+            <option value="Rio Grande do Sul">Rio Grande do Sul</option>
+            <option value="Paraná">Paraná</option>
+            <option value="Santa Catarina">Santa Catarina</option>
+            <option value="Bahia">Bahia</option>
+            <option value="Ceará">Ceará</option>
+            <option value="Pernambuco">Pernambuco</option>
+            <option value="Goiás">Goiás</option>
+            <option value="Distrito Federal">Distrito Federal</option>
+            <option value="Outro">Outro</option>
+          </select>
+          <svg class="state-chevron" viewBox="0 0 24 24" fill="none"
+               stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="6 9 12 15 18 9"/>
+          </svg>
+        </div>
       </div>
       <div class="input-wrap">
         <div class="anexo-preview" id="anexoPreview">
