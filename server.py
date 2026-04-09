@@ -5136,63 +5136,56 @@ def api_generate_image():
 # ─── Infográfico Educacional: geração via LLM + DALL-E 3 ─────────────────────
 
 def _gerar_estrutura_infografico(tema):
-    """LLM gera o conteúdo estruturado do infográfico em PT-BR."""
+    """LLM gera o conteúdo estruturado do infográfico em PT-BR via OpenAI JSON Mode."""
+    if not client_openai:
+        logger.error('_gerar_estrutura_infografico: OPENAI_API_KEY não configurada.')
+        return None
+
+    sistema = (
+        'Você é um gerador de JSON educacional. '
+        'Retorne EXCLUSIVAMENTE um objeto JSON válido com as chaves: '
+        '"titulo" (string) e "secoes" (array de 5 objetos, cada um com '
+        '"nome" (string), "topicos" (array de 3 strings em PT-BR) e '
+        '"ilustracao_en" (string em inglês descrevendo a ilustração para DALL-E)). '
+        'Encoding: UTF-8. Tudo em português do Brasil, exceto "ilustracao_en".'
+    )
     prompt = (
-        f'Gere um infográfico educacional em JSON sobre "{tema}" para estudantes brasileiros.\n\n'
-        'ESTRUTURA EXIGIDA (copie exatamente este esqueleto e preencha os valores):\n'
+        f'Crie um infográfico educacional sobre "{tema}" para estudantes brasileiros do ensino médio.\n\n'
+        'Retorne SOMENTE o JSON com esta estrutura:\n'
         '{\n'
-        '  "titulo": "TÍTULO EM MAIÚSCULAS PT-BR",\n'
+        '  "titulo": "TÍTULO DO TEMA EM MAIÚSCULAS",\n'
         '  "secoes": [\n'
         '    {\n'
         '      "nome": "NOME DA SEÇÃO EM MAIÚSCULAS",\n'
-        '      "topicos": ["tópico 1 PT-BR", "tópico 2 PT-BR", "tópico 3 PT-BR"],\n'
-        '      "ilustracao_en": "descrição em inglês da ilustração para DALL-E"\n'
+        '      "topicos": ["fato/conceito 1", "fato/conceito 2", "fato/conceito 3"],\n'
+        '      "ilustracao_en": "watercolor illustration description for DALL-E in English"\n'
         '    }\n'
         '  ]\n'
         '}\n\n'
-        'REGRAS ABSOLUTAS — VIOLÁ-LAS CAUSA ERRO CRÍTICO NO SISTEMA:\n'
-        '1. Retorne EXCLUSIVAMENTE o objeto JSON. Nenhuma palavra fora do JSON.\n'
-        '2. PROIBIDO usar blocos de código: não use ``` de nenhuma forma (nem ```json, nem ```mermaid, nem ```).\n'
-        '3. PROIBIDO incluir texto conversacional: sem "Aqui está", "Claro!", "Espero ajudar" ou qualquer frase.\n'
-        '4. O primeiro caractere da resposta DEVE ser { e o último DEVE ser }.\n'
-        '5. Exatamente 5 seções, 3 tópicos por seção.\n'
-        '6. Todos "nome" e "topicos" em PORTUGUÊS DO BRASIL.\n'
-        '7. "ilustracao_en": descreva em inglês figuras históricas, objetos ou cenas reconhecíveis.\n'
-        f'   Ex: "Watercolor portrait of Kaiser Wilhelm II in German military uniform"\n'
-        f'Tema: "{tema}"'
+        'REGRAS:\n'
+        '- Exatamente 5 seções cobrindo os aspectos mais importantes do tema\n'
+        '- 3 tópicos por seção: frases curtas e informativas em PT-BR\n'
+        '- "ilustracao_en": descreva em inglês uma figura histórica, objeto ou cena marcante do subtema\n'
+        '  Exemplos: "Watercolor portrait of Kaiser Wilhelm II in military uniform", '
+        '"Detailed watercolor of a steam locomotive with smoke, 1800s style"\n'
+        f'- Tema: "{tema}"'
     )
-    sistema = (
-        'Você é um gerador de JSON puro. '
-        'Sua resposta começa com { e termina com }. '
-        'Nunca use blocos markdown (```). '
-        'Nunca escreva texto fora do JSON. '
-        'Encoding: UTF-8.'
-    )
+
     try:
-        raw = _llm_cadeia_simples(prompt, sistema=sistema, max_tokens=1600)
-
-        # ── Limpeza defensiva: remove qualquer resíduo de markdown ou texto ──
-        # 1. Remove blocos de código com qualquer linguagem
-        raw = re.sub(r'```[a-zA-Z]*\r?\n?', '', raw)
-        raw = re.sub(r'```', '', raw)
-        # 2. Remove texto conversacional antes do JSON
-        raw = re.sub(r'^[^{\[]*', '', raw, flags=re.DOTALL)
-        # 3. Remove texto conversacional depois do JSON
-        raw = re.sub(r'[}\]]\K[^}\]]*$', '', raw, flags=re.DOTALL)
-        # 4. Remove espaços/quebras residuais
-        raw = raw.strip()
-
-        # Garante que começa com { e termina com }
-        start = raw.find('{')
-        end   = raw.rfind('}')
-        if start == -1 or end == -1:
-            raise ValueError(f'JSON não encontrado na resposta. Raw: {raw[:200]}')
-        raw = raw[start:end + 1]
-
-        return json.loads(raw)
+        resp = client_openai.chat.completions.create(
+            model='gpt-4o-mini',
+            response_format={"type": "json_object"},
+            messages=[
+                {"role": "system", "content": sistema},
+                {"role": "user",   "content": prompt},
+            ],
+            max_tokens=1800,
+            temperature=0.7,
+        )
+        content = resp.choices[0].message.content
+        return json.loads(content)  # json_object mode garante JSON válido
     except Exception as e:
-        logger.error('Estrutura infográfico falhou: %s | raw início: %.200s', e,
-                     locals().get('raw', '(sem raw)'))
+        logger.error('_gerar_estrutura_infografico falhou: %s', e)
         return None
 
 
