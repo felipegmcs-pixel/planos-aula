@@ -1980,7 +1980,9 @@
           method: 'POST', headers: {'Content-Type':'application/json'},
           body: JSON.stringify({tema: _tema})
         });
-        const data = await resp.json();
+        let data;
+        try { data = await resp.json(); }
+        catch(_) { throw new Error('Servidor indisponível. Aguarde o deploy e tente novamente.'); }
         if (!resp.ok || !data.url) throw new Error(data.erro || 'Erro ao gerar imagem');
 
         stream.replaceBubble(`
