@@ -5189,52 +5189,62 @@ def _gerar_estrutura_infografico(tema):
         return None
 
 
-def _prompt_infografico_dalle(estrutura, tema):
-    """Monta o prompt DALL-E 3 para o infográfico estilo Descomplica."""
-    titulo  = estrutura.get('titulo', tema.upper())[:70]
-    secoes  = estrutura.get('secoes', [])[:5]
+def _prompt_infografico_dalle(tema, estrutura=None):
+    """Monta o prompt DALL-E 3 para o infográfico estilo Descomplica.
+    Se estrutura for None, usa prompt genérico de alta qualidade como fallback.
+    """
+    titulo_base = tema.upper()[:70]
 
-    # Describe each section content for DALL-E
-    secs_lines = ''
-    for i, sec in enumerate(secoes, 1):
-        tops = ' | '.join(f'→ {t}' for t in sec.get('topicos', [])[:3])
-        ilus = sec.get('ilustracao_en', '')
-        secs_lines += f'  Section {i} — title: "{sec["nome"]}" — bullets: {tops} — illustration: {ilus}\n'
+    # ── Prompt base sempre presente ──────────────────────────────────────────
+    base = (
+        f'Premium educational infographic poster for Brazilian high school students about "{titulo_base}". '
+        'Style: professional Brazilian study guide publisher (Descomplica quality). '
+        'Watercolor + ink illustration style. Clean white background, bright colors.\n\n'
+        'EXACT LAYOUT:\n'
+        f'1. TOP BANNER: Full-width dark navy-blue ribbon. Giant bold white text "{titulo_base}" centered.\n'
+        '2. BODY: 5 white content cards in a 2-column grid (2 top, 2 middle, 1 bottom centered). '
+        'Each card: left half has bold colored title + 3 bullet points in PORTUGUESE; '
+        'right half has a detailed watercolor illustration.\n'
+        '3. BOTTOM: small "ProfessorIA" branding text.\n\n'
+    )
+
+    # ── Conteúdo detalhado quando o LLM gerou estrutura ──────────────────────
+    if estrutura and isinstance(estrutura, dict):
+        titulo = estrutura.get('titulo', titulo_base)[:70]
+        secoes = estrutura.get('secoes', [])[:5]
+        secs_lines = ''
+        for i, sec in enumerate(secoes, 1):
+            nome = sec.get('nome', '')
+            tops = ' | '.join(f'→ {t}' for t in sec.get('topicos', [])[:3])
+            ilus = sec.get('ilustracao_en', '')
+            secs_lines += f'  Section {i}: title="{nome}" bullets=({tops}) illustration=({ilus})\n'
+
+        conteudo = (
+            f'TOP BANNER title: "{titulo}"\n\n'
+            'CONTENT FOR EACH SECTION (use exactly this):\n'
+            + secs_lines + '\n'
+        )
+    else:
+        # Fallback: instrui o DALL-E a usar seu próprio conhecimento sobre o tema
+        conteudo = (
+            f'Divide content into 5 key aspects of "{titulo_base}": '
+            'causes/origins, main events, key historical figures, consequences, and legacy/impact. '
+            f'For each section, write 3 factual bullet points about "{titulo_base}" in PORTUGUESE. '
+            'Each section illustration: detailed watercolor of a relevant person, object, or scene.\n\n'
+        )
 
     return (
-        f'Premium educational infographic poster for Brazilian high school students about "{titulo}". '
-        'Design style: professional Brazilian study guide, like Descomplica or top educational publishers. '
-        'Mixed watercolor + ink line art illustration style. Clean, bright, editorial.\n\n'
-
-        'EXACT VISUAL STRUCTURE:\n'
-        f'1. TOP BANNER: Full-width dark navy-blue ribbon. '
-        f'Giant bold white sans-serif text "{titulo}" centered, very large (impossible to miss).\n'
-        '2. BODY: 5 content sections in a 2-column grid: '
-        '2 sections in top row, 2 in middle row, 1 centered at bottom. '
-        'Each section is a white card with a thin colored border.\n'
-        '3. BOTTOM RIGHT CORNER: small "ProfessorIA™" text with two interlocked circles logo.\n\n'
-
-        'CONTENT — USE EXACTLY THIS PER SECTION:\n'
-        + secs_lines + '\n'
-
-        'DESIGN OF EACH SECTION CARD:\n'
-        '• LEFT HALF: Large bold colored section title (uppercase, 22pt+) '
-        'followed by 3 bullet lines starting with → in Portuguese (14pt dark readable text on white)\n'
-        '• RIGHT HALF: The described watercolor+ink illustration — detailed, colorful, recognizable '
-        '(historical persons in period dress, machinery, maps, soldiers, objects — editorial quality)\n\n'
-
-        'TYPOGRAPHY RULES (non-negotiable):\n'
-        '• ALL body text and titles in PORTUGUESE (PT-BR) — absolutely zero English words in the image\n'
-        '• Top banner title: 52pt+ white bold — the biggest most readable text in the image\n'
-        '• Section titles: 20pt+ bold colored\n'
-        '• Bullet text: 13pt+ dark color on pure white — clearly readable\n'
-        '• Place NO text over dark or illustrated areas — white card background behind all text\n\n'
-
-        'ILLUSTRATION QUALITY: Each section\'s illustration is detailed watercolor with ink outlines, '
-        'showing specific recognizable people or objects. Educational publisher quality. Colorful.\n\n'
-
-        'FORBIDDEN: English text anywhere, unreadable tiny text, text overlapping illustrations, '
-        'dark backgrounds behind body text, cluttered layout, overlapping elements.'
+        base + conteudo +
+        'TYPOGRAPHY (non-negotiable):\n'
+        '• ALL text in the image must be in PORTUGUESE (PT-BR) — zero English words visible\n'
+        '• Banner title: 52pt+ white bold on dark navy\n'
+        '• Section titles: 20pt+ bold, colored\n'
+        '• Bullet text: 13pt+ dark on pure white background — clearly readable\n'
+        '• Never place text over illustrations or dark areas\n\n'
+        'ILLUSTRATION QUALITY: Each illustration is detailed watercolor+ink, showing recognizable '
+        'historical figures in period dress, landmarks, machinery, maps. Editorial publisher quality.\n\n'
+        'FORBIDDEN: Any English text, unreadable text, text overlapping illustrations, '
+        'dark backgrounds behind body text, cluttered/overlapping elements.'
     )
 
 
@@ -5260,14 +5270,17 @@ def api_generate_mapa_mental():
         try:
             yield f'data: {json.dumps({"status": "Organizando o conteúdo..."})}\n\n'
 
+            # Tenta gerar estrutura detalhada via JSON Mode; continua mesmo se falhar
             estrutura = _gerar_estrutura_infografico(tema)
             if not estrutura:
-                yield f'data: {json.dumps({"erro": "Não foi possível gerar o conteúdo."})}\n\n'
-                return
+                logger.warning('Estrutura LLM falhou para "%s" — usando prompt direto.', tema[:60])
 
             yield f'data: {json.dumps({"status": "Criando o infográfico... (~30s)"})}\n\n'
 
-            prompt = _prompt_infografico_dalle(estrutura, tema)
+            # Sempre gera o prompt (com estrutura detalhada ou fallback)
+            prompt = _prompt_infografico_dalle(tema, estrutura)
+            logger.info('DALL-E prompt len=%d para "%s"', len(prompt), tema[:50])
+
             img_resp = client_openai.images.generate(
                 model='dall-e-3',
                 prompt=prompt[:4000],
@@ -5276,18 +5289,22 @@ def api_generate_mapa_mental():
                 n=1
             )
             url = img_resp.data[0].url
-            logger.info('Infográfico gerado usuario %s: %s', uid, tema[:50])
+            logger.info('Infográfico gerado usuario %s tema="%s"', uid, tema[:50])
             yield f'data: {json.dumps({"url": url})}\n\n'
 
         except Exception as e:
             err = str(e)
-            logger.error('Erro infográfico SSE: %s', err[:300])
+            logger.error('Erro infográfico SSE usuario %s: %s', uid, err[:400])
             if 'content_policy' in err.lower() or 'safety' in err.lower():
-                msg = 'Tema bloqueado pela política de conteúdo. Tente outro.'
-            elif 'billing' in err.lower() or 'credit' in err.lower():
-                msg = 'Créditos OpenAI esgotados.'
+                msg = 'Tema bloqueado pela política de conteúdo da OpenAI. Tente reformular.'
+            elif 'billing' in err.lower() or 'credit' in err.lower() or 'quota' in err.lower():
+                msg = 'Créditos OpenAI esgotados. Verifique sua conta.'
+            elif 'rate_limit' in err.lower():
+                msg = 'Muitas solicitações. Aguarde um momento e tente novamente.'
+            elif 'timeout' in err.lower() or 'timed out' in err.lower():
+                msg = 'Tempo esgotado ao gerar. Tente novamente.'
             else:
-                msg = f'Erro ao gerar infográfico: {err[:150]}'
+                msg = f'Erro ao gerar infográfico: {err[:200]}'
             yield f'data: {json.dumps({"erro": msg})}\n\n'
         finally:
             yield 'data: [DONE]\n\n'

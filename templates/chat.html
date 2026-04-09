@@ -1986,9 +1986,9 @@
         // Lê SSE stream (igual ao chat — sem timeout de proxy)
         const reader  = resp.body.getReader();
         const decoder = new TextDecoder();
-        let buffer = '', imageUrl = null;
+        let buffer = '', imageUrl = null, streamDone = false;
 
-        while (true) {
+        while (!streamDone) {
           const { done, value } = await reader.read();
           if (done) break;
           buffer += decoder.decode(value, { stream: true });
@@ -1997,13 +1997,13 @@
           for (const line of lines) {
             if (!line.startsWith('data: ')) continue;
             const payload = line.slice(6).trim();
-            if (payload === '[DONE]') break;
+            if (payload === '[DONE]') { streamDone = true; break; }
             try {
               const obj = JSON.parse(payload);
               if (obj.erro) throw new Error(obj.erro);
               if (obj.status) _setLoading(obj.status);
               if (obj.url)    imageUrl = obj.url;
-            } catch(pe) { if (imageUrl === null) throw pe; }
+            } catch(pe) { throw pe; }
           }
         }
 
