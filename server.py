@@ -5139,38 +5139,60 @@ def _gerar_estrutura_infografico(tema):
     """LLM gera o conteúdo estruturado do infográfico em PT-BR."""
     prompt = (
         f'Gere um infográfico educacional em JSON sobre "{tema}" para estudantes brasileiros.\n\n'
-        'Retorne SOMENTE JSON válido, sem markdown:\n\n'
+        'ESTRUTURA EXIGIDA (copie exatamente este esqueleto e preencha os valores):\n'
         '{\n'
-        '  "titulo": "TÍTULO EM MAIÚSCULAS PT-BR (máx 5 palavras)",\n'
+        '  "titulo": "TÍTULO EM MAIÚSCULAS PT-BR",\n'
         '  "secoes": [\n'
         '    {\n'
-        '      "nome": "NOME DA SEÇÃO EM MAIÚSCULAS (máx 4 palavras)",\n'
-        '      "topicos": [\n'
-        '        "tópico curto 1 (máx 8 palavras PT-BR)",\n'
-        '        "tópico curto 2 (máx 8 palavras PT-BR)",\n'
-        '        "tópico curto 3 (máx 8 palavras PT-BR)"\n'
-        '      ],\n'
-        '      "ilustracao_en": "Detailed description in English for DALL-E of a watercolor illustration showing relevant historical figures, objects or scenes for this section"\n'
+        '      "nome": "NOME DA SEÇÃO EM MAIÚSCULAS",\n'
+        '      "topicos": ["tópico 1 PT-BR", "tópico 2 PT-BR", "tópico 3 PT-BR"],\n'
+        '      "ilustracao_en": "descrição em inglês da ilustração para DALL-E"\n'
         '    }\n'
         '  ]\n'
         '}\n\n'
-        'REGRAS:\n'
-        '- Exatamente 5 seções cobrindo os aspectos mais importantes do tema\n'
-        '- 3 tópicos por seção, factualmente corretos\n'
-        '- Todos os "nome" e "topicos" em PORTUGUÊS DO BRASIL\n'
-        '- "ilustracao_en": descreva em inglês pessoas históricas com nome+roupa, objetos ou cenas específicas\n'
-        '  Ex: "Watercolor portrait of Kaiser Wilhelm II in German military uniform, stern expression"\n'
-        '  Ex: "Watercolor scene of workers operating steam-powered textile machinery in a factory"\n'
-        f'- Tema: "{tema}"'
+        'REGRAS ABSOLUTAS — VIOLÁ-LAS CAUSA ERRO CRÍTICO NO SISTEMA:\n'
+        '1. Retorne EXCLUSIVAMENTE o objeto JSON. Nenhuma palavra fora do JSON.\n'
+        '2. PROIBIDO usar blocos de código: não use ``` de nenhuma forma (nem ```json, nem ```mermaid, nem ```).\n'
+        '3. PROIBIDO incluir texto conversacional: sem "Aqui está", "Claro!", "Espero ajudar" ou qualquer frase.\n'
+        '4. O primeiro caractere da resposta DEVE ser { e o último DEVE ser }.\n'
+        '5. Exatamente 5 seções, 3 tópicos por seção.\n'
+        '6. Todos "nome" e "topicos" em PORTUGUÊS DO BRASIL.\n'
+        '7. "ilustracao_en": descreva em inglês figuras históricas, objetos ou cenas reconhecíveis.\n'
+        f'   Ex: "Watercolor portrait of Kaiser Wilhelm II in German military uniform"\n'
+        f'Tema: "{tema}"'
     )
-    sistema = 'Responda SOMENTE com JSON válido e completo. Nenhum texto fora do JSON.'
+    sistema = (
+        'Você é um gerador de JSON puro. '
+        'Sua resposta começa com { e termina com }. '
+        'Nunca use blocos markdown (```). '
+        'Nunca escreva texto fora do JSON. '
+        'Encoding: UTF-8.'
+    )
     try:
         raw = _llm_cadeia_simples(prompt, sistema=sistema, max_tokens=1600)
-        raw = re.sub(r'^```[a-z]*\n?', '', raw.strip())
-        raw = re.sub(r'\n?```$', '', raw.strip())
+
+        # ── Limpeza defensiva: remove qualquer resíduo de markdown ou texto ──
+        # 1. Remove blocos de código com qualquer linguagem
+        raw = re.sub(r'```[a-zA-Z]*\r?\n?', '', raw)
+        raw = re.sub(r'```', '', raw)
+        # 2. Remove texto conversacional antes do JSON
+        raw = re.sub(r'^[^{\[]*', '', raw, flags=re.DOTALL)
+        # 3. Remove texto conversacional depois do JSON
+        raw = re.sub(r'[}\]]\K[^}\]]*$', '', raw, flags=re.DOTALL)
+        # 4. Remove espaços/quebras residuais
+        raw = raw.strip()
+
+        # Garante que começa com { e termina com }
+        start = raw.find('{')
+        end   = raw.rfind('}')
+        if start == -1 or end == -1:
+            raise ValueError(f'JSON não encontrado na resposta. Raw: {raw[:200]}')
+        raw = raw[start:end + 1]
+
         return json.loads(raw)
     except Exception as e:
-        logger.error('Estrutura infográfico falhou: %s', e)
+        logger.error('Estrutura infográfico falhou: %s | raw início: %.200s', e,
+                     locals().get('raw', '(sem raw)'))
         return None
 
 
