@@ -5192,62 +5192,205 @@ def _gerar_estrutura_infografico(tema):
 
 
 def _prompt_infografico_dalle(tema, estrutura=None):
-    """Monta o prompt DALL-E 3 para o infográfico estilo Descomplica.
-    Se estrutura for None, usa prompt genérico de alta qualidade como fallback.
+    """Monta prompt DALL-E que pede APENAS ilustrações + layout, SEM TEXTO.
+    O texto PT-BR será adicionado depois pelo Pillow em _compositar_poster().
     """
-    titulo_base = tema.upper()[:70]
+    titulo_base = tema[:70]
+    secoes = (estrutura or {}).get('secoes', [])[:4]
 
-    # ── Prompt base sempre presente ──────────────────────────────────────────
-    base = (
-        f'Premium educational infographic poster for Brazilian high school students about "{titulo_base}". '
-        'Style: professional Brazilian study guide publisher (Descomplica quality). '
-        'Watercolor + ink illustration style. Clean white background, bright colors.\n\n'
-        'EXACT LAYOUT:\n'
-        f'1. TOP BANNER: Full-width dark navy-blue ribbon. Giant bold white text "{titulo_base}" centered.\n'
-        '2. BODY: 5 white content cards in a 2-column grid (2 top, 2 middle, 1 bottom centered). '
-        'Each card: left half has bold colored title + 3 bullet points in PORTUGUESE; '
-        'right half has a detailed watercolor illustration.\n'
-        '3. BOTTOM: small "ProfessorIA" branding text.\n\n'
-    )
-
-    # ── Conteúdo detalhado quando o LLM gerou estrutura ──────────────────────
-    if estrutura and isinstance(estrutura, dict):
-        titulo = estrutura.get('titulo', titulo_base)[:70]
-        secoes = estrutura.get('secoes', [])[:5]
-        secs_lines = ''
-        for i, sec in enumerate(secoes, 1):
-            nome = sec.get('nome', '')
-            tops = ' | '.join(f'→ {t}' for t in sec.get('topicos', [])[:3])
-            ilus = sec.get('ilustracao_en', '')
-            secs_lines += f'  Section {i}: title="{nome}" bullets=({tops}) illustration=({ilus})\n'
-
-        conteudo = (
-            f'TOP BANNER title: "{titulo}"\n\n'
-            'CONTENT FOR EACH SECTION (use exactly this):\n'
-            + secs_lines + '\n'
-        )
-    else:
-        # Fallback: instrui o DALL-E a usar seu próprio conhecimento sobre o tema
-        conteudo = (
-            f'Divide content into 5 key aspects of "{titulo_base}": '
-            'causes/origins, main events, key historical figures, consequences, and legacy/impact. '
-            f'For each section, write 3 factual bullet points about "{titulo_base}" in PORTUGUESE. '
-            'Each section illustration: detailed watercolor of a relevant person, object, or scene.\n\n'
-        )
+    # Descrições das ilustrações de cada seção
+    ilus_parts = []
+    for i, sec in enumerate(secoes, 1):
+        ilus = sec.get('ilustracao_en', f'educational illustration about {tema}')
+        ilus_parts.append(f'panel {i}: {ilus}')
+    ilus_desc = ', '.join(ilus_parts) if ilus_parts else f'4 panels about {titulo_base}'
 
     return (
-        base + conteudo +
-        'TYPOGRAPHY (non-negotiable):\n'
-        '• ALL text in the image must be in PORTUGUESE (PT-BR) — zero English words visible\n'
-        '• Banner title: 52pt+ white bold on dark navy\n'
-        '• Section titles: 20pt+ bold, colored\n'
-        '• Bullet text: 13pt+ dark on pure white background — clearly readable\n'
-        '• Never place text over illustrations or dark areas\n\n'
-        'ILLUSTRATION QUALITY: Each illustration is detailed watercolor+ink, showing recognizable '
-        'historical figures in period dress, landmarks, machinery, maps. Editorial publisher quality.\n\n'
-        'FORBIDDEN: Any English text, unreadable text, text overlapping illustrations, '
-        'dark backgrounds behind body text, cluttered/overlapping elements.'
+        f'Educational infographic poster background about "{titulo_base}". '
+        'ABSOLUTELY NO TEXT, LETTERS, WORDS OR NUMBERS anywhere in the image. '
+        'Pure visual illustration only.\n\n'
+        'Layout structure:\n'
+        '1. TOP: Wide dark navy-blue horizontal bar (about 11% of image height). '
+        'Left portion lighter/gradient for title overlay.\n'
+        '2. BODY: 4 content panels in a 2×2 grid separated by thin white lines. '
+        'Each panel: LEFT 42% = soft white/very light grey area (for text overlay). '
+        'RIGHT 58% = detailed watercolor+ink illustration.\n'
+        '3. BOTTOM: Thin dark navy strip (5% of height).\n\n'
+        f'Illustrations for each panel ({ilus_desc}).\n\n'
+        'Style: professional educational publisher, watercolor+ink, editorial quality, '
+        'bright colors, clean composition. '
+        'CRITICAL: left side of each panel must be very light (white or near-white) '
+        'with NO details or texture — it will be used for text overlay. '
+        'Zero text anywhere.'
     )
+
+
+# ── Fontes para overlay Pillow ─────────────────────────────────────────────
+_FONTS_BOLD = [
+    '/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf',
+    '/usr/share/fonts/truetype/liberation/LiberationSans-Bold.ttf',
+    '/usr/share/fonts/truetype/freefont/FreeSansBold.ttf',
+]
+_FONTS_REGULAR = [
+    '/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf',
+    '/usr/share/fonts/truetype/liberation/LiberationSans-Regular.ttf',
+    '/usr/share/fonts/truetype/freefont/FreeSans.ttf',
+]
+
+
+def _pil_font(size, bold=True):
+    from PIL import ImageFont
+    for p in (_FONTS_BOLD if bold else _FONTS_REGULAR):
+        try:
+            return ImageFont.truetype(p, size)
+        except Exception:
+            pass
+    return ImageFont.load_default()
+
+
+def _wrap(text, font, max_w, draw):
+    """Quebra texto em linhas para caber em max_w pixels."""
+    from PIL import ImageDraw
+    words = text.split()
+    lines, cur = [], ''
+    for w in words:
+        test = (cur + ' ' + w).strip()
+        bb = draw.textbbox((0, 0), test, font=font)
+        if bb[2] - bb[0] <= max_w:
+            cur = test
+        else:
+            if cur:
+                lines.append(cur)
+            cur = w
+    if cur:
+        lines.append(cur)
+    return lines
+
+
+def _compositar_poster(image_url, estrutura, tema):
+    """Baixa a imagem DALL-E e sobrepõe TODO o texto PT-BR com Pillow.
+    Retorna string 'data:image/jpeg;base64,...' pronta para uso em <img src>.
+    """
+    from PIL import Image, ImageDraw
+    import requests as _req
+
+    # Download da imagem DALL-E
+    r = _req.get(image_url, timeout=30)
+    r.raise_for_status()
+    bg = Image.open(BytesIO(r.content)).convert('RGBA')
+    W, H = bg.size   # tipicamente 1792 × 1024
+
+    overlay = Image.new('RGBA', (W, H), (0, 0, 0, 0))
+    draw = ImageDraw.Draw(overlay)
+
+    # ── Dados de conteúdo ──────────────────────────────────────────────────
+    est = estrutura or {}
+    titulo = est.get('titulo', tema.upper())[:75]
+    secoes = est.get('secoes', [])[:5]
+
+    # Paleta de cores por seção (RGB sem alpha — usado com draw.rectangle fill)
+    PALETA = [
+        (20,  95, 185),   # azul
+        (175, 50,  20),   # vermelho
+        (18, 130,  75),   # verde
+        (130, 50, 170),   # roxo
+        (160, 115,  0),   # dourado
+    ]
+    NAVY       = (12, 24,  60)
+    WHITE_PX   = (255, 255, 255)
+    DARK_TEXT  = (18,  18,  38)
+
+    # ── Dimensões do layout ────────────────────────────────────────────────
+    BANNER_H  = max(100, int(H * 0.115))
+    FOOTER_H  = max(52,  int(H * 0.055))
+    BODY_Y1   = BANNER_H + 4
+    BODY_H    = H - BANNER_H - FOOTER_H - 4
+    GAP       = 4
+
+    # 4 cards em grade 2×2
+    CW = (W - GAP * 3) // 2              # largura de cada card
+    CH = (BODY_H - GAP) // 2            # altura de cada card
+    TEXT_FRAC = 0.42                     # 42% esquerda = zona de texto
+    TW = int(CW * TEXT_FRAC)            # largura da zona de texto
+
+    card_origins = [
+        (GAP,          BODY_Y1),
+        (GAP*2 + CW,   BODY_Y1),
+        (GAP,          BODY_Y1 + CH + GAP),
+        (GAP*2 + CW,   BODY_Y1 + CH + GAP),
+    ]
+
+    # ── BANNER ─────────────────────────────────────────────────────────────
+    draw.rectangle([0, 0, W, BANNER_H], fill=(*NAVY, 248))
+    tf = _pil_font(max(38, int(BANNER_H * 0.47)), bold=True)
+    draw.text((W // 2, BANNER_H // 2), titulo, font=tf,
+              fill=(*WHITE_PX, 255), anchor='mm')
+
+    # ── 4 CARDS ────────────────────────────────────────────────────────────
+    sf  = _pil_font(max(16, int(CH * 0.075)), bold=True)   # título da seção
+    bf  = _pil_font(max(13, int(CH * 0.058)), bold=False)  # bullets
+
+    for i, (ox, oy) in enumerate(card_origins):
+        if i >= len(secoes):
+            continue
+        sec   = secoes[i]
+        cor   = PALETA[i % len(PALETA)]
+        x1, y1 = ox, oy
+        x2, y2 = ox + TW, oy + CH
+
+        # Fundo branco semi-opaco na zona de texto
+        draw.rectangle([x1, y1, x2, y2], fill=(*WHITE_PX, 218))
+
+        # Barra de título da seção (cor sólida, altura ~13% do card)
+        TITLE_BAR_H = max(34, int(CH * 0.13))
+        draw.rectangle([x1, y1, x2, y1 + TITLE_BAR_H], fill=(*cor, 245))
+        nome = sec.get('nome', '')[:32]
+        draw.text((x1 + 10, y1 + TITLE_BAR_H // 2), nome,
+                  font=sf, fill=(*WHITE_PX, 255), anchor='lm')
+
+        # Bullets
+        y_cursor = y1 + TITLE_BAR_H + 10
+        BULLET_GAP = max(6, int(CH * 0.025))
+        LINE_H     = max(17, int(bf.size * 1.2)) if hasattr(bf, 'size') else 19
+
+        for topico in sec.get('topicos', [])[:3]:
+            lines = _wrap(f'→ {topico}', bf, TW - 20, draw)
+            for ln in lines[:2]:
+                if y_cursor + LINE_H < y2 - 6:
+                    draw.text((x1 + 10, y_cursor), ln, font=bf,
+                              fill=(*DARK_TEXT, 255))
+                    y_cursor += LINE_H
+            y_cursor += BULLET_GAP
+
+    # ── FOOTER STRIP ──────────────────────────────────────────────────────
+    FY = H - FOOTER_H
+    draw.rectangle([0, FY, W, H], fill=(*NAVY, 240))
+
+    # Seção 5 resumida no footer (se existir)
+    lf = _pil_font(max(13, int(FOOTER_H * 0.28)), bold=True)
+    rf = _pil_font(max(13, int(FOOTER_H * 0.26)), bold=False)
+
+    if len(secoes) >= 5:
+        sec5   = secoes[4]
+        s5nome = sec5.get('nome', '')[:25]
+        s5tops = ' | '.join(f'→ {t[:30]}' for t in sec5.get('topicos', [])[:3])
+        draw.text((20, FY + FOOTER_H // 2), s5nome + ':',
+                  font=lf, fill=(*PALETA[4], 255), anchor='lm')
+        draw.text((20 + draw.textlength(s5nome + ':  ', font=lf),
+                   FY + FOOTER_H // 2), s5tops,
+                  font=rf, fill=(*WHITE_PX, 200), anchor='lm')
+
+    # ProfessorIA™ à direita do footer
+    brand_font = _pil_font(max(14, int(FOOTER_H * 0.30)), bold=True)
+    brand_w = int(draw.textlength('ProfessorIA™', font=brand_font))
+    draw.text((W - brand_w - 18, FY + FOOTER_H // 2), 'ProfessorIA™',
+              font=brand_font, fill=(*WHITE_PX, 255), anchor='lm')
+
+    # ── Composição final ──────────────────────────────────────────────────
+    final = Image.alpha_composite(bg, overlay).convert('RGB')
+    buf   = BytesIO()
+    final.save(buf, format='JPEG', quality=92, optimize=True)
+    return 'data:image/jpeg;base64,' + base64.b64encode(buf.getvalue()).decode()
 
 
 
@@ -5289,9 +5432,13 @@ def api_generate_mapa_mental():
                 quality='hd',
                 n=1,
             )
-            url = img_resp.data[0].url
-            logger.info('Infográfico OK uid=%s tema="%s"', uid, tema[:50])
-            _infographic_jobs[job_id] = {'url': url}
+            dalle_url = img_resp.data[0].url
+            logger.info('DALL-E OK uid=%s tema="%s" — iniciando composição Pillow', uid, tema[:50])
+
+            # Baixa a imagem DALL-E e sobrepõe o texto PT-BR correto
+            data_url = _compositar_poster(dalle_url, estrutura, tema)
+            logger.info('Poster composto OK uid=%s tema="%s"', uid, tema[:50])
+            _infographic_jobs[job_id] = {'url': data_url}
         except Exception as e:
             err = str(e)
             logger.error('Infográfico ERRO uid=%s job=%s: %s', uid, job_id, err[:400])
