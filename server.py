@@ -5288,7 +5288,7 @@ def _compositar_poster(image_url, estrutura, tema):
     titulo = est.get('titulo', tema.upper())[:75]
     secoes = est.get('secoes', [])[:5]
 
-    # Paleta de cores por seção (RGB sem alpha — usado com draw.rectangle fill)
+    # Paleta de cores por seção
     PALETA = [
         (20,  95, 185),   # azul
         (175, 50,  20),   # vermelho
@@ -5296,95 +5296,114 @@ def _compositar_poster(image_url, estrutura, tema):
         (130, 50, 170),   # roxo
         (160, 115,  0),   # dourado
     ]
-    NAVY       = (12, 24,  60)
-    WHITE_PX   = (255, 255, 255)
-    DARK_TEXT  = (18,  18,  38)
+    NAVY      = (12, 24,  60)
+    WHITE_PX  = (255, 255, 255)
+    DARK_TEXT = (18,  18,  38)
 
     # ── Dimensões do layout ────────────────────────────────────────────────
-    BANNER_H  = max(100, int(H * 0.115))
-    FOOTER_H  = max(52,  int(H * 0.055))
-    BODY_Y1   = BANNER_H + 4
-    BODY_H    = H - BANNER_H - FOOTER_H - 4
-    GAP       = 4
+    BANNER_H = max(105, int(H * 0.118))
+    FOOTER_H = max(56,  int(H * 0.060))
+    BODY_Y1  = BANNER_H + 5
+    BODY_H   = H - BANNER_H - FOOTER_H - 5
+    GAP      = 6
 
-    # 4 cards em grade 2×2
-    CW = (W - GAP * 3) // 2              # largura de cada card
-    CH = (BODY_H - GAP) // 2            # altura de cada card
-    TEXT_FRAC = 0.42                     # 42% esquerda = zona de texto
-    TW = int(CW * TEXT_FRAC)            # largura da zona de texto
+    # Grade 2×2: cada card ocupa metade da largura
+    CW = (W - GAP * 3) // 2          # largura total de cada card
+    CH = (BODY_H - GAP) // 2         # altura de cada card
+
+    # Zona de texto: 46% esquerda; ilustração DALL-E aparece nos 54% direitos
+    TEXT_FRAC = 0.46
+    TW = int(CW * TEXT_FRAC)
 
     card_origins = [
         (GAP,          BODY_Y1),
-        (GAP*2 + CW,   BODY_Y1),
+        (GAP * 2 + CW, BODY_Y1),
         (GAP,          BODY_Y1 + CH + GAP),
-        (GAP*2 + CW,   BODY_Y1 + CH + GAP),
+        (GAP * 2 + CW, BODY_Y1 + CH + GAP),
     ]
 
     # ── BANNER ─────────────────────────────────────────────────────────────
-    draw.rectangle([0, 0, W, BANNER_H], fill=(*NAVY, 248))
-    tf = _pil_font(max(38, int(BANNER_H * 0.47)), bold=True)
+    draw.rectangle([0, 0, W, BANNER_H], fill=(*NAVY, 252))
+
+    # Título: reduz fonte se não couber em uma linha
+    title_size = max(40, int(BANNER_H * 0.50))
+    tf = _pil_font(title_size, bold=True)
+    while title_size > 24:
+        bb = draw.textbbox((0, 0), titulo, font=tf)
+        if bb[2] - bb[0] <= W - 80:
+            break
+        title_size -= 2
+        tf = _pil_font(title_size, bold=True)
     draw.text((W // 2, BANNER_H // 2), titulo, font=tf,
               fill=(*WHITE_PX, 255), anchor='mm')
 
     # ── 4 CARDS ────────────────────────────────────────────────────────────
-    sf  = _pil_font(max(16, int(CH * 0.075)), bold=True)   # título da seção
-    bf  = _pil_font(max(13, int(CH * 0.058)), bold=False)  # bullets
+    sf_size = max(15, int(CH * 0.072))
+    bf_size = max(13, int(CH * 0.055))
+    sf = _pil_font(sf_size, bold=True)    # fonte do título da seção
+    bf = _pil_font(bf_size, bold=False)   # fonte dos bullets
+
+    sf_line_h = sf_size + 4
+    bf_line_h = bf_size + 5
+
+    # Barra do título: alta o suficiente para 2 linhas
+    TITLE_BAR_H = max(50, sf_line_h * 2 + 16)
 
     for i, (ox, oy) in enumerate(card_origins):
         if i >= len(secoes):
             continue
-        sec   = secoes[i]
-        cor   = PALETA[i % len(PALETA)]
+        sec = secoes[i]
+        cor = PALETA[i % len(PALETA)]
         x1, y1 = ox, oy
         x2, y2 = ox + TW, oy + CH
 
-        # Fundo branco semi-opaco na zona de texto
-        draw.rectangle([x1, y1, x2, y2], fill=(*WHITE_PX, 218))
+        # ── Fundo branco semi-opaco (zona de texto) ──
+        draw.rectangle([x1, y1, x2, y2], fill=(*WHITE_PX, 225))
 
-        # Barra de título da seção (cor sólida, altura ~13% do card)
-        TITLE_BAR_H = max(34, int(CH * 0.13))
-        draw.rectangle([x1, y1, x2, y1 + TITLE_BAR_H], fill=(*cor, 245))
-        nome = sec.get('nome', '')[:32]
-        draw.text((x1 + 10, y1 + TITLE_BAR_H // 2), nome,
-                  font=sf, fill=(*WHITE_PX, 255), anchor='lm')
+        # ── Barra de título colorida ──
+        draw.rectangle([x1, y1, x2, y1 + TITLE_BAR_H], fill=(*cor, 248))
 
-        # Bullets
+        # Título da seção: tenta numa linha, quebra em 2 se necessário
+        nome_full = sec.get('nome', '')
+        nome_lines = _wrap(nome_full, sf, TW - 20, draw)[:2]
+        total_h = len(nome_lines) * sf_line_h
+        y_t = y1 + (TITLE_BAR_H - total_h) // 2
+        for ln in nome_lines:
+            draw.text((x1 + 12, y_t), ln, font=sf, fill=(*WHITE_PX, 255))
+            y_t += sf_line_h
+
+        # ── Bullets ──
         y_cursor = y1 + TITLE_BAR_H + 10
-        BULLET_GAP = max(6, int(CH * 0.025))
-        LINE_H     = max(17, int(bf.size * 1.2)) if hasattr(bf, 'size') else 19
-
         for topico in sec.get('topicos', [])[:3]:
-            lines = _wrap(f'→ {topico}', bf, TW - 20, draw)
-            for ln in lines[:2]:
-                if y_cursor + LINE_H < y2 - 6:
-                    draw.text((x1 + 10, y_cursor), ln, font=bf,
+            blines = _wrap(f'→ {topico}', bf, TW - 22, draw)
+            for ln in blines[:2]:
+                if y_cursor + bf_line_h < y2 - 8:
+                    draw.text((x1 + 12, y_cursor), ln, font=bf,
                               fill=(*DARK_TEXT, 255))
-                    y_cursor += LINE_H
-            y_cursor += BULLET_GAP
+                    y_cursor += bf_line_h
+            y_cursor += 6  # espaçamento entre bullets
 
-    # ── FOOTER STRIP ──────────────────────────────────────────────────────
+    # ── FOOTER ────────────────────────────────────────────────────────────
     FY = H - FOOTER_H
-    draw.rectangle([0, FY, W, H], fill=(*NAVY, 240))
+    draw.rectangle([0, FY, W, H], fill=(*NAVY, 245))
 
-    # Seção 5 resumida no footer (se existir)
-    lf = _pil_font(max(13, int(FOOTER_H * 0.28)), bold=True)
-    rf = _pil_font(max(13, int(FOOTER_H * 0.26)), bold=False)
+    footer_sf = _pil_font(max(13, int(FOOTER_H * 0.28)), bold=True)
+    footer_bf = _pil_font(max(13, int(FOOTER_H * 0.26)), bold=False)
 
     if len(secoes) >= 5:
         sec5   = secoes[4]
-        s5nome = sec5.get('nome', '')[:25]
-        s5tops = ' | '.join(f'→ {t[:30]}' for t in sec5.get('topicos', [])[:3])
+        s5nome = sec5.get('nome', '')
+        s5tops = '   '.join(f'→ {t}' for t in sec5.get('topicos', [])[:3])
         draw.text((20, FY + FOOTER_H // 2), s5nome + ':',
-                  font=lf, fill=(*PALETA[4], 255), anchor='lm')
-        draw.text((20 + draw.textlength(s5nome + ':  ', font=lf),
-                   FY + FOOTER_H // 2), s5tops,
-                  font=rf, fill=(*WHITE_PX, 200), anchor='lm')
+                  font=footer_sf, fill=(*PALETA[4], 255), anchor='lm')
+        name_w = int(draw.textlength(s5nome + ':  ', font=footer_sf))
+        draw.text((20 + name_w, FY + FOOTER_H // 2), s5tops,
+                  font=footer_bf, fill=(*WHITE_PX, 210), anchor='lm')
 
-    # ProfessorIA™ à direita do footer
-    brand_font = _pil_font(max(14, int(FOOTER_H * 0.30)), bold=True)
-    brand_w = int(draw.textlength('ProfessorIA™', font=brand_font))
-    draw.text((W - brand_w - 18, FY + FOOTER_H // 2), 'ProfessorIA™',
-              font=brand_font, fill=(*WHITE_PX, 255), anchor='lm')
+    # Branding
+    brand_f = _pil_font(max(15, int(FOOTER_H * 0.32)), bold=True)
+    draw.text((W - 20, FY + FOOTER_H // 2), 'ProfessorIA™',
+              font=brand_f, fill=(*WHITE_PX, 255), anchor='rm')
 
     # ── Composição final ──────────────────────────────────────────────────
     final = Image.alpha_composite(bg, overlay).convert('RGB')
