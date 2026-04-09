@@ -5277,7 +5277,7 @@ def _compositar_poster(image_url, estrutura, tema):
     # Download da imagem DALL-E
     r = _req.get(image_url, timeout=30)
     r.raise_for_status()
-    bg = Image.open(BytesIO(r.content)).convert('RGBA')
+    bg = Image.open(io.BytesIO(r.content)).convert('RGBA')
     W, H = bg.size   # tipicamente 1792 × 1024
 
     overlay = Image.new('RGBA', (W, H), (0, 0, 0, 0))
@@ -5388,7 +5388,7 @@ def _compositar_poster(image_url, estrutura, tema):
 
     # ── Composição final ──────────────────────────────────────────────────
     final = Image.alpha_composite(bg, overlay).convert('RGB')
-    buf   = BytesIO()
+    buf   = io.BytesIO()
     final.save(buf, format='JPEG', quality=92, optimize=True)
     return 'data:image/jpeg;base64,' + base64.b64encode(buf.getvalue()).decode()
 
