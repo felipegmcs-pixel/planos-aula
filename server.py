@@ -2,11 +2,13 @@ import os
 import io
 import re
 import json
+import math
 import base64
 import secrets
 import smtplib
 import logging
 import traceback
+import urllib.parse
 from email.mime.text import MIMEText
 
 # Carrega .env em desenvolvimento (em produção as vars já estão no ambiente)
@@ -5127,78 +5129,341 @@ def api_generate_image():
         return jsonify({'erro': f'Erro ao gerar imagem: {err[:200]}'}), 500
 
 
+# ─── Mapa Mental Programático: helpers ───────────────────────────────────────
+
+_MM_CORES = ['#E74C3C', '#27AE60', '#2980B9', '#F39C12', '#8E44AD']
+
+def _mm_font(size, bold=True):
+    """Carrega fonte TTF com fallback seguro."""
+    from PIL import ImageFont
+    candidates = (
+        ['/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf',
+         '/usr/share/fonts/truetype/liberation/LiberationSans-Bold.ttf',
+         '/usr/share/fonts/truetype/ubuntu/Ubuntu-B.ttf',
+         '/usr/share/fonts/truetype/freefont/FreeSansBold.ttf']
+        if bold else
+        ['/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf',
+         '/usr/share/fonts/truetype/liberation/LiberationSans-Regular.ttf',
+         '/usr/share/fonts/truetype/ubuntu/Ubuntu-R.ttf',
+         '/usr/share/fonts/truetype/freefont/FreeSans.ttf']
+    )
+    for p in candidates:
+        if os.path.exists(p):
+            try:
+                return ImageFont.truetype(p, size)
+            except Exception:
+                pass
+    return ImageFont.load_default()
+
+def _wiki_thumb(query, size=200):
+    """Busca thumbnail do Wikipedia para query e retorna Image PIL RGBA ou None."""
+    from PIL import Image as _Img
+    for lang in ('pt', 'en'):
+        try:
+            slug = urllib.parse.quote(str(query).replace(' ', '_'), safe='')
+            url = f'https://{lang}.wikipedia.org/api/rest_v1/page/summary/{slug}'
+            r = requests.get(url, timeout=5,
+                             headers={'User-Agent': 'ProfessorIA/2.0 (educacao@professorIA.com.br)'})
+            if r.ok:
+                src = r.json().get('thumbnail', {}).get('source', '')
+                if src:
+                    src = re.sub(r'/\d+px-', f'/{size}px-', src)
+                    ir = requests.get(src, timeout=5)
+                    if ir.ok:
+                        return _Img.open(io.BytesIO(ir.content)).convert('RGBA')
+        except Exception:
+            pass
+    return None
+
+def _circulo(img_pil, d):
+    """Recorta imagem PIL em círculo de diâmetro d."""
+    from PIL import Image as _Img
+    img_pil = img_pil.resize((d, d), _Img.LANCZOS)
+    mask = _Img.new('L', (d, d), 0)
+    from PIL import ImageDraw as _IDraw
+    _IDraw.Draw(mask).ellipse((0, 0, d-1, d-1), fill=255)
+    out = _Img.new('RGBA', (d, d), (0, 0, 0, 0))
+    out.paste(img_pil, mask=mask)
+    return out
+
+def _bezier_pts(p0, p1, p2, n=50):
+    """Pontos da curva de Bezier quadrática p0→p1→p2."""
+    pts = []
+    for i in range(n + 1):
+        t = i / n
+        x = (1-t)**2*p0[0] + 2*(1-t)*t*p1[0] + t**2*p2[0]
+        y = (1-t)**2*p0[1] + 2*(1-t)*t*p1[1] + t**2*p2[1]
+        pts.append((int(x), int(y)))
+    return pts
+
+def _wrap(text, font, max_w, draw):
+    """Quebra texto em linhas que caibam em max_w pixels."""
+    words = str(text).split()
+    lines, cur = [], ''
+    for w in words:
+        test = f'{cur} {w}'.strip()
+        if draw.textbbox((0,0), test, font=font)[2] <= max_w:
+            cur = test
+        else:
+            if cur:
+                lines.append(cur)
+            cur = w
+    if cur:
+        lines.append(cur)
+    return lines or [text]
+
+def _hex_to_rgb(h):
+    h = h.lstrip('#')
+    return tuple(int(h[i:i+2], 16) for i in (0, 2, 4))
+
+def _lighten(rgb, amt=70):
+    return tuple(min(255, c + amt) for c in rgb)
+
+def _gerar_estrutura_mm(tema):
+    """Chama o LLM para obter a estrutura JSON do mapa mental."""
+    prompt = (
+        f'Gere um mapa mental educacional estruturado em JSON sobre "{tema}" para alunos brasileiros.\n\n'
+        'Retorne SOMENTE JSON válido, sem markdown, sem comentários:\n\n'
+        '{\n'
+        '  "titulo": "Título em PT-BR (máx 4 palavras)",\n'
+        '  "wikipedia_central": "ExactEnglishWikipediaPageTitle",\n'
+        '  "ramos": [\n'
+        '    {\n'
+        '      "label": "Nome do Ramo (máx 3 palavras PT-BR)",\n'
+        '      "cor": "#E74C3C",\n'
+        '      "wikipedia": "ExactEnglishWikipediaPageTitle",\n'
+        '      "subitens": [\n'
+        '        {"label": "Sub (máx 3 palavras PT-BR)", "wikipedia": "ExactEnglishWikipediaPage"},\n'
+        '        {"label": "Sub (máx 3 palavras PT-BR)", "wikipedia": "ExactEnglishWikipediaPage"},\n'
+        '        {"label": "Sub (máx 3 palavras PT-BR)", "wikipedia": "ExactEnglishWikipediaPage"}\n'
+        '      ]\n'
+        '    }\n'
+        '  ]\n'
+        '}\n\n'
+        'REGRAS OBRIGATÓRIAS:\n'
+        '- Exatamente 5 ramos\n'
+        '- 3 subitens por ramo\n'
+        f'- Cores dos 5 ramos nessa ordem: {json.dumps(_MM_CORES)}\n'
+        '- "wikipedia": título exato da página em inglês no Wikipedia (underscores, sem espaço)\n'
+        '  → Prefira páginas de PESSOAS famosas (líderes, cientistas, artistas), lugares, objetos icônicos\n'
+        '  → Essas páginas têm fotos reconhecíveis\n'
+        '- Todos os "label" em PORTUGUÊS DO BRASIL\n'
+        '- Nenhum "label" com mais de 4 palavras'
+    )
+    sistema = 'Responda APENAS com JSON válido e completo. Nenhum texto fora do JSON.'
+    try:
+        raw = _llm_cadeia_simples(prompt, sistema=sistema, max_tokens=1400)
+        # limpa markdown se veio
+        raw = re.sub(r'^```[a-z]*\n?', '', raw.strip())
+        raw = re.sub(r'\n?```$', '', raw.strip())
+        return json.loads(raw)
+    except Exception as e:
+        logger.error('Estrutura mapa mental falhou: %s', e)
+        return {
+            'titulo': tema[:35],
+            'wikipedia_central': tema.replace(' ', '_'),
+            'ramos': [
+                {'label': f'Tópico {i+1}', 'cor': _MM_CORES[i],
+                 'wikipedia': tema.replace(' ', '_'),
+                 'subitens': [
+                     {'label': 'Item A', 'wikipedia': tema.replace(' ', '_')},
+                     {'label': 'Item B', 'wikipedia': tema.replace(' ', '_')},
+                     {'label': 'Item C', 'wikipedia': tema.replace(' ', '_')},
+                 ]}
+                for i in range(5)
+            ]
+        }
+
+def _renderizar_mm(estrutura):
+    """Renderiza o mapa mental com Pillow. Retorna bytes PNG."""
+    from PIL import Image as PI, ImageDraw as PD, ImageFilter as PF
+
+    W, H = 1792, 1024
+    CX, CY = W // 2, H // 2
+    BG = (250, 248, 244)
+
+    canvas = PI.new('RGBA', (W, H), BG + (255,))
+    draw   = PD.Draw(canvas)
+
+    f_titulo  = _mm_font(30)
+    f_ramo    = _mm_font(19)
+    f_sub     = _mm_font(13, bold=False)
+    f_sign    = _mm_font(11, bold=False)
+
+    ramos = estrutura.get('ramos', [])[:5]
+    n     = len(ramos)
+    if n == 0:
+        raise ValueError('Estrutura sem ramos')
+
+    DIST_RAMO = 340
+    DIST_SUB  = 190
+    NR        = 80   # raio nó ramo
+    SR        = 46   # raio sub-nó
+    CR        = 122  # raio centro
+
+    angles = [-math.pi/2 + i * 2*math.pi/n for i in range(n)]
+    branch_pos = [(int(CX + DIST_RAMO*math.cos(a)),
+                   int(CY + DIST_RAMO*math.sin(a))) for a in angles]
+
+    # ── Linhas de ramo (Bezier) ───────────────────────────────────────────────
+    for i, (ramo, (bx, by)) in enumerate(zip(ramos, branch_pos)):
+        cor = _hex_to_rgb(ramo['cor'])
+        a   = angles[i]
+        perp = a + math.pi/2
+        mx = int((CX+bx)/2 + 55*math.cos(perp))
+        my = int((CY+by)/2 + 55*math.sin(perp))
+        pts = _bezier_pts((CX, CY), (mx, my), (bx, by))
+        for j in range(len(pts)-1):
+            w = max(2, 9 - int(7*j/len(pts)))
+            draw.line([pts[j], pts[j+1]], fill=cor+(200,), width=w)
+
+    # ── Nós dos ramos ─────────────────────────────────────────────────────────
+    for i, (ramo, (bx, by)) in enumerate(zip(ramos, branch_pos)):
+        cor  = _hex_to_rgb(ramo['cor'])
+        clar = _lighten(cor, 65)
+        a    = angles[i]
+
+        # Sombra
+        shl = PI.new('RGBA', (W, H), (0,0,0,0))
+        PD.Draw(shl).ellipse([bx-NR+5, by-NR+5, bx+NR+5, by+NR+5], fill=(0,0,0,40))
+        shl = shl.filter(PF.GaussianBlur(7))
+        canvas = PI.alpha_composite(canvas, shl)
+        draw   = PD.Draw(canvas)
+
+        # Círculo
+        draw.ellipse([bx-NR, by-NR, bx+NR, by+NR],
+                     fill=cor+(255,), outline=(255,255,255,220), width=3)
+
+        # Foto Wikipedia
+        wi = _wiki_thumb(ramo.get('wikipedia', ramo['label']), size=NR*2)
+        if wi:
+            canvas.paste(_circulo(wi, NR*2-12), (bx-NR+6, by-NR+6), _circulo(wi, NR*2-12))
+        else:
+            ini = ramo['label'][0].upper()
+            fb  = _mm_font(48)
+            bb  = draw.textbbox((0,0), ini, font=fb)
+            draw.text((bx-(bb[2]-bb[0])//2, by-(bb[3]-bb[1])//2-4),
+                      ini, font=fb, fill=(255,255,255,230))
+        draw = PD.Draw(canvas)
+
+        # Label fora do nó
+        lines  = _wrap(ramo['label'], f_ramo, 210, draw)
+        lh     = 27
+        tot_h  = len(lines)*lh
+        max_lw = max(draw.textbbox((0,0), ln, font=f_ramo)[2] for ln in lines)
+        lx = int(bx + (NR+16)*math.cos(a))
+        ly = int(by + (NR+16)*math.sin(a)) - tot_h//2
+        # Clamp à tela
+        lx = max(max_lw//2+10, min(W-max_lw//2-10, lx))
+        ly = max(8, min(H-tot_h-8, ly))
+
+        pad = 9
+        draw.rounded_rectangle(
+            [lx-max_lw//2-pad, ly-pad//2,
+             lx+max_lw//2+pad, ly+tot_h+pad//2],
+            radius=11, fill=cor+(225,))
+        for li, ln in enumerate(lines):
+            bb = draw.textbbox((0,0), ln, font=f_ramo)
+            draw.text((lx-(bb[2]-bb[0])//2, ly+li*lh), ln,
+                      font=f_ramo, fill=(255,255,255,255))
+
+        # ── Sub-nós ───────────────────────────────────────────────────────────
+        subitens = ramo.get('subitens', [])[:3]
+        for j, sub in enumerate(subitens):
+            spread = (j - (len(subitens)-1)/2) * 0.44
+            sa = a + spread
+            sx = max(SR+6, min(W-SR-6, int(bx + DIST_SUB*math.cos(sa))))
+            sy = max(SR+6, min(H-SR-6, int(by + DIST_SUB*math.sin(sa))))
+
+            # Linha
+            draw.line([(bx,by),(sx,sy)], fill=clar+(170,), width=2)
+
+            # Círculo
+            draw.ellipse([sx-SR, sy-SR, sx+SR, sy+SR],
+                         fill=clar+(240,), outline=(255,255,255,180), width=2)
+            si = _wiki_thumb(sub.get('wikipedia', sub['label']), size=SR*2)
+            if si:
+                sc = _circulo(si, SR*2-8)
+                canvas.paste(sc, (sx-SR+4, sy-SR+4), sc)
+            draw = PD.Draw(canvas)
+
+            # Label sub-nó
+            slbl = sub['label']
+            bb   = draw.textbbox((0,0), slbl, font=f_sub)
+            slw  = bb[2]-bb[0]
+            sly  = (sy+SR+6) if sy < H//2 else (sy-SR-24)
+            slx  = max(6, min(W-slw-6, sx-slw//2))
+            sly  = max(2, min(H-22, sly))
+            draw.rounded_rectangle([slx-6, sly-3, slx+slw+6, sly+21],
+                                   radius=6, fill=(245,244,240,230))
+            draw.text((slx, sly), slbl, font=f_sub, fill=(50,50,50,255))
+
+    # ── Nó central ───────────────────────────────────────────────────────────
+    shl2 = PI.new('RGBA', (W, H), (0,0,0,0))
+    PD.Draw(shl2).ellipse([CX-CR+7, CY-CR+7, CX+CR+7, CY+CR+7], fill=(0,0,0,55))
+    shl2 = shl2.filter(PF.GaussianBlur(10))
+    canvas = PI.alpha_composite(canvas, shl2)
+    draw   = PD.Draw(canvas)
+
+    draw.ellipse([CX-CR-5, CY-CR-5, CX+CR+5, CY+CR+5], fill=(255,255,255,255))
+    draw.ellipse([CX-CR,   CY-CR,   CX+CR,   CY+CR],   fill=(218,215,210,255))
+
+    ci = _wiki_thumb(estrutura.get('wikipedia_central', estrutura.get('titulo','')), size=CR*2)
+    if ci:
+        cc = _circulo(ci, CR*2)
+        canvas.paste(cc, (CX-CR, CY-CR), cc)
+    draw = PD.Draw(canvas)
+
+    # Título abaixo do centro
+    titulo  = str(estrutura.get('titulo', ''))[:40]
+    lines_t = _wrap(titulo, f_titulo, 280, draw)
+    lh_t    = 37
+    tot_t   = len(lines_t)*lh_t
+    ty      = CY + CR + 14
+    max_tw  = max(draw.textbbox((0,0), ln, font=f_titulo)[2] for ln in lines_t)
+    pad_t   = 12
+    draw.rounded_rectangle(
+        [CX-max_tw//2-pad_t, ty-6, CX+max_tw//2+pad_t, ty+tot_t+6],
+        radius=13, fill=(28,40,58,235))
+    for li, ln in enumerate(lines_t):
+        bb = draw.textbbox((0,0), ln, font=f_titulo)
+        draw.text((CX-(bb[2]-bb[0])//2, ty+li*lh_t), ln,
+                  font=f_titulo, fill=(255,255,255,255))
+
+    # Assinatura
+    draw.text((W-152, H-22), 'ProfessorIA™', font=f_sign, fill=(180,180,180,200))
+
+    buf = io.BytesIO()
+    canvas.convert('RGB').save(buf, format='PNG', optimize=True)
+    return buf.getvalue()
+
+
 @app.route('/api/generate/mapa-mental', methods=['POST'])
 @login_required
 @limiter.limit('5 per minute')
 def api_generate_mapa_mental():
-    """Gera uma ilustração visual de mapa mental via DALL-E 3.
+    """Gera mapa mental programático: LLM (estrutura JSON) + Wikipedia (fotos) + Pillow (renderização).
     Entrada: { tema }
-    Saída:   { url }
+    Saída:   { url }  — data URL PNG base64
     """
-    if not client_openai:
-        return jsonify({'erro': 'OPENAI_API_KEY não configurada.'}), 503
-
     data = request.get_json(force=True) or {}
     tema = str(data.get('tema', '')).strip()[:300]
     if not tema:
         return jsonify({'erro': 'Campo obrigatório: tema'}), 400
 
-    prompt_final = (
-        f"Illustrated educational mind map poster in PORTUGUESE (PT-BR). Central topic: \"{tema}\".\n\n"
-
-        "OVERALL STYLE: Editorial educational illustration — like a premium school textbook or "
-        "National Geographic infographic. Warm off-white paper texture background. "
-        "Organic hand-drawn branches radiating from center. Colorful, joyful, detailed.\n\n"
-
-        "CENTER: A large central oval/circle (diameter ~25% of image width) with:\n"
-        f"- A vivid thematic illustration representing '{tema}' filling the oval\n"
-        f"- The title '{tema}' in very large (40pt+), bold, hand-lettered style BELOW or ABOVE the oval, "
-        "clearly legible, dark ink on light background, in PORTUGUESE\n\n"
-
-        "BRANCHES (exactly 5): Five thick organic branches growing outward from the center "
-        "in different directions (top, top-right, bottom-right, bottom-left, top-left). "
-        "Each branch ends in a labeled node:\n"
-        "- Node: a colorful rounded bubble/badge with a SMALL thematic illustration inside "
-        "(sketch or flat icon style, clearly representing the subtopic)\n"
-        "- Label: the subtopic name in LARGE bold text (24pt+), placed OUTSIDE the bubble on a "
-        "clean white/cream banner — clearly readable, 1–4 words max, in PORTUGUESE\n"
-        "- 2 small sub-labels branching from each node (thin lines), each on a small pill/tag, "
-        "12–16pt, dark text, 1–3 words, in PORTUGUESE\n\n"
-
-        "ILLUSTRATION QUALITY:\n"
-        "- Each node illustration is distinct, detailed, clearly recognizable\n"
-        "- Consistent color palette: warm coral, teal, golden yellow, soft violet, forest green\n"
-        "- Branches are thick at base, tapering toward nodes\n"
-        "- Light drop shadows on bubbles for depth\n\n"
-
-        "TEXT RULES (critical for legibility):\n"
-        "- ALL text in PORTUGUESE (PT-BR) — zero English\n"
-        "- Central title: 40pt+ bold, clearly the largest text element\n"
-        "- Branch labels: 24pt+ bold, placed on clean light-colored banners/ribbons\n"
-        "- Sub-labels: 14pt, placed on small pill-shaped tags\n"
-        "- NO text inside dark areas. Every text element has a light, high-contrast background\n"
-        "- Maximum 4 words per label — no sentences\n\n"
-
-        "BOTTOM-RIGHT: small 'ProfessorIA™' signature in gray.\n\n"
-
-        "FORBIDDEN: watercolor blobs that obscure text, tiny unreadable labels, "
-        "more than 5 main branches, English words, overlapping elements."
-    )
-
     try:
-        resp = client_openai.images.generate(
-            model='dall-e-3',
-            prompt=prompt_final[:4000],
-            size='1792x1024',
-            quality='hd',
-            n=1
-        )
-        url = resp.data[0].url
-        logger.info('Mapa mental visual gerado para usuario %s: %s', current_user.id, tema[:50])
+        estrutura  = _gerar_estrutura_mm(tema)
+        png_bytes  = _renderizar_mm(estrutura)
+        b64        = base64.b64encode(png_bytes).decode('utf-8')
+        url        = f'data:image/png;base64,{b64}'
+        logger.info('Mapa mental programático gerado para usuario %s: %s', current_user.id, tema[:50])
         return jsonify({'url': url})
+    except ImportError:
+        logger.error('Pillow não instalado')
+        return jsonify({'erro': 'Dependência Pillow ausente no servidor.'}), 503
     except Exception as e:
         err = str(e)
-        logger.error('DALL-E mapa-mental erro: %s', err[:300])
+        logger.error('Erro mapa mental: %s', err[:300])
         return jsonify({'erro': f'Erro ao gerar mapa mental: {err[:200]}'}), 500
 
 
