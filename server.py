@@ -5394,9 +5394,28 @@ def _compositar_poster(image_url, estrutura, tema):
 
 
 
-# ── Jobs em memória para geração de infográfico (polling) ────────────────────
-# Com --workers 1 --threads 8, todos os requests compartilham este dict.
-_infographic_jobs: dict = {}  # job_id -> {status|url|erro}
+# ── Jobs em /tmp — compartilhado entre TODOS os workers do container ─────────
+# In-memory dict falha com múltiplos workers (processos separados).
+# /tmp é compartilhado no mesmo container Render, independente de workers.
+import pathlib as _pl
+_JOBS_DIR = _pl.Path('/tmp/_pia_jobs')
+_JOBS_DIR.mkdir(exist_ok=True)
+
+
+def _job_set(job_id: str, data: dict) -> None:
+    (_JOBS_DIR / f'{job_id}.json').write_text(json.dumps(data), encoding='utf-8')
+
+
+def _job_get(job_id: str) -> dict | None:
+    p = _JOBS_DIR / f'{job_id}.json'
+    try:
+        return json.loads(p.read_text(encoding='utf-8'))
+    except Exception:
+        return None
+
+
+def _job_del(job_id: str) -> None:
+    (_JOBS_DIR / f'{job_id}.json').unlink(missing_ok=True)
 
 
 @app.route('/api/generate/mapa-mental', methods=['POST'])
@@ -5416,7 +5435,7 @@ def api_generate_mapa_mental():
 
     uid   = current_user.id
     job_id = secrets.token_hex(16)
-    _infographic_jobs[job_id] = {'status': 'processing'}
+    _job_set(job_id, {'status': 'processing'})
 
     def _worker():
         try:
@@ -5438,7 +5457,7 @@ def api_generate_mapa_mental():
             # Baixa a imagem DALL-E e sobrepõe o texto PT-BR correto
             data_url = _compositar_poster(dalle_url, estrutura, tema)
             logger.info('Poster composto OK uid=%s tema="%s"', uid, tema[:50])
-            _infographic_jobs[job_id] = {'url': data_url}
+            _job_set(job_id, {'url': data_url})
         except Exception as e:
             err = str(e)
             logger.error('Infográfico ERRO uid=%s job=%s: %s', uid, job_id, err[:400])
@@ -5451,7 +5470,7 @@ def api_generate_mapa_mental():
                 msg = 'Muitas solicitações. Aguarde um momento e tente novamente.'
             else:
                 msg = f'Erro ao gerar: {err[:200]}'
-            _infographic_jobs[job_id] = {'erro': msg}
+            _job_set(job_id, {'erro': msg})
 
     threading.Thread(target=_worker, daemon=True).start()
     return jsonify({'job_id': job_id})
@@ -5461,12 +5480,12 @@ def api_generate_mapa_mental():
 @login_required
 def api_mapa_mental_status(job_id):
     """Polling: retorna estado atual do job. {status:'processing'} | {url:...} | {erro:...}"""
-    job = _infographic_jobs.get(job_id)
+    job = _job_get(job_id)
     if not job:
-        return jsonify({'erro': 'Job não encontrado ou expirado.'}), 404
-    # Limpa da memória quando entregue (URL ou erro)
+        return jsonify({'status': 'processing'})  # ainda processando ou não iniciou
+    # Entrega resultado e limpa arquivo
     if 'url' in job or 'erro' in job:
-        _infographic_jobs.pop(job_id, None)
+        _job_del(job_id)
     return jsonify(job)
 
 
