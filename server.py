@@ -3,10 +3,12 @@ import io
 import re
 import json
 import math
+import queue
 import base64
 import secrets
 import smtplib
 import logging
+import threading
 import traceback
 import urllib.parse
 from email.mime.text import MIMEText
@@ -5267,47 +5269,62 @@ def api_generate_mapa_mental():
     uid = current_user.id  # captura antes do generator
 
     def _gerar():
-        try:
-            yield f'data: {json.dumps({"status": "Organizando o conteúdo..."})}\n\n'
+        """SSE generator com threading + heartbeats a cada 5s.
 
-            # Tenta gerar estrutura detalhada via JSON Mode; continua mesmo se falhar
-            estrutura = _gerar_estrutura_infografico(tema)
-            if not estrutura:
-                logger.warning('Estrutura LLM falhou para "%s" — usando prompt direto.', tema[:60])
+        O proxy do Render encerra conexões SSE inativas após ~30s.
+        A chamada DALL-E HD demora 30-60s sem enviar nada.
+        Solução: rodar LLM + DALL-E em thread separada; enquanto aguarda,
+        enviar comentários SSE a cada 5s para manter o TCP vivo.
+        """
+        result_q = queue.Queue()
 
-            yield f'data: {json.dumps({"status": "Criando o infográfico... (~30s)"})}\n\n'
+        def _trabalho():
+            try:
+                estrutura = _gerar_estrutura_infografico(tema)
+                if not estrutura:
+                    logger.warning('Estrutura LLM None para "%s" — usando prompt direto.', tema[:60])
+                prompt = _prompt_infografico_dalle(tema, estrutura)
+                logger.info('DALL-E prompt len=%d para "%s"', len(prompt), tema[:50])
+                img_resp = client_openai.images.generate(
+                    model='dall-e-3',
+                    prompt=prompt[:4000],
+                    size='1792x1024',
+                    quality='hd',
+                    n=1
+                )
+                url = img_resp.data[0].url
+                logger.info('Infográfico OK usuario %s tema="%s"', uid, tema[:50])
+                result_q.put({'url': url})
+            except Exception as e:
+                err = str(e)
+                logger.error('Erro infográfico worker uid=%s: %s', uid, err[:400])
+                el = err.lower()
+                if 'content_policy' in el or 'safety' in el:
+                    msg = 'Tema bloqueado pela política de conteúdo da OpenAI. Tente reformular.'
+                elif 'billing' in el or 'credit' in el or 'quota' in el:
+                    msg = 'Créditos OpenAI esgotados. Verifique sua conta.'
+                elif 'rate_limit' in el:
+                    msg = 'Muitas solicitações. Aguarde um momento e tente novamente.'
+                else:
+                    msg = f'Erro ao gerar infográfico: {err[:200]}'
+                result_q.put({'erro': msg})
 
-            # Sempre gera o prompt (com estrutura detalhada ou fallback)
-            prompt = _prompt_infografico_dalle(tema, estrutura)
-            logger.info('DALL-E prompt len=%d para "%s"', len(prompt), tema[:50])
+        t = threading.Thread(target=_trabalho, daemon=True)
+        t.start()
 
-            img_resp = client_openai.images.generate(
-                model='dall-e-3',
-                prompt=prompt[:4000],
-                size='1792x1024',
-                quality='hd',
-                n=1
-            )
-            url = img_resp.data[0].url
-            logger.info('Infográfico gerado usuario %s tema="%s"', uid, tema[:50])
-            yield f'data: {json.dumps({"url": url})}\n\n'
+        yield f'data: {json.dumps({"status": "Organizando o conteúdo..."})}\n\n'
 
-        except Exception as e:
-            err = str(e)
-            logger.error('Erro infográfico SSE usuario %s: %s', uid, err[:400])
-            if 'content_policy' in err.lower() or 'safety' in err.lower():
-                msg = 'Tema bloqueado pela política de conteúdo da OpenAI. Tente reformular.'
-            elif 'billing' in err.lower() or 'credit' in err.lower() or 'quota' in err.lower():
-                msg = 'Créditos OpenAI esgotados. Verifique sua conta.'
-            elif 'rate_limit' in err.lower():
-                msg = 'Muitas solicitações. Aguarde um momento e tente novamente.'
-            elif 'timeout' in err.lower() or 'timed out' in err.lower():
-                msg = 'Tempo esgotado ao gerar. Tente novamente.'
-            else:
-                msg = f'Erro ao gerar infográfico: {err[:200]}'
-            yield f'data: {json.dumps({"erro": msg})}\n\n'
-        finally:
-            yield 'data: [DONE]\n\n'
+        # Aguarda o resultado; a cada 5s envia heartbeat para manter conexão viva
+        while True:
+            try:
+                result = result_q.get(timeout=5)
+                yield f'data: {json.dumps(result)}\n\n'
+                break
+            except queue.Empty:
+                # Comentário SSE — ignorado pelo parser mas mantém TCP ativo
+                yield ': heartbeat\n\n'
+
+        yield 'data: [DONE]\n\n'
 
     return Response(
         stream_with_context(_gerar()),
