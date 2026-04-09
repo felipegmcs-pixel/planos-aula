@@ -1966,13 +1966,14 @@
       if (piaMark) piaMark.classList.add('typing');
       if (curAvatar) curAvatar.classList.add('typing');
 
-      stream.setHtml(`
+      const _setLoading = (msg) => stream.setHtml(`
         <div class="mapa-gerar-loading">
           <div class="mapa-gerar-spinner"></div>
-          <p>Gerando mapa mental de <strong>${escapeHtml(_tema)}</strong>…<br>
-             <span style="font-size:.72rem;opacity:.6">Isso pode levar alguns segundos.</span></p>
-        </div>
-      `);
+          <p>${escapeHtml(msg)}<br>
+             <span style="font-size:.72rem;opacity:.6">Isso pode levar até 60 segundos.</span></p>
+        </div>`);
+
+      _setLoading(`Preparando infográfico de "${_tema}"…`);
       scroll();
 
       try {
@@ -1980,23 +1981,46 @@
           method: 'POST', headers: {'Content-Type':'application/json'},
           body: JSON.stringify({tema: _tema})
         });
-        let data;
-        try { data = await resp.json(); }
-        catch(_) { throw new Error('Servidor indisponível. Aguarde o deploy e tente novamente.'); }
-        if (!resp.ok || !data.url) throw new Error(data.erro || 'Erro ao gerar imagem');
+        if (!resp.ok) throw new Error('Erro ao conectar ao servidor.');
+
+        // Lê SSE stream (igual ao chat — sem timeout de proxy)
+        const reader  = resp.body.getReader();
+        const decoder = new TextDecoder();
+        let buffer = '', imageUrl = null;
+
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          buffer += decoder.decode(value, { stream: true });
+          const lines = buffer.split('\n');
+          buffer = lines.pop();
+          for (const line of lines) {
+            if (!line.startsWith('data: ')) continue;
+            const payload = line.slice(6).trim();
+            if (payload === '[DONE]') break;
+            try {
+              const obj = JSON.parse(payload);
+              if (obj.erro) throw new Error(obj.erro);
+              if (obj.status) _setLoading(obj.status);
+              if (obj.url)    imageUrl = obj.url;
+            } catch(pe) { if (imageUrl === null) throw pe; }
+          }
+        }
+
+        if (!imageUrl) throw new Error('Infográfico não foi gerado. Tente novamente.');
 
         stream.replaceBubble(`
           <div class="mapa-mental-resultado">
-            <img src="${data.url}" class="mapa-mental-img" alt="Mapa Mental: ${escapeHtml(_tema)}"
+            <img src="${imageUrl}" class="mapa-mental-img" alt="Infográfico: ${escapeHtml(_tema)}"
                  loading="lazy" onclick="window.open(this.src,'_blank')">
             <div class="mapa-mental-acoes">
-              <a href="${data.url}" download="mapa-mental.png" target="_blank" class="btn-dl-mapa">⬇ Baixar Imagem</a>
+              <a href="${imageUrl}" download="infografico-${escapeHtml(_tema)}.png"
+                 target="_blank" class="btn-dl-mapa">⬇ Baixar Imagem</a>
             </div>
-          </div>
-        `);
-        historico.push({role:'assistant', content: `[Mapa mental visual gerado: ${_tema}]`});
+          </div>`);
+        historico.push({role:'assistant', content: `[Infográfico visual gerado: ${_tema}]`});
       } catch(e) {
-        stream.replaceBubble(`<p style="color:var(--text2)">⚠️ ${escapeHtml(e.message || 'Não foi possível gerar o mapa mental. Tente novamente.')}</p>`);
+        stream.replaceBubble(`<p style="color:var(--text2)">⚠️ ${escapeHtml(e.message || 'Não foi possível gerar o infográfico. Tente novamente.')}</p>`);
       } finally {
         if (piaMark) piaMark.classList.remove('typing');
         if (curAvatar) { curAvatar.classList.remove('typing'); curAvatar.removeAttribute('id'); }

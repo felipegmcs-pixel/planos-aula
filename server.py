@@ -5228,9 +5228,8 @@ def _prompt_infografico_dalle(estrutura, tema):
 @login_required
 @limiter.limit('5 per minute')
 def api_generate_mapa_mental():
-    """Gera infográfico educacional estilo Descomplica via LLM (conteúdo) + DALL-E 3 HD (visual).
-    Entrada: { tema }
-    Saída:   { url }
+    """Gera infográfico via SSE streaming — evita timeout do proxy.
+    Envia eventos: {status}, {url} ou {erro}, depois [DONE].
     """
     if not client_openai:
         return jsonify({'erro': 'OPENAI_API_KEY não configurada.'}), 503
@@ -5240,33 +5239,49 @@ def api_generate_mapa_mental():
     if not tema:
         return jsonify({'erro': 'Campo obrigatório: tema'}), 400
 
-    try:
-        # 1. LLM gera o conteúdo estruturado em PT-BR
-        estrutura = _gerar_estrutura_infografico(tema)
-        if not estrutura:
-            raise RuntimeError('LLM não retornou estrutura válida')
+    uid = current_user.id  # captura antes do generator
 
-        # 2. DALL-E 3 HD renderiza o infográfico visual completo
-        prompt = _prompt_infografico_dalle(estrutura, tema)
-        resp = client_openai.images.generate(
-            model='dall-e-3',
-            prompt=prompt[:4000],
-            size='1792x1024',
-            quality='hd',
-            n=1
-        )
-        url = resp.data[0].url
-        logger.info('Infográfico gerado para usuario %s: %s', current_user.id, tema[:50])
-        return jsonify({'url': url})
+    def _gerar():
+        try:
+            yield f'data: {json.dumps({"status": "Organizando o conteúdo..."})}\n\n'
 
-    except Exception as e:
-        err = str(e)
-        logger.error('Erro infográfico: %s', err[:300])
-        if 'billing' in err.lower() or 'credit' in err.lower():
-            return jsonify({'erro': 'Créditos OpenAI esgotados.'}), 402
-        if 'content_policy' in err.lower() or 'safety' in err.lower():
-            return jsonify({'erro': 'Tema bloqueado pela política de conteúdo. Tente outro.'}), 422
-        return jsonify({'erro': f'Erro ao gerar infográfico: {err[:200]}'}), 500
+            estrutura = _gerar_estrutura_infografico(tema)
+            if not estrutura:
+                yield f'data: {json.dumps({"erro": "Não foi possível gerar o conteúdo."})}\n\n'
+                return
+
+            yield f'data: {json.dumps({"status": "Criando o infográfico... (~30s)"})}\n\n'
+
+            prompt = _prompt_infografico_dalle(estrutura, tema)
+            img_resp = client_openai.images.generate(
+                model='dall-e-3',
+                prompt=prompt[:4000],
+                size='1792x1024',
+                quality='hd',
+                n=1
+            )
+            url = img_resp.data[0].url
+            logger.info('Infográfico gerado usuario %s: %s', uid, tema[:50])
+            yield f'data: {json.dumps({"url": url})}\n\n'
+
+        except Exception as e:
+            err = str(e)
+            logger.error('Erro infográfico SSE: %s', err[:300])
+            if 'content_policy' in err.lower() or 'safety' in err.lower():
+                msg = 'Tema bloqueado pela política de conteúdo. Tente outro.'
+            elif 'billing' in err.lower() or 'credit' in err.lower():
+                msg = 'Créditos OpenAI esgotados.'
+            else:
+                msg = f'Erro ao gerar infográfico: {err[:150]}'
+            yield f'data: {json.dumps({"erro": msg})}\n\n'
+        finally:
+            yield 'data: [DONE]\n\n'
+
+    return Response(
+        stream_with_context(_gerar()),
+        content_type='text/event-stream',
+        headers={'Cache-Control': 'no-cache', 'X-Accel-Buffering': 'no'}
+    )
 
 
 @app.route('/api/prova/docx', methods=['POST'])
