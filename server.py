@@ -5268,47 +5268,31 @@ def _gerar_estrutura_infografico(tema):
 
 
 def _prompt_infografico_dalle(tema, estrutura=None):
-    """Monta prompt DALL-E que pede APENAS ilustrações watercolor, SEM TEXTO.
-    Usa o framework de 4 ramos: Contexto, Processo, Impactos, Desdobramentos.
-    O texto PT-BR é adicionado depois pelo Pillow em _compositar_poster().
+    """Gera 4 vinhetas de ilustração em grid 2×2 — sem texto, fundo branco.
+    DALL-E faz APENAS as ilustrações; Pillow constrói TODO o poster.
     """
     titulo_base = tema[:70]
     secoes = (estrutura or {}).get('secoes', [])[:4]
 
-    # Usa ilustrações específicas do LLM ou fallback dos ramos padrão
-    panel_descs = []
-    for i, (sec, ramo) in enumerate(zip(secoes, _INFOGRAFICO_RAMOS), 1):
+    descs = []
+    for sec, ramo in zip(secoes, _INFOGRAFICO_RAMOS):
         ilus = sec.get('ilustracao_en') or f'{ramo["ilus"]} about {tema}'
-        panel_descs.append(f'Panel {i} ({ramo["nome"].split("&")[0].strip()}): {ilus}')
-
-    panels_text = '\n'.join(panel_descs) if panel_descs else (
-        f'4 educational watercolor panels about {titulo_base}: '
-        'context/origins, process/mechanism, impacts/consequences, modern applications'
-    )
+        descs.append(ilus)
+    while len(descs) < 4:
+        descs.append(f'educational watercolor about {tema}')
 
     return (
-        f'Premium educational mind map poster background about "{titulo_base}". '
-        'ZERO TEXT anywhere — pure illustration only, no letters, words or numbers.\n\n'
-
-        'LAYOUT (exact):\n'
-        '• TOP 11%: wide dark navy-blue banner strip\n'
-        '• BODY: 4 illustration panels in a clean 2×2 grid, '
-        'separated by thin white lines. '
-        'Each panel LEFT 44% = soft white/light-grey blank area (zero illustration, zero texture). '
-        'Each panel RIGHT 56% = detailed watercolor+ink illustration.\n'
-        '• BOTTOM 6%: narrow dark navy strip\n\n'
-
-        'PANEL ILLUSTRATIONS (no text, just visual):\n'
-        + panels_text + '\n\n'
-
-        'VISUAL STYLE:\n'
-        '• Watercolor + ink line art, editorial educational publisher quality\n'
-        '• Clean white background, bright harmonious colors\n'
-        '• Modern, organized — appropriate for students and adults\n'
-        '• Discrete light icons, not cartoonish\n'
-        '• CRITICAL: left half of every panel = pure white or very light grey, '
-        'completely flat — this area receives text overlay and must have NO illustration\n'
-        '• Zero text, zero numbers, zero letters anywhere in the image'
+        f'4 separate educational watercolor+ink vignette illustrations about "{tema}", '
+        'arranged in a clean 2×2 grid on a PURE WHITE background. '
+        'Each vignette is a distinct, clearly bounded scene with thick white borders between them. '
+        'No text, no letters, no numbers anywhere. '
+        f'Top-left: {descs[0]}. '
+        f'Top-right: {descs[1]}. '
+        f'Bottom-left: {descs[2]}. '
+        f'Bottom-right: {descs[3]}. '
+        'Style: clean professional watercolor with ink outlines, bright harmonious colors, '
+        'educational publisher quality. White background inside and between all vignettes. '
+        'Each scene must fit clearly within its quadrant.'
     )
 
 
@@ -5355,147 +5339,178 @@ def _wrap(text, font, max_w, draw):
 
 
 def _compositar_poster(image_url, estrutura, tema):
-    """Baixa a imagem DALL-E e sobrepõe TODO o texto PT-BR com Pillow.
-    Retorna string 'data:image/jpeg;base64,...' pronta para uso em <img src>.
+    """Constrói poster em CANVAS BRANCO estilo ProfessorIA™:
+    cards arredondados, pill headers coloridas, ilustrações DALL-E inseridas.
+    Retorna 'data:image/jpeg;base64,...'.
     """
     from PIL import Image, ImageDraw
     import requests as _req
 
-    # Download da imagem DALL-E
+    # ── Download das vinhetas DALL-E (grid 2×2) ───────────────────────────
     r = _req.get(image_url, timeout=30)
     r.raise_for_status()
-    bg = Image.open(io.BytesIO(r.content)).convert('RGBA')
-    W, H = bg.size   # tipicamente 1792 × 1024
+    dalle = Image.open(io.BytesIO(r.content)).convert('RGB')
+    DW, DH = dalle.size   # 1792 × 1024
 
-    overlay = Image.new('RGBA', (W, H), (0, 0, 0, 0))
-    draw = ImageDraw.Draw(overlay)
-
-    # ── Dados de conteúdo ──────────────────────────────────────────────────
-    est = estrutura or {}
-    titulo = est.get('titulo', tema.upper())[:75]
-    secoes = est.get('secoes', [])[:5]
-
-    # Paleta de cores por seção
-    PALETA = [
-        (20,  95, 185),   # azul
-        (175, 50,  20),   # vermelho
-        (18, 130,  75),   # verde
-        (130, 50, 170),   # roxo
-        (160, 115,  0),   # dourado
+    # Extrai 4 quadrantes como vinhetas independentes
+    vinhetas = [
+        dalle.crop((0,     0,     DW//2, DH//2)),
+        dalle.crop((DW//2, 0,     DW,    DH//2)),
+        dalle.crop((0,     DH//2, DW//2, DH)),
+        dalle.crop((DW//2, DH//2, DW,    DH)),
     ]
-    NAVY      = (12, 24,  60)
-    WHITE_PX  = (255, 255, 255)
-    DARK_TEXT = (18,  18,  38)
 
-    # ── Dimensões do layout ────────────────────────────────────────────────
-    BANNER_H = max(105, int(H * 0.118))
-    FOOTER_H = max(56,  int(H * 0.060))
-    BODY_Y1  = BANNER_H + 5
-    BODY_H   = H - BANNER_H - FOOTER_H - 5
-    GAP      = 6
+    # ── Canvas branco ─────────────────────────────────────────────────────
+    PW, PH = 1792, 1024
+    poster = Image.new('RGB', (PW, PH), (255, 255, 255))
+    draw   = ImageDraw.Draw(poster)
 
-    # Grade 2×2: cada card ocupa metade da largura
-    CW = (W - GAP * 3) // 2          # largura total de cada card
-    CH = (BODY_H - GAP) // 2         # altura de cada card
+    # ── Conteúdo ──────────────────────────────────────────────────────────
+    est    = estrutura or {}
+    titulo = est.get('titulo', tema.upper())[:80]
+    secoes = est.get('secoes', [])[:4]
+    # Garante 4 seções
+    for k in range(len(secoes), 4):
+        secoes.append({'nome': _INFOGRAFICO_RAMOS[k]['nome'], 'topicos': []})
 
-    # Zona de texto: 46% esquerda; ilustração DALL-E aparece nos 54% direitos
-    TEXT_FRAC = 0.46
-    TW = int(CW * TEXT_FRAC)
+    # Paleta por seção
+    PALETA    = [(20,95,185), (18,130,75), (175,50,20), (130,50,170)]
+    NAVY      = (12, 24, 60)
+    WHITE     = (255, 255, 255)
+    CARD_BG   = (237, 245, 255)   # azul glacial
+    TEXT_DARK = (20, 20, 45)
+
+    # ── TÍTULO ────────────────────────────────────────────────────────────
+    TITLE_H = 112
+
+    # Banner navy centralizado atrás do título
+    tf_size = 52
+    tf = _pil_font(tf_size, bold=True)
+    for _ in range(20):                          # reduz até caber
+        bb = draw.textbbox((0, 0), titulo, font=tf)
+        if bb[2] - bb[0] <= PW - 120:
+            break
+        tf_size -= 2
+        tf = _pil_font(tf_size, bold=True)
+
+    bb      = draw.textbbox((0, 0), titulo, font=tf)
+    txt_w   = bb[2] - bb[0]
+    bx1     = PW // 2 - txt_w // 2 - 44
+    bx2     = PW // 2 + txt_w // 2 + 44
+    by1     = TITLE_H // 2 - tf_size // 2 - 14
+    by2     = TITLE_H // 2 + tf_size // 2 + 14
+
+    draw.rounded_rectangle([bx1, by1, bx2, by2], radius=10, fill=NAVY)
+    draw.text((PW // 2, TITLE_H // 2), titulo, font=tf, fill=WHITE, anchor='mm')
+
+    # Linhas decorativas laterais ao banner
+    draw.rectangle([24, TITLE_H//2-2, bx1-12, TITLE_H//2+2], fill=(180, 200, 230))
+    draw.rectangle([bx2+12, TITLE_H//2-2, PW-24, TITLE_H//2+2], fill=(180, 200, 230))
+
+    # ── GRID 2×2 ──────────────────────────────────────────────────────────
+    GAP    = 18
+    CARD_W = (PW - 3 * GAP) // 2          # ≈ 878 px
+    CARD_H = (PH - TITLE_H - 3 * GAP - 58) // 2  # ≈ 387 px
 
     card_origins = [
-        (GAP,          BODY_Y1),
-        (GAP * 2 + CW, BODY_Y1),
-        (GAP,          BODY_Y1 + CH + GAP),
-        (GAP * 2 + CW, BODY_Y1 + CH + GAP),
+        (GAP,              TITLE_H + GAP),
+        (GAP * 2 + CARD_W, TITLE_H + GAP),
+        (GAP,              TITLE_H + 2 * GAP + CARD_H),
+        (GAP * 2 + CARD_W, TITLE_H + 2 * GAP + CARD_H),
     ]
 
-    # ── BANNER ─────────────────────────────────────────────────────────────
-    draw.rectangle([0, 0, W, BANNER_H], fill=(*NAVY, 252))
+    # Proporções intra-card
+    TEXT_FRAC = 0.54          # 54% esquerda = texto
+    TW  = int(CARD_W * TEXT_FRAC)       # largura zona texto
+    IW  = CARD_W - TW - 12              # largura zona ilustração
+    IH  = CARD_H - 18                   # altura zona ilustração
+    PAD = 14                             # padding interno
 
-    # Título: reduz fonte se não couber em uma linha
-    title_size = max(40, int(BANNER_H * 0.50))
-    tf = _pil_font(title_size, bold=True)
-    while title_size > 24:
-        bb = draw.textbbox((0, 0), titulo, font=tf)
-        if bb[2] - bb[0] <= W - 80:
-            break
-        title_size -= 2
-        tf = _pil_font(title_size, bold=True)
-    draw.text((W // 2, BANNER_H // 2), titulo, font=tf,
-              fill=(*WHITE_PX, 255), anchor='mm')
-
-    # ── 4 CARDS ────────────────────────────────────────────────────────────
-    sf_size = max(15, int(CH * 0.072))
-    bf_size = max(13, int(CH * 0.055))
-    sf = _pil_font(sf_size, bold=True)    # fonte do título da seção
-    bf = _pil_font(bf_size, bold=False)   # fonte dos bullets
-
-    sf_line_h = sf_size + 4
-    bf_line_h = bf_size + 5
-
-    # Barra do título: alta o suficiente para 2 linhas
-    TITLE_BAR_H = max(50, sf_line_h * 2 + 16)
+    sf_sz = max(16, int(CARD_H * 0.072))
+    bf_sz = max(14, int(CARD_H * 0.057))
+    sf    = _pil_font(sf_sz, bold=True)
+    bf    = _pil_font(bf_sz, bold=False)
+    sf_lh = sf_sz + 5
+    bf_lh = bf_sz + 6
+    PILL_H = max(44, sf_lh + 16)        # altura da pill do título
 
     for i, (ox, oy) in enumerate(card_origins):
-        if i >= len(secoes):
-            continue
-        sec = secoes[i]
         cor = PALETA[i % len(PALETA)]
-        x1, y1 = ox, oy
-        x2, y2 = ox + TW, oy + CH
+        sec = secoes[i]
+        cx1, cy1 = ox, oy
+        cx2, cy2 = ox + CARD_W, oy + CARD_H
 
-        # ── Fundo branco semi-opaco (zona de texto) ──
-        draw.rectangle([x1, y1, x2, y2], fill=(*WHITE_PX, 225))
+        # ── Card background arredondado ──────────────────────────────────
+        draw.rounded_rectangle([cx1, cy1, cx2, cy2], radius=16, fill=CARD_BG)
 
-        # ── Barra de título colorida ──
-        draw.rectangle([x1, y1, x2, y1 + TITLE_BAR_H], fill=(*cor, 248))
+        # ── Ilustração DALL-E (zona direita) ────────────────────────────
+        ix = cx1 + TW + 10
+        iy = cy1 + 9
+        vig = vinhetas[i].resize((IW, IH), Image.LANCZOS)
+        mask = Image.new('L', (IW, IH), 0)
+        ImageDraw.Draw(mask).rounded_rectangle(
+            [0, 0, IW - 1, IH - 1], radius=12, fill=255
+        )
+        poster.paste(vig, (ix, iy), mask=mask)
 
-        # Título da seção: tenta numa linha, quebra em 2 se necessário
-        nome_full = sec.get('nome', '')
-        nome_lines = _wrap(nome_full, sf, TW - 20, draw)[:2]
-        total_h = len(nome_lines) * sf_line_h
-        y_t = y1 + (TITLE_BAR_H - total_h) // 2
+        # ── Pill header do título da seção ──────────────────────────────
+        nome = sec.get('nome', '')
+        # Mede e, se necessário, quebra o nome em 2 linhas dentro da pill
+        pill_max_w = TW - PAD * 2
+        nome_lines = _wrap(nome, sf, pill_max_w - 24, draw)[:2]
+        n_lines    = len(nome_lines)
+        pill_h     = max(PILL_H, n_lines * sf_lh + 16)
+        pill_x1    = cx1 + PAD
+        pill_x2    = cx1 + TW - PAD
+        pill_y1    = cy1 + PAD
+        pill_y2    = cy1 + PAD + pill_h
+
+        draw.rounded_rectangle(
+            [pill_x1, pill_y1, pill_x2, pill_y2],
+            radius=pill_h // 2,
+            fill=cor,
+        )
+        # Texto centrado verticalmente na pill
+        total_txt_h = n_lines * sf_lh
+        y_t = pill_y1 + (pill_h - total_txt_h) // 2
         for ln in nome_lines:
-            draw.text((x1 + 12, y_t), ln, font=sf, fill=(*WHITE_PX, 255))
-            y_t += sf_line_h
+            bb_ln = draw.textbbox((0, 0), ln, font=sf)
+            x_t   = (pill_x1 + pill_x2) // 2 - (bb_ln[2] - bb_ln[0]) // 2
+            draw.text((x_t, y_t), ln, font=sf, fill=WHITE)
+            y_t  += sf_lh
 
-        # ── Bullets ──
-        y_cursor = y1 + TITLE_BAR_H + 10
+        # ── Bullets ─────────────────────────────────────────────────────
+        y_cur    = pill_y2 + 14
+        max_bw   = TW - PAD * 2 - 4
         for topico in sec.get('topicos', [])[:3]:
-            blines = _wrap(f'→ {topico}', bf, TW - 22, draw)
+            blines = _wrap(f'→  {topico}', bf, max_bw, draw)
             for ln in blines[:2]:
-                if y_cursor + bf_line_h < y2 - 8:
-                    draw.text((x1 + 12, y_cursor), ln, font=bf,
-                              fill=(*DARK_TEXT, 255))
-                    y_cursor += bf_line_h
-            y_cursor += 6  # espaçamento entre bullets
+                if y_cur + bf_lh < cy2 - 8:
+                    draw.text((cx1 + PAD + 4, y_cur), ln, font=bf, fill=TEXT_DARK)
+                    y_cur += bf_lh
+            y_cur += 9
 
     # ── FOOTER ────────────────────────────────────────────────────────────
-    FY = H - FOOTER_H
-    draw.rectangle([0, FY, W, H], fill=(*NAVY, 245))
+    FY = PH - 56
+    draw.rectangle([0, FY, PW, PH], fill=NAVY)
 
-    footer_sf = _pil_font(max(13, int(FOOTER_H * 0.28)), bold=True)
-    footer_bf = _pil_font(max(13, int(FOOTER_H * 0.26)), bold=False)
+    brand_f = _pil_font(20, bold=True)
 
-    if len(secoes) >= 5:
-        sec5   = secoes[4]
-        s5nome = sec5.get('nome', '')
-        s5tops = '   '.join(f'→ {t}' for t in sec5.get('topicos', [])[:3])
-        draw.text((20, FY + FOOTER_H // 2), s5nome + ':',
-                  font=footer_sf, fill=(*PALETA[4], 255), anchor='lm')
-        name_w = int(draw.textlength(s5nome + ':  ', font=footer_sf))
-        draw.text((20 + name_w, FY + FOOTER_H // 2), s5tops,
-                  font=footer_bf, fill=(*WHITE_PX, 210), anchor='lm')
+    # Logo: dois círculos entrelaçados à esquerda do texto
+    LCX  = PW - 200    # centro do par de círculos
+    LCY  = FY + 28
+    R    = 13
+    OVL  = 7           # overlap entre os dois círculos
+    draw.ellipse([LCX - R,       LCY - R, LCX + R,       LCY + R],
+                 outline=WHITE, width=2)
+    draw.ellipse([LCX + OVL - R, LCY - R, LCX + OVL + R, LCY + R],
+                 outline=WHITE, width=2)
+    draw.text((LCX + OVL + R + 8, LCY), 'ProfessorIA™',
+              font=brand_f, fill=WHITE, anchor='lm')
 
-    # Branding
-    brand_f = _pil_font(max(15, int(FOOTER_H * 0.32)), bold=True)
-    draw.text((W - 20, FY + FOOTER_H // 2), 'ProfessorIA™',
-              font=brand_f, fill=(*WHITE_PX, 255), anchor='rm')
-
-    # ── Composição final ──────────────────────────────────────────────────
-    final = Image.alpha_composite(bg, overlay).convert('RGB')
-    buf   = io.BytesIO()
-    final.save(buf, format='JPEG', quality=92, optimize=True)
+    # ── Serialização ──────────────────────────────────────────────────────
+    buf = io.BytesIO()
+    poster.save(buf, format='JPEG', quality=93, optimize=True)
     return 'data:image/jpeg;base64,' + base64.b64encode(buf.getvalue()).decode()
 
 
