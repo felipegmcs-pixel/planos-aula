@@ -4517,10 +4517,14 @@ def privacidade():
 
 @app.errorhandler(404)
 def nao_encontrado(e):
+    if request.path.startswith('/api/') or request.is_json:
+        return jsonify({'erro': 'Rota não encontrada.'}), 404
     return render_template('404.html'), 404
 
 @app.errorhandler(500)
 def erro_interno(e):
+    if request.path.startswith('/api/') or request.is_json:
+        return jsonify({'erro': 'Erro interno do servidor.'}), 500
     return render_template('500.html'), 500
 
 # ═══════════════════════════════════════════════════════════════════════════════
