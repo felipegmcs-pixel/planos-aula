@@ -5143,17 +5143,30 @@ def api_generate_mapa_mental():
     if not tema:
         return jsonify({'erro': 'Campo obrigatório: tema'}), 400
 
-    # Garante que o tema está em PT-BR no prompt enviado ao DALL-E
-    # (evita que a IA alucie títulos em inglês na imagem gerada)
     prompt_final = (
-        f"Mapa mental educacional em PORTUGUÊS DO BRASIL sobre '{tema}'. "
-        f"O título central e todos os rótulos dos ramos DEVEM estar em português, "
-        f"nunca em inglês. Estilo aquarela digital moderna, "
-        "fundo 100% branco sólido, composição radial com tema central e ramos conectados "
-        "a subtópicos ilustrados com ícones acadêmicos. "
-        "Design premium, cores pastéis acadêmicas, sem texto longo dentro da imagem. "
-        "No canto inferior direito: logotipo minimalista 'ProfessorIA™' em azul acadêmico. "
-        + IMAGE_STYLE_MODIFIER
+        f"Professional educational mind map infographic — ALL text in PORTUGUESE (PT-BR) — topic: \"{tema}\".\n\n"
+        "VISUAL STYLE:\n"
+        "- Pure white background (#FFFFFF), flat design, zero textures, zero watercolor, zero illustrations\n"
+        "- Central rounded rectangle (large, bold) containing the main topic title in big readable text\n"
+        "- Exactly 6 main branch nodes radiating outward, each a distinct solid accent color "
+        "(coral, teal, violet, amber, sky-blue, sage-green)\n"
+        "- Each branch: thick colored curved line connecting center to a colored rounded-rectangle node\n"
+        "- 2–3 sub-nodes per branch: smaller rounded rectangles, lighter shade, connected by thin lines\n\n"
+        "TYPOGRAPHY (critical):\n"
+        "- Modern sans-serif font (Inter / Nunito / Roboto) throughout\n"
+        "- Center title: 28–32pt bold, white text on dark background\n"
+        "- Branch labels: 16–18pt bold, white text on colored node background\n"
+        "- Sub-node labels: 12–14pt medium, dark text on very light background\n"
+        "- Every label: short (1–5 words max), NO sentences, NO punctuation\n"
+        "- ALL labels in PORTUGUESE (PT-BR) — NEVER English\n\n"
+        "LAYOUT:\n"
+        "- Symmetric radial layout, nodes evenly spaced, no overlap\n"
+        "- Generous whitespace between nodes\n"
+        "- Clean geometric connector lines, slight curve\n"
+        "- Small 'ProfessorIA™' signature in bottom-right corner, gray, 9pt\n\n"
+        "FORBIDDEN: watercolor, textures, illustrations, complex artwork, "
+        "any text longer than 5 words per node, English words, decorative borders.\n"
+        "RESULT must look like a premium Canva or Miro mind map template — clean, modern, instantly readable."
     )
 
     try:
@@ -5161,7 +5174,7 @@ def api_generate_mapa_mental():
             model='dall-e-3',
             prompt=prompt_final[:4000],
             size='1792x1024',
-            quality='standard',
+            quality='hd',
             n=1
         )
         url = resp.data[0].url
