@@ -5144,29 +5144,45 @@ def api_generate_mapa_mental():
         return jsonify({'erro': 'Campo obrigatório: tema'}), 400
 
     prompt_final = (
-        f"Professional educational mind map infographic — ALL text in PORTUGUESE (PT-BR) — topic: \"{tema}\".\n\n"
-        "VISUAL STYLE:\n"
-        "- Pure white background (#FFFFFF), flat design, zero textures, zero watercolor, zero illustrations\n"
-        "- Central rounded rectangle (large, bold) containing the main topic title in big readable text\n"
-        "- Exactly 6 main branch nodes radiating outward, each a distinct solid accent color "
-        "(coral, teal, violet, amber, sky-blue, sage-green)\n"
-        "- Each branch: thick colored curved line connecting center to a colored rounded-rectangle node\n"
-        "- 2–3 sub-nodes per branch: smaller rounded rectangles, lighter shade, connected by thin lines\n\n"
-        "TYPOGRAPHY (critical):\n"
-        "- Modern sans-serif font (Inter / Nunito / Roboto) throughout\n"
-        "- Center title: 28–32pt bold, white text on dark background\n"
-        "- Branch labels: 16–18pt bold, white text on colored node background\n"
-        "- Sub-node labels: 12–14pt medium, dark text on very light background\n"
-        "- Every label: short (1–5 words max), NO sentences, NO punctuation\n"
-        "- ALL labels in PORTUGUESE (PT-BR) — NEVER English\n\n"
-        "LAYOUT:\n"
-        "- Symmetric radial layout, nodes evenly spaced, no overlap\n"
-        "- Generous whitespace between nodes\n"
-        "- Clean geometric connector lines, slight curve\n"
-        "- Small 'ProfessorIA™' signature in bottom-right corner, gray, 9pt\n\n"
-        "FORBIDDEN: watercolor, textures, illustrations, complex artwork, "
-        "any text longer than 5 words per node, English words, decorative borders.\n"
-        "RESULT must look like a premium Canva or Miro mind map template — clean, modern, instantly readable."
+        f"Illustrated educational mind map poster in PORTUGUESE (PT-BR). Central topic: \"{tema}\".\n\n"
+
+        "OVERALL STYLE: Editorial educational illustration — like a premium school textbook or "
+        "National Geographic infographic. Warm off-white paper texture background. "
+        "Organic hand-drawn branches radiating from center. Colorful, joyful, detailed.\n\n"
+
+        "CENTER: A large central oval/circle (diameter ~25% of image width) with:\n"
+        f"- A vivid thematic illustration representing '{tema}' filling the oval\n"
+        f"- The title '{tema}' in very large (40pt+), bold, hand-lettered style BELOW or ABOVE the oval, "
+        "clearly legible, dark ink on light background, in PORTUGUESE\n\n"
+
+        "BRANCHES (exactly 5): Five thick organic branches growing outward from the center "
+        "in different directions (top, top-right, bottom-right, bottom-left, top-left). "
+        "Each branch ends in a labeled node:\n"
+        "- Node: a colorful rounded bubble/badge with a SMALL thematic illustration inside "
+        "(sketch or flat icon style, clearly representing the subtopic)\n"
+        "- Label: the subtopic name in LARGE bold text (24pt+), placed OUTSIDE the bubble on a "
+        "clean white/cream banner — clearly readable, 1–4 words max, in PORTUGUESE\n"
+        "- 2 small sub-labels branching from each node (thin lines), each on a small pill/tag, "
+        "12–16pt, dark text, 1–3 words, in PORTUGUESE\n\n"
+
+        "ILLUSTRATION QUALITY:\n"
+        "- Each node illustration is distinct, detailed, clearly recognizable\n"
+        "- Consistent color palette: warm coral, teal, golden yellow, soft violet, forest green\n"
+        "- Branches are thick at base, tapering toward nodes\n"
+        "- Light drop shadows on bubbles for depth\n\n"
+
+        "TEXT RULES (critical for legibility):\n"
+        "- ALL text in PORTUGUESE (PT-BR) — zero English\n"
+        "- Central title: 40pt+ bold, clearly the largest text element\n"
+        "- Branch labels: 24pt+ bold, placed on clean light-colored banners/ribbons\n"
+        "- Sub-labels: 14pt, placed on small pill-shaped tags\n"
+        "- NO text inside dark areas. Every text element has a light, high-contrast background\n"
+        "- Maximum 4 words per label — no sentences\n\n"
+
+        "BOTTOM-RIGHT: small 'ProfessorIA™' signature in gray.\n\n"
+
+        "FORBIDDEN: watercolor blobs that obscure text, tiny unreadable labels, "
+        "more than 5 main branches, English words, overlapping elements."
     )
 
     try:
