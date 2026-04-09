@@ -5137,39 +5137,91 @@ def api_generate_image():
 
 # ─── Infográfico Educacional: geração via LLM + DALL-E 3 ─────────────────────
 
+# Estrutura fixa dos 4 ramos — baseada no framework do Diretor de Arte ProfessorIA
+_INFOGRAFICO_RAMOS = [
+    {
+        'chave': 'contexto',
+        'nome':  'CONTEXTO & DEFINIÇÃO',
+        'guia':  'O que é o tema, sua origem e base conceitual. '
+                 'Explique de forma clara, do simples ao analítico.',
+        'ilus':  'educational diagram or historical origins illustration',
+    },
+    {
+        'chave': 'processo',
+        'nome':  'PROCESSO & FUNCIONAMENTO',
+        'guia':  'Como acontece, etapas, mecanismos ou desenvolvimento do tema.',
+        'ilus':  'step-by-step process or mechanism watercolor illustration',
+    },
+    {
+        'chave': 'impactos',
+        'nome':  'IMPACTOS & CONSEQUÊNCIAS',
+        'guia':  'Efeitos práticos, mudanças geradas, resultados históricos ou científicos.',
+        'ilus':  'impactful scene showing consequences or effects watercolor',
+    },
+    {
+        'chave': 'desdobramentos',
+        'nome':  'DESDOBRAMENTOS & APLICAÇÕES',
+        'guia':  'O que o tema influencia hoje, conexões com o mundo atual, '
+                 'legado ou aplicações modernas.',
+        'ilus':  'modern applications or legacy of the topic watercolor illustration',
+    },
+]
+
+
 def _gerar_estrutura_infografico(tema):
-    """LLM gera o conteúdo estruturado do infográfico em PT-BR via OpenAI JSON Mode."""
+    """Gera conteúdo do infográfico usando o framework de 4 ramos do ProfessorIA.
+
+    Estrutura fixa:
+      1. CONTEXTO & DEFINIÇÃO
+      2. PROCESSO & FUNCIONAMENTO
+      3. IMPACTOS & CONSEQUÊNCIAS
+      4. DESDOBRAMENTOS & APLICAÇÕES
+    Conteúdo de cada ramo adaptado ao tema via OpenAI JSON Mode.
+    """
     if not client_openai:
         logger.error('_gerar_estrutura_infografico: OPENAI_API_KEY não configurada.')
         return None
 
-    sistema = (
-        'Você é um gerador de JSON educacional. '
-        'Retorne EXCLUSIVAMENTE um objeto JSON válido com as chaves: '
-        '"titulo" (string) e "secoes" (array de 5 objetos, cada um com '
-        '"nome" (string), "topicos" (array de 3 strings em PT-BR) e '
-        '"ilustracao_en" (string em inglês descrevendo a ilustração para DALL-E)). '
-        'Encoding: UTF-8. Tudo em português do Brasil, exceto "ilustracao_en".'
+    ramos_desc = '\n'.join(
+        f'  "{r["chave"]}": {r["guia"]}'
+        for r in _INFOGRAFICO_RAMOS
     )
+
+    sistema = (
+        'Você é um Diretor de Arte e Especialista em Design Instrucional. '
+        'Retorne EXCLUSIVAMENTE JSON válido UTF-8. '
+        'Adapte o nível do conteúdo: comece simples, permita aprofundamento progressivo. '
+        'Público: estudantes brasileiros do ensino médio e professores.'
+    )
+
     prompt = (
-        f'Crie um infográfico educacional sobre "{tema}" para estudantes brasileiros do ensino médio.\n\n'
-        'Retorne SOMENTE o JSON com esta estrutura:\n'
+        f'Crie um mapa mental visual educacional sobre "{tema}".\n\n'
+
+        'ESTRUTURA OBRIGATÓRIA (4 ramos fixos):\n'
         '{\n'
-        '  "titulo": "TÍTULO DO TEMA EM MAIÚSCULAS",\n'
+        '  "titulo": "TÍTULO EM MAIÚSCULAS (máx 60 chars)",\n'
         '  "secoes": [\n'
         '    {\n'
-        '      "nome": "NOME DA SEÇÃO EM MAIÚSCULAS",\n'
-        '      "topicos": ["fato/conceito 1", "fato/conceito 2", "fato/conceito 3"],\n'
-        '      "ilustracao_en": "watercolor illustration description for DALL-E in English"\n'
-        '    }\n'
+        '      "nome": "CONTEXTO & DEFINIÇÃO",\n'
+        '      "topicos": ["tópico 1 PT-BR", "tópico 2 PT-BR", "tópico 3 PT-BR"],\n'
+        '      "ilustracao_en": "descrição em inglês da ilustração watercolor para DALL-E"\n'
+        '    },\n'
+        '    { "nome": "PROCESSO & FUNCIONAMENTO", "topicos": [...3...], "ilustracao_en": "..." },\n'
+        '    { "nome": "IMPACTOS & CONSEQUÊNCIAS",  "topicos": [...3...], "ilustracao_en": "..." },\n'
+        '    { "nome": "DESDOBRAMENTOS & APLICAÇÕES","topicos": [...3...], "ilustracao_en": "..." }\n'
         '  ]\n'
         '}\n\n'
+
+        'DIRETRIZES POR RAMO:\n'
+        + ramos_desc + '\n\n'
+
         'REGRAS:\n'
-        '- Exatamente 5 seções cobrindo os aspectos mais importantes do tema\n'
-        '- 3 tópicos por seção: frases curtas e informativas em PT-BR\n'
-        '- "ilustracao_en": descreva em inglês uma figura histórica, objeto ou cena marcante do subtema\n'
-        '  Exemplos: "Watercolor portrait of Kaiser Wilhelm II in military uniform", '
-        '"Detailed watercolor of a steam locomotive with smoke, 1800s style"\n'
+        '- Exatamente 4 seções, na ordem acima, com os nomes exatos\n'
+        '- 3 tópicos por seção: frases curtas, informativas e progressivas (do simples ao analítico)\n'
+        '- Evite superficialidade extrema e complexidade confusa\n'
+        '- "ilustracao_en": cena, figura histórica ou objeto marcante do subtema, '
+        'estilo aquarela limpa — ex: "Watercolor of the Bastille storming, dramatic scene"\n'
+        '- Idioma dos tópicos e titulo: PORTUGUÊS DO BRASIL\n'
         f'- Tema: "{tema}"'
     )
 
@@ -5181,47 +5233,82 @@ def _gerar_estrutura_infografico(tema):
                 {"role": "system", "content": sistema},
                 {"role": "user",   "content": prompt},
             ],
-            max_tokens=1800,
-            temperature=0.7,
+            max_tokens=1600,
+            temperature=0.65,
         )
-        content = resp.choices[0].message.content
-        return json.loads(content)  # json_object mode garante JSON válido
+        data = json.loads(resp.choices[0].message.content)
+
+        # Garante os 4 ramos com os nomes corretos, mesmo se o LLM divergir
+        secoes_llm = {s.get('nome', '').upper(): s for s in data.get('secoes', [])}
+        secoes_final = []
+        for ramo in _INFOGRAFICO_RAMOS:
+            # Busca pelo nome exato ou parcial
+            match = next(
+                (s for k, s in secoes_llm.items() if ramo['chave'].upper() in k or
+                 any(w in k for w in ramo['nome'].split()[:2])),
+                None
+            )
+            if match:
+                match['nome'] = ramo['nome']  # normaliza o nome
+                secoes_final.append(match)
+            else:
+                # Fallback: cria seção vazia com nome correto
+                secoes_final.append({
+                    'nome': ramo['nome'],
+                    'topicos': [f'Tópico sobre {tema}'] * 3,
+                    'ilustracao_en': f'{ramo["ilus"]} about {tema}',
+                })
+        data['secoes'] = secoes_final
+        logger.info('Estrutura 4 ramos OK para "%s"', tema[:50])
+        return data
+
     except Exception as e:
         logger.error('_gerar_estrutura_infografico falhou: %s', e)
         return None
 
 
 def _prompt_infografico_dalle(tema, estrutura=None):
-    """Monta prompt DALL-E que pede APENAS ilustrações + layout, SEM TEXTO.
-    O texto PT-BR será adicionado depois pelo Pillow em _compositar_poster().
+    """Monta prompt DALL-E que pede APENAS ilustrações watercolor, SEM TEXTO.
+    Usa o framework de 4 ramos: Contexto, Processo, Impactos, Desdobramentos.
+    O texto PT-BR é adicionado depois pelo Pillow em _compositar_poster().
     """
     titulo_base = tema[:70]
     secoes = (estrutura or {}).get('secoes', [])[:4]
 
-    # Descrições das ilustrações de cada seção
-    ilus_parts = []
-    for i, sec in enumerate(secoes, 1):
-        ilus = sec.get('ilustracao_en', f'educational illustration about {tema}')
-        ilus_parts.append(f'panel {i}: {ilus}')
-    ilus_desc = ', '.join(ilus_parts) if ilus_parts else f'4 panels about {titulo_base}'
+    # Usa ilustrações específicas do LLM ou fallback dos ramos padrão
+    panel_descs = []
+    for i, (sec, ramo) in enumerate(zip(secoes, _INFOGRAFICO_RAMOS), 1):
+        ilus = sec.get('ilustracao_en') or f'{ramo["ilus"]} about {tema}'
+        panel_descs.append(f'Panel {i} ({ramo["nome"].split("&")[0].strip()}): {ilus}')
+
+    panels_text = '\n'.join(panel_descs) if panel_descs else (
+        f'4 educational watercolor panels about {titulo_base}: '
+        'context/origins, process/mechanism, impacts/consequences, modern applications'
+    )
 
     return (
-        f'Educational infographic poster background about "{titulo_base}". '
-        'ABSOLUTELY NO TEXT, LETTERS, WORDS OR NUMBERS anywhere in the image. '
-        'Pure visual illustration only.\n\n'
-        'Layout structure:\n'
-        '1. TOP: Wide dark navy-blue horizontal bar (about 11% of image height). '
-        'Left portion lighter/gradient for title overlay.\n'
-        '2. BODY: 4 content panels in a 2×2 grid separated by thin white lines. '
-        'Each panel: LEFT 42% = soft white/very light grey area (for text overlay). '
-        'RIGHT 58% = detailed watercolor+ink illustration.\n'
-        '3. BOTTOM: Thin dark navy strip (5% of height).\n\n'
-        f'Illustrations for each panel ({ilus_desc}).\n\n'
-        'Style: professional educational publisher, watercolor+ink, editorial quality, '
-        'bright colors, clean composition. '
-        'CRITICAL: left side of each panel must be very light (white or near-white) '
-        'with NO details or texture — it will be used for text overlay. '
-        'Zero text anywhere.'
+        f'Premium educational mind map poster background about "{titulo_base}". '
+        'ZERO TEXT anywhere — pure illustration only, no letters, words or numbers.\n\n'
+
+        'LAYOUT (exact):\n'
+        '• TOP 11%: wide dark navy-blue banner strip\n'
+        '• BODY: 4 illustration panels in a clean 2×2 grid, '
+        'separated by thin white lines. '
+        'Each panel LEFT 44% = soft white/light-grey blank area (zero illustration, zero texture). '
+        'Each panel RIGHT 56% = detailed watercolor+ink illustration.\n'
+        '• BOTTOM 6%: narrow dark navy strip\n\n'
+
+        'PANEL ILLUSTRATIONS (no text, just visual):\n'
+        + panels_text + '\n\n'
+
+        'VISUAL STYLE:\n'
+        '• Watercolor + ink line art, editorial educational publisher quality\n'
+        '• Clean white background, bright harmonious colors\n'
+        '• Modern, organized — appropriate for students and adults\n'
+        '• Discrete light icons, not cartoonish\n'
+        '• CRITICAL: left half of every panel = pure white or very light grey, '
+        'completely flat — this area receives text overlay and must have NO illustration\n'
+        '• Zero text, zero numbers, zero letters anywhere in the image'
     )
 
 
