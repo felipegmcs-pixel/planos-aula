@@ -5251,12 +5251,17 @@ def _prompt_infografico_dalle(tema, estrutura=None):
 
 
 
+# ── Jobs em memória para geração de infográfico (polling) ────────────────────
+# Com --workers 1 --threads 8, todos os requests compartilham este dict.
+_infographic_jobs: dict = {}  # job_id -> {status|url|erro}
+
+
 @app.route('/api/generate/mapa-mental', methods=['POST'])
 @login_required
 @limiter.limit('5 per minute')
 def api_generate_mapa_mental():
-    """Gera infográfico via SSE streaming — evita timeout do proxy.
-    Envia eventos: {status}, {url} ou {erro}, depois [DONE].
+    """Inicia geração de infográfico em background. Retorna {job_id} imediatamente.
+    Cliente faz polling em /api/generate/mapa-mental/status/<job_id>.
     """
     if not client_openai:
         return jsonify({'erro': 'OPENAI_API_KEY não configurada.'}), 503
@@ -5266,71 +5271,56 @@ def api_generate_mapa_mental():
     if not tema:
         return jsonify({'erro': 'Campo obrigatório: tema'}), 400
 
-    uid = current_user.id  # captura antes do generator
+    uid   = current_user.id
+    job_id = secrets.token_hex(16)
+    _infographic_jobs[job_id] = {'status': 'processing'}
 
-    def _gerar():
-        """SSE generator com threading + heartbeats a cada 5s.
+    def _worker():
+        try:
+            estrutura = _gerar_estrutura_infografico(tema)
+            if not estrutura:
+                logger.warning('Estrutura LLM None para "%s" — usando fallback.', tema[:60])
+            prompt = _prompt_infografico_dalle(tema, estrutura)
+            logger.info('DALL-E prompt len=%d uid=%s tema="%s"', len(prompt), uid, tema[:50])
+            img_resp = client_openai.images.generate(
+                model='dall-e-3',
+                prompt=prompt[:4000],
+                size='1792x1024',
+                quality='hd',
+                n=1,
+            )
+            url = img_resp.data[0].url
+            logger.info('Infográfico OK uid=%s tema="%s"', uid, tema[:50])
+            _infographic_jobs[job_id] = {'url': url}
+        except Exception as e:
+            err = str(e)
+            logger.error('Infográfico ERRO uid=%s job=%s: %s', uid, job_id, err[:400])
+            el = err.lower()
+            if 'content_policy' in el or 'safety' in el:
+                msg = 'Tema bloqueado pela política de conteúdo da OpenAI. Tente reformular.'
+            elif 'billing' in el or 'credit' in el or 'quota' in el:
+                msg = 'Créditos OpenAI esgotados. Verifique sua conta.'
+            elif 'rate_limit' in el:
+                msg = 'Muitas solicitações. Aguarde um momento e tente novamente.'
+            else:
+                msg = f'Erro ao gerar: {err[:200]}'
+            _infographic_jobs[job_id] = {'erro': msg}
 
-        O proxy do Render encerra conexões SSE inativas após ~30s.
-        A chamada DALL-E HD demora 30-60s sem enviar nada.
-        Solução: rodar LLM + DALL-E em thread separada; enquanto aguarda,
-        enviar comentários SSE a cada 5s para manter o TCP vivo.
-        """
-        result_q = queue.Queue()
+    threading.Thread(target=_worker, daemon=True).start()
+    return jsonify({'job_id': job_id})
 
-        def _trabalho():
-            try:
-                estrutura = _gerar_estrutura_infografico(tema)
-                if not estrutura:
-                    logger.warning('Estrutura LLM None para "%s" — usando prompt direto.', tema[:60])
-                prompt = _prompt_infografico_dalle(tema, estrutura)
-                logger.info('DALL-E prompt len=%d para "%s"', len(prompt), tema[:50])
-                img_resp = client_openai.images.generate(
-                    model='dall-e-3',
-                    prompt=prompt[:4000],
-                    size='1792x1024',
-                    quality='hd',
-                    n=1
-                )
-                url = img_resp.data[0].url
-                logger.info('Infográfico OK usuario %s tema="%s"', uid, tema[:50])
-                result_q.put({'url': url})
-            except Exception as e:
-                err = str(e)
-                logger.error('Erro infográfico worker uid=%s: %s', uid, err[:400])
-                el = err.lower()
-                if 'content_policy' in el or 'safety' in el:
-                    msg = 'Tema bloqueado pela política de conteúdo da OpenAI. Tente reformular.'
-                elif 'billing' in el or 'credit' in el or 'quota' in el:
-                    msg = 'Créditos OpenAI esgotados. Verifique sua conta.'
-                elif 'rate_limit' in el:
-                    msg = 'Muitas solicitações. Aguarde um momento e tente novamente.'
-                else:
-                    msg = f'Erro ao gerar infográfico: {err[:200]}'
-                result_q.put({'erro': msg})
 
-        t = threading.Thread(target=_trabalho, daemon=True)
-        t.start()
-
-        yield f'data: {json.dumps({"status": "Organizando o conteúdo..."})}\n\n'
-
-        # Aguarda o resultado; a cada 5s envia heartbeat para manter conexão viva
-        while True:
-            try:
-                result = result_q.get(timeout=5)
-                yield f'data: {json.dumps(result)}\n\n'
-                break
-            except queue.Empty:
-                # Comentário SSE — ignorado pelo parser mas mantém TCP ativo
-                yield ': heartbeat\n\n'
-
-        yield 'data: [DONE]\n\n'
-
-    return Response(
-        stream_with_context(_gerar()),
-        content_type='text/event-stream',
-        headers={'Cache-Control': 'no-cache', 'X-Accel-Buffering': 'no'}
-    )
+@app.route('/api/generate/mapa-mental/status/<job_id>', methods=['GET'])
+@login_required
+def api_mapa_mental_status(job_id):
+    """Polling: retorna estado atual do job. {status:'processing'} | {url:...} | {erro:...}"""
+    job = _infographic_jobs.get(job_id)
+    if not job:
+        return jsonify({'erro': 'Job não encontrado ou expirado.'}), 404
+    # Limpa da memória quando entregue (URL ou erro)
+    if 'url' in job or 'erro' in job:
+        _infographic_jobs.pop(job_id, None)
+    return jsonify(job)
 
 
 @app.route('/api/prova/docx', methods=['POST'])

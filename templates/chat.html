@@ -1977,37 +1977,37 @@
       scroll();
 
       try {
-        const resp = await fetch('/api/generate/mapa-mental', {
+        // ── Arquitetura de polling: POST inicia job; GET /status/:id verifica ──
+        // SSE era bloqueado pelo proxy do Render (conexão inativa > 30s).
+        // Polling usa requests curtos (<1s cada), sem dependência de streaming.
+        const startResp = await fetch('/api/generate/mapa-mental', {
           method: 'POST', headers: {'Content-Type':'application/json'},
           body: JSON.stringify({tema: _tema})
         });
-        if (!resp.ok) throw new Error('Erro ao conectar ao servidor.');
-
-        // Lê SSE stream (igual ao chat — sem timeout de proxy)
-        const reader  = resp.body.getReader();
-        const decoder = new TextDecoder();
-        let buffer = '', imageUrl = null, streamDone = false;
-
-        while (!streamDone) {
-          const { done, value } = await reader.read();
-          if (done) break;
-          buffer += decoder.decode(value, { stream: true });
-          const lines = buffer.split('\n');
-          buffer = lines.pop();
-          for (const line of lines) {
-            if (!line.startsWith('data: ')) continue;
-            const payload = line.slice(6).trim();
-            if (payload === '[DONE]') { streamDone = true; break; }
-            try {
-              const obj = JSON.parse(payload);
-              if (obj.erro) throw new Error(obj.erro);
-              if (obj.status) _setLoading(obj.status);
-              if (obj.url)    imageUrl = obj.url;
-            } catch(pe) { throw pe; }
-          }
+        if (!startResp.ok) {
+          const errData = await startResp.json().catch(() => ({}));
+          throw new Error(errData.erro || `Erro ${startResp.status} ao iniciar geração.`);
         }
+        const startData = await startResp.json();
+        if (startData.erro) throw new Error(startData.erro);
+        const job_id = startData.job_id;
+        if (!job_id) throw new Error('Servidor não retornou job_id.');
 
-        if (!imageUrl) throw new Error('Infográfico não foi gerado. Tente novamente.');
+        _setLoading(`Gerando infográfico de "${_tema}"…`);
+
+        // Polling a cada 3s (máx 60 tentativas = 3 minutos)
+        let imageUrl = null;
+        for (let i = 0; i < 60; i++) {
+          await new Promise(r => setTimeout(r, 3000));
+          const pollResp = await fetch(`/api/generate/mapa-mental/status/${job_id}`);
+          const data = await pollResp.json().catch(() => ({}));
+          if (data.erro) throw new Error(data.erro);
+          if (data.url)  { imageUrl = data.url; break; }
+          // data.status === 'processing' → continua
+          if (i === 6)  _setLoading('Quase lá… finalizando os detalhes');
+          if (i === 14) _setLoading('Aguardando resposta do servidor de imagens…');
+        }
+        if (!imageUrl) throw new Error('Tempo esgotado. Tente novamente.');
 
         stream.replaceBubble(`
           <div class="mapa-mental-resultado">
