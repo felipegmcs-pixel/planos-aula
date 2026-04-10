@@ -5205,7 +5205,8 @@ def _gerar_estrutura_infografico(tema):
         '  "secoes": [\n'
         '    { "nome": "Nome específico ao tema (ex: Pioneirismo Inglês)",\n'
         '      "topicos": ["tópico curto 1", "tópico curto 2", "até 4 tópicos"],\n'
-        '      "ilustracao_en": "cena watercolor para DALL-E em inglês" },\n'
+        '      "ilustracao_en": "cena watercolor para DALL-E em inglês",\n'
+        '      "fonte": "SOBRENOME, N. Título. Editora, Ano. — ou — BNCC: EF00XX00" },\n'
         '    ... (5 seções no total)\n'
         '  ]\n'
         '}\n\n'
@@ -5230,6 +5231,9 @@ def _gerar_estrutura_infografico(tema):
         '"A Exploração do Trabalho", "A Reação Operária"\n'
         '- 2 a 4 tópicos por seção: curtos, máx 7 palavras cada\n'
         '- "ilustracao_en": cena watercolor com objetos/personagens marcantes do subtema\n'
+        '- "fonte": referência REAL e verificável para cada seção. '
+        'Formato: AUTOR. Título. Editora, Ano. — OU — BNCC: EF09HI01 — descrição. '
+        'Use APENAS obras acadêmicas ou livros didáticos que realmente existam.\n'
         '- Idioma dos tópicos e título: PORTUGUÊS DO BRASIL\n'
         f'- Tema: "{tema}"'
     )
@@ -5254,10 +5258,11 @@ def _gerar_estrutura_infografico(tema):
             if i < len(secoes_llm):
                 s = secoes_llm[i]
                 secoes_final.append({
-                    'nome':         s.get('nome', f'Seção {i + 1}'),
-                    'topicos':      s.get('topicos', [])[:4],
+                    'nome':          s.get('nome', f'Seção {i + 1}'),
+                    'topicos':       s.get('topicos', [])[:4],
                     'ilustracao_en': s.get('ilustracao_en',
                                           f'{ramo["ilus"]} about {tema}'),
+                    'fonte':         s.get('fonte', ''),
                 })
             else:
                 secoes_final.append({
@@ -5617,7 +5622,12 @@ def api_generate_mapa_mental():
             # Baixa a imagem DALL-E e sobrepõe o texto PT-BR correto
             data_url = _compositar_poster(dalle_url, estrutura, tema)
             logger.info('Poster composto OK uid=%s tema="%s"', uid, tema[:50])
-            _job_set(job_id, {'url': data_url})
+            fontes = [
+                {'secao': s.get('nome', ''), 'fonte': s.get('fonte', '')}
+                for s in (estrutura or {}).get('secoes', [])
+                if s.get('fonte', '').strip()
+            ]
+            _job_set(job_id, {'url': data_url, 'fontes': fontes})
         except Exception as e:
             err = str(e)
             logger.error('Infográfico ERRO uid=%s job=%s: %s', uid, job_id, err[:400])

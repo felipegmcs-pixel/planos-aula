@@ -1128,6 +1128,24 @@
       transition: all .2s;
     }
     .btn-dl-mapa:hover { border-color: var(--indigo); color: var(--indigo); background: rgba(30,90,99,.06); }
+    .mapa-fontes {
+      border: 1px solid var(--linha-f); border-radius: 10px;
+      padding: 14px 18px; background: var(--tag-bg);
+      font-size: .82rem; color: var(--text);
+    }
+    .mapa-fontes-titulo {
+      font-weight: 700; color: var(--indigo);
+      margin-bottom: 8px; font-size: .88rem;
+    }
+    .mapa-fontes-lista {
+      margin: 0 0 10px 16px; padding: 0;
+      display: flex; flex-direction: column; gap: 4px;
+    }
+    .mapa-fontes-lista li { line-height: 1.45; }
+    .mapa-fontes-aviso {
+      font-size: .75rem; color: var(--text2);
+      border-top: 1px solid var(--linha-f); padding-top: 8px; margin-top: 4px;
+    }
     .mapa-gerar-loading {
       display: flex; flex-direction: column; align-items: center;
       gap: 14px; padding: 32px 16px; text-align: center;
@@ -1997,17 +2015,29 @@
 
         // Polling a cada 3s (máx 60 tentativas = 3 minutos)
         let imageUrl = null;
+        let jobFontes = [];
         for (let i = 0; i < 60; i++) {
           await new Promise(r => setTimeout(r, 3000));
           const pollResp = await fetch(`/api/generate/mapa-mental/status/${job_id}`);
           const data = await pollResp.json().catch(() => ({}));
           if (data.erro) throw new Error(data.erro);
-          if (data.url)  { imageUrl = data.url; break; }
+          if (data.url)  { imageUrl = data.url; jobFontes = data.fontes || []; break; }
           // data.status === 'processing' → continua
           if (i === 6)  _setLoading('Quase lá… finalizando os detalhes');
           if (i === 14) _setLoading('Aguardando resposta do servidor de imagens…');
         }
         if (!imageUrl) throw new Error('Tempo esgotado. Tente novamente.');
+
+        const fontesHtml = jobFontes.length ? `
+          <div class="mapa-fontes">
+            <div class="mapa-fontes-titulo">Referências bibliográficas</div>
+            <ul class="mapa-fontes-lista">
+              ${jobFontes.map(f =>
+                `<li><strong>${escapeHtml(f.secao)}:</strong> ${escapeHtml(f.fonte)}</li>`
+              ).join('')}
+            </ul>
+            <div class="mapa-fontes-aviso">⚠ Conteúdo gerado por IA — verifique as informações antes de utilizar em sala de aula.</div>
+          </div>` : '';
 
         stream.replaceBubble(`
           <div class="mapa-mental-resultado">
@@ -2017,6 +2047,7 @@
               <a href="${imageUrl}" download="infografico-${escapeHtml(_tema)}.png"
                  target="_blank" class="btn-dl-mapa">⬇ Baixar Imagem</a>
             </div>
+            ${fontesHtml}
           </div>`);
         historico.push({role:'assistant', content: `[Infográfico visual gerado: ${_tema}]`});
       } catch(e) {
