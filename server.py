@@ -5140,50 +5140,50 @@ def api_generate_image():
 # Estrutura fixa dos 4 ramos — baseada no framework do Diretor de Arte ProfessorIA
 _INFOGRAFICO_RAMOS = [
     {
-        'chave': 'contexto',
-        'nome':  'CONTEXTO & DEFINIÇÃO',
-        'guia':  'O que é o tema, sua origem e base conceitual. '
-                 'Explique de forma clara, do simples ao analítico.',
-        'ilus':  'educational diagram or historical origins illustration',
+        'slot': 1,
+        'guia': 'Contexto histórico, origem, causas ou condições iniciais do tema. '
+                'Responda: o que é, quando/onde surgiu, por que aconteceu.',
+        'ilus': 'historical context or origins establishing scene',
     },
     {
-        'chave': 'processo',
-        'nome':  'PROCESSO & FUNCIONAMENTO',
-        'guia':  'Como acontece, etapas, mecanismos ou desenvolvimento do tema.',
-        'ilus':  'step-by-step process or mechanism watercolor illustration',
+        'slot': 2,
+        'guia': 'Mecanismo central, processo, tecnologia ou funcionamento principal do tema. '
+                'Responda: como funciona ou como se desenvolveu passo a passo.',
+        'ilus': 'core process, mechanism or key technology watercolor scene',
     },
     {
-        'chave': 'impactos',
-        'nome':  'IMPACTOS & CONSEQUÊNCIAS',
-        'guia':  'Efeitos práticos, mudanças geradas, resultados históricos ou científicos.',
-        'ilus':  'impactful scene showing consequences or effects watercolor',
+        'slot': 3,
+        'guia': 'Impacto social, econômico, ambiental ou cultural sobre grupos humanos. '
+                'Responda: quais foram as principais consequências para a sociedade.',
+        'ilus': 'social or economic impact scene showing affected people',
     },
     {
-        'chave': 'desdobramentos',
-        'nome':  'DESDOBRAMENTOS & APLICAÇÕES',
-        'guia':  'O que o tema influencia hoje, conexões com o mundo atual, '
-                 'legado ou aplicações modernas.',
-        'ilus':  'modern applications or legacy of the topic watercolor illustration',
+        'slot': 4,
+        'guia': 'Agentes específicos: personagens, grupos, classes sociais ou forças que moldaram o tema. '
+                'Responda: quem foram os protagonistas, antagonistas ou atores principais.',
+        'ilus': 'key historical figures, social groups or protagonists in action',
+    },
+    {
+        'slot': 5,
+        'guia': 'Reações, resistências, movimentos, legado histórico ou desdobramentos do tema. '
+                'Responda: o que mudou depois, quais foram as respostas, qual o legado.',
+        'ilus': 'resistance movement, uprising, legacy or aftermath scene',
     },
 ]
 
 
 def _gerar_estrutura_infografico(tema):
-    """Gera conteúdo do infográfico usando o framework de 4 ramos do ProfessorIA.
+    """Gera conteúdo do infográfico com 5 seções adaptadas ao tema.
 
-    Estrutura fixa:
-      1. CONTEXTO & DEFINIÇÃO
-      2. PROCESSO & FUNCIONAMENTO
-      3. IMPACTOS & CONSEQUÊNCIAS
-      4. DESDOBRAMENTOS & APLICAÇÕES
-    Conteúdo de cada ramo adaptado ao tema via OpenAI JSON Mode.
+    Layout: 2-2-1 (seções 1-2 topo, 3-4 meio, 5 centralizada no fundo).
+    Nomes de seção: específicos ao tema (não genéricos).
     """
     if not client_openai:
         logger.error('_gerar_estrutura_infografico: OPENAI_API_KEY não configurada.')
         return None
 
     ramos_desc = '\n'.join(
-        f'  "{r["chave"]}": {r["guia"]}'
+        f'  Seção {r["slot"]}: {r["guia"]}'
         for r in _INFOGRAFICO_RAMOS
     )
 
@@ -5195,48 +5195,42 @@ def _gerar_estrutura_infografico(tema):
     )
 
     prompt = (
-        f'Crie um mapa mental visual educacional sobre "{tema}".\n\n'
+        f'Crie um infográfico educacional sobre "{tema}" com EXATAMENTE 5 seções.\n\n'
 
-        'ESTRUTURA OBRIGATÓRIA (4 ramos fixos):\n'
+        'JSON OBRIGATÓRIO:\n'
         '{\n'
-        '  "titulo": "TÍTULO EM MAIÚSCULAS (máx 60 chars)",\n'
+        '  "titulo": "TÍTULO EM MAIÚSCULAS com contexto temporal/geográfico (máx 55 chars)",\n'
         '  "cor_primaria": "#RRGGBB",\n'
         '  "cor_escura":   "#RRGGBB",\n'
         '  "secoes": [\n'
-        '    {\n'
-        '      "nome": "CONTEXTO & DEFINIÇÃO",\n'
-        '      "topicos": ["tópico 1 PT-BR", "tópico 2 PT-BR", "tópico 3 PT-BR"],\n'
-        '      "ilustracao_en": "descrição em inglês da ilustração watercolor para DALL-E"\n'
-        '    },\n'
-        '    { "nome": "PROCESSO & FUNCIONAMENTO", "topicos": [...3...], "ilustracao_en": "..." },\n'
-        '    { "nome": "IMPACTOS & CONSEQUÊNCIAS",  "topicos": [...3...], "ilustracao_en": "..." },\n'
-        '    { "nome": "DESDOBRAMENTOS & APLICAÇÕES","topicos": [...3...], "ilustracao_en": "..." }\n'
+        '    { "nome": "Nome específico ao tema (ex: Pioneirismo Inglês)",\n'
+        '      "topicos": ["tópico curto 1", "tópico curto 2", "até 4 tópicos"],\n'
+        '      "ilustracao_en": "cena watercolor para DALL-E em inglês" },\n'
+        '    ... (5 seções no total)\n'
         '  ]\n'
         '}\n\n'
 
         'PALETA TEMÁTICA (obrigatório):\n'
-        '- "cor_primaria": cor vibrante que REPRESENTA o tema visualmente.\n'
-        '  Exemplos: história/guerra → "#B8252A" (vermelho escarlate); '
-        'biologia → "#2E8B3A" (verde vivo); '
-        'física/tecnologia → "#1B5FA8" (azul elétrico); '
-        'geografia → "#C67C2A" (laranja terra); '
-        'literatura → "#6B3FA0" (roxo); '
-        'matemática → "#1A7A8A" (teal); '
-        'química → "#8B4E0A" (âmbar); '
-        'artes → "#C2185B" (rosa-magenta).\n'
-        '- "cor_escura": versão escura/navy da mesma cor para texto. '
-        'Ex: se cor_primaria="#B8252A", cor_escura="#5C0D10".\n\n'
+        '- "cor_primaria": cor que REPRESENTA o tema. '
+        'História/guerra → "#B8252A"; biologia → "#2E8B3A"; '
+        'física/tecnologia → "#1B5FA8"; geografia → "#C67C2A"; '
+        'literatura → "#6B3FA0"; matemática → "#1A7A8A"; '
+        'química → "#8B4E0A"; artes → "#C2185B"; '
+        'Revolução Industrial / industrialização → "#2364C8".\n'
+        '- "cor_escura": versão navy/escura da mesma cor para texto.\n\n'
 
-        'DIRETRIZES POR RAMO:\n'
+        'GUIA PEDAGÓGICO — 5 seções nessa ordem:\n'
         + ramos_desc + '\n\n'
 
         'REGRAS:\n'
-        '- Exatamente 4 seções, na ordem acima, com os nomes exatos\n'
-        '- 3 tópicos por seção: MUITO curtos, máx 6 palavras cada (ex: "Aliança entre Entente e Eixo")\n'
-        '- Evite frases longas — o tópico deve caber em uma linha curta\n'
-        '- "ilustracao_en": cena, figura histórica ou objeto marcante do subtema, '
-        'estilo aquarela limpa — ex: "Watercolor of the Bastille storming, dramatic scene"\n'
-        '- Idioma dos tópicos e titulo: PORTUGUÊS DO BRASIL\n'
+        '- 5 seções exatas, na ordem do guia\n'
+        '- Nome de cada seção: ESPECÍFICO ao tema, NÃO genérico. '
+        '  Exemplos para Revolução Industrial: "Pioneirismo Inglês", '
+        '"A Mudança Técnica", "Impacto Social – Os Cercamentos", '
+        '"A Exploração do Trabalho", "A Reação Operária"\n'
+        '- 2 a 4 tópicos por seção: curtos, máx 7 palavras cada\n'
+        '- "ilustracao_en": cena watercolor com objetos/personagens marcantes do subtema\n'
+        '- Idioma dos tópicos e título: PORTUGUÊS DO BRASIL\n'
         f'- Tema: "{tema}"'
     )
 
@@ -5248,39 +5242,31 @@ def _gerar_estrutura_infografico(tema):
                 {"role": "system", "content": sistema},
                 {"role": "user",   "content": prompt},
             ],
-            max_tokens=1600,
+            max_tokens=2000,
             temperature=0.65,
         )
         data = json.loads(resp.choices[0].message.content)
 
-        # Garante os 4 ramos com os nomes corretos, mesmo se o LLM divergir
-        secoes_llm = {s.get('nome', '').upper(): s for s in data.get('secoes', [])}
-        used_keys  = set()
+        # Aceita seções na ordem retornada pelo LLM (nomes são adaptativos ao tema)
+        secoes_llm = data.get('secoes', [])
         secoes_final = []
-        for ramo in _INFOGRAFICO_RAMOS:
-            # Palavras significativas — exclui '&' e tokens de 1-2 chars que
-            # causariam falsos positivos (ex: '&' bate em QUALQUER seção)
-            words = [w for w in ramo['nome'].split() if len(w) > 2 and w != '&']
-            match_key = next(
-                (k for k in secoes_llm
-                 if k not in used_keys and
-                 (ramo['chave'].upper() in k or any(w in k for w in words))),
-                next((k for k in secoes_llm if k not in used_keys), None),
-            )
-            if match_key:
-                used_keys.add(match_key)
-                # Cópia rasa do dict — evita mutação do objeto compartilhado
-                # (bug anterior: todas as seções apontavam para o mesmo dict)
-                secoes_final.append({**secoes_llm[match_key], 'nome': ramo['nome']})
-            else:
-                # Fallback: cria seção vazia com nome correto
+        for i, ramo in enumerate(_INFOGRAFICO_RAMOS):
+            if i < len(secoes_llm):
+                s = secoes_llm[i]
                 secoes_final.append({
-                    'nome': ramo['nome'],
-                    'topicos': [f'Tópico sobre {tema}'] * 3,
+                    'nome':         s.get('nome', f'Seção {i + 1}'),
+                    'topicos':      s.get('topicos', [])[:4],
+                    'ilustracao_en': s.get('ilustracao_en',
+                                          f'{ramo["ilus"]} about {tema}'),
+                })
+            else:
+                secoes_final.append({
+                    'nome':         f'Seção {i + 1}',
+                    'topicos':      [f'Tópico sobre {tema}'],
                     'ilustracao_en': f'{ramo["ilus"]} about {tema}',
                 })
         data['secoes'] = secoes_final
-        logger.info('Estrutura 4 ramos OK para "%s"', tema[:50])
+        logger.info('Estrutura 5 seções OK para "%s"', tema[:50])
         return data
 
     except Exception as e:
@@ -5289,33 +5275,33 @@ def _gerar_estrutura_infografico(tema):
 
 
 def _prompt_infografico_dalle(tema, estrutura=None):
-    """Gera 4 vinhetas de ilustração em grid 2×2 — sem texto, fundo branco.
+    """Gera 5 vinhetas de ilustração em grid 3×2 — sem texto, fundo branco.
+    6ª célula (inferior-direita) fica em branco.
     DALL-E faz APENAS as ilustrações; Pillow constrói TODO o poster.
     """
-    titulo_base = tema[:70]
-    secoes = (estrutura or {}).get('secoes', [])[:4]
+    secoes = (estrutura or {}).get('secoes', [])[:5]
 
-    descs = []
-    for sec, ramo in zip(secoes, _INFOGRAFICO_RAMOS):
-        ilus = sec.get('ilustracao_en') or f'{ramo["ilus"]} about {tema}'
-        descs.append(ilus)
-    while len(descs) < 4:
+    descs = [s.get('ilustracao_en') or f'educational watercolor about {tema}'
+             for s in secoes]
+    while len(descs) < 5:
         descs.append(f'educational watercolor about {tema}')
 
     return (
-        f'Exactly 4 educational watercolor illustration panels about "{tema}", '
-        'arranged in a strict 2×2 grid. '
+        f'Exactly 5 educational watercolor illustration panels about "{tema}", '
+        'arranged in a 3-column × 2-row grid (6 cells total). '
+        'The 6th cell (bottom-right) must be completely white/blank — leave it empty. '
         'CRITICAL: pure white (#FFFFFF) background everywhere — between panels, '
-        'behind illustrations, and in gutters. Each panel separated by a wide white border. '
+        'behind illustrations, and in gutters. Each panel separated by a white border. '
         'ABSOLUTELY NO TEXT, NO LETTERS, NO NUMBERS, NO LABELS anywhere in the image. '
-        'Each panel is a single clear scene with ink outlines and bright watercolor fills. '
-        f'Panel 1 (top-left): {descs[0]}. '
-        f'Panel 2 (top-right): {descs[1]}. '
-        f'Panel 3 (bottom-left): {descs[2]}. '
-        f'Panel 4 (bottom-right): {descs[3]}. '
+        'Each panel: single clear scene, clean ink outlines, bright watercolor fills. '
+        f'Panel 1 (row 1 col 1): {descs[0]}. '
+        f'Panel 2 (row 1 col 2): {descs[1]}. '
+        f'Panel 3 (row 1 col 3): {descs[2]}. '
+        f'Panel 4 (row 2 col 1): {descs[3]}. '
+        f'Panel 5 (row 2 col 2): {descs[4]}. '
+        'Panel 6 (row 2 col 3): white blank — no illustration. '
         'Style: professional educational publisher watercolor, clean ink lines, '
-        'vibrant harmonious palette, each scene clearly contained within its quadrant. '
-        'The four panels must be visually distinct from each other.'
+        'vibrant harmonious palette. Each scene visually distinct from the others.'
     )
 
 
@@ -5362,34 +5348,17 @@ def _wrap(text, font, max_w, draw):
 
 
 def _compositar_poster(image_url, estrutura, tema):
-    """Poster v3 estilo ProfessorIA™: fundo branco puro, ovals feathered,
-    ribbons coloridos, setas →, tipografia limpa.
+    """Poster ProfessorIA™ — layout 2-2-1 (5 seções).
+    Estrutura fiel à referência: title ribbon, label parallelogram,
+    oval landscape feathered à direita, arco "C" na esquerda do oval,
+    bullets com seta →, footer com logo.
     Retorna 'data:image/jpeg;base64,...'.
     """
     from PIL import Image, ImageDraw, ImageFilter
-    import requests as _req
+    import requests as _req, math as _m
 
     def _lighten(c, f):
-        """Blend cor com branco por fator f (0=cor, 1=branco)."""
         return tuple(int(x + (255 - x) * f) for x in c)
-
-    # ── Download das vinhetas DALL-E (grid 2×2) ───────────────────────────
-    r = _req.get(image_url, timeout=30)
-    r.raise_for_status()
-    dalle = Image.open(io.BytesIO(r.content)).convert('RGB')
-    DW, DH = dalle.size   # 1792 × 1024
-
-    # Extrai 4 quadrantes como vinhetas independentes
-    vinhetas = [
-        dalle.crop((0,     0,     DW//2, DH//2)),
-        dalle.crop((DW//2, 0,     DW,    DH//2)),
-        dalle.crop((0,     DH//2, DW//2, DH)),
-        dalle.crop((DW//2, DH//2, DW,    DH)),
-    ]
-
-    # ── Canvas branco puro ────────────────────────────────────────────────
-    PW, PH  = 1792, 1024
-    WHITE   = (255, 255, 255)
 
     def _hex_to_rgb(h, default):
         try:
@@ -5400,44 +5369,65 @@ def _compositar_poster(image_url, estrutura, tema):
             pass
         return default
 
-    est    = estrutura or {}
-
-    # Cores adaptadas ao tema — fornecidas pelo LLM, com fallback ao azul padrão
-    BLUE = _hex_to_rgb(est.get('cor_primaria', ''), (35, 100, 205))
-    NAVY = _hex_to_rgb(est.get('cor_escura',   ''), (10,  22,  58))
-    poster  = Image.new('RGB', (PW, PH), WHITE)
-    draw    = ImageDraw.Draw(poster)
-
-    titulo = est.get('titulo', tema.upper())[:80]
-    secoes = list(est.get('secoes', []))[:4]
-    for k in range(len(secoes), 4):
-        secoes.append({'nome': _INFOGRAFICO_RAMOS[k]['nome'], 'topicos': []})
-
-    # ── Layout ────────────────────────────────────────────────────────────
-    TITLE_H  = 96
-    FOOTER_H = 44
-    H_PAD    = 16
-    H_GAP    = 10
-    V_GAP    = 10
-
-    CARD_W = (PW - 2 * H_PAD - H_GAP) // 2        # = 875
-    CARD_H = (PH - TITLE_H - FOOTER_H - 3 * V_GAP) // 2  # = 427
-
-    card_origins = [
-        (H_PAD,                   TITLE_H + V_GAP),
-        (H_PAD + CARD_W + H_GAP,  TITLE_H + V_GAP),
-        (H_PAD,                   TITLE_H + 2 * V_GAP + CARD_H),
-        (H_PAD + CARD_W + H_GAP,  TITLE_H + 2 * V_GAP + CARD_H),
+    # ── Download & crop 5 painéis do grid 3×2 ────────────────────────────
+    r = _req.get(image_url, timeout=30)
+    r.raise_for_status()
+    dalle = Image.open(io.BytesIO(r.content)).convert('RGB')
+    DW, DH = dalle.size   # 1792 × 1024
+    CW, CH = DW // 3, DH // 2   # ≈ 597 × 512
+    panels = [
+        dalle.crop((0,    0,   CW,    CH)),    # 0
+        dalle.crop((CW,   0,   CW*2,  CH)),    # 1
+        dalle.crop((CW*2, 0,   DW,    CH)),    # 2
+        dalle.crop((0,    CH,  CW,    DH)),    # 3
+        dalle.crop((CW,   CH,  CW*2,  DH)),    # 4  (6ª célula ignorada)
     ]
 
-    PAD     = 22
-    OVL_W   = int(CARD_W * 0.45)              # ≈ 393
-    OVL_H   = max(10, CARD_H - PAD * 2)       # ≈ 383
-    GAP_MID = 14
-    TXT_W   = CARD_W - OVL_W - GAP_MID - PAD  # ≈ 446
+    # ── Setup ─────────────────────────────────────────────────────────────
+    PW, PH  = 1792, 1024
+    WHITE   = (255, 255, 255)
+    est     = estrutura or {}
 
-    # Fontes
-    tf_sz = 52
+    BLUE   = _hex_to_rgb(est.get('cor_primaria', ''), (35, 100, 205))
+    NAVY   = _hex_to_rgb(est.get('cor_escura',   ''), (10,  22,  58))
+    SHADOW = _lighten(BLUE, 0.55)
+
+    poster = Image.new('RGB', (PW, PH), WHITE)
+    draw   = ImageDraw.Draw(poster)
+
+    titulo = est.get('titulo', tema.upper())[:70]
+    secoes = list(est.get('secoes', []))[:5]
+    while len(secoes) < 5:
+        secoes.append({'nome': f'Seção {len(secoes)+1}', 'topicos': []})
+
+    # ── Dimensões globais ─────────────────────────────────────────────────
+    TITLE_H  = 82
+    FOOTER_H = 44
+    H_PAD    = 20
+    COL_GAP  = 10
+    ROW_GAP  = 10
+
+    # 3 linhas iguais no espaço restante
+    content_h = PH - TITLE_H - ROW_GAP - FOOTER_H   # 888
+    ROW_H     = (content_h - ROW_GAP * 2) // 3       # ~289
+    HALF_W    = (PW - H_PAD * 2 - COL_GAP) // 2      # 871
+    BOT_W     = 980
+
+    ROW1_Y = TITLE_H + ROW_GAP
+    ROW2_Y = ROW1_Y + ROW_H + ROW_GAP
+    ROW3_Y = ROW2_Y + ROW_H + ROW_GAP
+
+    # (x, y, w, h) de cada seção
+    sections_geo = [
+        (H_PAD,                   ROW1_Y, HALF_W, ROW_H),
+        (H_PAD + HALF_W + COL_GAP, ROW1_Y, HALF_W, ROW_H),
+        (H_PAD,                   ROW2_Y, HALF_W, ROW_H),
+        (H_PAD + HALF_W + COL_GAP, ROW2_Y, HALF_W, ROW_H),
+        ((PW - BOT_W) // 2,       ROW3_Y, BOT_W,  ROW_H),
+    ]
+
+    # ── Fontes ────────────────────────────────────────────────────────────
+    tf_sz = 50
     tf = _pil_font(tf_sz, bold=True)
     for _ in range(20):
         bb = draw.textbbox((0, 0), titulo, font=tf)
@@ -5446,129 +5436,115 @@ def _compositar_poster(image_url, estrutura, tema):
         tf_sz -= 2
         tf = _pil_font(tf_sz, bold=True)
 
-    sf_sz = max(18, int(CARD_H * 0.072))
-    bf_sz = max(14, int(CARD_H * 0.058))
-    sf    = _pil_font(sf_sz, bold=True)
-    bf    = _pil_font(bf_sz, bold=False)
-    sf_lh = sf_sz + 4
-    bf_lh = bf_sz + 8
+    sf = _pil_font(20, bold=True)   # label da seção
+    bf = _pil_font(16, bold=False)  # bullets
+    sf_lh = 24
+    bf_lh = 24
 
-    # ── TÍTULO: ribbon azul adaptativo ao texto ───────────────────────────
-    bb     = draw.textbbox((0, 0), titulo, font=tf)
-    tw     = bb[2] - bb[0]
-    ban_w  = min(tw + 120, PW - 2 * H_PAD)
-    ban_x1 = max(H_PAD, PW // 2 - ban_w // 2)
-    ban_x2 = min(PW - H_PAD, PW // 2 + ban_w // 2)
-    ban_y1 = 12
-    ban_y2 = TITLE_H - 12
-    ban_r  = (ban_y2 - ban_y1) // 4    # ribbon shape (não pill perfeito)
-    # Sombra (versão clareada da cor primária)
-    SHADOW = _lighten(BLUE, 0.55)
-    draw.rounded_rectangle([ban_x1 + 3, ban_y1 + 4, ban_x2 + 3, ban_y2 + 4],
-                           radius=ban_r, fill=SHADOW)
-    draw.rounded_rectangle([ban_x1, ban_y1, ban_x2, ban_y2],
-                           radius=ban_r, fill=BLUE)
-    draw.text((PW // 2, (ban_y1 + ban_y2) // 2), titulo, font=tf,
-              fill=WHITE, anchor='mm')
+    # ── TÍTULO: parallelogram ribbon ──────────────────────────────────────
+    bb    = draw.textbbox((0, 0), titulo, font=tf)
+    tw    = bb[2] - bb[0]
+    ban_w = min(tw + 130, PW - 2 * H_PAD)
+    bx1   = PW // 2 - ban_w // 2
+    bx2   = bx1 + ban_w
+    by1, by2 = 10, TITLE_H - 10
+    SK    = 18   # skew do parallelogram
+    # sombra
+    draw.polygon([(bx1+SK+4, by1+4), (bx2+SK+4, by1+4),
+                  (bx2-SK+4, by2+4), (bx1-SK+4, by2+4)], fill=SHADOW)
+    draw.polygon([(bx1+SK, by1), (bx2+SK, by1),
+                  (bx2-SK, by2), (bx1-SK, by2)], fill=BLUE)
+    draw.text((PW // 2, (by1 + by2) // 2), titulo,
+              font=tf, fill=WHITE, anchor='mm')
 
-    # ── CARDS ─────────────────────────────────────────────────────────────
-    FEATHER = 30
-    import math as _m
+    # ── SEÇÕES ────────────────────────────────────────────────────────────
+    FEATHER = 22
 
-    for i, (ox, oy) in enumerate(card_origins):
-        sec = secoes[i]
+    for i, (sx, sy, sw, sh) in enumerate(sections_geo):
+        sec   = secoes[i]
+        panel = panels[i]
 
-        # ── Oval ilustração, centralizado verticalmente ───────────────────
-        oval_x = ox + TXT_W + GAP_MID
-        oval_y = oy + (CARD_H - OVL_H) // 2
+        # Oval: ocupa 52 % da largura, altura quase total da seção
+        OVL_W = int(sw * 0.52)
+        OVL_H = sh - 16
+        TXT_W = sw - OVL_W - 14   # área de texto à esquerda
+        OVL_X = sx + TXT_W + 14
+        OVL_Y = sy + (sh - OVL_H) // 2
 
-        # ── Arco conector azul (elemento chave do estilo ProfessorIA™) ────
-        # Varre ao redor da metade superior do oval, de ~SW até ~NE
-        A_EXP = 32
-        arc_cx = oval_x + OVL_W // 2
-        arc_cy = oval_y + OVL_H // 2
+        # ── Arco "C" na esquerda do oval (lado que enfrenta o texto) ─────
+        A_EXP  = 22
+        arc_cx = OVL_X + OVL_W // 2
+        arc_cy = OVL_Y + OVL_H // 2
         arc_rx = OVL_W // 2 + A_EXP
         arc_ry = OVL_H // 2 + A_EXP
-        a_s    = _m.radians(115)   # ponto de início (baixo-esquerda)
-        a_e    = _m.radians(342)   # ponto de fim (cima-direita)
-        steps  = 45
-        pts    = [
+        # 250° → 110° (decrescente = sentido anti-horário = "(" na esquerda)
+        a_s, a_e = _m.radians(252), _m.radians(108)
+        steps = 32
+        pts = [
             (arc_cx + arc_rx * _m.cos(a_s + (a_e - a_s) * k / steps),
              arc_cy + arc_ry * _m.sin(a_s + (a_e - a_s) * k / steps))
             for k in range(steps + 1)
         ]
         for k in range(len(pts) - 1):
-            draw.line([pts[k], pts[k + 1]], fill=BLUE, width=6)
+            draw.line([pts[k], pts[k + 1]], fill=BLUE, width=9)
 
-        # ── Paste com máscara elipse feathered (sem borda extra) ──────────
-        vig    = vinhetas[i].resize((OVL_W, OVL_H), Image.LANCZOS)
+        # ── Ilustração watercolor, oval feathered ─────────────────────────
+        vig    = panel.resize((OVL_W, OVL_H), Image.LANCZOS)
         mask_e = Image.new('L', (OVL_W, OVL_H), 0)
         ImageDraw.Draw(mask_e).ellipse(
             [FEATHER, FEATHER, OVL_W - FEATHER - 1, OVL_H - FEATHER - 1], fill=255
         )
-        mask_e = mask_e.filter(ImageFilter.GaussianBlur(radius=int(FEATHER * 0.70)))
-        poster.paste(vig, (oval_x, oval_y), mask=mask_e)
+        mask_e = mask_e.filter(ImageFilter.GaussianBlur(radius=int(FEATHER * 0.65)))
+        poster.paste(vig, (OVL_X, OVL_Y), mask=mask_e)
 
-        # ── Ribbon adaptativo (largura = conteúdo do texto) ──────────────
+        # ── Label parallelogram (nome da seção) ───────────────────────────
         nome       = sec.get('nome', '')
-        nome_lines = _wrap(nome, sf, TXT_W - PAD, draw)[:2]
+        nome_lines = _wrap(nome, sf, TXT_W - 28, draw)[:2]
         n_ln       = len(nome_lines)
-
-        # Largura da pill = maior linha + padding
-        max_lw = 0
+        max_lw     = max((draw.textbbox((0,0), ln, font=sf)[2]
+                         - draw.textbbox((0,0), ln, font=sf)[0])
+                        for ln in nome_lines)
+        lab_w = min(max_lw + 28, TXT_W - 8)
+        lab_h = max(sf_lh + 14, n_ln * sf_lh + 14)
+        lx1 = sx + 6
+        lx2 = lx1 + lab_w
+        ly1 = sy + 10
+        ly2 = ly1 + lab_h
+        SK2 = 10
+        draw.polygon([(lx1+SK2+3, ly1+3), (lx2+SK2+3, ly1+3),
+                      (lx2+3,     ly2+3), (lx1+3,     ly2+3)], fill=SHADOW)
+        draw.polygon([(lx1+SK2, ly1), (lx2+SK2, ly1),
+                      (lx2,     ly2), (lx1,     ly2)], fill=BLUE)
+        y_t = ly1 + (lab_h - n_ln * sf_lh) // 2
         for ln in nome_lines:
-            bln = draw.textbbox((0, 0), ln, font=sf)
-            max_lw = max(max_lw, bln[2] - bln[0])
-        pill_w = min(max_lw + PAD * 2, TXT_W)
-        pill_h = max(sf_lh + 20, n_ln * sf_lh + 20)
-
-        rx1 = ox + PAD // 2
-        rx2 = ox + PAD // 2 + pill_w
-        ry1 = oy + PAD
-        ry2 = oy + PAD + pill_h
-        pr  = pill_h // 2    # pill shape perfeito
-
-        # Sombra (mesma cor da sombra do título)
-        draw.rounded_rectangle([rx1 + 2, ry1 + 3, rx2 + 2, ry2 + 3],
-                               radius=pr, fill=SHADOW)
-        draw.rounded_rectangle([rx1, ry1, rx2, ry2], radius=pr, fill=BLUE)
-
-        tot = n_ln * sf_lh
-        y_t = ry1 + (pill_h - tot) // 2
-        for ln in nome_lines:
-            draw.text((rx1 + PAD, y_t), ln, font=sf, fill=WHITE)
+            draw.text((lx1 + SK2 + 10, y_t), ln, font=sf, fill=WHITE)
             y_t += sf_lh
 
         # ── Bullets com seta → ────────────────────────────────────────────
-        y_cur  = ry2 + 18
-        max_bw = TXT_W - 32
-        cy_lim = oy + CARD_H - PAD
+        y_cur  = ly2 + 12
+        cy_lim = sy + sh - 8
+        bw_max = TXT_W - 28
 
-        for topico in sec.get('topicos', [])[:3]:
+        for topico in sec.get('topicos', [])[:4]:
             if y_cur + bf_lh > cy_lim:
                 break
-            ax  = ox + PAD
+            ax  = sx + 8
             acy = y_cur + bf_lh // 2
-            draw.polygon([(ax, acy - 6), (ax + 13, acy), (ax, acy + 6)], fill=BLUE)
-            blines = _wrap(topico, bf, max_bw, draw)
-            for ln in blines[:2]:
+            draw.polygon([(ax, acy-5), (ax+11, acy), (ax, acy+5)], fill=BLUE)
+            for ln in _wrap(topico, bf, bw_max, draw)[:2]:
                 if y_cur + bf_lh <= cy_lim:
-                    draw.text((ox + PAD + 18, y_cur), ln, font=bf, fill=NAVY)
+                    draw.text((sx + 22, y_cur), ln, font=bf, fill=NAVY)
                     y_cur += bf_lh
-            y_cur += 10
+            y_cur += 5
 
-    # ── FOOTER (fundo branco, logo outline) ──────────────────────────────
-    FY      = PH - FOOTER_H
+    # ── FOOTER: logo ProfessorIA™ ─────────────────────────────────────────
     brand_f = _pil_font(20, bold=True)
-    LCX     = PW - 155
-    LCY     = FY + FOOTER_H // 2
-    R, OFF  = 14, 11
-    # Dois círculos entrelaçados — apenas outline azul (igual à referência)
-    draw.ellipse([LCX - R, LCY - R, LCX + R, LCY + R],
-                 outline=BLUE, width=3)
-    draw.ellipse([LCX + OFF - R, LCY - R, LCX + OFF + R, LCY + R],
-                 outline=BLUE, width=3)
-    draw.text((LCX + OFF + R + 8, LCY), 'ProfessorIA™',
+    LCX = PW - 155
+    LCY = PH - FOOTER_H // 2
+    R, OFF = 14, 11
+    draw.ellipse([LCX-R, LCY-R, LCX+R, LCY+R], outline=BLUE, width=3)
+    draw.ellipse([LCX+OFF-R, LCY-R, LCX+OFF+R, LCY+R], outline=BLUE, width=3)
+    draw.text((LCX+OFF+R+8, LCY), 'ProfessorIA™',
               font=brand_f, fill=NAVY, anchor='lm')
 
     # ── Serialização ──────────────────────────────────────────────────────
