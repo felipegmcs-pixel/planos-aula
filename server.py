@@ -5200,6 +5200,8 @@ def _gerar_estrutura_infografico(tema):
         'ESTRUTURA OBRIGATÓRIA (4 ramos fixos):\n'
         '{\n'
         '  "titulo": "TÍTULO EM MAIÚSCULAS (máx 60 chars)",\n'
+        '  "cor_primaria": "#RRGGBB",\n'
+        '  "cor_escura":   "#RRGGBB",\n'
         '  "secoes": [\n'
         '    {\n'
         '      "nome": "CONTEXTO & DEFINIÇÃO",\n'
@@ -5211,6 +5213,19 @@ def _gerar_estrutura_infografico(tema):
         '    { "nome": "DESDOBRAMENTOS & APLICAÇÕES","topicos": [...3...], "ilustracao_en": "..." }\n'
         '  ]\n'
         '}\n\n'
+
+        'PALETA TEMÁTICA (obrigatório):\n'
+        '- "cor_primaria": cor vibrante que REPRESENTA o tema visualmente.\n'
+        '  Exemplos: história/guerra → "#B8252A" (vermelho escarlate); '
+        'biologia → "#2E8B3A" (verde vivo); '
+        'física/tecnologia → "#1B5FA8" (azul elétrico); '
+        'geografia → "#C67C2A" (laranja terra); '
+        'literatura → "#6B3FA0" (roxo); '
+        'matemática → "#1A7A8A" (teal); '
+        'química → "#8B4E0A" (âmbar); '
+        'artes → "#C2185B" (rosa-magenta).\n'
+        '- "cor_escura": versão escura/navy da mesma cor para texto. '
+        'Ex: se cor_primaria="#B8252A", cor_escura="#5C0D10".\n\n'
 
         'DIRETRIZES POR RAMO:\n'
         + ramos_desc + '\n\n'
@@ -5375,12 +5390,24 @@ def _compositar_poster(image_url, estrutura, tema):
     # ── Canvas branco puro ────────────────────────────────────────────────
     PW, PH  = 1792, 1024
     WHITE   = (255, 255, 255)
-    NAVY    = (10, 22, 58)
-    BLUE    = (35, 100, 205)    # cor única ProfessorIA™
+
+    def _hex_to_rgb(h, default):
+        try:
+            h = h.strip().lstrip('#')
+            if len(h) == 6:
+                return tuple(int(h[i:i+2], 16) for i in (0, 2, 4))
+        except Exception:
+            pass
+        return default
+
+    est    = estrutura or {}
+
+    # Cores adaptadas ao tema — fornecidas pelo LLM, com fallback ao azul padrão
+    BLUE = _hex_to_rgb(est.get('cor_primaria', ''), (35, 100, 205))
+    NAVY = _hex_to_rgb(est.get('cor_escura',   ''), (10,  22,  58))
     poster  = Image.new('RGB', (PW, PH), WHITE)
     draw    = ImageDraw.Draw(poster)
 
-    est    = estrutura or {}
     titulo = est.get('titulo', tema.upper())[:80]
     secoes = list(est.get('secoes', []))[:4]
     for k in range(len(secoes), 4):
@@ -5435,9 +5462,10 @@ def _compositar_poster(image_url, estrutura, tema):
     ban_y1 = 12
     ban_y2 = TITLE_H - 12
     ban_r  = (ban_y2 - ban_y1) // 4    # ribbon shape (não pill perfeito)
-    # Sombra
+    # Sombra (versão clareada da cor primária)
+    SHADOW = _lighten(BLUE, 0.55)
     draw.rounded_rectangle([ban_x1 + 3, ban_y1 + 4, ban_x2 + 3, ban_y2 + 4],
-                           radius=ban_r, fill=(175, 205, 245))
+                           radius=ban_r, fill=SHADOW)
     draw.rounded_rectangle([ban_x1, ban_y1, ban_x2, ban_y2],
                            radius=ban_r, fill=BLUE)
     draw.text((PW // 2, (ban_y1 + ban_y2) // 2), titulo, font=tf,
@@ -5500,9 +5528,9 @@ def _compositar_poster(image_url, estrutura, tema):
         ry2 = oy + PAD + pill_h
         pr  = pill_h // 2    # pill shape perfeito
 
-        # Sombra
+        # Sombra (mesma cor da sombra do título)
         draw.rounded_rectangle([rx1 + 2, ry1 + 3, rx2 + 2, ry2 + 3],
-                               radius=pr, fill=(178, 206, 248))
+                               radius=pr, fill=SHADOW)
         draw.rounded_rectangle([rx1, ry1, rx2, ry2], radius=pr, fill=BLUE)
 
         tot = n_ln * sf_lh
