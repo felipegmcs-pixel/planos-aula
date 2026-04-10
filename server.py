@@ -5202,6 +5202,7 @@ def _gerar_estrutura_infografico(tema):
         '  "titulo": "TÍTULO EM MAIÚSCULAS com contexto temporal/geográfico (máx 55 chars)",\n'
         '  "cor_primaria": "#RRGGBB",\n'
         '  "cor_escura":   "#RRGGBB",\n'
+        '  "estilo_fonte": "classico",\n'
         '  "secoes": [\n'
         '    { "nome": "Nome específico ao tema (ex: Pioneirismo Inglês)",\n'
         '      "topicos": ["tópico curto 1", "tópico curto 2", "até 4 tópicos"],\n'
@@ -5234,6 +5235,9 @@ def _gerar_estrutura_infografico(tema):
         '- "fonte": referência REAL e verificável para cada seção. '
         'Formato: AUTOR. Título. Editora, Ano. — OU — BNCC: EF09HI01 — descrição. '
         'Use APENAS obras acadêmicas ou livros didáticos que realmente existam.\n'
+        '- "estilo_fonte": "classico" para história, literatura, artes, filosofia, geografia. '
+        '"moderno" para ciências, biologia, física, química, matemática, tecnologia '
+        'e temas contemporâneos.\n'
         '- Idioma dos tópicos e título: PORTUGUÊS DO BRASIL\n'
         f'- Tema: "{tema}"'
     )
@@ -5311,6 +5315,7 @@ def _prompt_infografico_dalle(tema, estrutura=None):
 
 
 # ── Fontes para overlay Pillow ─────────────────────────────────────────────
+# Sans-serif: estilo moderno/científico
 _FONTS_BOLD = [
     '/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf',
     '/usr/share/fonts/truetype/liberation/LiberationSans-Bold.ttf',
@@ -5321,11 +5326,32 @@ _FONTS_REGULAR = [
     '/usr/share/fonts/truetype/liberation/LiberationSans-Regular.ttf',
     '/usr/share/fonts/truetype/freefont/FreeSans.ttf',
 ]
+# Serif: estilo clássico/histórico/literário (com fallback sans)
+_FONTS_BOLD_SERIF = [
+    '/usr/share/fonts/truetype/dejavu/DejaVuSerif-Bold.ttf',
+    '/usr/share/fonts/truetype/liberation/LiberationSerif-Bold.ttf',
+    '/usr/share/fonts/truetype/freefont/FreeSerifBold.ttf',
+    '/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf',    # fallback
+]
+_FONTS_REGULAR_SERIF = [
+    '/usr/share/fonts/truetype/dejavu/DejaVuSerif.ttf',
+    '/usr/share/fonts/truetype/liberation/LiberationSerif-Regular.ttf',
+    '/usr/share/fonts/truetype/freefont/FreeSerif.ttf',
+    '/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf',          # fallback
+]
 
 
-def _pil_font(size, bold=True):
+def _pil_font(size, bold=True, estilo='moderno'):
+    """Retorna fonte Pillow adequada ao estilo temático.
+    estilo='classico' → serif (história, literatura, geografia)
+    estilo='moderno'  → sans-serif (ciências, tecnologia, matemática)
+    """
     from PIL import ImageFont
-    for p in (_FONTS_BOLD if bold else _FONTS_REGULAR):
+    if estilo == 'classico':
+        paths = _FONTS_BOLD_SERIF if bold else _FONTS_REGULAR_SERIF
+    else:
+        paths = _FONTS_BOLD if bold else _FONTS_REGULAR
+    for p in paths:
         try:
             return ImageFont.truetype(p, size)
         except Exception:
@@ -5352,15 +5378,65 @@ def _wrap(text, font, max_w, draw):
     return lines
 
 
-def _compositar_poster(image_url, estrutura, tema):
+def _gerar_vinhetas_individuais(estrutura, tema):
+    """Gera 5 ilustrações watercolor independentes via DALL-E (paralelo).
+    Retorna lista de 5 PIL.Image (RGB), na ordem das seções.
+    Custo: 5 × standard 1024×1024 ≈ $0.10 (vs $0.08 do HD grid anterior).
+    """
+    from concurrent.futures import ThreadPoolExecutor
+    from PIL import Image
+    import requests as _req
+
+    if not client_openai:
+        return None
+
+    secoes = list((estrutura or {}).get('secoes', []))[:5]
+    while len(secoes) < 5:
+        secoes.append({'ilustracao_en': f'educational watercolor about {tema}'})
+
+    STYLE = (
+        'Educational watercolor illustration, pure white background (#FFFFFF), '
+        'clean ink outlines, bright vibrant colors, no text, no letters, no numbers.'
+    )
+
+    def _um(idx_sec):
+        idx, sec = idx_sec
+        desc = sec.get('ilustracao_en') or f'educational watercolor about {tema}'
+        prompt = f'{desc}. {STYLE}'
+        try:
+            resp = client_openai.images.generate(
+                model='dall-e-3',
+                prompt=prompt[:4000],
+                size='1024x1024',
+                quality='standard',
+                n=1,
+            )
+            url = resp.data[0].url
+            r = _req.get(url, timeout=30)
+            r.raise_for_status()
+            return idx, Image.open(io.BytesIO(r.content)).convert('RGB')
+        except Exception as e:
+            logger.error('Vinheta %d falhou: %s', idx, e)
+            return idx, Image.new('RGB', (1024, 1024), (245, 245, 240))
+
+    panels = [None] * 5
+    with ThreadPoolExecutor(max_workers=5) as ex:
+        for idx, img in ex.map(_um, enumerate(secoes)):
+            panels[idx] = img
+    return panels
+
+
+def _compositar_poster(panels, estrutura, tema):
     """Poster ProfessorIA™ — layout 2-2-1 (5 seções).
     Estrutura fiel à referência: title ribbon, label parallelogram,
     oval landscape feathered à direita, arco "C" na esquerda do oval,
     bullets com seta →, footer com logo.
+
+    panels: lista de 5 PIL.Image RGB (1024×1024 cada).
     Retorna 'data:image/jpeg;base64,...'.
     """
     from PIL import Image, ImageDraw, ImageFilter
-    import requests as _req, math as _m
+    import math as _m
 
     def _lighten(c, f):
         return tuple(int(x + (255 - x) * f) for x in c)
@@ -5374,28 +5450,16 @@ def _compositar_poster(image_url, estrutura, tema):
             pass
         return default
 
-    # ── Download & crop 5 painéis do grid 3×2 ────────────────────────────
-    r = _req.get(image_url, timeout=30)
-    r.raise_for_status()
-    dalle = Image.open(io.BytesIO(r.content)).convert('RGB')
-    DW, DH = dalle.size   # 1792 × 1024
-    CW, CH = DW // 3, DH // 2   # ≈ 597 × 512
-    panels = [
-        dalle.crop((0,    0,   CW,    CH)),    # 0
-        dalle.crop((CW,   0,   CW*2,  CH)),    # 1
-        dalle.crop((CW*2, 0,   DW,    CH)),    # 2
-        dalle.crop((0,    CH,  CW,    DH)),    # 3
-        dalle.crop((CW,   CH,  CW*2,  DH)),    # 4  (6ª célula ignorada)
-    ]
-
     # ── Setup ─────────────────────────────────────────────────────────────
-    PW, PH  = 1792, 1024
-    WHITE   = (255, 255, 255)
-    est     = estrutura or {}
+    S      = 2          # fator de escala — saída em 3584×2048 (≈ 2K nativo)
+    PW, PH = 1792*S, 1024*S
+    WHITE  = (255, 255, 255)
+    est    = estrutura or {}
 
     BLUE   = _hex_to_rgb(est.get('cor_primaria', ''), (35, 100, 205))
     NAVY   = _hex_to_rgb(est.get('cor_escura',   ''), (10,  22,  58))
     SHADOW = _lighten(BLUE, 0.55)
+    estilo = est.get('estilo_fonte', 'moderno')   # 'classico' | 'moderno'
 
     poster = Image.new('RGB', (PW, PH), WHITE)
     draw   = ImageDraw.Draw(poster)
@@ -5405,95 +5469,90 @@ def _compositar_poster(image_url, estrutura, tema):
     while len(secoes) < 5:
         secoes.append({'nome': f'Seção {len(secoes)+1}', 'topicos': []})
 
-    # ── Dimensões globais ─────────────────────────────────────────────────
-    TITLE_H  = 82
-    FOOTER_H = 44
-    H_PAD    = 20
-    COL_GAP  = 10
-    ROW_GAP  = 10
+    # ── Dimensões × S ─────────────────────────────────────────────────────
+    TITLE_H  = 82*S
+    FOOTER_H = 44*S
+    H_PAD    = 20*S
+    COL_GAP  = 10*S
+    ROW_GAP  = 10*S
 
-    # 3 linhas iguais no espaço restante
-    content_h = PH - TITLE_H - ROW_GAP - FOOTER_H   # 888
-    ROW_H     = (content_h - ROW_GAP * 2) // 3       # ~289
-    HALF_W    = (PW - H_PAD * 2 - COL_GAP) // 2      # 871
-    BOT_W     = 980
+    content_h = PH - TITLE_H - ROW_GAP - FOOTER_H
+    ROW_H     = (content_h - ROW_GAP * 2) // 3
+    HALF_W    = (PW - H_PAD * 2 - COL_GAP) // 2
+    BOT_W     = 980*S
 
     ROW1_Y = TITLE_H + ROW_GAP
     ROW2_Y = ROW1_Y + ROW_H + ROW_GAP
     ROW3_Y = ROW2_Y + ROW_H + ROW_GAP
 
-    # (x, y, w, h) de cada seção
     sections_geo = [
-        (H_PAD,                   ROW1_Y, HALF_W, ROW_H),
+        (H_PAD,                    ROW1_Y, HALF_W, ROW_H),
         (H_PAD + HALF_W + COL_GAP, ROW1_Y, HALF_W, ROW_H),
-        (H_PAD,                   ROW2_Y, HALF_W, ROW_H),
+        (H_PAD,                    ROW2_Y, HALF_W, ROW_H),
         (H_PAD + HALF_W + COL_GAP, ROW2_Y, HALF_W, ROW_H),
-        ((PW - BOT_W) // 2,       ROW3_Y, BOT_W,  ROW_H),
+        ((PW - BOT_W) // 2,        ROW3_Y, BOT_W,  ROW_H),
     ]
 
-    # ── Fontes ────────────────────────────────────────────────────────────
-    tf_sz = 50
-    tf = _pil_font(tf_sz, bold=True)
+    # ── Fontes (escala × S, estilo temático) ─────────────────────────────
+    tf_sz = 50*S
+    tf = _pil_font(tf_sz, bold=True, estilo=estilo)
     for _ in range(20):
         bb = draw.textbbox((0, 0), titulo, font=tf)
-        if bb[2] - bb[0] <= PW - 200:
+        if bb[2] - bb[0] <= PW - 200*S:
             break
-        tf_sz -= 2
-        tf = _pil_font(tf_sz, bold=True)
+        tf_sz -= S*2
+        tf = _pil_font(tf_sz, bold=True, estilo=estilo)
 
-    sf = _pil_font(20, bold=True)   # label da seção
-    bf = _pil_font(16, bold=False)  # bullets
-    sf_lh = 24
-    bf_lh = 24
+    sf = _pil_font(20*S, bold=True,  estilo=estilo)   # label seção
+    bf = _pil_font(16*S, bold=False, estilo=estilo)    # bullets
+    sf_lh = 24*S
+    bf_lh = 24*S
 
     # ── TÍTULO: parallelogram ribbon ──────────────────────────────────────
     bb    = draw.textbbox((0, 0), titulo, font=tf)
     tw    = bb[2] - bb[0]
-    ban_w = min(tw + 130, PW - 2 * H_PAD)
+    ban_w = min(tw + 130*S, PW - 2*H_PAD)
     bx1   = PW // 2 - ban_w // 2
     bx2   = bx1 + ban_w
-    by1, by2 = 10, TITLE_H - 10
-    SK    = 18   # skew do parallelogram
-    # sombra
-    draw.polygon([(bx1+SK+4, by1+4), (bx2+SK+4, by1+4),
-                  (bx2-SK+4, by2+4), (bx1-SK+4, by2+4)], fill=SHADOW)
+    by1, by2 = 10*S, TITLE_H - 10*S
+    SK    = 18*S
+    draw.polygon([(bx1+SK+4*S, by1+4*S), (bx2+SK+4*S, by1+4*S),
+                  (bx2-SK+4*S, by2+4*S), (bx1-SK+4*S, by2+4*S)], fill=SHADOW)
     draw.polygon([(bx1+SK, by1), (bx2+SK, by1),
                   (bx2-SK, by2), (bx1-SK, by2)], fill=BLUE)
     draw.text((PW // 2, (by1 + by2) // 2), titulo,
               font=tf, fill=WHITE, anchor='mm')
 
     # ── SEÇÕES ────────────────────────────────────────────────────────────
-    FEATHER = 22
+    FEATHER = 22*S
 
     for i, (sx, sy, sw, sh) in enumerate(sections_geo):
         sec   = secoes[i]
         panel = panels[i]
 
-        # Oval: ocupa 52 % da largura, altura quase total da seção
         OVL_W = int(sw * 0.52)
-        OVL_H = sh - 16
-        TXT_W = sw - OVL_W - 14   # área de texto à esquerda
-        OVL_X = sx + TXT_W + 14
+        OVL_H = sh - 16*S
+        TXT_W = sw - OVL_W - 14*S
+        OVL_X = sx + TXT_W + 14*S
         OVL_Y = sy + (sh - OVL_H) // 2
 
-        # ── Arco "C" na esquerda do oval (lado que enfrenta o texto) ─────
-        A_EXP  = 22
+        # ── Arco "C" na esquerda do oval ──────────────────────────────────
+        A_EXP  = 22*S
         arc_cx = OVL_X + OVL_W // 2
         arc_cy = OVL_Y + OVL_H // 2
         arc_rx = OVL_W // 2 + A_EXP
         arc_ry = OVL_H // 2 + A_EXP
-        # 250° → 110° (decrescente = sentido anti-horário = "(" na esquerda)
         a_s, a_e = _m.radians(252), _m.radians(108)
-        steps = 32
+        steps = 40
         pts = [
             (arc_cx + arc_rx * _m.cos(a_s + (a_e - a_s) * k / steps),
              arc_cy + arc_ry * _m.sin(a_s + (a_e - a_s) * k / steps))
             for k in range(steps + 1)
         ]
         for k in range(len(pts) - 1):
-            draw.line([pts[k], pts[k + 1]], fill=BLUE, width=9)
+            draw.line([pts[k], pts[k + 1]], fill=BLUE, width=9*S)
 
-        # ── Ilustração watercolor, oval feathered ─────────────────────────
+        # ── Oval feathered ────────────────────────────────────────────────
         vig    = panel.resize((OVL_W, OVL_H), Image.LANCZOS)
         mask_e = Image.new('L', (OVL_W, OVL_H), 0)
         ImageDraw.Draw(mask_e).ellipse(
@@ -5502,59 +5561,59 @@ def _compositar_poster(image_url, estrutura, tema):
         mask_e = mask_e.filter(ImageFilter.GaussianBlur(radius=int(FEATHER * 0.65)))
         poster.paste(vig, (OVL_X, OVL_Y), mask=mask_e)
 
-        # ── Label parallelogram (nome da seção) ───────────────────────────
+        # ── Label parallelogram ───────────────────────────────────────────
         nome       = sec.get('nome', '')
-        nome_lines = _wrap(nome, sf, TXT_W - 28, draw)[:2]
+        nome_lines = _wrap(nome, sf, TXT_W - 28*S, draw)[:2]
         n_ln       = len(nome_lines)
         max_lw     = max((draw.textbbox((0,0), ln, font=sf)[2]
                          - draw.textbbox((0,0), ln, font=sf)[0])
                         for ln in nome_lines)
-        lab_w = min(max_lw + 28, TXT_W - 8)
-        lab_h = max(sf_lh + 14, n_ln * sf_lh + 14)
-        lx1 = sx + 6
+        lab_w = min(max_lw + 28*S, TXT_W - 8*S)
+        lab_h = max(sf_lh + 14*S, n_ln * sf_lh + 14*S)
+        lx1 = sx + 6*S
         lx2 = lx1 + lab_w
-        ly1 = sy + 10
+        ly1 = sy + 10*S
         ly2 = ly1 + lab_h
-        SK2 = 10
-        draw.polygon([(lx1+SK2+3, ly1+3), (lx2+SK2+3, ly1+3),
-                      (lx2+3,     ly2+3), (lx1+3,     ly2+3)], fill=SHADOW)
+        SK2 = 10*S
+        draw.polygon([(lx1+SK2+3*S, ly1+3*S), (lx2+SK2+3*S, ly1+3*S),
+                      (lx2+3*S,     ly2+3*S), (lx1+3*S,     ly2+3*S)], fill=SHADOW)
         draw.polygon([(lx1+SK2, ly1), (lx2+SK2, ly1),
                       (lx2,     ly2), (lx1,     ly2)], fill=BLUE)
         y_t = ly1 + (lab_h - n_ln * sf_lh) // 2
         for ln in nome_lines:
-            draw.text((lx1 + SK2 + 10, y_t), ln, font=sf, fill=WHITE)
+            draw.text((lx1 + SK2 + 10*S, y_t), ln, font=sf, fill=WHITE)
             y_t += sf_lh
 
         # ── Bullets com seta → ────────────────────────────────────────────
-        y_cur  = ly2 + 12
-        cy_lim = sy + sh - 8
-        bw_max = TXT_W - 28
+        y_cur  = ly2 + 12*S
+        cy_lim = sy + sh - 8*S
+        bw_max = TXT_W - 28*S
 
         for topico in sec.get('topicos', [])[:4]:
             if y_cur + bf_lh > cy_lim:
                 break
-            ax  = sx + 8
+            ax  = sx + 8*S
             acy = y_cur + bf_lh // 2
-            draw.polygon([(ax, acy-5), (ax+11, acy), (ax, acy+5)], fill=BLUE)
+            draw.polygon([(ax, acy-5*S), (ax+11*S, acy), (ax, acy+5*S)], fill=BLUE)
             for ln in _wrap(topico, bf, bw_max, draw)[:2]:
                 if y_cur + bf_lh <= cy_lim:
-                    draw.text((sx + 22, y_cur), ln, font=bf, fill=NAVY)
+                    draw.text((sx + 22*S, y_cur), ln, font=bf, fill=NAVY)
                     y_cur += bf_lh
-            y_cur += 5
+            y_cur += 5*S
 
     # ── FOOTER: logo ProfessorIA™ ─────────────────────────────────────────
-    brand_f = _pil_font(20, bold=True)
-    LCX = PW - 155
+    brand_f = _pil_font(20*S, bold=True, estilo=estilo)
+    LCX = PW - 155*S
     LCY = PH - FOOTER_H // 2
-    R, OFF = 14, 11
-    draw.ellipse([LCX-R, LCY-R, LCX+R, LCY+R], outline=BLUE, width=3)
-    draw.ellipse([LCX+OFF-R, LCY-R, LCX+OFF+R, LCY+R], outline=BLUE, width=3)
-    draw.text((LCX+OFF+R+8, LCY), 'ProfessorIA™',
+    R, OFF = 14*S, 11*S
+    draw.ellipse([LCX-R, LCY-R, LCX+R, LCY+R], outline=BLUE, width=3*S)
+    draw.ellipse([LCX+OFF-R, LCY-R, LCX+OFF+R, LCY+R], outline=BLUE, width=3*S)
+    draw.text((LCX+OFF+R+8*S, LCY), 'ProfessorIA™',
               font=brand_f, fill=NAVY, anchor='lm')
 
     # ── Serialização ──────────────────────────────────────────────────────
     buf = io.BytesIO()
-    poster.save(buf, format='JPEG', quality=95, optimize=True)
+    poster.save(buf, format='JPEG', quality=92, optimize=True)
     return 'data:image/jpeg;base64,' + base64.b64encode(buf.getvalue()).decode()
 
 
@@ -5607,20 +5666,15 @@ def api_generate_mapa_mental():
             estrutura = _gerar_estrutura_infografico(tema)
             if not estrutura:
                 logger.warning('Estrutura LLM None para "%s" — usando fallback.', tema[:60])
-            prompt = _prompt_infografico_dalle(tema, estrutura)
-            logger.info('DALL-E prompt len=%d uid=%s tema="%s"', len(prompt), uid, tema[:50])
-            img_resp = client_openai.images.generate(
-                model='dall-e-3',
-                prompt=prompt[:4000],
-                size='1792x1024',
-                quality='hd',
-                n=1,
-            )
-            dalle_url = img_resp.data[0].url
-            logger.info('DALL-E OK uid=%s tema="%s" — iniciando composição Pillow', uid, tema[:50])
 
-            # Baixa a imagem DALL-E e sobrepõe o texto PT-BR correto
-            data_url = _compositar_poster(dalle_url, estrutura, tema)
+            # Gera 5 ilustrações individuais em paralelo (1 DALL-E por seção)
+            logger.info('Gerando 5 vinhetas individuais uid=%s tema="%s"', uid, tema[:50])
+            panels = _gerar_vinhetas_individuais(estrutura, tema)
+            if not panels:
+                raise RuntimeError('Falha ao gerar ilustrações DALL-E.')
+            logger.info('Vinhetas OK uid=%s tema="%s" — compondo poster', uid, tema[:50])
+
+            data_url = _compositar_poster(panels, estrutura, tema)
             logger.info('Poster composto OK uid=%s tema="%s"', uid, tema[:50])
             fontes = [
                 {'secao': s.get('nome', ''), 'fonte': s.get('fonte', '')}
