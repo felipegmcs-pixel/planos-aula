@@ -5305,21 +5305,40 @@ def _prompt_infografico_dalle(tema, estrutura=None):
 
 
 # ── Fontes para overlay Pillow ─────────────────────────────────────────────
+import os as _os
+_FONTS_DIR = _os.path.join(_os.path.dirname(__file__), 'static', 'fonts')
+
+# Bangers — display/título estilo editorial (Descomplica)
+_FONTS_DISPLAY = [
+    _os.path.join(_FONTS_DIR, 'Bangers-Regular.ttf'),
+    '/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf',   # fallback
+]
+# Nunito — corpo de texto arredondado e legível
 _FONTS_BOLD = [
+    _os.path.join(_FONTS_DIR, 'Nunito-Variable.ttf'),
     '/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf',
     '/usr/share/fonts/truetype/liberation/LiberationSans-Bold.ttf',
-    '/usr/share/fonts/truetype/freefont/FreeSansBold.ttf',
 ]
 _FONTS_REGULAR = [
+    _os.path.join(_FONTS_DIR, 'Nunito-Variable.ttf'),
     '/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf',
     '/usr/share/fonts/truetype/liberation/LiberationSans-Regular.ttf',
-    '/usr/share/fonts/truetype/freefont/FreeSans.ttf',
 ]
 
 
-def _pil_font(size, bold=True):
+def _pil_font(size, bold=True, estilo='moderno'):
+    """Retorna fonte PIL.
+    estilo='display' → Bangers (títulos grandes estilo editorial)
+    estilo='moderno' → Nunito Bold/Regular
+    """
     from PIL import ImageFont
-    for p in (_FONTS_BOLD if bold else _FONTS_REGULAR):
+    if estilo == 'display':
+        candidates = _FONTS_DISPLAY
+    elif bold:
+        candidates = _FONTS_BOLD
+    else:
+        candidates = _FONTS_REGULAR
+    for p in candidates:
         try:
             return ImageFont.truetype(p, size)
         except Exception:
@@ -5362,23 +5381,20 @@ def _gerar_vinhetas_individuais(estrutura, tema):
     while len(secoes) < 5:
         secoes.append({'ilustracao_en': f'educational watercolor about {tema}'})
 
+    # Estilo editorial cartoon — inspirado em infográficos Descomplica/Vestibular
     STYLE = (
-        'Educational watercolor illustration, pure white background (#FFFFFF), '
-        'clean ink outlines, bright vibrant colors, no text, no letters, no numbers.'
-    )
-
-    STYLE = (
-        'Educational watercolor illustration, pure white background (#FFFFFF), '
-        'clean ink outlines, bright vibrant colors. '
-        'NO text, NO letters, NO numbers. '
-        'Focus on OBJECTS, SCENES, MAPS, MACHINERY, DOCUMENTS, SYMBOLS — '
-        'avoid close-up faces of named individuals; use silhouettes or '
-        'scene-wide views when showing groups of people.'
+        'Flat color editorial cartoon illustration for a Brazilian educational infographic. '
+        'Pure white background (#FFFFFF). '
+        'Thick black ink outlines, bold graphic style, bright solid colors (no gradients, no watercolor). '
+        'Simple shapes, dynamic composition, expressive but not violent. '
+        'NO text, NO letters, NO numbers, NO watermarks. '
+        'Scene-wide view preferred; avoid photorealism. '
+        'Style: newspaper editorial cartoon meets modern infographic design.'
     )
 
     def _um(idx_sec):
         idx, sec = idx_sec
-        desc = sec.get('ilustracao_en') or f'educational watercolor about {tema}'
+        desc = sec.get('ilustracao_en') or f'editorial cartoon about {tema}'
         prompt = f'{desc}. {STYLE}'
         for attempt in range(3):
             try:
@@ -5478,19 +5494,22 @@ def _compositar_poster(panels, estrutura, tema):
         ((PW - BOT_W) // 2,        ROW3_Y, BOT_W,  ROW_H),
     ]
 
-    # ── Fontes (escala × S, estilo temático) ─────────────────────────────
-    tf_sz = 50*S
-    tf = _pil_font(tf_sz, bold=True, estilo=estilo)
+    # ── Fontes (escala × S) ───────────────────────────────────────────────
+    # Título principal: Bangers (display grande, impacto editorial)
+    tf_sz = 58*S
+    tf = _pil_font(tf_sz, bold=True, estilo='display')
     for _ in range(20):
         bb = draw.textbbox((0, 0), titulo, font=tf)
         if bb[2] - bb[0] <= PW - 200*S:
             break
         tf_sz -= S*2
-        tf = _pil_font(tf_sz, bold=True, estilo=estilo)
+        tf = _pil_font(tf_sz, bold=True, estilo='display')
 
-    sf = _pil_font(20*S, bold=True,  estilo=estilo)   # label seção
-    bf = _pil_font(16*S, bold=False, estilo=estilo)    # bullets
-    sf_lh = 24*S
+    # Labels de seção: Bangers também — mesmo estilo dos títulos Descomplica
+    sf = _pil_font(22*S, bold=True, estilo='display')
+    # Bullets: Nunito (legível, arredondado)
+    bf = _pil_font(16*S, bold=False, estilo='moderno')
+    sf_lh = 26*S
     bf_lh = 24*S
 
     # ── TÍTULO: parallelogram ribbon ──────────────────────────────────────
@@ -5587,7 +5606,7 @@ def _compositar_poster(panels, estrutura, tema):
             y_cur += 5*S
 
     # ── FOOTER: logo ProfessorIA™ ─────────────────────────────────────────
-    brand_f = _pil_font(20*S, bold=True, estilo=estilo)
+    brand_f = _pil_font(22*S, bold=True, estilo='display')
     LCX = PW - 155*S
     LCY = PH - FOOTER_H // 2
     R, OFF = 14*S, 11*S
