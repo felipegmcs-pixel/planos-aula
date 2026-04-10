@@ -5376,168 +5376,171 @@ def _compositar_poster(image_url, estrutura, tema):
     PW, PH  = 1792, 1024
     WHITE   = (255, 255, 255)
     NAVY    = (10, 22, 58)
+    BLUE    = (35, 100, 205)    # cor única ProfessorIA™
     poster  = Image.new('RGB', (PW, PH), WHITE)
     draw    = ImageDraw.Draw(poster)
 
-    # ── Conteúdo ──────────────────────────────────────────────────────────
     est    = estrutura or {}
     titulo = est.get('titulo', tema.upper())[:80]
     secoes = list(est.get('secoes', []))[:4]
     for k in range(len(secoes), 4):
         secoes.append({'nome': _INFOGRAFICO_RAMOS[k]['nome'], 'topicos': []})
 
-    PALETA = [(35, 100, 205), (18, 142, 72), (185, 48, 30), (115, 45, 175)]
-
     # ── Layout ────────────────────────────────────────────────────────────
-    TITLE_H  = 88
-    FOOTER_H = 42
-    MARGIN   = 22
-    GAP      = 14
+    TITLE_H  = 96
+    FOOTER_H = 44
+    H_PAD    = 16
+    H_GAP    = 10
+    V_GAP    = 10
 
-    CARD_W = (PW - 2 * MARGIN - GAP) // 2    # ≈ 869
-    CARD_H = (PH - TITLE_H - FOOTER_H - 3 * GAP) // 2  # ≈ 424
+    CARD_W = (PW - 2 * H_PAD - H_GAP) // 2        # = 875
+    CARD_H = (PH - TITLE_H - FOOTER_H - 3 * V_GAP) // 2  # = 427
 
     card_origins = [
-        (MARGIN,                TITLE_H + GAP),
-        (MARGIN + CARD_W + GAP, TITLE_H + GAP),
-        (MARGIN,                TITLE_H + 2 * GAP + CARD_H),
-        (MARGIN + CARD_W + GAP, TITLE_H + 2 * GAP + CARD_H),
+        (H_PAD,                   TITLE_H + V_GAP),
+        (H_PAD + CARD_W + H_GAP,  TITLE_H + V_GAP),
+        (H_PAD,                   TITLE_H + 2 * V_GAP + CARD_H),
+        (H_PAD + CARD_W + H_GAP,  TITLE_H + 2 * V_GAP + CARD_H),
     ]
 
-    PAD     = 18
-    # Oval: 43% da largura do card; texto: resto
-    OVL_FRAC = 0.43
-    OVL_W    = max(10, int(CARD_W * OVL_FRAC) - PAD)
-    OVL_H    = max(10, CARD_H - PAD)
-    TXT_W    = CARD_W - OVL_W - PAD * 3       # zona de texto
+    PAD     = 22
+    OVL_W   = int(CARD_W * 0.45)              # ≈ 393
+    OVL_H   = max(10, CARD_H - PAD * 2)       # ≈ 383
+    GAP_MID = 14
+    TXT_W   = CARD_W - OVL_W - GAP_MID - PAD  # ≈ 446
 
-    sf_sz = max(17, int(CARD_H * 0.068))
-    bf_sz = max(14, int(CARD_H * 0.057))
+    # Fontes
+    tf_sz = 52
+    tf = _pil_font(tf_sz, bold=True)
+    for _ in range(20):
+        bb = draw.textbbox((0, 0), titulo, font=tf)
+        if bb[2] - bb[0] <= PW - 200:
+            break
+        tf_sz -= 2
+        tf = _pil_font(tf_sz, bold=True)
+
+    sf_sz = max(18, int(CARD_H * 0.072))
+    bf_sz = max(14, int(CARD_H * 0.058))
     sf    = _pil_font(sf_sz, bold=True)
     bf    = _pil_font(bf_sz, bold=False)
     sf_lh = sf_sz + 4
     bf_lh = bf_sz + 8
 
-    # ── TÍTULO: banner azul com sombra ────────────────────────────────────
-    tf_sz = 52
-    tf = _pil_font(tf_sz, bold=True)
-    for _ in range(20):
-        bb = draw.textbbox((0, 0), titulo, font=tf)
-        if bb[2] - bb[0] <= PW - 180:
-            break
-        tf_sz -= 2
-        tf = _pil_font(tf_sz, bold=True)
-
-    BLUE    = PALETA[0]
-    ban_y1  = 10
-    ban_y2  = TITLE_H - 10
-    ban_r   = (ban_y2 - ban_y1) // 2
+    # ── TÍTULO: ribbon azul adaptativo ao texto ───────────────────────────
+    bb     = draw.textbbox((0, 0), titulo, font=tf)
+    tw     = bb[2] - bb[0]
+    ban_w  = min(tw + 120, PW - 2 * H_PAD)
+    ban_x1 = max(H_PAD, PW // 2 - ban_w // 2)
+    ban_x2 = min(PW - H_PAD, PW // 2 + ban_w // 2)
+    ban_y1 = 12
+    ban_y2 = TITLE_H - 12
+    ban_r  = (ban_y2 - ban_y1) // 4    # ribbon shape (não pill perfeito)
     # Sombra
-    draw.rounded_rectangle([MARGIN + 4, ban_y1 + 4, PW - MARGIN + 4, ban_y2 + 4],
-                           radius=ban_r, fill=(170, 200, 240))
-    # Banner azul
-    draw.rounded_rectangle([MARGIN, ban_y1, PW - MARGIN, ban_y2],
+    draw.rounded_rectangle([ban_x1 + 3, ban_y1 + 4, ban_x2 + 3, ban_y2 + 4],
+                           radius=ban_r, fill=(175, 205, 245))
+    draw.rounded_rectangle([ban_x1, ban_y1, ban_x2, ban_y2],
                            radius=ban_r, fill=BLUE)
     draw.text((PW // 2, (ban_y1 + ban_y2) // 2), titulo, font=tf,
               fill=WHITE, anchor='mm')
 
-    # Separador horizontal leve entre título e cards
-    SEP_COL = (210, 220, 238)
-    draw.rectangle([0, TITLE_H, PW, TITLE_H + 2], fill=SEP_COL)
-    # Separador vertical entre colunas
-    mid_x = MARGIN + CARD_W + GAP // 2
-    draw.rectangle([mid_x, TITLE_H + 2, mid_x + 1, PH - FOOTER_H], fill=SEP_COL)
-    # Separador horizontal entre linhas
-    mid_y = TITLE_H + 2 * GAP + CARD_H
-    draw.rectangle([0, mid_y, PW, mid_y + 1], fill=SEP_COL)
-
     # ── CARDS ─────────────────────────────────────────────────────────────
-    FEATHER = 24   # pixels de suavização nas bordas do oval
+    FEATHER = 30
+    import math as _m
 
     for i, (ox, oy) in enumerate(card_origins):
-        cor  = PALETA[i % len(PALETA)]
-        sec  = secoes[i]
+        sec = secoes[i]
 
-        # ── Oval ilustração (direita do card) com bordas feathered ────────
-        oval_x = ox + TXT_W + PAD * 2
-        oval_y = oy + PAD // 2
+        # ── Oval ilustração, centralizado verticalmente ───────────────────
+        oval_x = ox + TXT_W + GAP_MID
+        oval_y = oy + (CARD_H - OVL_H) // 2
 
-        vig = vinhetas[i].resize((OVL_W, OVL_H), Image.LANCZOS)
-        # Máscara elipse suavizada (feathered) — blenda naturalmente no branco
+        # ── Arco conector azul (elemento chave do estilo ProfessorIA™) ────
+        # Varre ao redor da metade superior do oval, de ~SW até ~NE
+        A_EXP = 32
+        arc_cx = oval_x + OVL_W // 2
+        arc_cy = oval_y + OVL_H // 2
+        arc_rx = OVL_W // 2 + A_EXP
+        arc_ry = OVL_H // 2 + A_EXP
+        a_s    = _m.radians(115)   # ponto de início (baixo-esquerda)
+        a_e    = _m.radians(342)   # ponto de fim (cima-direita)
+        steps  = 45
+        pts    = [
+            (arc_cx + arc_rx * _m.cos(a_s + (a_e - a_s) * k / steps),
+             arc_cy + arc_ry * _m.sin(a_s + (a_e - a_s) * k / steps))
+            for k in range(steps + 1)
+        ]
+        for k in range(len(pts) - 1):
+            draw.line([pts[k], pts[k + 1]], fill=BLUE, width=6)
+
+        # ── Paste com máscara elipse feathered (sem borda extra) ──────────
+        vig    = vinhetas[i].resize((OVL_W, OVL_H), Image.LANCZOS)
         mask_e = Image.new('L', (OVL_W, OVL_H), 0)
         ImageDraw.Draw(mask_e).ellipse(
             [FEATHER, FEATHER, OVL_W - FEATHER - 1, OVL_H - FEATHER - 1], fill=255
         )
-        mask_e = mask_e.filter(ImageFilter.GaussianBlur(radius=int(FEATHER * 0.65)))
+        mask_e = mask_e.filter(ImageFilter.GaussianBlur(radius=int(FEATHER * 0.70)))
         poster.paste(vig, (oval_x, oval_y), mask=mask_e)
 
-        # Borda oval fina colorida (sobreposta após paste)
-        draw.ellipse(
-            [oval_x + FEATHER // 2, oval_y + FEATHER // 2,
-             oval_x + OVL_W - FEATHER // 2, oval_y + OVL_H - FEATHER // 2],
-            outline=_lighten(cor, 0.45), width=3
-        )
+        # ── Ribbon adaptativo (largura = conteúdo do texto) ──────────────
+        nome       = sec.get('nome', '')
+        nome_lines = _wrap(nome, sf, TXT_W - PAD, draw)[:2]
+        n_ln       = len(nome_lines)
 
-        # ── Ribbon/pill header (esquerda, topo do card) ───────────────────
-        nome = sec.get('nome', '')
-        pill_mw = TXT_W - PAD - 4
-        nome_lines = _wrap(nome, sf, pill_mw, draw)[:2]
-        n_ln   = len(nome_lines)
-        pill_h = max(sf_lh + 22, n_ln * sf_lh + 22)
+        # Largura da pill = maior linha + padding
+        max_lw = 0
+        for ln in nome_lines:
+            bln = draw.textbbox((0, 0), ln, font=sf)
+            max_lw = max(max_lw, bln[2] - bln[0])
+        pill_w = min(max_lw + PAD * 2, TXT_W)
+        pill_h = max(sf_lh + 20, n_ln * sf_lh + 20)
 
-        px1 = ox
-        px2 = ox + TXT_W + PAD    # pill se estende levemente sobre o gap
-        py1 = oy + PAD
-        py2 = oy + PAD + pill_h
-        pr  = pill_h // 2
+        rx1 = ox + PAD // 2
+        rx2 = ox + PAD // 2 + pill_w
+        ry1 = oy + PAD
+        ry2 = oy + PAD + pill_h
+        pr  = pill_h // 2    # pill shape perfeito
 
         # Sombra
-        draw.rounded_rectangle([px1 + 4, py1 + 5, px2 + 4, py2 + 5],
-                               radius=pr, fill=_lighten(cor, 0.52))
-        # Pill
-        draw.rounded_rectangle([px1, py1, px2, py2], radius=pr, fill=cor)
+        draw.rounded_rectangle([rx1 + 2, ry1 + 3, rx2 + 2, ry2 + 3],
+                               radius=pr, fill=(178, 206, 248))
+        draw.rounded_rectangle([rx1, ry1, rx2, ry2], radius=pr, fill=BLUE)
 
         tot = n_ln * sf_lh
-        y_t = py1 + (pill_h - tot) // 2
+        y_t = ry1 + (pill_h - tot) // 2
         for ln in nome_lines:
-            draw.text((px1 + PAD + 4, y_t), ln, font=sf, fill=WHITE)
+            draw.text((rx1 + PAD, y_t), ln, font=sf, fill=WHITE)
             y_t += sf_lh
 
         # ── Bullets com seta → ────────────────────────────────────────────
-        y_cur  = py2 + 16
-        max_bw = TXT_W - 30
-        cy_lim = oy + CARD_H - 10
+        y_cur  = ry2 + 18
+        max_bw = TXT_W - 32
+        cy_lim = oy + CARD_H - PAD
 
         for topico in sec.get('topicos', [])[:3]:
             if y_cur + bf_lh > cy_lim:
                 break
-            # Seta →: linha + triângulo
-            ax   = ox + PAD + 2
-            acy  = y_cur + bf_lh // 2
-            draw.rectangle([ax, acy - 1, ax + 9, acy + 1], fill=cor)
-            draw.polygon([(ax + 9, acy - 5), (ax + 16, acy), (ax + 9, acy + 5)],
-                         fill=cor)
+            ax  = ox + PAD
+            acy = y_cur + bf_lh // 2
+            draw.polygon([(ax, acy - 6), (ax + 13, acy), (ax, acy + 6)], fill=BLUE)
             blines = _wrap(topico, bf, max_bw, draw)
             for ln in blines[:2]:
                 if y_cur + bf_lh <= cy_lim:
-                    draw.text((ox + PAD + 20, y_cur), ln, font=bf,
-                              fill=(28, 28, 55))
+                    draw.text((ox + PAD + 18, y_cur), ln, font=bf, fill=NAVY)
                     y_cur += bf_lh
-            y_cur += 8
+            y_cur += 10
 
-    # ── FOOTER ────────────────────────────────────────────────────────────
-    FY = PH - FOOTER_H
-    draw.rectangle([0, FY, PW, PH], fill=(246, 249, 255))
-    draw.rectangle([0, FY, PW, FY + 2], fill=SEP_COL)
-
+    # ── FOOTER (fundo branco, logo outline) ──────────────────────────────
+    FY      = PH - FOOTER_H
     brand_f = _pil_font(20, bold=True)
-    LCX = PW - 160
-    LCY = FY + FOOTER_H // 2
-    R, OVL_OFF = 13, 10
-    draw.ellipse([LCX - R, LCY - R, LCX + R, LCY + R], fill=PALETA[0])
-    draw.ellipse([LCX + OVL_OFF - R, LCY - R, LCX + OVL_OFF + R, LCY + R],
-                 fill=PALETA[1], outline=WHITE, width=2)
-    draw.text((LCX + OVL_OFF + R + 8, LCY), 'ProfessorIA™',
+    LCX     = PW - 155
+    LCY     = FY + FOOTER_H // 2
+    R, OFF  = 14, 11
+    # Dois círculos entrelaçados — apenas outline azul (igual à referência)
+    draw.ellipse([LCX - R, LCY - R, LCX + R, LCY + R],
+                 outline=BLUE, width=3)
+    draw.ellipse([LCX + OFF - R, LCY - R, LCX + OFF + R, LCY + R],
+                 outline=BLUE, width=3)
+    draw.text((LCX + OFF + R + 8, LCY), 'ProfessorIA™',
               font=brand_f, fill=NAVY, anchor='lm')
 
     # ── Serialização ──────────────────────────────────────────────────────
