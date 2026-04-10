@@ -5346,203 +5346,259 @@ def _wrap(text, font, max_w, draw):
     return lines
 
 
-def _compositar_poster(image_url, estrutura, tema):
-    """Constrói poster em CANVAS BRANCO estilo ProfessorIA™:
-    cards brancos com header colorido + pill arredondada, ilustrações DALL-E inseridas.
+def _gerar_vinhetas_individuais(estrutura, tema):
+    """Gera 5 ilustrações watercolor independentes via DALL-E (paralelo).
+    Retorna lista de 5 PIL.Image (RGB), na ordem das seções.
+    Custo: 5 × standard 1024×1024 ≈ $0.10 (vs $0.08 do HD grid anterior).
+    """
+    from concurrent.futures import ThreadPoolExecutor
+    from PIL import Image
+    import requests as _req
+
+    if not client_openai:
+        return None
+
+    secoes = list((estrutura or {}).get('secoes', []))[:5]
+    while len(secoes) < 5:
+        secoes.append({'ilustracao_en': f'educational watercolor about {tema}'})
+
+    STYLE = (
+        'Educational watercolor illustration, pure white background (#FFFFFF), '
+        'clean ink outlines, bright vibrant colors, no text, no letters, no numbers.'
+    )
+
+    STYLE = (
+        'Educational watercolor illustration, pure white background (#FFFFFF), '
+        'clean ink outlines, bright vibrant colors. '
+        'NO text, NO letters, NO numbers. '
+        'Focus on OBJECTS, SCENES, MAPS, MACHINERY, DOCUMENTS, SYMBOLS — '
+        'avoid close-up faces of named individuals; use silhouettes or '
+        'scene-wide views when showing groups of people.'
+    )
+
+    def _um(idx_sec):
+        idx, sec = idx_sec
+        desc = sec.get('ilustracao_en') or f'educational watercolor about {tema}'
+        prompt = f'{desc}. {STYLE}'
+        for attempt in range(3):
+            try:
+                if attempt:
+                    import time as _t
+                    _t.sleep(attempt * 3)   # backoff: 3s, 6s
+                resp = client_openai.images.generate(
+                    model='dall-e-3',
+                    prompt=prompt[:4000],
+                    size='1024x1024',
+                    quality='standard',
+                    n=1,
+                )
+                url = resp.data[0].url
+                r = _req.get(url, timeout=30)
+                r.raise_for_status()
+                return idx, Image.open(io.BytesIO(r.content)).convert('RGB')
+            except Exception as e:
+                logger.warning('Vinheta %d tentativa %d: %s', idx, attempt + 1, e)
+        # Fallback visível: fundo bege claro (não branco puro)
+        logger.error('Vinheta %d: usando fallback.', idx)
+        fb = Image.new('RGB', (1024, 1024), (230, 220, 200))
+        return idx, fb
+
+    panels = [None] * 5
+    # max_workers=2 evita rate-limit do DALL-E com múltiplas calls simultâneas
+    with ThreadPoolExecutor(max_workers=2) as ex:
+        for idx, img in ex.map(_um, enumerate(secoes)):
+            panels[idx] = img
+    return panels
+
+
+def _compositar_poster(panels, estrutura, tema):
+    """Poster ProfessorIA™ — layout 2-2-1 (5 seções).
+    Estrutura fiel à referência: title ribbon, label parallelogram,
+    oval landscape feathered à direita, arco "C" na esquerda do oval,
+    bullets com seta →, footer com logo.
+
+    panels: lista de 5 PIL.Image RGB (1024×1024 cada).
     Retorna 'data:image/jpeg;base64,...'.
     """
     from PIL import Image, ImageDraw, ImageFilter
-    import requests as _req
+    import math as _m
 
-    # ── Download das vinhetas DALL-E (grid 2×2) ───────────────────────────
-    r = _req.get(image_url, timeout=30)
-    r.raise_for_status()
-    dalle = Image.open(io.BytesIO(r.content)).convert('RGBA')
-    DW, DH = dalle.size   # 1792 × 1024
+    def _lighten(c, f):
+        return tuple(int(x + (255 - x) * f) for x in c)
 
-    # Extrai 4 quadrantes como vinhetas independentes
-    vinhetas = [
-        dalle.crop((0,     0,     DW//2, DH//2)).convert('RGB'),
-        dalle.crop((DW//2, 0,     DW,    DH//2)).convert('RGB'),
-        dalle.crop((0,     DH//2, DW//2, DH)).convert('RGB'),
-        dalle.crop((DW//2, DH//2, DW,    DH)).convert('RGB'),
-    ]
+    def _hex_to_rgb(h, default):
+        try:
+            h = h.strip().lstrip('#')
+            if len(h) == 6:
+                return tuple(int(h[i:i+2], 16) for i in (0, 2, 4))
+        except Exception:
+            pass
+        return default
 
-    # ── Canvas ────────────────────────────────────────────────────────────
-    PW, PH = 1792, 1024
-    BG     = (245, 247, 252)    # fundo cinza-azulado suave (não branco puro)
-    poster = Image.new('RGB', (PW, PH), BG)
+    # ── Setup ─────────────────────────────────────────────────────────────
+    S      = 2          # fator de escala — saída em 3584×2048 (≈ 2K nativo)
+    PW, PH = 1792*S, 1024*S
+    WHITE  = (255, 255, 255)
+    est    = estrutura or {}
+
+    BLUE   = _hex_to_rgb(est.get('cor_primaria', ''), (35, 100, 205))
+    NAVY   = _hex_to_rgb(est.get('cor_escura',   ''), (10,  22,  58))
+    SHADOW = _lighten(BLUE, 0.55)
+    estilo = est.get('estilo_fonte', 'moderno')   # 'classico' | 'moderno'
+
+    poster = Image.new('RGB', (PW, PH), WHITE)
     draw   = ImageDraw.Draw(poster)
 
-    # ── Conteúdo ──────────────────────────────────────────────────────────
-    est    = estrutura or {}
-    titulo = est.get('titulo', tema.upper())[:80]
-    secoes = list(est.get('secoes', []))[:4]
-    # Garante 4 seções
-    for k in range(len(secoes), 4):
-        secoes.append({'nome': _INFOGRAFICO_RAMOS[k]['nome'], 'topicos': []})
+    titulo = est.get('titulo', tema.upper())[:70]
+    secoes = list(est.get('secoes', []))[:5]
+    while len(secoes) < 5:
+        secoes.append({'nome': f'Seção {len(secoes)+1}', 'topicos': []})
 
-    # Paleta vibrante por seção
-    PALETA    = [(22, 100, 195), (16, 140, 72), (190, 48, 30), (120, 45, 175)]
-    PALETA_LT = [(220, 235, 255), (210, 245, 225), (255, 225, 215), (235, 215, 255)]
-    NAVY      = (10, 22, 58)
-    WHITE     = (255, 255, 255)
-    TEXT_DARK = (18, 18, 42)
+    # ── Dimensões × S ─────────────────────────────────────────────────────
+    TITLE_H  = 82*S
+    FOOTER_H = 44*S
+    H_PAD    = 20*S
+    COL_GAP  = 10*S
+    ROW_GAP  = 10*S
 
-    # ── CABEÇALHO FULL-WIDTH ──────────────────────────────────────────────
-    HEADER_H = 100
+    content_h = PH - TITLE_H - ROW_GAP - FOOTER_H
+    ROW_H     = (content_h - ROW_GAP * 2) // 3
+    HALF_W    = (PW - H_PAD * 2 - COL_GAP) // 2
+    BOT_W     = 980*S
 
-    # Barra navy cheia no topo
-    draw.rectangle([0, 0, PW, HEADER_H], fill=NAVY)
+    ROW1_Y = TITLE_H + ROW_GAP
+    ROW2_Y = ROW1_Y + ROW_H + ROW_GAP
+    ROW3_Y = ROW2_Y + ROW_H + ROW_GAP
 
-    # Título em branco, centralizado
-    tf_size = 54
-    tf = _pil_font(tf_size, bold=True)
-    for _ in range(20):
-        bb = draw.textbbox((0, 0), titulo, font=tf)
-        if bb[2] - bb[0] <= PW - 160:
-            break
-        tf_size -= 2
-        tf = _pil_font(tf_size, bold=True)
-    draw.text((PW // 2, HEADER_H // 2), titulo, font=tf, fill=WHITE, anchor='mm')
-
-    # Linha dourada decorativa embaixo do header
-    GOLD = (210, 170, 50)
-    draw.rectangle([0, HEADER_H, PW, HEADER_H + 4], fill=GOLD)
-
-    # ── GRID 2×2 ──────────────────────────────────────────────────────────
-    MARGIN   = 16
-    GAP      = 14
-    FOOTER_H = 52
-    CARD_Y0  = HEADER_H + 4 + MARGIN
-    CARD_Y_AVAIL = PH - FOOTER_H - CARD_Y0 - GAP
-    CARD_W   = (PW - 2 * MARGIN - GAP) // 2
-    CARD_H   = CARD_Y_AVAIL // 2
-
-    card_origins = [
-        (MARGIN,                 CARD_Y0),
-        (MARGIN + CARD_W + GAP,  CARD_Y0),
-        (MARGIN,                 CARD_Y0 + CARD_H + GAP),
-        (MARGIN + CARD_W + GAP,  CARD_Y0 + CARD_H + GAP),
+    sections_geo = [
+        (H_PAD,                    ROW1_Y, HALF_W, ROW_H),
+        (H_PAD + HALF_W + COL_GAP, ROW1_Y, HALF_W, ROW_H),
+        (H_PAD,                    ROW2_Y, HALF_W, ROW_H),
+        (H_PAD + HALF_W + COL_GAP, ROW2_Y, HALF_W, ROW_H),
+        ((PW - BOT_W) // 2,        ROW3_Y, BOT_W,  ROW_H),
     ]
 
-    # Proporções intra-card: 48% ilustração (direita), 52% texto (esquerda)
-    IW_FRAC = 0.42
-    IW  = int(CARD_W * IW_FRAC)
-    TW  = CARD_W - IW - 2             # zona de texto
-    IH  = CARD_H - 2
-    PAD = 13
+    # ── Fontes (escala × S, estilo temático) ─────────────────────────────
+    tf_sz = 50*S
+    tf = _pil_font(tf_sz, bold=True, estilo=estilo)
+    for _ in range(20):
+        bb = draw.textbbox((0, 0), titulo, font=tf)
+        if bb[2] - bb[0] <= PW - 200*S:
+            break
+        tf_sz -= S*2
+        tf = _pil_font(tf_sz, bold=True, estilo=estilo)
 
-    sf_sz = max(15, int(CARD_H * 0.075))
-    bf_sz = max(13, int(CARD_H * 0.060))
-    sf    = _pil_font(sf_sz, bold=True)
-    bf    = _pil_font(bf_sz, bold=False)
-    sf_lh = sf_sz + 4
-    bf_lh = bf_sz + 7
+    sf = _pil_font(20*S, bold=True,  estilo=estilo)   # label seção
+    bf = _pil_font(16*S, bold=False, estilo=estilo)    # bullets
+    sf_lh = 24*S
+    bf_lh = 24*S
 
-    for i, (ox, oy) in enumerate(card_origins):
-        cor    = PALETA[i % len(PALETA)]
-        cor_lt = PALETA_LT[i % len(PALETA_LT)]
-        sec    = secoes[i]
-        cx1, cy1 = ox, oy
-        cx2, cy2 = ox + CARD_W, oy + CARD_H
+    # ── TÍTULO: parallelogram ribbon ──────────────────────────────────────
+    bb    = draw.textbbox((0, 0), titulo, font=tf)
+    tw    = bb[2] - bb[0]
+    ban_w = min(tw + 130*S, PW - 2*H_PAD)
+    bx1   = PW // 2 - ban_w // 2
+    bx2   = bx1 + ban_w
+    by1, by2 = 10*S, TITLE_H - 10*S
+    SK    = 18*S
+    draw.polygon([(bx1+SK+4*S, by1+4*S), (bx2+SK+4*S, by1+4*S),
+                  (bx2-SK+4*S, by2+4*S), (bx1-SK+4*S, by2+4*S)], fill=SHADOW)
+    draw.polygon([(bx1+SK, by1), (bx2+SK, by1),
+                  (bx2-SK, by2), (bx1-SK, by2)], fill=BLUE)
+    draw.text((PW // 2, (by1 + by2) // 2), titulo,
+              font=tf, fill=WHITE, anchor='mm')
 
-        # ── Sombra suave (retângulo deslocado) ────────────────────────────
-        SHADOW_OFF = 4
-        draw.rounded_rectangle(
-            [cx1 + SHADOW_OFF, cy1 + SHADOW_OFF,
-             cx2 + SHADOW_OFF, cy2 + SHADOW_OFF],
-            radius=18, fill=(200, 205, 220)
+    # ── SEÇÕES ────────────────────────────────────────────────────────────
+    FEATHER = 22*S
+
+    for i, (sx, sy, sw, sh) in enumerate(sections_geo):
+        sec   = secoes[i]
+        panel = panels[i]
+
+        OVL_W = int(sw * 0.52)
+        OVL_H = sh - 16*S
+        TXT_W = sw - OVL_W - 14*S
+        OVL_X = sx + TXT_W + 14*S
+        OVL_Y = sy + (sh - OVL_H) // 2
+
+        # ── Arco "C" na esquerda do oval ──────────────────────────────────
+        A_EXP  = 22*S
+        arc_cx = OVL_X + OVL_W // 2
+        arc_cy = OVL_Y + OVL_H // 2
+        arc_rx = OVL_W // 2 + A_EXP
+        arc_ry = OVL_H // 2 + A_EXP
+        a_s, a_e = _m.radians(252), _m.radians(108)
+        steps = 40
+        pts = [
+            (arc_cx + arc_rx * _m.cos(a_s + (a_e - a_s) * k / steps),
+             arc_cy + arc_ry * _m.sin(a_s + (a_e - a_s) * k / steps))
+            for k in range(steps + 1)
+        ]
+        for k in range(len(pts) - 1):
+            draw.line([pts[k], pts[k + 1]], fill=BLUE, width=9*S)
+
+        # ── Oval feathered ────────────────────────────────────────────────
+        vig    = panel.resize((OVL_W, OVL_H), Image.LANCZOS)
+        mask_e = Image.new('L', (OVL_W, OVL_H), 0)
+        ImageDraw.Draw(mask_e).ellipse(
+            [FEATHER, FEATHER, OVL_W - FEATHER - 1, OVL_H - FEATHER - 1], fill=255
         )
+        mask_e = mask_e.filter(ImageFilter.GaussianBlur(radius=int(FEATHER * 0.65)))
+        poster.paste(vig, (OVL_X, OVL_Y), mask=mask_e)
 
-        # ── Card branco ───────────────────────────────────────────────────
-        draw.rounded_rectangle([cx1, cy1, cx2, cy2], radius=18, fill=WHITE)
-
-        # ── Zona de ilustração (direita) com fundo colorido suave ─────────
-        ix1 = cx2 - IW
-        iy1 = cy1
-        ix2 = cx2
-        iy2 = cy2
-        # Fundo colorido suave para zona de ilustração
-        draw.rounded_rectangle([ix1, iy1, ix2, iy2], radius=18, fill=cor_lt)
-        # Clip esquerdo da zona de ilustração (máscara retangular no lado esquerdo)
-        draw.rectangle([ix1, iy1, ix1 + 18, iy2], fill=cor_lt)
-
-        vig = vinhetas[i].resize((IW, IH), Image.LANCZOS)
-        mask_img = Image.new('L', (IW, IH), 0)
-        mask_draw = ImageDraw.Draw(mask_img)
-        # Arredonda apenas o lado direito da ilustração
-        mask_draw.rounded_rectangle([0, 0, IW - 1, IH - 1], radius=18, fill=255)
-        mask_draw.rectangle([0, 0, 20, IH], fill=255)  # lado esq. reto
-        poster.paste(vig, (ix1, iy1), mask=mask_img)
-
-        # ── Header colorido no topo do card (zona de texto) ───────────────
-        HEADER_CARD_H = sf_sz * 2 + 28
-        draw.rounded_rectangle(
-            [cx1, cy1, cx1 + TW, cy1 + HEADER_CARD_H],
-            radius=18, fill=cor
-        )
-        # Quadrado nos cantos inferiores do header
-        draw.rectangle([cx1, cy1 + HEADER_CARD_H - 18, cx1 + TW, cy1 + HEADER_CARD_H],
-                       fill=cor)
-
-        # Número da seção (círculo pequeno)
-        NUM_R = sf_sz // 2 + 2
-        num_cx = cx1 + PAD + NUM_R
-        num_cy = cy1 + HEADER_CARD_H // 2
-        draw.ellipse([num_cx - NUM_R, num_cy - NUM_R, num_cx + NUM_R, num_cy + NUM_R],
-                     fill=WHITE)
-        num_f = _pil_font(sf_sz - 4, bold=True)
-        draw.text((num_cx, num_cy), str(i + 1), font=num_f, fill=cor, anchor='mm')
-
-        # Texto do título da seção (ao lado do número)
-        nome = sec.get('nome', '')
-        nome_lines = _wrap(nome, sf, TW - PAD * 2 - NUM_R * 2 - 8, draw)[:2]
-        txt_x = num_cx + NUM_R + 8
-        total_h = len(nome_lines) * sf_lh
-        y_t = cy1 + (HEADER_CARD_H - total_h) // 2
+        # ── Label parallelogram ───────────────────────────────────────────
+        nome       = sec.get('nome', '')
+        nome_lines = _wrap(nome, sf, TXT_W - 28*S, draw)[:2]
+        n_ln       = len(nome_lines)
+        max_lw     = max((draw.textbbox((0,0), ln, font=sf)[2]
+                         - draw.textbbox((0,0), ln, font=sf)[0])
+                        for ln in nome_lines)
+        lab_w = min(max_lw + 28*S, TXT_W - 8*S)
+        lab_h = max(sf_lh + 14*S, n_ln * sf_lh + 14*S)
+        lx1 = sx + 6*S
+        lx2 = lx1 + lab_w
+        ly1 = sy + 10*S
+        ly2 = ly1 + lab_h
+        SK2 = 10*S
+        draw.polygon([(lx1+SK2+3*S, ly1+3*S), (lx2+SK2+3*S, ly1+3*S),
+                      (lx2+3*S,     ly2+3*S), (lx1+3*S,     ly2+3*S)], fill=SHADOW)
+        draw.polygon([(lx1+SK2, ly1), (lx2+SK2, ly1),
+                      (lx2,     ly2), (lx1,     ly2)], fill=BLUE)
+        y_t = ly1 + (lab_h - n_ln * sf_lh) // 2
         for ln in nome_lines:
-            draw.text((txt_x, y_t), ln, font=sf, fill=WHITE)
+            draw.text((lx1 + SK2 + 10*S, y_t), ln, font=sf, fill=WHITE)
             y_t += sf_lh
 
-        # ── Bullets ──────────────────────────────────────────────────────
-        y_cur  = cy1 + HEADER_CARD_H + 14
-        max_bw = TW - PAD * 2
-        bullet_colors = [cor, (60, 60, 80), (80, 80, 100)]
-        for bi, topico in enumerate(sec.get('topicos', [])[:3]):
-            # Marcador colorido
-            mk_x = cx1 + PAD + 4
-            mk_y = y_cur + bf_lh // 2 - 4
-            b_col = bullet_colors[bi % len(bullet_colors)]
-            draw.ellipse([mk_x, mk_y, mk_x + 8, mk_y + 8], fill=b_col)
+        # ── Bullets com seta → ────────────────────────────────────────────
+        y_cur  = ly2 + 12*S
+        cy_lim = sy + sh - 8*S
+        bw_max = TXT_W - 28*S
 
-            blines = _wrap(topico, bf, max_bw - 18, draw)
-            for li, ln in enumerate(blines[:2]):
-                if y_cur + bf_lh < cy2 - 8:
-                    draw.text((cx1 + PAD + 18, y_cur), ln, font=bf, fill=TEXT_DARK)
+        for topico in sec.get('topicos', [])[:4]:
+            if y_cur + bf_lh > cy_lim:
+                break
+            ax  = sx + 8*S
+            acy = y_cur + bf_lh // 2
+            draw.polygon([(ax, acy-5*S), (ax+11*S, acy), (ax, acy+5*S)], fill=BLUE)
+            for ln in _wrap(topico, bf, bw_max, draw)[:2]:
+                if y_cur + bf_lh <= cy_lim:
+                    draw.text((sx + 22*S, y_cur), ln, font=bf, fill=NAVY)
                     y_cur += bf_lh
-            y_cur += 8
+            y_cur += 5*S
 
-    # ── FOOTER ────────────────────────────────────────────────────────────
-    FY = PH - FOOTER_H
-    draw.rectangle([0, FY, PW, PH], fill=NAVY)
-    draw.rectangle([0, FY, PW, FY + 3], fill=GOLD)
-
-    brand_f  = _pil_font(21, bold=True)
-    small_f  = _pil_font(16, bold=False)
-
-    # Logo: dois círculos entrelaçados
-    LCX, LCY = PW // 2 - 90, FY + FOOTER_H // 2
-    R, OVL = 12, 6
-    draw.ellipse([LCX - R, LCY - R, LCX + R, LCY + R], fill=(80, 130, 255))
-    draw.ellipse([LCX + OVL - R, LCY - R, LCX + OVL + R, LCY + R],
-                 outline=WHITE, fill=(50, 200, 130), width=2)
-    draw.text((LCX + OVL + R + 10, LCY), 'ProfessorIA™',
-              font=brand_f, fill=WHITE, anchor='lm')
+    # ── FOOTER: logo ProfessorIA™ ─────────────────────────────────────────
+    brand_f = _pil_font(20*S, bold=True, estilo=estilo)
+    LCX = PW - 155*S
+    LCY = PH - FOOTER_H // 2
+    R, OFF = 14*S, 11*S
+    draw.ellipse([LCX-R, LCY-R, LCX+R, LCY+R], outline=BLUE, width=3*S)
+    draw.ellipse([LCX+OFF-R, LCY-R, LCX+OFF+R, LCY+R], outline=BLUE, width=3*S)
+    draw.text((LCX+OFF+R+8*S, LCY), 'ProfessorIA™',
+              font=brand_f, fill=NAVY, anchor='lm')
 
     # ── Serialização ──────────────────────────────────────────────────────
     buf = io.BytesIO()
-    poster.save(buf, format='JPEG', quality=94, optimize=True)
+    poster.save(buf, format='JPEG', quality=92, optimize=True)
     return 'data:image/jpeg;base64,' + base64.b64encode(buf.getvalue()).decode()
 
 
@@ -5595,22 +5651,22 @@ def api_generate_mapa_mental():
             estrutura = _gerar_estrutura_infografico(tema)
             if not estrutura:
                 logger.warning('Estrutura LLM None para "%s" — usando fallback.', tema[:60])
-            prompt = _prompt_infografico_dalle(tema, estrutura)
-            logger.info('DALL-E prompt len=%d uid=%s tema="%s"', len(prompt), uid, tema[:50])
-            img_resp = client_openai.images.generate(
-                model='dall-e-3',
-                prompt=prompt[:4000],
-                size='1792x1024',
-                quality='hd',
-                n=1,
-            )
-            dalle_url = img_resp.data[0].url
-            logger.info('DALL-E OK uid=%s tema="%s" — iniciando composição Pillow', uid, tema[:50])
 
-            # Baixa a imagem DALL-E e sobrepõe o texto PT-BR correto
-            data_url = _compositar_poster(dalle_url, estrutura, tema)
+            # Gera 5 ilustrações individuais em paralelo (1 DALL-E por seção)
+            logger.info('Gerando 5 vinhetas individuais uid=%s tema="%s"', uid, tema[:50])
+            panels = _gerar_vinhetas_individuais(estrutura, tema)
+            if not panels:
+                raise RuntimeError('Falha ao gerar ilustrações DALL-E.')
+            logger.info('Vinhetas OK uid=%s tema="%s" — compondo poster', uid, tema[:50])
+
+            data_url = _compositar_poster(panels, estrutura, tema)
             logger.info('Poster composto OK uid=%s tema="%s"', uid, tema[:50])
-            _job_set(job_id, {'url': data_url})
+            fontes = [
+                {'secao': s.get('nome', ''), 'fonte': s.get('fonte', '')}
+                for s in (estrutura or {}).get('secoes', [])
+                if s.get('fonte', '').strip()
+            ]
+            _job_set(job_id, {'url': data_url, 'fontes': fontes})
         except Exception as e:
             err = str(e)
             logger.error('Infográfico ERRO uid=%s job=%s: %s', uid, job_id, err[:400])
