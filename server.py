@@ -5143,31 +5143,31 @@ _INFOGRAFICO_RAMOS = [
         'chave': 'contexto',
         'nome':  'CONTEXTO & ORIGEM',
         'guia':  'O que é o tema, sua origem histórica e condições iniciais.',
-        'ilus':  'flat color cartoon of historical origins or context scene, bold outlines',
+        'ilus':  'watercolor scene of historical origins or context — objects, maps, documents',
     },
     {
         'chave': 'conceitos',
         'nome':  'CONCEITOS-CHAVE',
         'guia':  'Definições, termos essenciais e bases teóricas do tema.',
-        'ilus':  'flat color cartoon diagram of key concepts, bold graphic style',
+        'ilus':  'watercolor diagram or symbolic scene representing key concepts',
     },
     {
         'chave': 'processo',
         'nome':  'DESENVOLVIMENTO',
         'guia':  'Como o tema se desenvolveu: etapas, eventos ou mecanismos centrais.',
-        'ilus':  'flat color editorial cartoon showing main events or process, bold outlines',
+        'ilus':  'watercolor scene of main events, mechanisms or development stages',
     },
     {
         'chave': 'impactos',
         'nome':  'IMPACTOS & CONSEQUÊNCIAS',
         'guia':  'Efeitos concretos: mudanças sociais, científicas, econômicas ou ambientais.',
-        'ilus':  'flat color cartoon showing social or economic impact scene, bold graphic',
+        'ilus':  'watercolor scene showing social or environmental impact and consequences',
     },
     {
         'chave': 'legado',
         'nome':  'LEGADO & ATUALIDADE',
         'guia':  'O que permanece hoje, conexões com o mundo atual e aprendizados.',
-        'ilus':  'flat color cartoon of modern legacy or contemporary connection, bold style',
+        'ilus':  'watercolor scene of modern legacy, contemporary connection or lasting impact',
     },
 ]
 
@@ -5207,7 +5207,7 @@ def _gerar_estrutura_infografico(tema):
         '    {\n'
         '      "nome": "NOME DA SEÇÃO EM MAIÚSCULAS (máx 30 chars)",\n'
         '      "topicos": ["frase curta PT-BR", "frase curta PT-BR", "frase curta PT-BR", "frase curta PT-BR"],\n'
-        '      "ilustracao_en": "flat color cartoon scene for DALL-E, bold ink outlines, no text",\n'
+        '      "ilustracao_en": "watercolor scene for DALL-E, white background, no text — ex: watercolor of steam engine factory, vivid colors"\n'
         '      "fonte": "AUTOR. Título. Editora, Ano. — ou — BNCC: EF09HI01"\n'
         '    }\n'
         '    ... (5 seções no total)\n'
@@ -5220,8 +5220,8 @@ def _gerar_estrutura_infografico(tema):
         'REGRAS:\n'
         '- Exatamente 5 seções, na ordem acima\n'
         '- 4 tópicos por seção: frases curtas (até 8 palavras), informativas\n'
-        '- "ilustracao_en": cena editorial cartoon relacionada ao subtema, '
-        'sem texto, fundo branco — ex: "flat color cartoon of steam engine factory, bold outlines"\n'
+        '- "ilustracao_en": cena aquarela educacional relacionada ao subtema, '
+        'fundo branco, sem texto — ex: "Watercolor of steam engine and factory workers, vivid colors"\n'
         '- "fonte": referência real e verificável (livro, BNCC ou obra acadêmica)\n'
         '- "cor_primaria"/"cor_escura": cores vibrantes e contrastantes adaptadas ao tema\n'
         '- Tópicos e titulo em PORTUGUÊS DO BRASIL\n'
@@ -5370,22 +5370,20 @@ def _gerar_vinhetas_individuais(estrutura, tema):
 
     secoes = list((estrutura or {}).get('secoes', []))[:5]
     while len(secoes) < 5:
-        secoes.append({'ilustracao_en': f'flat color editorial cartoon about {tema}, bold outlines'})
+        secoes.append({'ilustracao_en': f'educational watercolor scene about {tema}'})
 
-    # Estilo editorial cartoon — inspirado em infográficos Descomplica/Vestibular
+    # Estilo aquarela educacional — fiel à referência ProfessorIA™
     STYLE = (
-        'Flat color editorial cartoon illustration for a Brazilian educational infographic. '
-        'Pure white background (#FFFFFF). '
-        'Thick black ink outlines, bold graphic style, bright solid colors (no gradients, no watercolor). '
-        'Simple shapes, dynamic composition, expressive but not violent. '
+        'Clean educational watercolor illustration on pure white background (#FFFFFF). '
+        'Soft ink outlines, bright vibrant watercolor fills, professional educational style. '
         'NO text, NO letters, NO numbers, NO watermarks. '
-        'Scene-wide view preferred; avoid photorealism. '
-        'Style: newspaper editorial cartoon meets modern infographic design.'
+        'Wide scene view preferred — landscapes, objects, machinery, maps, documents. '
+        'Avoid close-up portraits of named individuals; use group scenes or symbolic objects.'
     )
 
     def _um(idx_sec):
         idx, sec = idx_sec
-        desc = sec.get('ilustracao_en') or f'editorial cartoon about {tema}'
+        desc = sec.get('ilustracao_en') or f'educational watercolor about {tema}'
         prompt = f'{desc}. {STYLE}'
         for attempt in range(3):
             try:
@@ -5419,22 +5417,15 @@ def _gerar_vinhetas_individuais(estrutura, tema):
 
 
 def _compositar_poster(panels, estrutura, tema):
-    """Poster ProfessorIA™ — identidade visual própria.
-    Layout 3+2 (topo/rodapé). Linha vertical colorida como assinatura,
-    ilustrações proeminentes em retângulo arredondado, fundo branco limpo.
-
-    panels: lista de 5 PIL.Image RGB.
-    Retorna 'data:image/jpeg;base64,...'.
+    """Poster ProfessorIA™ — layout 2-2-1 fiel à referência.
+    5 seções: 2 topo / 2 meio / 1 rodapé centrada.
+    Oval aquarela feathered + arco azul C + label parallelogram + setas →.
     """
     from PIL import Image, ImageDraw, ImageFilter
-    import colorsys as _cs
+    import math as _m
 
-    # ── Helpers ───────────────────────────────────────────────────────────
     def _lighten(c, f):
         return tuple(min(255, int(x + (255-x)*f)) for x in c)
-
-    def _darken(c, f):
-        return tuple(max(0, int(x*(1-f))) for x in c)
 
     def _hex_to_rgb(h, default):
         try:
@@ -5445,29 +5436,11 @@ def _compositar_poster(panels, estrutura, tema):
             pass
         return default
 
-    def _rotate_hue(rgb, deg):
-        r, g, b = (x/255.0 for x in rgb)
-        h, s, v = _cs.rgb_to_hsv(r, g, b)
-        h = (h + deg/360.0) % 1.0
-        s = min(1.0, max(0.5, s))
-        v = max(0.6, v)
-        r2, g2, b2 = _cs.hsv_to_rgb(h, s, v)
-        return (int(r2*255), int(g2*255), int(b2*255))
-
-    def _rrect_mask(size, radius):
-        """Máscara de retângulo arredondado para paste."""
-        m = Image.new('L', size, 0)
-        ImageDraw.Draw(m).rounded_rectangle(
-            [0, 0, size[0]-1, size[1]-1], radius=radius, fill=255
-        )
-        return m
-
     # ── Setup ─────────────────────────────────────────────────────────────
     S      = 2
     PW, PH = 1792*S, 1024*S
     WHITE  = (255, 255, 255)
-    BLACK  = (22, 22, 30)
-    LGRAY  = (220, 217, 212)
+    BG     = (247, 249, 252)   # fundo levemente frio, como na referência
 
     est    = estrutura or {}
     titulo = est.get('titulo', tema.upper())[:65]
@@ -5475,159 +5448,157 @@ def _compositar_poster(panels, estrutura, tema):
     while len(secoes) < 5:
         secoes.append({'nome': f'Seção {len(secoes)+1}', 'topicos': []})
 
-    c0   = _hex_to_rgb(est.get('cor_primaria', ''), (210, 35, 42))
-    NAVY = _hex_to_rgb(est.get('cor_escura',   ''), (14,  24, 58))
+    BLUE   = _hex_to_rgb(est.get('cor_primaria', ''), (35,  90, 175))
+    NAVY   = _hex_to_rgb(est.get('cor_escura',   ''), (10,  24,  58))
+    SHADOW = _lighten(BLUE, 0.45)
 
-    # Paleta triádica (120°) — 3 cores harmônicas, distribuídas nas 5 seções
-    c1 = _rotate_hue(c0, 120)
-    c2 = _rotate_hue(c0, 240)
-    PALETA = [c0, c1, c2, c0, c1]
-
-    poster = Image.new('RGB', (PW, PH), WHITE)
+    poster = Image.new('RGB', (PW, PH), BG)
     draw   = ImageDraw.Draw(poster)
 
     # ── Fontes ────────────────────────────────────────────────────────────
-    tf_sz = 56*S
+    tf_sz = 52*S
     tf = _pil_font(tf_sz, estilo='display')
     for _ in range(20):
         bb = draw.textbbox((0, 0), titulo, font=tf)
-        if bb[2]-bb[0] <= PW - 200*S:
+        if bb[2]-bb[0] <= 900*S:
             break
         tf_sz -= 2*S
         tf = _pil_font(tf_sz, estilo='display')
 
-    sf_sz = 27*S
-    sf    = _pil_font(sf_sz, estilo='display')
-    bf_sz = 13*S
-    bf    = _pil_font(bf_sz, bold=False, estilo='moderno')
-    sf_lh = int(sf_sz * 1.18)
-    bf_lh = int(bf_sz * 1.72)
+    sf = _pil_font(19*S, bold=True, estilo='display')   # label seção
+    bf = _pil_font(15*S, bold=False, estilo='moderno')  # bullets
+    sf_lh = int(19*S * 1.2)
+    bf_lh = int(15*S * 1.65)
 
-    # ── Layout 3 + 2 ──────────────────────────────────────────────────────
+    # ── Layout 2-2-1 ──────────────────────────────────────────────────────
     TITLE_H  = 80*S
-    FOOTER_H = 36*S
-    MARGIN   = 14*S
-    GAP      = 10*S
+    FOOTER_H = 44*S
+    H_PAD    = 18*S
+    COL_GAP  = 10*S
+    ROW_GAP  = 10*S
 
-    avail_h  = PH - TITLE_H - FOOTER_H
-    TOP_H    = int(avail_h * 0.54)
-    BOT_H    = avail_h - TOP_H - GAP
+    avail_h = PH - TITLE_H - FOOTER_H
+    ROW_H   = (avail_h - ROW_GAP*2) // 3
+    HALF_W  = (PW - H_PAD*2 - COL_GAP) // 2
+    BOT_W   = 960*S
 
-    avail_w  = PW - MARGIN*2
-    COL_W    = (avail_w - GAP*2) // 3
-    HALF_W   = (avail_w - GAP) // 2
-
-    ROW1_Y   = TITLE_H
-    ROW2_Y   = TITLE_H + TOP_H + GAP
+    ROW1_Y = TITLE_H
+    ROW2_Y = ROW1_Y + ROW_H + ROW_GAP
+    ROW3_Y = ROW2_Y + ROW_H + ROW_GAP
 
     sections_geo = [
-        (MARGIN,                   ROW1_Y, COL_W,  TOP_H),   # 0 topo-esq
-        (MARGIN + COL_W + GAP,     ROW1_Y, COL_W,  TOP_H),   # 1 topo-centro
-        (MARGIN + (COL_W+GAP)*2,   ROW1_Y, COL_W,  TOP_H),   # 2 topo-dir
-        (MARGIN,                   ROW2_Y, HALF_W, BOT_H),   # 3 baixo-esq
-        (MARGIN + HALF_W + GAP,    ROW2_Y, HALF_W, BOT_H),   # 4 baixo-dir
+        (H_PAD,                    ROW1_Y, HALF_W, ROW_H),
+        (H_PAD + HALF_W + COL_GAP, ROW1_Y, HALF_W, ROW_H),
+        (H_PAD,                    ROW2_Y, HALF_W, ROW_H),
+        (H_PAD + HALF_W + COL_GAP, ROW2_Y, HALF_W, ROW_H),
+        ((PW - BOT_W)//2,          ROW3_Y, BOT_W,  ROW_H),
     ]
 
-    # ── BARRA DE TÍTULO ───────────────────────────────────────────────────
-    draw.rectangle([0, 0, PW, TITLE_H], fill=NAVY)
-    # Stripe vertical esquerda (assinatura ProfessorIA™)
-    draw.rectangle([0, 0, 9*S, TITLE_H], fill=c0)
-    # Stripe inferior fina
-    draw.rectangle([0, TITLE_H-5*S, PW, TITLE_H], fill=c0)
-    draw.text((PW//2, TITLE_H//2), titulo, font=tf, fill=WHITE, anchor='mm')
-
-    # Linha divisória horizontal entre as duas linhas de seções
-    draw.rectangle([MARGIN, ROW2_Y-GAP//2-S, PW-MARGIN, ROW2_Y-GAP//2+S],
-                   fill=LGRAY)
+    # ── TÍTULO: parallelogram ribbon centrado no topo ─────────────────────
+    bb    = draw.textbbox((0, 0), titulo, font=tf)
+    tw    = bb[2]-bb[0]
+    ban_w = min(tw + 120*S, PW - 2*H_PAD)
+    bx1   = PW//2 - ban_w//2
+    bx2   = bx1 + ban_w
+    by1, by2 = 10*S, TITLE_H - 10*S
+    SK = 18*S
+    draw.polygon([(bx1+SK+4*S, by1+4*S), (bx2+SK+4*S, by1+4*S),
+                  (bx2-SK+4*S, by2+4*S), (bx1-SK+4*S, by2+4*S)], fill=SHADOW)
+    draw.polygon([(bx1+SK, by1), (bx2+SK, by1),
+                  (bx2-SK, by2), (bx1-SK, by2)], fill=BLUE)
+    draw.text((PW//2, (by1+by2)//2), titulo, font=tf, fill=WHITE, anchor='mm')
 
     # ── SEÇÕES ────────────────────────────────────────────────────────────
-    ILL_RADIUS = 12*S
-    VL_W       = 5*S        # largura da linha vertical colorida
+    FEATHER = 20*S
 
     for i, (sx, sy, sw, sh) in enumerate(sections_geo):
-        sec    = secoes[i]
-        cor    = PALETA[i]
-        cor_lt = _lighten(cor, 0.88)
-        panel  = panels[i]
-        nome   = sec.get('nome', '').upper()
+        sec   = secoes[i]
+        panel = panels[i]
+        nome  = sec.get('nome', '')
 
-        # ── 1. Linha vertical colorida (identidade ProfessorIA™) ──────────
-        draw.rectangle([sx, sy, sx+VL_W, sy+sh], fill=cor)
-        xi = sx + VL_W + 9*S    # x interno (início do conteúdo)
+        # Proporção: 48% texto | 52% oval
+        TXT_W = int(sw * 0.47)
+        OVL_W = sw - TXT_W - 8*S
+        OVL_H = sh - 10*S
+        OVL_X = sx + TXT_W + 8*S
+        OVL_Y = sy + (sh - OVL_H)//2
 
-        # ── 2. Número da seção em círculo colorido ────────────────────────
-        NR  = 11*S
-        NCX = xi + NR
-        NCY = sy + NR + 5*S
-        draw.ellipse([NCX-NR, NCY-NR, NCX+NR, NCY+NR], fill=cor)
-        nf = _pil_font(NR, estilo='display')
-        draw.text((NCX, NCY), str(i+1), font=nf, fill=WHITE, anchor='mm')
+        # ── Arco "C" à esquerda do oval ───────────────────────────────────
+        A_EXP  = 18*S
+        arc_cx = OVL_X + OVL_W//2
+        arc_cy = OVL_Y + OVL_H//2
+        arc_rx = OVL_W//2 + A_EXP
+        arc_ry = OVL_H//2 + A_EXP
+        a_s = _m.radians(252)
+        a_e = _m.radians(108)
+        steps = 50
+        pts = [
+            (arc_cx + arc_rx*_m.cos(a_s + (a_e-a_s)*k/steps),
+             arc_cy + arc_ry*_m.sin(a_s + (a_e-a_s)*k/steps))
+            for k in range(steps+1)
+        ]
+        for k in range(len(pts)-1):
+            draw.line([pts[k], pts[k+1]], fill=BLUE, width=8*S)
 
-        # ── 3. Título da seção (Bangers, colorido) ────────────────────────
-        title_x  = NCX + NR + 6*S
-        title_w  = sw - VL_W - 9*S - (title_x - sx) - 6*S
-        nome_lns = _wrap(nome, sf, title_w, draw)[:2]
-        ty = sy + 4*S
+        # ── Oval feathered ────────────────────────────────────────────────
+        vig    = panel.resize((OVL_W, OVL_H), Image.LANCZOS)
+        mask_e = Image.new('L', (OVL_W, OVL_H), 0)
+        ImageDraw.Draw(mask_e).ellipse(
+            [FEATHER, FEATHER, OVL_W-FEATHER-1, OVL_H-FEATHER-1], fill=255
+        )
+        mask_e = mask_e.filter(ImageFilter.GaussianBlur(radius=int(FEATHER*0.7)))
+        poster.paste(vig, (OVL_X, OVL_Y), mask=mask_e)
+
+        # ── Label parallelogram ───────────────────────────────────────────
+        nome_lns = _wrap(nome, sf, TXT_W - 24*S, draw)[:2]
+        n_ln     = len(nome_lns)
+        max_lw   = max(
+            (draw.textbbox((0,0),ln,font=sf)[2] - draw.textbbox((0,0),ln,font=sf)[0])
+            for ln in nome_lns
+        )
+        lab_w = min(max_lw + 24*S, TXT_W - 6*S)
+        lab_h = max(sf_lh + 12*S, n_ln*sf_lh + 12*S)
+        lx1 = sx + 4*S
+        lx2 = lx1 + lab_w
+        ly1 = sy + 8*S
+        ly2 = ly1 + lab_h
+        SK2 = 8*S
+        draw.polygon([(lx1+SK2+3*S, ly1+3*S), (lx2+SK2+3*S, ly1+3*S),
+                      (lx2+3*S,     ly2+3*S), (lx1+3*S,     ly2+3*S)], fill=SHADOW)
+        draw.polygon([(lx1+SK2, ly1), (lx2+SK2, ly1),
+                      (lx2,     ly2), (lx1,     ly2)], fill=BLUE)
+        yt = ly1 + (lab_h - n_ln*sf_lh)//2
         for ln in nome_lns:
-            draw.text((title_x, ty), ln, font=sf, fill=cor)
-            ty += sf_lh
+            draw.text((lx1+SK2+8*S, yt), ln, font=sf, fill=WHITE)
+            yt += sf_lh
 
-        # Underline grosso
-        UL_Y   = ty + 2*S
-        UL_W   = int(sw * 0.58)
-        UL_H   = 4*S
-        draw.rectangle([xi, UL_Y, xi+UL_W, UL_Y+UL_H], fill=cor)
-
-        CONTENT_Y = UL_Y + UL_H + 8*S
-
-        # ── 4. Ilustração: retângulo arredondado, lado direito ────────────
-        avail_c  = sy + sh - CONTENT_Y - 6*S
-        ILL_W    = int(sw * 0.46)
-        ILL_H    = max(avail_c, 20*S)
-        ILL_X    = sx + sw - ILL_W - 5*S
-        ILL_Y    = CONTENT_Y
-
-        # Fundo suave atrás da ilustração
-        draw.rounded_rectangle(
-            [ILL_X-3*S, ILL_Y-3*S, ILL_X+ILL_W+3*S, ILL_Y+ILL_H+3*S],
-            radius=ILL_RADIUS+2*S, fill=cor_lt
-        )
-        # Cola ilustração com máscara arredondada
-        vig  = panel.resize((ILL_W, ILL_H), Image.LANCZOS)
-        mask = _rrect_mask((ILL_W, ILL_H), ILL_RADIUS)
-        poster.paste(vig, (ILL_X, ILL_Y), mask=mask)
-        # Borda colorida
-        draw.rounded_rectangle(
-            [ILL_X, ILL_Y, ILL_X+ILL_W-1, ILL_Y+ILL_H-1],
-            radius=ILL_RADIUS, outline=cor, width=3*S
-        )
-
-        # ── 5. Bullets (esquerda, abaixo do underline) ────────────────────
-        BUL_W  = ILL_X - xi - 8*S
-        y_cur  = CONTENT_Y
-        cy_lim = sy + sh - 4*S
+        # ── Bullets com seta → ────────────────────────────────────────────
+        y_cur  = ly2 + 10*S
+        cy_lim = sy + sh - 6*S
+        bw_max = TXT_W - 22*S
 
         for topico in sec.get('topicos', [])[:5]:
             if y_cur + bf_lh > cy_lim:
                 break
-            MK   = 5*S
-            mk_y = y_cur + bf_lh//2 - MK//2
-            draw.rectangle([xi, mk_y, xi+MK, mk_y+MK], fill=cor)
-            for ln in _wrap(topico, bf, BUL_W - MK - 5*S, draw)[:2]:
+            ax  = sx + 6*S
+            acy = y_cur + bf_lh//2
+            draw.polygon([(ax, acy-5*S), (ax+10*S, acy), (ax, acy+5*S)], fill=BLUE)
+            for ln in _wrap(topico, bf, bw_max, draw)[:2]:
                 if y_cur + bf_lh <= cy_lim:
-                    draw.text((xi+MK+5*S, y_cur), ln, font=bf, fill=BLACK)
+                    draw.text((sx+19*S, y_cur), ln, font=bf, fill=NAVY)
                     y_cur += bf_lh
             y_cur += 4*S
 
-    # ── FOOTER ────────────────────────────────────────────────────────────
-    FY = PH - FOOTER_H
-    draw.rectangle([0, FY, PW, PH], fill=NAVY)
-    draw.rectangle([0, FY, 9*S, PH], fill=c0)
+    # ── FOOTER: logo ProfessorIA™ ─────────────────────────────────────────
     brand_f = _pil_font(20*S, estilo='display')
-    draw.text((PW//2, FY+FOOTER_H//2), 'ProfessorIA™',
-              font=brand_f, fill=WHITE, anchor='mm')
+    LCX = PW - 160*S
+    LCY = PH - FOOTER_H//2
+    R, OFF = 13*S, 10*S
+    draw.ellipse([LCX-R, LCY-R, LCX+R, LCY+R], outline=BLUE, width=3*S)
+    draw.ellipse([LCX+OFF-R, LCY-R, LCX+OFF+R, LCY+R], outline=BLUE, width=3*S)
+    draw.text((LCX+OFF+R+8*S, LCY), 'ProfessorIA™',
+              font=brand_f, fill=NAVY, anchor='lm')
 
-    # ── Serialização ──────────────────────────────────────────────────────
     buf = io.BytesIO()
     poster.save(buf, format='JPEG', quality=92, optimize=True)
     return 'data:image/jpeg;base64,' + base64.b64encode(buf.getvalue()).decode()
