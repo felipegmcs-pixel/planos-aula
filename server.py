@@ -5419,17 +5419,17 @@ def _gerar_vinhetas_individuais(estrutura, tema):
 
 
 def _compositar_poster(panels, estrutura, tema):
-    """Poster ProfessorIA™ — layout editorial Descomplica.
-    3 seções no topo + 2 no rodapé. Fontes Bangers + Nunito.
-    Paleta de cores gerada por rotação de matiz a partir de cor_primaria.
+    """Poster ProfessorIA™ — identidade visual própria.
+    Layout 3+2 (topo/rodapé). Linha vertical colorida como assinatura,
+    ilustrações proeminentes em retângulo arredondado, fundo branco limpo.
 
-    panels: lista de 5 PIL.Image RGB (1024×1024).
+    panels: lista de 5 PIL.Image RGB.
     Retorna 'data:image/jpeg;base64,...'.
     """
     from PIL import Image, ImageDraw, ImageFilter
     import colorsys as _cs
 
-    # ── Helpers de cor ────────────────────────────────────────────────────
+    # ── Helpers ───────────────────────────────────────────────────────────
     def _lighten(c, f):
         return tuple(min(255, int(x + (255-x)*f)) for x in c)
 
@@ -5449,17 +5449,25 @@ def _compositar_poster(panels, estrutura, tema):
         r, g, b = (x/255.0 for x in rgb)
         h, s, v = _cs.rgb_to_hsv(r, g, b)
         h = (h + deg/360.0) % 1.0
-        s = min(1.0, max(0.45, s))   # garante saturação mínima
-        v = max(0.55, v)             # evita cores muito escuras
+        s = min(1.0, max(0.5, s))
+        v = max(0.6, v)
         r2, g2, b2 = _cs.hsv_to_rgb(h, s, v)
         return (int(r2*255), int(g2*255), int(b2*255))
+
+    def _rrect_mask(size, radius):
+        """Máscara de retângulo arredondado para paste."""
+        m = Image.new('L', size, 0)
+        ImageDraw.Draw(m).rounded_rectangle(
+            [0, 0, size[0]-1, size[1]-1], radius=radius, fill=255
+        )
+        return m
 
     # ── Setup ─────────────────────────────────────────────────────────────
     S      = 2
     PW, PH = 1792*S, 1024*S
     WHITE  = (255, 255, 255)
-    BLACK  = (18, 18, 24)
-    BG     = (250, 249, 245)     # creme levíssimo
+    BLACK  = (22, 22, 30)
+    LGRAY  = (220, 217, 212)
 
     est    = estrutura or {}
     titulo = est.get('titulo', tema.upper())[:65]
@@ -5470,178 +5478,159 @@ def _compositar_poster(panels, estrutura, tema):
     c0   = _hex_to_rgb(est.get('cor_primaria', ''), (210, 35, 42))
     NAVY = _hex_to_rgb(est.get('cor_escura',   ''), (14,  24, 58))
 
-    # 5 cores por seção — rotação de matiz em 72° (divisão do círculo cromático)
-    PALETA = [
-        c0,
-        _rotate_hue(c0,  72),
-        _rotate_hue(c0, 144),
-        _rotate_hue(c0, 216),
-        _rotate_hue(c0, 288),
-    ]
+    # Paleta triádica (120°) — 3 cores harmônicas, distribuídas nas 5 seções
+    c1 = _rotate_hue(c0, 120)
+    c2 = _rotate_hue(c0, 240)
+    PALETA = [c0, c1, c2, c0, c1]
 
-    poster = Image.new('RGB', (PW, PH), BG)
+    poster = Image.new('RGB', (PW, PH), WHITE)
     draw   = ImageDraw.Draw(poster)
-
-    # ── Background: grade de pontos sutis ────────────────────────────────
-    DOT_STEP  = 20*S
-    DOT_R     = S          # raio = 1 pixel base
-    DOT_COLOR = (228, 223, 214)
-    for dy in range(DOT_STEP // 2, PH, DOT_STEP):
-        for dx in range(DOT_STEP // 2, PW, DOT_STEP):
-            draw.ellipse([dx-DOT_R, dy-DOT_R, dx+DOT_R, dy+DOT_R], fill=DOT_COLOR)
 
     # ── Fontes ────────────────────────────────────────────────────────────
     tf_sz = 56*S
     tf = _pil_font(tf_sz, estilo='display')
     for _ in range(20):
         bb = draw.textbbox((0, 0), titulo, font=tf)
-        if bb[2]-bb[0] <= PW - 160*S:
+        if bb[2]-bb[0] <= PW - 200*S:
             break
         tf_sz -= 2*S
         tf = _pil_font(tf_sz, estilo='display')
 
-    sf_sz = 26*S
-    sf    = _pil_font(sf_sz, estilo='display')    # título de seção
-    bf    = _pil_font(14*S, bold=False, estilo='moderno')  # bullets
-    sf_lh = int(sf_sz * 1.2)
-    bf_lh = int(14*S * 1.65)
+    sf_sz = 27*S
+    sf    = _pil_font(sf_sz, estilo='display')
+    bf_sz = 13*S
+    bf    = _pil_font(bf_sz, bold=False, estilo='moderno')
+    sf_lh = int(sf_sz * 1.18)
+    bf_lh = int(bf_sz * 1.72)
 
-    # ── Dimensões do layout 3+2 ───────────────────────────────────────────
+    # ── Layout 3 + 2 ──────────────────────────────────────────────────────
     TITLE_H  = 80*S
-    FOOTER_H = 38*S
-    MARGIN   = 12*S
+    FOOTER_H = 36*S
+    MARGIN   = 14*S
     GAP      = 10*S
 
     avail_h  = PH - TITLE_H - FOOTER_H
-    TOP_H    = int(avail_h * 0.55)
+    TOP_H    = int(avail_h * 0.54)
     BOT_H    = avail_h - TOP_H - GAP
 
     avail_w  = PW - MARGIN*2
     COL_W    = (avail_w - GAP*2) // 3
     HALF_W   = (avail_w - GAP) // 2
 
-    ROW1_Y = TITLE_H
-    ROW2_Y = TITLE_H + TOP_H + GAP
+    ROW1_Y   = TITLE_H
+    ROW2_Y   = TITLE_H + TOP_H + GAP
 
     sections_geo = [
-        (MARGIN,                   ROW1_Y, COL_W,  TOP_H),  # 0 — topo-esq
-        (MARGIN + COL_W + GAP,     ROW1_Y, COL_W,  TOP_H),  # 1 — topo-centro
-        (MARGIN + (COL_W+GAP)*2,   ROW1_Y, COL_W,  TOP_H),  # 2 — topo-dir
-        (MARGIN,                   ROW2_Y, HALF_W, BOT_H),  # 3 — baixo-esq
-        (MARGIN + HALF_W + GAP,    ROW2_Y, HALF_W, BOT_H),  # 4 — baixo-dir
+        (MARGIN,                   ROW1_Y, COL_W,  TOP_H),   # 0 topo-esq
+        (MARGIN + COL_W + GAP,     ROW1_Y, COL_W,  TOP_H),   # 1 topo-centro
+        (MARGIN + (COL_W+GAP)*2,   ROW1_Y, COL_W,  TOP_H),   # 2 topo-dir
+        (MARGIN,                   ROW2_Y, HALF_W, BOT_H),   # 3 baixo-esq
+        (MARGIN + HALF_W + GAP,    ROW2_Y, HALF_W, BOT_H),   # 4 baixo-dir
     ]
 
-    # ── BARRA DE TÍTULO (navy full-width) ─────────────────────────────────
+    # ── BARRA DE TÍTULO ───────────────────────────────────────────────────
     draw.rectangle([0, 0, PW, TITLE_H], fill=NAVY)
-    draw.text((PW//2, TITLE_H//2), titulo, font=tf, fill=WHITE, anchor='mm')
-    # Stripe colorida na base do título
+    # Stripe vertical esquerda (assinatura ProfessorIA™)
+    draw.rectangle([0, 0, 9*S, TITLE_H], fill=c0)
+    # Stripe inferior fina
     draw.rectangle([0, TITLE_H-5*S, PW, TITLE_H], fill=c0)
-    # Acento esquerdo
-    draw.rectangle([0, 0, 7*S, TITLE_H], fill=c0)
+    draw.text((PW//2, TITLE_H//2), titulo, font=tf, fill=WHITE, anchor='mm')
+
+    # Linha divisória horizontal entre as duas linhas de seções
+    draw.rectangle([MARGIN, ROW2_Y-GAP//2-S, PW-MARGIN, ROW2_Y-GAP//2+S],
+                   fill=LGRAY)
 
     # ── SEÇÕES ────────────────────────────────────────────────────────────
+    ILL_RADIUS = 12*S
+    VL_W       = 5*S        # largura da linha vertical colorida
+
     for i, (sx, sy, sw, sh) in enumerate(sections_geo):
         sec    = secoes[i]
         cor    = PALETA[i]
-        cor_lt = _lighten(cor, 0.82)
+        cor_lt = _lighten(cor, 0.88)
         panel  = panels[i]
         nome   = sec.get('nome', '').upper()
 
-        # Card branco com sombra suave (deslocamento 3px)
-        SHADOW_OFF = 3*S
-        draw.rounded_rectangle(
-            [sx+SHADOW_OFF, sy+SHADOW_OFF, sx+sw-1+SHADOW_OFF, sy+sh-1+SHADOW_OFF],
-            radius=8*S, fill=_lighten(cor, 0.88)
-        )
-        draw.rounded_rectangle(
-            [sx, sy, sx+sw-1, sy+sh-1],
-            radius=8*S, fill=WHITE
-        )
+        # ── 1. Linha vertical colorida (identidade ProfessorIA™) ──────────
+        draw.rectangle([sx, sy, sx+VL_W, sy+sh], fill=cor)
+        xi = sx + VL_W + 9*S    # x interno (início do conteúdo)
 
-        # Barra de topo colorida (header da seção)
-        HEADER_H = sf_lh + 14*S
-        draw.rounded_rectangle(
-            [sx, sy, sx+sw-1, sy+HEADER_H],
-            radius=8*S, fill=cor
-        )
-        # Retângulo nos cantos inferiores do header (mantém topo arredondado apenas)
-        draw.rectangle(
-            [sx, sy+HEADER_H//2, sx+sw-1, sy+HEADER_H],
-            fill=cor
-        )
-
-        # Título da seção (Bangers branco dentro do header)
-        nome_lines = _wrap(nome, sf, sw - 14*S, draw)[:2]
-        ty = sy + (HEADER_H - len(nome_lines) * sf_lh) // 2
-        for ln in nome_lines:
-            draw.text((sx + 10*S, ty), ln, font=sf, fill=WHITE)
-            ty += sf_lh
-
-        # Número da seção (círculo branco translúcido no canto direito do header)
-        NR  = int(HEADER_H * 0.38)
-        NCX = sx + sw - NR - 8*S
-        NCY = sy + HEADER_H // 2
-        draw.ellipse([NCX-NR, NCY-NR, NCX+NR, NCY+NR],
-                     fill=_darken(cor, 0.2))
+        # ── 2. Número da seção em círculo colorido ────────────────────────
+        NR  = 11*S
+        NCX = xi + NR
+        NCY = sy + NR + 5*S
+        draw.ellipse([NCX-NR, NCY-NR, NCX+NR, NCY+NR], fill=cor)
         nf = _pil_font(NR, estilo='display')
         draw.text((NCX, NCY), str(i+1), font=nf, fill=WHITE, anchor='mm')
 
-        # ── Ilustração circular ───────────────────────────────────────────
-        CONTENT_Y = sy + HEADER_H + 8*S
-        avail_img  = sh - HEADER_H - 12*S
-        IMG_D      = min(avail_img - 4*S, sw//3 - 4*S)
-        IMG_D      = max(IMG_D, 50*S)
-        IMG_X      = sx + sw - IMG_D - 8*S
-        IMG_Y      = CONTENT_Y + (avail_img - IMG_D) // 2
+        # ── 3. Título da seção (Bangers, colorido) ────────────────────────
+        title_x  = NCX + NR + 6*S
+        title_w  = sw - VL_W - 9*S - (title_x - sx) - 6*S
+        nome_lns = _wrap(nome, sf, title_w, draw)[:2]
+        ty = sy + 4*S
+        for ln in nome_lns:
+            draw.text((title_x, ty), ln, font=sf, fill=cor)
+            ty += sf_lh
 
-        # Círculo colorido claro (fundo da ilustração)
-        draw.ellipse([IMG_X-3*S, IMG_Y-3*S, IMG_X+IMG_D+3*S, IMG_Y+IMG_D+3*S],
-                     fill=cor_lt)
-        # Cola ilustração com máscara circular suavizada
-        vig  = panel.resize((IMG_D, IMG_D), Image.LANCZOS)
-        mask = Image.new('L', (IMG_D, IMG_D), 0)
-        ImageDraw.Draw(mask).ellipse([0, 0, IMG_D-1, IMG_D-1], fill=255)
-        mask = mask.filter(ImageFilter.GaussianBlur(radius=max(1, 5*S)))
-        poster.paste(vig, (IMG_X, IMG_Y), mask=mask)
-        # Borda circular
-        draw.ellipse([IMG_X, IMG_Y, IMG_X+IMG_D-1, IMG_Y+IMG_D-1],
-                     outline=cor, width=3*S)
+        # Underline grosso
+        UL_Y   = ty + 2*S
+        UL_W   = int(sw * 0.58)
+        UL_H   = 4*S
+        draw.rectangle([xi, UL_Y, xi+UL_W, UL_Y+UL_H], fill=cor)
 
-        # ── Bullets ───────────────────────────────────────────────────────
-        TXT_X  = sx + 8*S
-        TXT_W  = sw - IMG_D - 20*S
-        y_cur  = CONTENT_Y + 2*S
-        cy_lim = sy + sh - 6*S
+        CONTENT_Y = UL_Y + UL_H + 8*S
+
+        # ── 4. Ilustração: retângulo arredondado, lado direito ────────────
+        avail_c  = sy + sh - CONTENT_Y - 6*S
+        ILL_W    = int(sw * 0.46)
+        ILL_H    = max(avail_c, 20*S)
+        ILL_X    = sx + sw - ILL_W - 5*S
+        ILL_Y    = CONTENT_Y
+
+        # Fundo suave atrás da ilustração
+        draw.rounded_rectangle(
+            [ILL_X-3*S, ILL_Y-3*S, ILL_X+ILL_W+3*S, ILL_Y+ILL_H+3*S],
+            radius=ILL_RADIUS+2*S, fill=cor_lt
+        )
+        # Cola ilustração com máscara arredondada
+        vig  = panel.resize((ILL_W, ILL_H), Image.LANCZOS)
+        mask = _rrect_mask((ILL_W, ILL_H), ILL_RADIUS)
+        poster.paste(vig, (ILL_X, ILL_Y), mask=mask)
+        # Borda colorida
+        draw.rounded_rectangle(
+            [ILL_X, ILL_Y, ILL_X+ILL_W-1, ILL_Y+ILL_H-1],
+            radius=ILL_RADIUS, outline=cor, width=3*S
+        )
+
+        # ── 5. Bullets (esquerda, abaixo do underline) ────────────────────
+        BUL_W  = ILL_X - xi - 8*S
+        y_cur  = CONTENT_Y
+        cy_lim = sy + sh - 4*S
 
         for topico in sec.get('topicos', [])[:5]:
             if y_cur + bf_lh > cy_lim:
                 break
-            # Marcador quadrado colorido
-            MK = 6*S
-            draw.rectangle(
-                [TXT_X, y_cur + bf_lh//2 - MK//2,
-                 TXT_X+MK, y_cur + bf_lh//2 + MK//2],
-                fill=cor
-            )
-            for ln in _wrap(topico, bf, TXT_W - MK - 6*S, draw)[:2]:
+            MK   = 5*S
+            mk_y = y_cur + bf_lh//2 - MK//2
+            draw.rectangle([xi, mk_y, xi+MK, mk_y+MK], fill=cor)
+            for ln in _wrap(topico, bf, BUL_W - MK - 5*S, draw)[:2]:
                 if y_cur + bf_lh <= cy_lim:
-                    draw.text((TXT_X + MK + 5*S, y_cur), ln, font=bf, fill=BLACK)
+                    draw.text((xi+MK+5*S, y_cur), ln, font=bf, fill=BLACK)
                     y_cur += bf_lh
-            y_cur += 3*S
+            y_cur += 4*S
 
     # ── FOOTER ────────────────────────────────────────────────────────────
     FY = PH - FOOTER_H
     draw.rectangle([0, FY, PW, PH], fill=NAVY)
-    draw.rectangle([0, FY, 7*S, PH], fill=c0)   # acento esq
-    brand_f = _pil_font(18*S, estilo='display')
-    draw.text((PW//2, FY + FOOTER_H//2), 'ProfessorIA™',
+    draw.rectangle([0, FY, 9*S, PH], fill=c0)
+    brand_f = _pil_font(20*S, estilo='display')
+    draw.text((PW//2, FY+FOOTER_H//2), 'ProfessorIA™',
               font=brand_f, fill=WHITE, anchor='mm')
 
-    # ── Serialização JPEG ─────────────────────────────────────────────────
+    # ── Serialização ──────────────────────────────────────────────────────
     buf = io.BytesIO()
     poster.save(buf, format='JPEG', quality=92, optimize=True)
     return 'data:image/jpeg;base64,' + base64.b64encode(buf.getvalue()).decode()
-
 
 
 # ── Jobs em /tmp — compartilhado entre TODOS os workers do container ─────────
