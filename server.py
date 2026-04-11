@@ -5417,9 +5417,10 @@ def _gerar_vinhetas_individuais(estrutura, tema):
 
 
 def _compositar_poster(panels, estrutura, tema):
-    """Poster ProfessorIA™ — fusão das duas referências.
-    Estrutura ProfessorIA: 2-2-1, oval aquarela feathered, arco C, logo.
-    Tipografia Descomplica: título Bangers grande flutuante, underline grosso, cor por seção.
+    """Poster ProfessorIA™ — estilo Descomplica.
+    Títulos de seção GRANDES ocupando largura total (como Descomplica),
+    oval aquarela + arco C na área de conteúdo abaixo do título.
+    Layout 2-2-1.
     """
     from PIL import Image, ImageDraw, ImageFilter
     import math as _m
@@ -5441,8 +5442,8 @@ def _compositar_poster(panels, estrutura, tema):
         r, g, b = (x/255.0 for x in rgb)
         h, s, v = _cs.rgb_to_hsv(r, g, b)
         h = (h + deg/360.0) % 1.0
-        s = min(1.0, max(0.5, s))
-        v = max(0.6, v)
+        s = min(1.0, max(0.55, s))
+        v = max(0.62, v)
         r2, g2, b2 = _cs.hsv_to_rgb(h, s, v)
         return (int(r2*255), int(g2*255), int(b2*255))
 
@@ -5450,8 +5451,8 @@ def _compositar_poster(panels, estrutura, tema):
     S      = 2
     PW, PH = 1792*S, 1024*S
     WHITE  = (255, 255, 255)
-    BLACK  = (20, 20, 28)
-    BG     = (250, 250, 248)
+    BLACK  = (22, 22, 30)
+    BG     = (252, 251, 248)
 
     est    = estrutura or {}
     titulo = est.get('titulo', tema.upper())[:65]
@@ -5462,15 +5463,14 @@ def _compositar_poster(panels, estrutura, tema):
     c0   = _hex_to_rgb(est.get('cor_primaria', ''), (35,  90, 175))
     NAVY = _hex_to_rgb(est.get('cor_escura',   ''), (10,  24,  58))
 
-    # Paleta triádica — 3 cores harmônicas, 5 seções
-    c1 = _rotate_hue(c0, 120)
-    c2 = _rotate_hue(c0, 240)
-    PALETA = [c0, c1, c2, c0, c1]
+    # 5 cores para as seções (rotação de 72°)
+    PALETA = [_rotate_hue(c0, i*72) for i in range(5)]
 
     poster = Image.new('RGB', (PW, PH), BG)
     draw   = ImageDraw.Draw(poster)
 
     # ── Fontes ────────────────────────────────────────────────────────────
+    # Título principal
     tf_sz = 54*S
     tf = _pil_font(tf_sz, estilo='display')
     for _ in range(20):
@@ -5480,17 +5480,19 @@ def _compositar_poster(panels, estrutura, tema):
         tf_sz -= 2*S
         tf = _pil_font(tf_sz, estilo='display')
 
-    sf_sz = 25*S
+    # Título de seção: GRANDE (estilo Descomplica — título é o protagonista)
+    sf_sz = 36*S
     sf    = _pil_font(sf_sz, estilo='display')
+    sf_lh = int(sf_sz * 1.18)
+
     bf_sz = 14*S
     bf    = _pil_font(bf_sz, bold=False, estilo='moderno')
-    sf_lh = int(sf_sz * 1.2)
-    bf_lh = int(bf_sz * 1.7)
+    bf_lh = int(bf_sz * 1.72)
 
     # ── Layout 2-2-1 ──────────────────────────────────────────────────────
     TITLE_H  = 82*S
     FOOTER_H = 44*S
-    H_PAD    = 18*S
+    H_PAD    = 16*S
     COL_GAP  = 10*S
     ROW_GAP  = 10*S
 
@@ -5511,7 +5513,7 @@ def _compositar_poster(panels, estrutura, tema):
         ((PW - BOT_W)//2,          ROW3_Y, BOT_W,  ROW_H),
     ]
 
-    # ── TÍTULO: parallelogram ribbon ──────────────────────────────────────
+    # ── TÍTULO PRINCIPAL: parallelogram ribbon (ProfessorIA™) ─────────────
     bb    = draw.textbbox((0, 0), titulo, font=tf)
     ban_w = min(bb[2]-bb[0] + 120*S, PW - 2*H_PAD)
     bx1   = PW//2 - ban_w//2
@@ -5526,7 +5528,7 @@ def _compositar_poster(panels, estrutura, tema):
     draw.text((PW//2, (by1+by2)//2), titulo, font=tf, fill=WHITE, anchor='mm')
 
     # ── SEÇÕES ────────────────────────────────────────────────────────────
-    FEATHER = 20*S
+    FEATHER = 18*S
 
     for i, (sx, sy, sw, sh) in enumerate(sections_geo):
         sec   = secoes[i]
@@ -5534,15 +5536,35 @@ def _compositar_poster(panels, estrutura, tema):
         panel = panels[i]
         nome  = sec.get('nome', '').upper()
 
-        # Proporção: texto 45% | oval 55%
-        TXT_W = int(sw * 0.44)
-        OVL_W = sw - TXT_W - 6*S
-        OVL_H = sh - 8*S
-        OVL_X = sx + TXT_W + 6*S
-        OVL_Y = sy + (sh - OVL_H)//2
+        # ── TÍTULO DA SEÇÃO: ocupa a largura total (estilo Descomplica) ────
+        nome_lns = _wrap(nome, sf, sw - 6*S, draw)[:2]
+        ty = sy + 4*S
+        for ln in nome_lns:
+            # Sombra leve (desloca 2px)
+            draw.text((sx + 4*S + 2*S, ty + 2*S), ln, font=sf,
+                      fill=_lighten(cor, 0.5))
+            # Texto principal colorido
+            draw.text((sx + 4*S, ty), ln, font=sf, fill=cor)
+            ty += sf_lh
 
-        # ── Arco "C" à esquerda do oval (cor da seção) ────────────────────
-        A_EXP  = 16*S
+        # Underline grosso (full section width * 0.7)
+        UL_Y    = ty + 3*S
+        UL_W_px = int(sw * 0.70)
+        UL_H_px = 5*S
+        draw.rectangle([sx+4*S, UL_Y, sx+4*S+UL_W_px, UL_Y+UL_H_px], fill=cor)
+
+        CONTENT_Y = UL_Y + UL_H_px + 8*S
+        CONTENT_H = sy + sh - CONTENT_Y - 4*S
+
+        # ── ÁREA DE CONTEÚDO: bullets esq | oval aquarela dir ────────────
+        TXT_W = int(sw * 0.43)
+        OVL_W = sw - TXT_W - 6*S
+        OVL_H = CONTENT_H
+        OVL_X = sx + TXT_W + 6*S
+        OVL_Y = CONTENT_Y
+
+        # Arco "C" à esquerda do oval
+        A_EXP  = 14*S
         arc_cx = OVL_X + OVL_W//2
         arc_cy = OVL_Y + OVL_H//2
         arc_rx = OVL_W//2 + A_EXP
@@ -5556,9 +5578,9 @@ def _compositar_poster(panels, estrutura, tema):
             for k in range(steps+1)
         ]
         for k in range(len(pts)-1):
-            draw.line([pts[k], pts[k+1]], fill=cor, width=8*S)
+            draw.line([pts[k], pts[k+1]], fill=cor, width=7*S)
 
-        # ── Oval aquarela feathered ───────────────────────────────────────
+        # Oval aquarela feathered
         vig    = panel.resize((OVL_W, OVL_H), Image.LANCZOS)
         mask_e = Image.new('L', (OVL_W, OVL_H), 0)
         ImageDraw.Draw(mask_e).ellipse(
@@ -5567,32 +5589,20 @@ def _compositar_poster(panels, estrutura, tema):
         mask_e = mask_e.filter(ImageFilter.GaussianBlur(radius=int(FEATHER*0.7)))
         poster.paste(vig, (OVL_X, OVL_Y), mask=mask_e)
 
-        # ── Título da seção: Bangers grande flutuante (estilo Descomplica) ─
-        nome_lns = _wrap(nome, sf, TXT_W - 6*S, draw)[:2]
-        ty = sy + 6*S
-        for ln in nome_lns:
-            draw.text((sx + 4*S, ty), ln, font=sf, fill=cor)
-            ty += sf_lh
-
-        # Underline grosso colorido (assinatura Descomplica)
-        UL_Y    = ty + 2*S
-        UL_W_px = min(int(TXT_W * 0.85), TXT_W - 6*S)
-        draw.rectangle([sx+4*S, UL_Y, sx+4*S+UL_W_px, UL_Y+4*S], fill=cor)
-
-        # ── Bullets com seta → ────────────────────────────────────────────
-        y_cur  = UL_Y + 10*S
-        cy_lim = sy + sh - 6*S
-        bw_max = TXT_W - 20*S
+        # Bullets com seta →
+        y_cur  = CONTENT_Y
+        cy_lim = sy + sh - 4*S
+        bw_max = TXT_W - 18*S
 
         for topico in sec.get('topicos', [])[:5]:
             if y_cur + bf_lh > cy_lim:
                 break
-            ax  = sx + 5*S
+            ax  = sx + 4*S
             acy = y_cur + bf_lh//2
             draw.polygon([(ax, acy-5*S), (ax+10*S, acy), (ax, acy+5*S)], fill=cor)
             for ln in _wrap(topico, bf, bw_max, draw)[:2]:
                 if y_cur + bf_lh <= cy_lim:
-                    draw.text((sx+18*S, y_cur), ln, font=bf, fill=BLACK)
+                    draw.text((sx+17*S, y_cur), ln, font=bf, fill=BLACK)
                     y_cur += bf_lh
             y_cur += 4*S
 
