@@ -5417,9 +5417,10 @@ def _gerar_vinhetas_individuais(estrutura, tema):
 
 
 def _compositar_poster(panels, estrutura, tema):
-    """Poster ProfessorIA™ — estilo Descomplica.
-    Títulos de seção GRANDES ocupando largura total (como Descomplica),
-    oval aquarela + arco C na área de conteúdo abaixo do título.
+    """Poster ProfessorIA™ — DNA Descomplica.
+    Fundo branco puro. SEM tarjas, SEM cards, SEM bordas coloridas.
+    Título de seção GIGANTE flutuando direto no branco (exatamente como Descomplica).
+    Ilustração watercolor à direita, bullets à esquerda.
     Layout 2-2-1.
     """
     from PIL import Image, ImageDraw, ImageFilter
@@ -5428,6 +5429,9 @@ def _compositar_poster(panels, estrutura, tema):
 
     def _lighten(c, f):
         return tuple(min(255, int(x+(255-x)*f)) for x in c)
+
+    def _darken(c, f):
+        return tuple(max(0, int(x*(1-f))) for x in c)
 
     def _hex_to_rgb(h, default):
         try:
@@ -5442,8 +5446,8 @@ def _compositar_poster(panels, estrutura, tema):
         r, g, b = (x/255.0 for x in rgb)
         h, s, v = _cs.rgb_to_hsv(r, g, b)
         h = (h + deg/360.0) % 1.0
-        s = min(1.0, max(0.55, s))
-        v = max(0.62, v)
+        s = min(0.85, max(0.55, s))
+        v = max(0.65, min(0.92, v))
         r2, g2, b2 = _cs.hsv_to_rgb(h, s, v)
         return (int(r2*255), int(g2*255), int(b2*255))
 
@@ -5452,7 +5456,6 @@ def _compositar_poster(panels, estrutura, tema):
     PW, PH = 1792*S, 1024*S
     WHITE  = (255, 255, 255)
     BLACK  = (22, 22, 30)
-    BG     = (252, 251, 248)
 
     est    = estrutura or {}
     titulo = est.get('titulo', tema.upper())[:65]
@@ -5460,46 +5463,47 @@ def _compositar_poster(panels, estrutura, tema):
     while len(secoes) < 5:
         secoes.append({'nome': f'Seção {len(secoes)+1}', 'topicos': []})
 
-    c0   = _hex_to_rgb(est.get('cor_primaria', ''), (35,  90, 175))
-    NAVY = _hex_to_rgb(est.get('cor_escura',   ''), (10,  24,  58))
+    c0   = _hex_to_rgb(est.get('cor_primaria', ''), (30,  85, 175))
+    NAVY = _hex_to_rgb(est.get('cor_escura',   ''), (12,  22,  56))
 
-    # 5 cores para as seções (rotação de 72°)
+    # 5 cores vibrantes e harmônicas (rotação 72°)
     PALETA = [_rotate_hue(c0, i*72) for i in range(5)]
 
-    poster = Image.new('RGB', (PW, PH), BG)
+    # FUNDO BRANCO PURO — sem padrões, sem sombras de fundo
+    poster = Image.new('RGB', (PW, PH), WHITE)
     draw   = ImageDraw.Draw(poster)
 
     # ── Fontes ────────────────────────────────────────────────────────────
-    # Título principal
-    tf_sz = 54*S
+    # Título principal: grande
+    tf_sz = 58*S
     tf = _pil_font(tf_sz, estilo='display')
     for _ in range(20):
         bb = draw.textbbox((0, 0), titulo, font=tf)
-        if bb[2]-bb[0] <= 900*S:
+        if bb[2]-bb[0] <= PW - 160*S:
             break
         tf_sz -= 2*S
         tf = _pil_font(tf_sz, estilo='display')
 
-    # Título de seção: GRANDE (estilo Descomplica — título é o protagonista)
-    sf_sz = 36*S
+    # Título de seção: ENORME (DNA Descomplica — o título é o protagonista)
+    sf_sz = 42*S
     sf    = _pil_font(sf_sz, estilo='display')
-    sf_lh = int(sf_sz * 1.18)
+    sf_lh = int(sf_sz * 1.15)
 
     bf_sz = 14*S
     bf    = _pil_font(bf_sz, bold=False, estilo='moderno')
-    bf_lh = int(bf_sz * 1.72)
+    bf_lh = int(bf_sz * 1.75)
 
     # ── Layout 2-2-1 ──────────────────────────────────────────────────────
-    TITLE_H  = 82*S
-    FOOTER_H = 44*S
-    H_PAD    = 16*S
-    COL_GAP  = 10*S
-    ROW_GAP  = 10*S
+    TITLE_H  = 88*S    # barra de título escura no topo
+    FOOTER_H = 40*S
+    H_PAD    = 18*S
+    COL_GAP  = 14*S
+    ROW_GAP  = 12*S
 
     avail_h = PH - TITLE_H - FOOTER_H
     ROW_H   = (avail_h - ROW_GAP*2) // 3
     HALF_W  = (PW - H_PAD*2 - COL_GAP) // 2
-    BOT_W   = 960*S
+    BOT_W   = 980*S
 
     ROW1_Y = TITLE_H
     ROW2_Y = ROW1_Y + ROW_H + ROW_GAP
@@ -5513,22 +5517,22 @@ def _compositar_poster(panels, estrutura, tema):
         ((PW - BOT_W)//2,          ROW3_Y, BOT_W,  ROW_H),
     ]
 
-    # ── TÍTULO PRINCIPAL: parallelogram ribbon (ProfessorIA™) ─────────────
-    bb    = draw.textbbox((0, 0), titulo, font=tf)
-    ban_w = min(bb[2]-bb[0] + 120*S, PW - 2*H_PAD)
-    bx1   = PW//2 - ban_w//2
-    bx2   = bx1 + ban_w
-    by1, by2 = 10*S, TITLE_H - 10*S
-    SK = 18*S
-    draw.polygon([(bx1+SK+4*S, by1+4*S), (bx2+SK+4*S, by1+4*S),
-                  (bx2-SK+4*S, by2+4*S), (bx1-SK+4*S, by2+4*S)],
-                 fill=_lighten(c0, 0.45))
-    draw.polygon([(bx1+SK, by1), (bx2+SK, by1),
-                  (bx2-SK, by2), (bx1-SK, by2)], fill=c0)
-    draw.text((PW//2, (by1+by2)//2), titulo, font=tf, fill=WHITE, anchor='mm')
+    # ── TÍTULO PRINCIPAL ─────────────────────────────────────────────────
+    # Retângulo escuro (como "SEGUNDA GUERRA" no Descomplica) — SEM parallelogram
+    draw.rectangle([0, 0, PW, TITLE_H], fill=NAVY)
+    draw.text((PW//2, TITLE_H//2), titulo, font=tf, fill=WHITE, anchor='mm')
+    # Linha fina colorida na base (único acento, não é tarja)
+    draw.rectangle([0, TITLE_H-3*S, PW, TITLE_H], fill=c0)
 
-    # ── SEÇÕES ────────────────────────────────────────────────────────────
-    FEATHER = 18*S
+    # Divisória horizontal suave entre fileiras (linha fina cinza)
+    DIV_COLOR = (218, 215, 210)
+    draw.line([H_PAD, ROW2_Y-ROW_GAP//2, PW-H_PAD, ROW2_Y-ROW_GAP//2],
+              fill=DIV_COLOR, width=S)
+    draw.line([H_PAD, ROW3_Y-ROW_GAP//2, PW-H_PAD, ROW3_Y-ROW_GAP//2],
+              fill=DIV_COLOR, width=S)
+
+    # ── SEÇÕES — DNA Descomplica ──────────────────────────────────────────
+    # Regra de ouro: NADA colorido no fundo. Só texto e imagem sobre branco.
 
     for i, (sx, sy, sw, sh) in enumerate(sections_geo):
         sec   = secoes[i]
@@ -5536,77 +5540,61 @@ def _compositar_poster(panels, estrutura, tema):
         panel = panels[i]
         nome  = sec.get('nome', '').upper()
 
-        # ── TÍTULO DA SEÇÃO: ocupa a largura total (estilo Descomplica) ────
-        nome_lns = _wrap(nome, sf, sw - 6*S, draw)[:2]
-        ty = sy + 4*S
+        # ── TÍTULO DA SEÇÃO: gigante, flutuante, sem caixa ────────────────
+        # (exatamente como NÚMEROS, ANTECEDENTES, ALIANÇAS no Descomplica)
+        nome_lns = _wrap(nome, sf, sw - 8*S, draw)[:2]
+        ty = sy + 6*S
         for ln in nome_lns:
-            # Sombra leve (desloca 2px)
-            draw.text((sx + 4*S + 2*S, ty + 2*S), ln, font=sf,
-                      fill=_lighten(cor, 0.5))
-            # Texto principal colorido
             draw.text((sx + 4*S, ty), ln, font=sf, fill=cor)
             ty += sf_lh
 
-        # Underline grosso (full section width * 0.7)
-        UL_Y    = ty + 3*S
-        UL_W_px = int(sw * 0.70)
-        UL_H_px = 5*S
-        draw.rectangle([sx+4*S, UL_Y, sx+4*S+UL_W_px, UL_Y+UL_H_px], fill=cor)
+        # Linha fina abaixo do título (estilo Descomplica — não é tarja, é underline)
+        UL_Y = ty + 2*S
+        draw.line([sx+4*S, UL_Y, sx+4*S+int(sw*0.65), UL_Y],
+                  fill=cor, width=3*S)
 
-        CONTENT_Y = UL_Y + UL_H_px + 8*S
+        CONTENT_Y = UL_Y + 6*S
         CONTENT_H = sy + sh - CONTENT_Y - 4*S
 
-        # ── ÁREA DE CONTEÚDO: bullets esq | oval aquarela dir ────────────
-        TXT_W = int(sw * 0.43)
-        OVL_W = sw - TXT_W - 6*S
-        OVL_H = CONTENT_H
-        OVL_X = sx + TXT_W + 6*S
-        OVL_Y = CONTENT_Y
+        # ── ILUSTRAÇÃO watercolor: lado direito ───────────────────────────
+        ILL_W = int(sw * 0.48)
+        ILL_H = CONTENT_H
+        ILL_X = sx + sw - ILL_W - 2*S
+        ILL_Y = CONTENT_Y
 
-        # Arco "C" à esquerda do oval
-        A_EXP  = 14*S
-        arc_cx = OVL_X + OVL_W//2
-        arc_cy = OVL_Y + OVL_H//2
-        arc_rx = OVL_W//2 + A_EXP
-        arc_ry = OVL_H//2 + A_EXP
-        a_s = _m.radians(252)
-        a_e = _m.radians(108)
-        steps = 50
-        pts = [
-            (arc_cx + arc_rx*_m.cos(a_s + (a_e-a_s)*k/steps),
-             arc_cy + arc_ry*_m.sin(a_s + (a_e-a_s)*k/steps))
-            for k in range(steps+1)
-        ]
-        for k in range(len(pts)-1):
-            draw.line([pts[k], pts[k+1]], fill=cor, width=7*S)
-
-        # Oval aquarela feathered
-        vig    = panel.resize((OVL_W, OVL_H), Image.LANCZOS)
-        mask_e = Image.new('L', (OVL_W, OVL_H), 0)
+        # Feather suave para fundir com o fundo branco (como o Descomplica)
+        FEATHER = 24*S
+        vig    = panel.resize((ILL_W, ILL_H), Image.LANCZOS)
+        mask_e = Image.new('L', (ILL_W, ILL_H), 0)
+        # Elipse feathered = aquarela se integra ao branco naturalmente
         ImageDraw.Draw(mask_e).ellipse(
-            [FEATHER, FEATHER, OVL_W-FEATHER-1, OVL_H-FEATHER-1], fill=255
+            [FEATHER, FEATHER, ILL_W-FEATHER-1, ILL_H-FEATHER-1], fill=255
         )
-        mask_e = mask_e.filter(ImageFilter.GaussianBlur(radius=int(FEATHER*0.7)))
-        poster.paste(vig, (OVL_X, OVL_Y), mask=mask_e)
+        mask_e = mask_e.filter(ImageFilter.GaussianBlur(radius=int(FEATHER*0.8)))
+        poster.paste(vig, (ILL_X, ILL_Y), mask=mask_e)
 
-        # Bullets com seta →
+        # ── BULLETS: lado esquerdo ────────────────────────────────────────
+        BUL_X  = sx + 4*S
+        BUL_W  = sw - ILL_W - 14*S
         y_cur  = CONTENT_Y
         cy_lim = sy + sh - 4*S
-        bw_max = TXT_W - 18*S
 
         for topico in sec.get('topicos', [])[:5]:
             if y_cur + bf_lh > cy_lim:
                 break
-            ax  = sx + 4*S
-            acy = y_cur + bf_lh//2
-            draw.polygon([(ax, acy-5*S), (ax+10*S, acy), (ax, acy+5*S)], fill=cor)
-            for ln in _wrap(topico, bf, bw_max, draw)[:2]:
+            # Marcador: quadrado pequeno colorido (como Descomplica usa)
+            MK = 6*S
+            draw.rectangle(
+                [BUL_X, y_cur+bf_lh//2-MK//2, BUL_X+MK, y_cur+bf_lh//2+MK//2],
+                fill=cor
+            )
+            for ln in _wrap(topico, bf, BUL_W-MK-6*S, draw)[:2]:
                 if y_cur + bf_lh <= cy_lim:
-                    draw.text((sx+17*S, y_cur), ln, font=bf, fill=BLACK)
+                    draw.text((BUL_X+MK+5*S, y_cur), ln, font=bf, fill=BLACK)
                     y_cur += bf_lh
             y_cur += 4*S
 
-    # ── FOOTER: logo ProfessorIA™ ─────────────────────────────────────────
+    # ── FOOTER ────────────────────────────────────────────────────────────
     brand_f = _pil_font(20*S, estilo='display')
     LCX = PW - 160*S
     LCY = PH - FOOTER_H//2
