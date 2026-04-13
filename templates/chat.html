@@ -2112,13 +2112,19 @@
             URL.revokeObjectURL(url);
           });
           acoes.appendChild(dlBtn);
-          // Imprimir / PDF
+          // Imprimir / PDF — usa o próprio iframe, sem abrir nova aba
           const printBtn = document.createElement('button');
           printBtn.className = 'btn-dl-mapa';
           printBtn.textContent = '🖨 Imprimir / PDF';
           printBtn.addEventListener('click', () => {
-            const w = window.open('', '_blank');
-            if (w) { w.document.write(posterHtml); w.document.close(); w.print(); }
+            try { iframe.contentWindow.focus(); iframe.contentWindow.print(); }
+            catch(e) {
+              // fallback: Blob URL (evita about:blank)
+              const blob = new Blob([posterHtml], {type: 'text/html'});
+              const burl = URL.createObjectURL(blob);
+              const w = window.open(burl, '_blank');
+              if (w) w.addEventListener('load', () => { w.print(); URL.revokeObjectURL(burl); });
+            }
           });
           acoes.appendChild(printBtn);
 
@@ -2127,10 +2133,10 @@
           stream.replaceBubble(`
             <div class="mapa-mental-resultado">
               <img src="${imageUrl}" class="mapa-mental-img" alt="Infográfico: ${escapeHtml(_tema)}"
-                   loading="lazy" onclick="window.open(this.src,'_blank')">
+                   loading="lazy" style="cursor:default">
               <div class="mapa-mental-acoes">
-                <a href="${imageUrl}" download="infografico-${escapeHtml(_tema)}.png"
-                   target="_blank" class="btn-dl-mapa">⬇ Baixar Imagem</a>
+                <a href="${imageUrl}" download="infografico-${escapeHtml(_tema)}.jpeg"
+                   class="btn-dl-mapa">⬇ Baixar Imagem</a>
               </div>
               ${fontesHtml}
             </div>`);

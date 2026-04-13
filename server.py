@@ -76,6 +76,15 @@ app.secret_key = _secret
 
 app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16 MB máximo por request
 
+# ─── Sessão persistente ────────────────────────────────────────────────────────
+app.config['SESSION_PERMANENT']           = True
+app.config['PERMANENT_SESSION_LIFETIME']  = timedelta(days=30)
+app.config['SESSION_COOKIE_HTTPONLY']     = True
+app.config['SESSION_COOKIE_SAMESITE']     = 'Lax'
+app.config['REMEMBER_COOKIE_DURATION']    = timedelta(days=30)
+app.config['REMEMBER_COOKIE_HTTPONLY']    = True
+app.config['REMEMBER_COOKIE_SAMESITE']   = 'Lax'
+
 login_manager = LoginManager(app)
 login_manager.login_view = 'login'
 login_manager.login_message = 'Faça login para acessar esta página.'
@@ -1326,7 +1335,7 @@ def login():
             ' FROM usuarios WHERE email = ?', (email,)).fetchone()
         conn.close()
         if row and check_password_hash(row['senha'], senha):
-            login_user(Usuario(row))
+            login_user(Usuario(row), remember=True)
             return redirect(url_for('chat'))
         flash('E-mail ou senha incorretos.', 'erro')
     return render_template('login.html')
@@ -1370,7 +1379,7 @@ def cadastro():
             conn.commit()
             row = conn.execute('SELECT * FROM usuarios WHERE email = ?', (email,)).fetchone()
             conn.close()
-            login_user(Usuario(row))
+            login_user(Usuario(row), remember=True)
             _capi_event('CompleteRegistration', user_data={'email': email, 'name': nome})
             return redirect(url_for('chat'))
         except Exception as e:
@@ -1504,7 +1513,7 @@ def stripe_sucesso():
                 row = conn.execute('SELECT * FROM usuarios WHERE id=?', (current_user.id,)).fetchone()
                 conn.close()
                 if row:
-                    login_user(Usuario(row))
+                    login_user(Usuario(row), remember=True)
                 preco = PLANOS.get(plano_id, {}).get('preco', 0)
                 _capi_event('Purchase',
                             user_data={'email': current_user.email, 'name': current_user.nome},
