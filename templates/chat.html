@@ -1142,6 +1142,17 @@
       display: flex; flex-direction: column; gap: 4px;
     }
     .mapa-fontes-lista li { line-height: 1.45; }
+    /* ── Poster iframe ── */
+    .poster-iframe-wrap {
+      width: 100%; overflow: hidden; border-radius: 12px;
+      border: 1px solid var(--linha-f);
+      box-shadow: 0 4px 24px rgba(0,0,0,.12);
+      background: #d8d8d8;
+    }
+    .poster-iframe {
+      width: 1400px; height: 900px; border: none; display: block;
+      transform-origin: top left;
+    }
     .mapa-fontes-aviso {
       font-size: .75rem; color: var(--text2);
       border-top: 1px solid var(--linha-f); padding-top: 8px; margin-top: 4px;
@@ -2014,19 +2025,25 @@
         _setLoading(`Gerando infográfico de "${_tema}"…`);
 
         // Polling a cada 3s (máx 60 tentativas = 3 minutos)
-        let imageUrl = null;
-        let jobFontes = [];
+        let posterHtml = null;
+        let imageUrl   = null;
+        let jobFontes  = [];
         for (let i = 0; i < 60; i++) {
           await new Promise(r => setTimeout(r, 3000));
           const pollResp = await fetch(`/api/generate/mapa-mental/status/${job_id}`);
           const data = await pollResp.json().catch(() => ({}));
           if (data.erro) throw new Error(data.erro);
-          if (data.url)  { imageUrl = data.url; jobFontes = data.fontes || []; break; }
+          if (data.html || data.url) {
+            posterHtml = data.html || null;
+            imageUrl   = data.url  || null;
+            jobFontes  = data.fontes || [];
+            break;
+          }
           // data.status === 'processing' → continua
           if (i === 6)  _setLoading('Quase lá… finalizando os detalhes');
           if (i === 14) _setLoading('Aguardando resposta do servidor de imagens…');
         }
-        if (!imageUrl) throw new Error('Tempo esgotado. Tente novamente.');
+        if (!posterHtml && !imageUrl) throw new Error('Tempo esgotado. Tente novamente.');
 
         const fontesHtml = jobFontes.length ? `
           <div class="mapa-fontes">
@@ -2039,16 +2056,85 @@
             <div class="mapa-fontes-aviso">⚠ Conteúdo gerado por IA — verifique as informações antes de utilizar em sala de aula.</div>
           </div>` : '';
 
-        stream.replaceBubble(`
-          <div class="mapa-mental-resultado">
-            <img src="${imageUrl}" class="mapa-mental-img" alt="Infográfico: ${escapeHtml(_tema)}"
-                 loading="lazy" onclick="window.open(this.src,'_blank')">
-            <div class="mapa-mental-acoes">
-              <a href="${imageUrl}" download="infografico-${escapeHtml(_tema)}.png"
-                 target="_blank" class="btn-dl-mapa">⬇ Baixar Imagem</a>
-            </div>
-            ${fontesHtml}
-          </div>`);
+        if (posterHtml) {
+          // ── Renderização HTML/CSS via iframe ─────────────────────────────
+          const slotId = 'pia-poster-' + Date.now();
+          const safeNome = escapeHtml(_tema);
+          stream.replaceBubble(`
+            <div class="mapa-mental-resultado">
+              <div class="poster-iframe-wrap" id="${slotId}"></div>
+              <div class="mapa-mental-acoes" id="${slotId}-acoes"></div>
+              ${fontesHtml}
+            </div>`);
+
+          // Insere iframe com srcdoc (sem innerHTML para evitar escaping)
+          const wrap   = document.getElementById(slotId);
+          const iframe = document.createElement('iframe');
+          iframe.className   = 'poster-iframe';
+          iframe.title       = `Infográfico: ${safeNome}`;
+          iframe.scrolling   = 'no';
+          iframe.setAttribute('loading', 'lazy');
+          wrap.appendChild(iframe);
+
+          // Escala o iframe para caber no container assim que carregar
+          let _iframeNativeH = 900;
+          const _scaleIframe = () => {
+            const ww    = wrap.offsetWidth || 720;
+            const scale = Math.min(1, ww / 1400);
+            iframe.style.transform = `scale(${scale})`;
+            wrap.style.height      = Math.round(_iframeNativeH * scale) + 'px';
+          };
+          iframe.addEventListener('load', () => {
+            // Ajusta altura real do conteúdo (srcdoc é same-origin → contentDocument ok)
+            try {
+              const h = iframe.contentDocument.documentElement.scrollHeight;
+              if (h > 200) { _iframeNativeH = h; iframe.style.height = h + 'px'; }
+            } catch(e) {}
+            _scaleIframe();
+          });
+          window.addEventListener('resize', _scaleIframe);
+          iframe.srcdoc = posterHtml;   // dispara o load
+
+          // Botões de ação
+          const acoes = document.getElementById(slotId + '-acoes');
+          // Download HTML
+          const dlBtn = document.createElement('a');
+          dlBtn.className = 'btn-dl-mapa';
+          dlBtn.textContent = '⬇ Baixar HTML';
+          dlBtn.href = '#';
+          dlBtn.addEventListener('click', e => {
+            e.preventDefault();
+            const blob = new Blob([posterHtml], {type: 'text/html'});
+            const url  = URL.createObjectURL(blob);
+            const a    = Object.assign(document.createElement('a'),
+                           {href: url, download: `infografico-${safeNome}.html`});
+            a.click();
+            URL.revokeObjectURL(url);
+          });
+          acoes.appendChild(dlBtn);
+          // Imprimir / PDF
+          const printBtn = document.createElement('button');
+          printBtn.className = 'btn-dl-mapa';
+          printBtn.textContent = '🖨 Imprimir / PDF';
+          printBtn.addEventListener('click', () => {
+            const w = window.open('', '_blank');
+            if (w) { w.document.write(posterHtml); w.document.close(); w.print(); }
+          });
+          acoes.appendChild(printBtn);
+
+        } else {
+          // ── Fallback legado: imagem JPEG ──────────────────────────────────
+          stream.replaceBubble(`
+            <div class="mapa-mental-resultado">
+              <img src="${imageUrl}" class="mapa-mental-img" alt="Infográfico: ${escapeHtml(_tema)}"
+                   loading="lazy" onclick="window.open(this.src,'_blank')">
+              <div class="mapa-mental-acoes">
+                <a href="${imageUrl}" download="infografico-${escapeHtml(_tema)}.png"
+                   target="_blank" class="btn-dl-mapa">⬇ Baixar Imagem</a>
+              </div>
+              ${fontesHtml}
+            </div>`);
+        }
         historico.push({role:'assistant', content: `[Infográfico visual gerado: ${_tema}]`});
       } catch(e) {
         stream.replaceBubble(`<p style="color:var(--text2)">⚠️ ${escapeHtml(e.message || 'Não foi possível gerar o infográfico. Tente novamente.')}</p>`);

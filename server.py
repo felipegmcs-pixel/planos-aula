@@ -5609,6 +5609,167 @@ def _compositar_poster(panels, estrutura, tema):
     return 'data:image/jpeg;base64,' + base64.b64encode(buf.getvalue()).decode()
 
 
+def _gerar_html_poster(panels, estrutura, tema):
+    """Gera HTML/CSS poster educacional ProfessorIA™ — Padrão Visual Premium.
+
+    Retorna string HTML completo com imagens base64 embutidas.
+    Adequado para <iframe srcdoc="..."> ou download como .html / print-to-PDF.
+    """
+    import html as _html
+    import colorsys as _cs
+
+    def _hex_to_rgb(h, default):
+        try:
+            h = h.strip().lstrip('#')
+            if len(h) == 6:
+                return tuple(int(h[i:i+2], 16) for i in (0, 2, 4))
+        except Exception:
+            pass
+        return default
+
+    def _rgb_to_hex(rgb):
+        return '#{:02x}{:02x}{:02x}'.format(*rgb)
+
+    def _rotate_hue(rgb, deg):
+        r, g, b = (x / 255.0 for x in rgb)
+        h, s, v = _cs.rgb_to_hsv(r, g, b)
+        h = (h + deg / 360.0) % 1.0
+        s = min(0.85, max(0.55, s))
+        v = max(0.65, min(0.92, v))
+        r2, g2, b2 = _cs.hsv_to_rgb(h, s, v)
+        return (int(r2 * 255), int(g2 * 255), int(b2 * 255))
+
+    est     = estrutura or {}
+    titulo  = _html.escape(est.get('titulo', tema.upper())[:65])
+    secoes  = list(est.get('secoes', []))[:5]
+    while len(secoes) < 5:
+        secoes.append({'nome': f'Seção {len(secoes) + 1}', 'topicos': []})
+
+    c0_rgb   = _hex_to_rgb(est.get('cor_primaria', ''), (30,  85, 175))
+    navy_rgb = _hex_to_rgb(est.get('cor_escura',   ''), (12,  22,  56))
+    c0       = _rgb_to_hex(c0_rgb)
+    navy     = _rgb_to_hex(navy_rgb)
+    PALETA   = [_rgb_to_hex(_rotate_hue(c0_rgb, i * 72)) for i in range(5)]
+
+    # Converte panels (PIL Image RGB) em data URLs PNG base64
+    panel_srcs = []
+    for panel in (panels or [None] * 5):
+        if panel is None:
+            panel_srcs.append('')
+        else:
+            buf = io.BytesIO()
+            panel.save(buf, format='PNG', optimize=True)
+            panel_srcs.append(
+                'data:image/png;base64,' + base64.b64encode(buf.getvalue()).decode()
+            )
+    while len(panel_srcs) < 5:
+        panel_srcs.append('')
+
+    # ── Cards das seções ──────────────────────────────────────────────────────
+    cards = []
+    for i, sec in enumerate(secoes):
+        nome    = _html.escape(sec.get('nome', '').upper())
+        topicos = sec.get('topicos', [])[:4]
+        cor     = PALETA[i]
+        src     = panel_srcs[i]
+
+        bullets = ''.join(
+            f'<li><span class="arr" style="color:{cor}">&#10148;</span>'
+            f'<span>{_html.escape(str(t))}</span></li>'
+            for t in topicos
+        )
+        img_tag = (
+            f'<div class="sec-img">'
+            f'<img src="{src}" alt="{nome}" loading="lazy">'
+            f'</div>'
+        ) if src else ''
+
+        extra = ' sec-full' if i == 4 else ''
+        cards.append(f'''
+    <div class="sec-card{extra}">
+      <div class="sec-inner">
+        <div class="sec-text">
+          <h2 class="sec-title" style="color:{cor}">{nome}</h2>
+          <div class="sec-line" style="background:{cor}"></div>
+          <ul class="sec-bullets">{bullets}</ul>
+        </div>
+        {img_tag}
+      </div>
+    </div>''')
+
+    cards_html = '\n'.join(cards)
+
+    return f'''<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>{titulo} — ProfessorIA</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+<link href="https://fonts.googleapis.com/css2?family=Bangers&family=Nunito:wght@400;700;800&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{{box-sizing:border-box;margin:0;padding:0}}
+html,body{{width:1400px;background:#d8d8d8;font-family:'Nunito',sans-serif;}}
+.poster{{width:1400px;background:#FAFAFA;box-shadow:0 12px 52px rgba(0,0,0,.24);display:flex;flex-direction:column;}}
+/* ── HEADER ── */
+.poster-header{{background:{navy};padding:22px 44px;display:flex;align-items:center;justify-content:center;border-bottom:5px solid {c0};}}
+.poster-title{{font-family:'Bangers',cursive;font-size:60px;letter-spacing:5px;color:#fff;text-align:center;line-height:1.05;text-shadow:2px 3px 0 rgba(0,0,0,.38);}}
+/* ── GRID ── */
+.poster-grid{{display:grid;grid-template-columns:1fr 1fr;gap:3px;background:{c0};padding:3px;flex:1;}}
+/* ── CARD ── */
+.sec-card{{background:#FAFAFA;padding:18px 22px 16px;min-height:216px;}}
+.sec-full{{grid-column:1/-1;}}
+.sec-inner{{display:flex;gap:14px;height:100%;align-items:flex-start;}}
+.sec-text{{flex:1;min-width:0;}}
+/* ── TITLE ── */
+.sec-title{{font-family:'Bangers',cursive;font-size:31px;letter-spacing:1.5px;line-height:1.1;margin-bottom:5px;}}
+.sec-line{{height:3px;width:55%;border-radius:2px;margin-bottom:10px;}}
+/* ── BULLETS ── */
+.sec-bullets{{list-style:none;display:flex;flex-direction:column;gap:7px;}}
+.sec-bullets li{{font-size:13.5px;line-height:1.45;color:#1a1a2e;font-weight:700;display:flex;align-items:flex-start;gap:7px;}}
+.arr{{font-size:14px;margin-top:1px;flex-shrink:0;}}
+/* ── IMAGE ── */
+.sec-img{{flex-shrink:0;width:192px;}}
+.sec-full .sec-img{{width:255px;}}
+.sec-img img{{width:100%;height:175px;object-fit:cover;border-radius:50%;
+  -webkit-mask-image:radial-gradient(ellipse 87% 87% at 50% 50%,#000 55%,transparent 100%);
+  mask-image:radial-gradient(ellipse 87% 87% at 50% 50%,#000 55%,transparent 100%);}}
+.sec-full .sec-img img{{height:232px;}}
+/* ── FOOTER ── */
+.poster-footer{{background:{navy};padding:11px 32px;display:flex;align-items:center;justify-content:flex-end;border-top:4px solid {c0};}}
+.brand{{display:flex;align-items:center;gap:8px;}}
+.brand-circles{{display:flex;align-items:center;}}
+.brand-circles span{{display:inline-block;width:21px;height:21px;border-radius:50%;border:3px solid {c0};}}
+.brand-circles span+span{{margin-left:-9px;}}
+.brand-name{{font-family:'Bangers',cursive;font-size:22px;letter-spacing:1px;color:#fff;}}
+/* ── PRINT ── */
+@media print{{
+  html,body{{width:297mm;background:#fff;}}
+  .poster{{width:100%;box-shadow:none;page-break-inside:avoid;}}
+  .poster-title{{font-size:44px;}}
+}}
+</style>
+</head>
+<body>
+<div class="poster">
+  <header class="poster-header">
+    <h1 class="poster-title">{titulo}</h1>
+  </header>
+  <main class="poster-grid">
+{cards_html}
+  </main>
+  <footer class="poster-footer">
+    <div class="brand">
+      <div class="brand-circles"><span></span><span></span></div>
+      <span class="brand-name">ProfessorIA™</span>
+    </div>
+  </footer>
+</div>
+</body>
+</html>'''
+
+
 # ── Jobs em /tmp — compartilhado entre TODOS os workers do container ─────────
 # In-memory dict falha com múltiplos workers (processos separados).
 # /tmp é compartilhado no mesmo container Render, independente de workers.
@@ -5665,14 +5826,14 @@ def api_generate_mapa_mental():
                 raise RuntimeError('Falha ao gerar ilustrações DALL-E.')
             logger.info('Vinhetas OK uid=%s tema="%s" — compondo poster', uid, tema[:50])
 
-            data_url = _compositar_poster(panels, estrutura, tema)
-            logger.info('Poster composto OK uid=%s tema="%s"', uid, tema[:50])
+            html_str = _gerar_html_poster(panels, estrutura, tema)
+            logger.info('Poster HTML OK uid=%s tema="%s"', uid, tema[:50])
             fontes = [
                 {'secao': s.get('nome', ''), 'fonte': s.get('fonte', '')}
                 for s in (estrutura or {}).get('secoes', [])
                 if s.get('fonte', '').strip()
             ]
-            _job_set(job_id, {'url': data_url, 'fontes': fontes})
+            _job_set(job_id, {'html': html_str, 'fontes': fontes})
         except Exception as e:
             err = str(e)
             logger.error('Infográfico ERRO uid=%s job=%s: %s', uid, job_id, err[:400])
@@ -5699,7 +5860,7 @@ def api_mapa_mental_status(job_id):
     if not job:
         return jsonify({'status': 'processing'})  # ainda processando ou não iniciou
     # Entrega resultado e limpa arquivo
-    if 'url' in job or 'erro' in job:
+    if 'html' in job or 'url' in job or 'erro' in job:
         _job_del(job_id)
     return jsonify(job)
 
