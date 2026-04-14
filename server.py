@@ -68,22 +68,31 @@ IMAGE_STYLE_MODIFIER = (
 # ─── App ──────────────────────────────────────────────────────────────────────
 
 app = Flask(__name__)
+
+# ─── Secret Key ───────────────────────────────────────────────────────────────
+# ATENÇÃO: configure SECRET_KEY como variável de ambiente permanente no Render/host.
+# Sem ela, cada novo deploy invalida todos os cookies de sessão ativos.
 _secret = os.environ.get('SECRET_KEY', '')
 if not _secret:
-    logger.critical('SECRET_KEY não definida — usando chave insegura. Defina SECRET_KEY em produção!')
-    _secret = 'dev-secret-troque-em-producao'
+    logger.critical('SECRET_KEY não definida — sessões serão perdidas a cada restart!')
+    # Fallback estável para desenvolvimento local (não muda entre reinicializações)
+    _secret = 'pia-dev-key-troque-em-producao-urgente'
 app.secret_key = _secret
 
 app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16 MB máximo por request
 
-# ─── Sessão persistente ────────────────────────────────────────────────────────
+# ─── Sessão persistente (usuário permanece logado por 30 dias) ────────────────
+# Para funcionar: SECRET_KEY deve ser uma string fixa e permanente no servidor.
 app.config['SESSION_PERMANENT']           = True
 app.config['PERMANENT_SESSION_LIFETIME']  = timedelta(days=30)
 app.config['SESSION_COOKIE_HTTPONLY']     = True
 app.config['SESSION_COOKIE_SAMESITE']     = 'Lax'
+app.config['SESSION_COOKIE_SECURE']       = False  # True apenas se forçar HTTPS no proxy
+# Cookie secundário "lembre-me" do Flask-Login (sobrevive a fechamento do browser)
 app.config['REMEMBER_COOKIE_DURATION']    = timedelta(days=30)
 app.config['REMEMBER_COOKIE_HTTPONLY']    = True
-app.config['REMEMBER_COOKIE_SAMESITE']   = 'Lax'
+app.config['REMEMBER_COOKIE_SAMESITE']    = 'Lax'
+app.config['REMEMBER_COOKIE_SECURE']      = False  # idem SESSION_COOKIE_SECURE
 
 login_manager = LoginManager(app)
 login_manager.login_view = 'login'
@@ -849,16 +858,22 @@ class Usuario(UserMixin):
 
 @login_manager.user_loader
 def load_user(user_id):
-    conn = get_db()
-    row = conn.execute(
-        'SELECT id, nome, email, senha, plano, ativo, valido_ate, criado_em,'
-        ' escola_nome, professor_nome, logo_path, logo_estado_path,'
-        ' escola_template, onboarding_done, escola_id, papel, default_segment,'
-        ' escola_governo, escola_secretaria, escola_diretoria,'
-        ' escola_endereco, escola_fone, escola_email'
-        ' FROM usuarios WHERE id = %s', (user_id,)).fetchone()
-    conn.close()
-    return Usuario(row) if row else None
+    """Carrega usuário a partir do cookie de sessão em cada requisição."""
+    try:
+        conn = get_db()
+        row = conn.execute(
+            'SELECT id, nome, email, senha, plano, ativo, valido_ate, criado_em,'
+            ' escola_nome, professor_nome, logo_path, logo_estado_path,'
+            ' escola_template, onboarding_done, escola_id, papel, default_segment,'
+            ' escola_governo, escola_secretaria, escola_diretoria,'
+            ' escola_endereco, escola_fone, escola_email'
+            ' FROM usuarios WHERE id = %s', (user_id,)).fetchone()
+        conn.close()
+        return Usuario(row) if row else None
+    except Exception as exc:
+        # Falha de banco não deve derrubar a sessão — retorna None silenciosamente
+        logger.error('load_user(%s) erro: %s', user_id, exc)
+        return None
 
 # ─── Helper: ativar assinatura ────────────────────────────────────────────────
 
