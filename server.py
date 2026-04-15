@@ -5280,6 +5280,28 @@ def _gerar_estrutura_infografico(tema):
                     'fonte':        '',
                 })
         data['secoes'] = secoes_final
+
+        # ── Paleta de 5 cores pré-computada ──────────────────────────────────
+        # Evita que o frontend precise recalcular rotação HSV
+        import colorsys as _cs2
+        def _rhue(rgb, deg):
+            r, g, b = (x / 255.0 for x in rgb)
+            h, s, v = _cs2.rgb_to_hsv(r, g, b)
+            h = (h + deg / 360.0) % 1.0
+            s = min(0.85, max(0.55, s))
+            v = max(0.65, min(0.92, v))
+            r2, g2, b2 = _cs2.hsv_to_rgb(h, s, v)
+            return '#{:02x}{:02x}{:02x}'.format(int(r2*255), int(g2*255), int(b2*255))
+
+        def _h2rgb(h, default=(30, 85, 175)):
+            try:
+                h = h.strip().lstrip('#')
+                return tuple(int(h[i:i+2], 16) for i in (0, 2, 4))
+            except Exception:
+                return default
+
+        c0_rgb = _h2rgb(data.get('cor_primaria', ''))
+        data['paleta'] = [_rhue(c0_rgb, i * 72) for i in range(5)]
         logger.info('Estrutura 5 ramos OK para "%s"', tema[:50])
         return data
 
@@ -5438,6 +5460,159 @@ def _gerar_vinhetas_individuais(estrutura, tema):
         for idx, img in ex.map(_um, enumerate(secoes)):
             panels[idx] = img
     return panels
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+# SERVIÇO DE ILUSTRAÇÃO — Pipeline DALL-E 3 por Tópico
+# ══════════════════════════════════════════════════════════════════════════════
+
+# Prompt de estilo obrigatório — garante consistência visual em todas as cards.
+# Altere aqui para mudar o estilo globalmente sem tocar em outra parte do código.
+_ILUS_STYLE = (
+    'isolated on white background, watercolor style, '
+    'classical educational illustration, highly detailed, '
+    'soft edges, minimalist UI approach. '
+    'NO text, NO letters, NO numbers, NO watermarks. '
+    'Wide composition, landscape or object scene preferred.'
+)
+
+
+def _gerar_ilustracao_topico(descricao_en: str) -> str:
+    """Gera 1 ilustração DALL-E 3 para um nó/tópico do mapa mental.
+
+    Pipeline:
+      1. Concatena a descrição do tópico com _ILUS_STYLE (prompt de estilo obrigatório)
+      2. Chama a API DALL-E 3 (openai.images.generate)
+      3. Extrai a URL temporária da resposta
+      4. Baixa e converte para base64 PNG (URLs DALL-E expiram em ~60 min)
+      5. Retorna data URL persistente pronta para uso em <img src="...">
+
+    Args:
+        descricao_en: descrição em inglês do conteúdo da ilustração
+                      (ex: "steam engine factory with workers, 1800s")
+
+    Returns:
+        Data URL  →  "data:image/png;base64,..."
+
+    Raises:
+        RuntimeError: OPENAI_API_KEY não configurada
+        Exception:    falha após 3 tentativas com backoff
+
+    Variável de ambiente obrigatória:
+        OPENAI_API_KEY — obtenha em platform.openai.com/api-keys
+    """
+    # ── Variável de ambiente ── configure OPENAI_API_KEY no painel do Render ──
+    if not client_openai:
+        raise RuntimeError('OPENAI_API_KEY não configurada. Adicione a variável de ambiente.')
+
+    import requests as _req
+
+    # Concatena tópico + estilo obrigatório
+    prompt_final = f'{descricao_en}. {_ILUS_STYLE}'
+
+    # Tentativas com backoff (rate-limit do DALL-E é agressivo)
+    for tentativa in range(3):
+        try:
+            if tentativa:
+                import time as _t
+                _t.sleep(tentativa * 4)   # backoff: 4s, 8s
+
+            # ── Chamada à API de geração de imagens ──────────────────────────
+            # model='dall-e-3': melhor qualidade; use 'dall-e-2' para menor custo
+            # quality='standard': $0.04/imagem; 'hd' = $0.08/imagem
+            resp = client_openai.images.generate(
+                model='dall-e-3',
+                prompt=prompt_final[:4000],
+                size='1024x1024',
+                quality='standard',
+                n=1,
+            )
+
+            # Extrai URL temporária retornada pela API
+            temp_url = resp.data[0].url
+
+            # Baixa e converte para base64 (evita expiração dos links DALL-E)
+            r = _req.get(temp_url, timeout=30)
+            r.raise_for_status()
+            b64 = base64.b64encode(r.content).decode()
+            return f'data:image/png;base64,{b64}'
+
+        except Exception as e:
+            logger.warning('_gerar_ilustracao_topico tentativa %d/3: %s', tentativa + 1, e)
+            if tentativa == 2:
+                raise
+
+    raise RuntimeError('Falha ao gerar ilustração após 3 tentativas')
+
+
+@app.route('/api/generate/ilustracao', methods=['POST'])
+@login_required
+@limiter.limit('20 per minute')
+def api_gerar_ilustracao():
+    """Gera 1 ilustração DALL-E 3 para um nó/tópico do mapa mental.
+
+    Body JSON:
+        { "topico": "descrição em inglês do conteúdo visual" }
+
+    Response (sucesso):
+        { "b64": "data:image/png;base64,..." }
+
+    Response (erro):
+        { "erro": "mensagem legível" }
+
+    Custo: ~$0.04 por chamada (DALL-E 3 standard 1024×1024)
+    """
+    data   = request.get_json(force=True) or {}
+    topico = str(data.get('topico', '')).strip()[:300]
+    if not topico:
+        return jsonify({'erro': 'Campo obrigatório: topico'}), 400
+
+    try:
+        b64 = _gerar_ilustracao_topico(topico)
+        return jsonify({'b64': b64})
+    except Exception as e:
+        err = str(e).lower()
+        logger.error('api_gerar_ilustracao erro: %s', e)
+        if 'content_policy' in err or 'safety' in err:
+            return jsonify({'erro': 'Tópico bloqueado pela política de conteúdo da OpenAI.'}), 422
+        if 'billing' in err or 'credit' in err or 'quota' in err:
+            return jsonify({'erro': 'Créditos OpenAI esgotados.'}), 402
+        if 'rate_limit' in err:
+            return jsonify({'erro': 'Muitas solicitações. Aguarde um momento.'}), 429
+        return jsonify({'erro': f'Erro ao gerar ilustração: {str(e)[:120]}'}), 500
+
+
+@app.route('/api/generate/estrutura-mapa', methods=['POST'])
+@login_required
+@limiter.limit('10 per minute')
+def api_gerar_estrutura_mapa():
+    """Retorna a estrutura de texto do mapa mental sem gerar imagens.
+
+    Rápido (~3-5s). Use para exibir o texto imediatamente enquanto
+    as imagens carregam em paralelo via /api/generate/ilustracao.
+
+    Body JSON:
+        { "tema": "string" }
+
+    Response JSON:
+        {
+          "titulo": "...",
+          "cor_primaria": "#rrggbb",
+          "cor_escura": "#rrggbb",
+          "paleta": ["#...", "#...", "#...", "#...", "#..."],
+          "secoes": [{ "nome", "topicos", "ilustracao_en", "fonte" }, ...]
+        }
+    """
+    data = request.get_json(force=True) or {}
+    tema = str(data.get('tema', '')).strip()[:300]
+    if not tema:
+        return jsonify({'erro': 'Campo obrigatório: tema'}), 400
+
+    estrutura = _gerar_estrutura_infografico(tema)
+    if not estrutura:
+        return jsonify({'erro': 'Não foi possível gerar a estrutura. Tente novamente.'}), 500
+
+    return jsonify(estrutura)
 
 
 def _compositar_poster(panels, estrutura, tema):

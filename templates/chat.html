@@ -1153,6 +1153,66 @@
       width: 1400px; height: 900px; border: none; display: block;
       transform-origin: top left;
     }
+    /* ── Mapa Mental — Cards progressivos ── */
+    .mm-resultado { display: flex; flex-direction: column; gap: 10px; padding: 4px 0; }
+    .mm-header {
+      border-radius: 10px 10px 0 0; padding: 14px 22px;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .mm-titulo {
+      font-family: 'Bangers', cursive, var(--font);
+      font-size: 26px; letter-spacing: 3px; color: #fff;
+      text-align: center; text-shadow: 1px 2px 0 rgba(0,0,0,.3);
+    }
+    .mm-grid {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 8px;
+    }
+    .mm-card {
+      background: #fff; border: 1px solid var(--linha-f);
+      border-radius: 10px; overflow: hidden;
+      display: flex; flex-direction: column;
+      border-top: 3px solid var(--cor, #1e3a5f);
+    }
+    .mm-card-full { grid-column: 1 / -1; }
+    .mm-card-top { padding: 11px 14px 4px; }
+    .mm-card-title {
+      font-family: 'Bangers', cursive, var(--font);
+      font-size: 19px; letter-spacing: 1.2px;
+      line-height: 1.1; color: var(--cor, #1e3a5f);
+    }
+    .mm-card-line {
+      height: 2px; width: 50%; border-radius: 2px; margin-top: 5px;
+      background: var(--cor, #1e3a5f);
+    }
+    .mm-card-body {
+      display: flex; gap: 8px; padding: 8px 14px 12px;
+      align-items: flex-start; flex: 1;
+    }
+    .mm-card-bullets {
+      list-style: none; flex: 1; display: flex; flex-direction: column; gap: 5px;
+    }
+    .mm-card-bullets li {
+      font-size: 12px; color: #1a1a2e; font-weight: 700;
+      line-height: 1.4; display: flex; align-items: flex-start; gap: 5px;
+    }
+    .mm-arr { flex-shrink: 0; margin-top: 1px; font-size: 11px; }
+    .mm-card-img {
+      flex-shrink: 0; width: 110px; height: 105px;
+      background: #f0f4f8; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center; overflow: hidden;
+      -webkit-mask-image: radial-gradient(ellipse 90% 90% at 50% 50%, #000 55%, transparent 100%);
+      mask-image: radial-gradient(ellipse 90% 90% at 50% 50%, #000 55%, transparent 100%);
+    }
+    .mm-card-full .mm-card-img { width: 145px; height: 140px; }
+    .mm-card-img img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .mm-spinner {
+      width: 28px; height: 28px; border-radius: 50%;
+      border: 3px solid #e2e8f0;
+      border-top-color: var(--cor, #1e3a5f);
+      animation: mm-spin .75s linear infinite;
+    }
+    @keyframes mm-spin { to { transform: rotate(360deg); } }
+    .mm-acoes { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 2px; }
     .mapa-fontes-aviso {
       font-size: .75rem; color: var(--text2);
       border-top: 1px solid var(--linha-f); padding-top: 8px; margin-top: 4px;
@@ -2002,145 +2062,112 @@
              <span style="font-size:.72rem;opacity:.6">Isso pode levar até 60 segundos.</span></p>
         </div>`);
 
-      _setLoading(`Preparando infográfico de "${_tema}"…`);
+      _setLoading(`Buscando estrutura de "${_tema}"…`);
       scroll();
 
       try {
-        // ── Arquitetura de polling: POST inicia job; GET /status/:id verifica ──
-        // SSE era bloqueado pelo proxy do Render (conexão inativa > 30s).
-        // Polling usa requests curtos (<1s cada), sem dependência de streaming.
-        const startResp = await fetch('/api/generate/mapa-mental', {
+        // ══════════════════════════════════════════════════════════════════
+        // FLOW PROGRESSIVO — Pipeline de Ilustração por Tópico
+        //
+        // Etapa 1: /api/generate/estrutura-mapa  → texto rápido (~3-5s)
+        // Etapa 2: renderiza 5 cards com spinner em cada imagem
+        // Etapa 3: /api/generate/ilustracao × 5  → DALL-E 3 por seção
+        //          imagens aparecem uma a uma conforme chegam (~15-40s cada)
+        // ══════════════════════════════════════════════════════════════════
+
+        // ── ETAPA 1: busca estrutura de texto (rápido) ────────────────────
+        const estResp = await fetch('/api/generate/estrutura-mapa', {
           method: 'POST', headers: {'Content-Type':'application/json'},
           body: JSON.stringify({tema: _tema})
         });
-        if (!startResp.ok) {
-          const errData = await startResp.json().catch(() => ({}));
-          throw new Error(errData.erro || `Erro ${startResp.status} ao iniciar geração.`);
-        }
-        const startData = await startResp.json();
-        if (startData.erro) throw new Error(startData.erro);
-        const job_id = startData.job_id;
-        if (!job_id) throw new Error('Servidor não retornou job_id.');
+        const estrutura = await estResp.json().catch(() => ({}));
+        if (!estResp.ok || estrutura.erro) throw new Error(estrutura.erro || 'Erro ao gerar estrutura.');
 
-        _setLoading(`Gerando infográfico de "${_tema}"…`);
+        const secoes  = estrutura.secoes  || [];
+        const paleta  = estrutura.paleta  || Array(5).fill(estrutura.cor_primaria || '#1e55af');
+        const navy    = estrutura.cor_escura  || '#0c1638';
+        const c0      = estrutura.cor_primaria || '#1e55af';
+        const titulo  = escapeHtml(estrutura.titulo || _tema.toUpperCase());
+        const uid     = 'mm-' + Date.now();
 
-        // Polling a cada 3s (máx 60 tentativas = 3 minutos)
-        let posterHtml = null;
-        let imageUrl   = null;
-        let jobFontes  = [];
-        for (let i = 0; i < 60; i++) {
-          await new Promise(r => setTimeout(r, 3000));
-          const pollResp = await fetch(`/api/generate/mapa-mental/status/${job_id}`);
-          const data = await pollResp.json().catch(() => ({}));
-          if (data.erro) throw new Error(data.erro);
-          if (data.html || data.url) {
-            posterHtml = data.html || null;
-            imageUrl   = data.url  || null;
-            jobFontes  = data.fontes || [];
-            break;
-          }
-          // data.status === 'processing' → continua
-          if (i === 6)  _setLoading('Quase lá… finalizando os detalhes');
-          if (i === 14) _setLoading('Aguardando resposta do servidor de imagens…');
-        }
-        if (!posterHtml && !imageUrl) throw new Error('Tempo esgotado. Tente novamente.');
+        // ── ETAPA 2: renderiza cards com spinners ─────────────────────────
+        const cardsHtml = secoes.map((sec, i) => {
+          const cor  = paleta[i] || c0;
+          const nome = escapeHtml(sec.nome || '');
+          const buls = (sec.topicos || []).slice(0, 4).map(t =>
+            `<li><span class="mm-arr" style="color:${cor}">&#10148;</span><span>${escapeHtml(String(t))}</span></li>`
+          ).join('');
+          const full = i === 4 ? ' mm-card-full' : '';
+          return `
+          <div class="mm-card${full}" style="--cor:${cor}">
+            <div class="mm-card-top">
+              <div class="mm-card-title">${nome}</div>
+              <div class="mm-card-line"></div>
+            </div>
+            <div class="mm-card-body">
+              <ul class="mm-card-bullets">${buls}</ul>
+              <div class="mm-card-img" id="${uid}-img-${i}">
+                <div class="mm-spinner" style="border-top-color:${cor}"></div>
+              </div>
+            </div>
+          </div>`;
+        }).join('');
 
-        const fontesHtml = jobFontes.length ? `
+        const fontesHtml = secoes.some(s => s.fonte) ? `
           <div class="mapa-fontes">
             <div class="mapa-fontes-titulo">Referências bibliográficas</div>
             <ul class="mapa-fontes-lista">
-              ${jobFontes.map(f =>
-                `<li><strong>${escapeHtml(f.secao)}:</strong> ${escapeHtml(f.fonte)}</li>`
+              ${secoes.filter(s => s.fonte).map(s =>
+                `<li><strong>${escapeHtml(s.nome)}:</strong> ${escapeHtml(s.fonte)}</li>`
               ).join('')}
             </ul>
-            <div class="mapa-fontes-aviso">⚠ Conteúdo gerado por IA — verifique as informações antes de utilizar em sala de aula.</div>
+            <div class="mapa-fontes-aviso">⚠ Conteúdo gerado por IA — verifique antes de usar em sala de aula.</div>
           </div>` : '';
 
-        if (posterHtml) {
-          // ── Renderização HTML/CSS via iframe ─────────────────────────────
-          const slotId = 'pia-poster-' + Date.now();
-          const safeNome = escapeHtml(_tema);
-          stream.replaceBubble(`
-            <div class="mapa-mental-resultado">
-              <div class="poster-iframe-wrap" id="${slotId}"></div>
-              <div class="mapa-mental-acoes" id="${slotId}-acoes"></div>
-              ${fontesHtml}
-            </div>`);
+        stream.replaceBubble(`
+          <div class="mm-resultado">
+            <div class="mm-header" style="background:${navy};border-bottom:4px solid ${c0}">
+              <span class="mm-titulo">${titulo}</span>
+            </div>
+            <div class="mm-grid">${cardsHtml}</div>
+            <div class="mm-acoes" id="${uid}-acoes"></div>
+            ${fontesHtml}
+          </div>`);
+        scroll();
 
-          // Insere iframe com srcdoc (sem innerHTML para evitar escaping)
-          const wrap   = document.getElementById(slotId);
-          const iframe = document.createElement('iframe');
-          iframe.className   = 'poster-iframe';
-          iframe.title       = `Infográfico: ${safeNome}`;
-          iframe.scrolling   = 'no';
-          iframe.setAttribute('loading', 'lazy');
-          wrap.appendChild(iframe);
+        // Botões de ação
+        const acoes = document.getElementById(`${uid}-acoes`);
+        const printBtn = document.createElement('button');
+        printBtn.className = 'btn-dl-mapa';
+        printBtn.textContent = '🖨 Imprimir / PDF';
+        printBtn.addEventListener('click', () => window.print());
+        acoes.appendChild(printBtn);
 
-          // Escala o iframe para caber no container assim que carregar
-          let _iframeNativeH = 900;
-          const _scaleIframe = () => {
-            const ww    = wrap.offsetWidth || 720;
-            const scale = Math.min(1, ww / 1400);
-            iframe.style.transform = `scale(${scale})`;
-            wrap.style.height      = Math.round(_iframeNativeH * scale) + 'px';
-          };
-          iframe.addEventListener('load', () => {
-            // Ajusta altura real do conteúdo (srcdoc é same-origin → contentDocument ok)
-            try {
-              const h = iframe.contentDocument.documentElement.scrollHeight;
-              if (h > 200) { _iframeNativeH = h; iframe.style.height = h + 'px'; }
-            } catch(e) {}
-            _scaleIframe();
-          });
-          window.addEventListener('resize', _scaleIframe);
-          iframe.srcdoc = posterHtml;   // dispara o load
-
-          // Botões de ação
-          const acoes = document.getElementById(slotId + '-acoes');
-          // Download HTML
-          const dlBtn = document.createElement('a');
-          dlBtn.className = 'btn-dl-mapa';
-          dlBtn.textContent = '⬇ Baixar HTML';
-          dlBtn.href = '#';
-          dlBtn.addEventListener('click', e => {
-            e.preventDefault();
-            const blob = new Blob([posterHtml], {type: 'text/html'});
-            const url  = URL.createObjectURL(blob);
-            const a    = Object.assign(document.createElement('a'),
-                           {href: url, download: `infografico-${safeNome}.html`});
-            a.click();
-            URL.revokeObjectURL(url);
-          });
-          acoes.appendChild(dlBtn);
-          // Imprimir / PDF — usa o próprio iframe, sem abrir nova aba
-          const printBtn = document.createElement('button');
-          printBtn.className = 'btn-dl-mapa';
-          printBtn.textContent = '🖨 Imprimir / PDF';
-          printBtn.addEventListener('click', () => {
-            try { iframe.contentWindow.focus(); iframe.contentWindow.print(); }
-            catch(e) {
-              // fallback: Blob URL (evita about:blank)
-              const blob = new Blob([posterHtml], {type: 'text/html'});
-              const burl = URL.createObjectURL(blob);
-              const w = window.open(burl, '_blank');
-              if (w) w.addEventListener('load', () => { w.print(); URL.revokeObjectURL(burl); });
+        // ── ETAPA 3: carrega imagens DALL-E em paralelo ───────────────────
+        // Cada seção dispara uma chamada independente a /api/generate/ilustracao
+        // A imagem substitui o spinner assim que chega, sem bloquear as outras
+        const _loadImg = async (sec, i) => {
+          const slot = document.getElementById(`${uid}-img-${i}`);
+          if (!slot) return;
+          try {
+            const r = await fetch('/api/generate/ilustracao', {
+              method: 'POST', headers: {'Content-Type':'application/json'},
+              body: JSON.stringify({topico: sec.ilustracao_en || sec.nome || _tema})
+            });
+            const d = await r.json().catch(() => ({}));
+            if (d.b64 && slot) {
+              // Substitui spinner pela imagem gerada
+              slot.innerHTML = `<img src="${d.b64}" alt="${escapeHtml(sec.nome || '')}" loading="lazy">`;
+              scroll();
             }
-          });
-          acoes.appendChild(printBtn);
+          } catch(err) {
+            // Falha silenciosa: mantém spinner apagado, não quebra o card
+            if (slot) slot.innerHTML = '';
+          }
+        };
+        // Dispara todas em paralelo (o servidor tem limiter de 20/min)
+        secoes.forEach((sec, i) => _loadImg(sec, i));
 
-        } else {
-          // ── Fallback legado: imagem JPEG ──────────────────────────────────
-          stream.replaceBubble(`
-            <div class="mapa-mental-resultado">
-              <img src="${imageUrl}" class="mapa-mental-img" alt="Infográfico: ${escapeHtml(_tema)}"
-                   loading="lazy" style="cursor:default">
-              <div class="mapa-mental-acoes">
-                <a href="${imageUrl}" download="infografico-${escapeHtml(_tema)}.jpeg"
-                   class="btn-dl-mapa">⬇ Baixar Imagem</a>
-              </div>
-              ${fontesHtml}
-            </div>`);
-        }
         historico.push({role:'assistant', content: `[Infográfico visual gerado: ${_tema}]`});
       } catch(e) {
         stream.replaceBubble(`<p style="color:var(--text2)">⚠️ ${escapeHtml(e.message || 'Não foi possível gerar o infográfico. Tente novamente.')}</p>`);
