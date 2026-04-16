@@ -1340,8 +1340,9 @@ def login():
     if current_user.is_authenticated:
         return redirect(url_for('chat'))
     if request.method == 'POST':
-        email = request.form.get('email', '').strip().lower()
-        senha = request.form.get('senha', '')
+        email    = request.form.get('email', '').strip().lower()
+        senha    = request.form.get('senha', '')
+        remember = request.form.get('remember') == '1'
         conn  = get_db()
         row   = conn.execute(
             'SELECT id, nome, email, senha, plano, ativo, valido_ate, criado_em,'
@@ -1350,7 +1351,7 @@ def login():
             ' FROM usuarios WHERE email = ?', (email,)).fetchone()
         conn.close()
         if row and check_password_hash(row['senha'], senha):
-            login_user(Usuario(row), remember=True)
+            login_user(Usuario(row), remember=remember)
             return redirect(url_for('chat'))
         flash('E-mail ou senha incorretos.', 'erro')
     return render_template('login.html')
