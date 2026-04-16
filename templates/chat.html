@@ -2574,14 +2574,11 @@
           container.className = 'mindmap-visual-container';
           container.style.marginTop = '15px';
           container.innerHTML = `
-            <button class="btn-action" onclick="gerarMapaMentalVisual('${tema.replace(/'/g, "\\'")}', this)" 
-                    style="background: #D4AF37; color: #0D2327; border: none; padding: 8px 15px; border-radius: 8px; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 8px; font-family: 'Inter', sans-serif;">
-              <span>🎨 Gerar Mapa Mental Visual Premium</span>
+            <button class="btn-action" onclick="gerarMapaMentalVisual('${tema.replace(/'/g, "\\'")}', this)"
+                    style="background:#D4AF37;color:#0D2327;border:none;padding:8px 15px;border-radius:8px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:8px;font-family:'Inter',sans-serif;">
+              <span>🎨 Gerar Infográfico Visual</span>
             </button>
-            <div class="mapa-visual-result" style="margin-top: 15px; display: none;">
-              <img src="" alt="Mapa Mental Visual" style="width: 100%; border-radius: 12px; border: 1px solid rgba(255,255,255,0.1); box-shadow: 0 10px 30px rgba(0,0,0,0.3);">
-              <a href="" download="Mapa_Mental_${tema}.png" class="btn-action" style="margin-top: 10px; display: inline-block; font-size: 0.75rem; text-decoration: underline; color: #D4AF37;">Baixar Imagem</a>
-            </div>
+            <div class="mapa-visual-result" style="margin-top:12px;display:none;"></div>
           `;
           el.parentNode.insertBefore(container, el.nextSibling);
         }
@@ -2597,36 +2594,91 @@
   }
 
   async function gerarMapaMentalVisual(tema, btn) {
-    const container = btn.closest('.mindmap-visual-container');
-    const resultDiv = container.querySelector('.mapa-visual-result');
-    const img = resultDiv.querySelector('img');
-    const downloadLink = resultDiv.querySelector('a');
-    
-    const originalContent = btn.innerHTML;
-    btn.disabled = true;
-    btn.innerHTML = '<span>⏳ Pintando Aquarela...</span>';
-    
+    const container   = btn.closest('.mindmap-visual-container');
+    const resultDiv   = container.querySelector('.mapa-visual-result');
+
+    btn.disabled  = true;
+    btn.innerHTML = '<span>⏳ Buscando estrutura…</span>';
+
+    // Limpa resultado anterior e exibe área
+    resultDiv.innerHTML = `
+      <div class="mm-resultado" style="font-size:.92em">
+        <div style="padding:18px;text-align:center;color:#888;font-size:.8rem">
+          ⏳ Gerando estrutura visual…
+        </div>
+      </div>`;
+    resultDiv.style.display = 'block';
+
     try {
-      const resp = await fetch('/api/generate/mapa-mental', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ tema })
+      // ── Etapa 1: estrutura rápida ──────────────────────────────────────
+      const estResp  = await fetch('/api/generate/estrutura-mapa', {
+        method: 'POST', headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({tema})
       });
-      
-      const data = await resp.json();
-      if (!resp.ok) throw new Error(data.erro || 'Erro ao gerar mapa');
-      
-      img.src = data.url;
-      downloadLink.href = data.url;
-      resultDiv.style.display = 'block';
+      const estrutura = await estResp.json().catch(() => ({}));
+      if (!estResp.ok || estrutura.erro) throw new Error(estrutura.erro || 'Erro na estrutura.');
+
+      const secoes = estrutura.secoes  || [];
+      const paleta = estrutura.paleta  || Array(5).fill(estrutura.cor_primaria || '#1e55af');
+      const navy   = estrutura.cor_escura  || '#0c1638';
+      const c0     = estrutura.cor_primaria || '#1e55af';
+      const titulo = escapeHtml(estrutura.titulo || tema.toUpperCase());
+      const uid    = 'mmv-' + Date.now();
+
+      // ── Etapa 2: renderiza cards com spinners ──────────────────────────
+      const cardsHtml = secoes.map((sec, i) => {
+        const cor  = paleta[i] || c0;
+        const nome = escapeHtml(sec.nome || '');
+        const buls = (sec.topicos || []).slice(0, 4).map(t =>
+          `<li><span class="mm-arr" style="color:${cor}">&#10148;</span><span>${escapeHtml(String(t))}</span></li>`
+        ).join('');
+        const full = i === 4 ? ' mm-card-full' : '';
+        return `
+        <div class="mm-card${full}" style="--cor:${cor}">
+          <div class="mm-card-top">
+            <div class="mm-card-title">${nome}</div>
+            <div class="mm-card-line"></div>
+          </div>
+          <div class="mm-card-body">
+            <ul class="mm-card-bullets">${buls}</ul>
+            <div class="mm-card-img" id="${uid}-img-${i}">
+              <div class="mm-spinner" style="border-top-color:${cor}"></div>
+            </div>
+          </div>
+        </div>`;
+      }).join('');
+
+      resultDiv.innerHTML = `
+        <div class="mm-resultado">
+          <div class="mm-header" style="background:${navy};border-bottom:4px solid ${c0}">
+            <span class="mm-titulo">${titulo}</span>
+          </div>
+          <div class="mm-grid">${cardsHtml}</div>
+        </div>`;
+
       btn.style.display = 'none';
-      
-      // Scroll suave para a imagem
-      resultDiv.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-    } catch (e) {
-      alert(e.message);
-      btn.disabled = false;
-      btn.innerHTML = originalContent;
+      resultDiv.scrollIntoView({behavior:'smooth', block:'nearest'});
+
+      // ── Etapa 3: imagens DALL-E em paralelo ────────────────────────────
+      secoes.forEach(async (sec, i) => {
+        const slot = document.getElementById(`${uid}-img-${i}`);
+        if (!slot) return;
+        try {
+          const r = await fetch('/api/generate/ilustracao', {
+            method: 'POST', headers: {'Content-Type':'application/json'},
+            body: JSON.stringify({topico: sec.ilustracao_en || sec.nome || tema})
+          });
+          const d = await r.json().catch(() => ({}));
+          if (d.b64 && slot) {
+            slot.innerHTML = `<img src="${d.b64}" alt="${escapeHtml(sec.nome || '')}" loading="lazy">`;
+          }
+        } catch(_e) { if (slot) slot.innerHTML = ''; }
+      });
+
+    } catch(e) {
+      resultDiv.innerHTML = `<p style="color:#e53e3e;font-size:.8rem;padding:10px">⚠ ${escapeHtml(e.message)}</p>`;
+      btn.disabled  = false;
+      btn.innerHTML = '<span>🎨 Tentar novamente</span>';
     }
   }
 </script>
