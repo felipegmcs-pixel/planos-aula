@@ -5523,10 +5523,10 @@ def _compositar_poster(panels, estrutura, tema):
         tf_sz -= S*2
         tf = _pil_font(tf_sz, bold=True, estilo=estilo)
 
-    sf = _pil_font(26*S, bold=True,  estilo=estilo)   # label seção
-    bf = _pil_font(22*S, bold=False, estilo=estilo)    # bullets
-    sf_lh = 32*S   # line-height label
-    bf_lh = 30*S   # line-height bullets
+    sf = _pil_font(24*S, bold=True,  estilo=estilo)   # label seção
+    bf = _pil_font(20*S, bold=False, estilo=estilo)    # bullets — menor p/ caber mais
+    sf_lh = 30*S   # line-height label
+    bf_lh = 26*S   # line-height bullets — compacto p/ 7-8 itens por seção
 
     # ── TÍTULO: parallelogram ribbon ──────────────────────────────────────
     bb    = draw.textbbox((0, 0), titulo, font=tf)
@@ -5548,24 +5548,21 @@ def _compositar_poster(panels, estrutura, tema):
         sec   = secoes[i]
         panel = panels[i]
 
-        IMG_W = int(sw * 0.62)         # 62% da largura — grande e visual
+        IMG_W = int(sw * 0.40)         # 40% — decorativa, texto é o protagonista
         IMG_H = sh - 2*S               # altura total da seção
-        TXT_W = sw - IMG_W - 14*S     # área de texto
-        IMG_X = sx + TXT_W + 14*S     # imagem logo após texto
+        TXT_W = sw - IMG_W - 14*S     # 60% para texto — espaço para 7-8 bullets
+        IMG_X = sx + TXT_W + 14*S     # imagem à direita do texto
         IMG_Y = sy + (sh - IMG_H) // 2
 
         # ── Vinheta aquarela — sangra no papel, sem recorte geométrico ───
         from PIL import ImageOps
         vig = ImageOps.fit(panel, (IMG_W, IMG_H), Image.LANCZOS)
 
-        # Máscara retangular com fade nas quatro bordas:
-        # borda esquerda (junto ao texto) desfoca mais para integrar suavemente;
-        # bordas direita/superior/inferior desfocam menos para preservar a imagem.
-        FL = 38*S   # fade left  (transição suave em direção ao texto)
-        FR = 18*S   # fade right
-        FT = 18*S   # fade top
-        FB = 18*S   # fade bottom
-        BLUR_R = 28*S
+        FL = 32*S   # fade left  (transição em direção ao texto)
+        FR = 14*S   # fade right
+        FT = 16*S   # fade top
+        FB = 16*S   # fade bottom
+        BLUR_R = 24*S
 
         mask_v = Image.new('L', (IMG_W, IMG_H), 0)
         ImageDraw.Draw(mask_v).rectangle(
@@ -5573,7 +5570,6 @@ def _compositar_poster(panels, estrutura, tema):
         )
         mask_v = mask_v.filter(ImageFilter.GaussianBlur(radius=BLUR_R))
         poster.paste(vig, (IMG_X, IMG_Y), mask=mask_v)
-        # Sem contorno geométrico — a imagem respira naturalmente no papel
 
         # ── Label parallelogram ───────────────────────────────────────────
         nome       = sec.get('nome', '')
@@ -5613,7 +5609,7 @@ def _compositar_poster(panels, estrutura, tema):
                 if y_cur + bf_lh <= cy_lim:
                     draw.text((sx + 27*S, y_cur), ln, font=bf, fill=NAVY)
                     y_cur += bf_lh
-            y_cur += 8*S
+            y_cur += 5*S
 
     # ── FOOTER: logo ProfessorIA™ + texto de marca ────────────────────────
     LOGO_MARGIN  = 24*S
