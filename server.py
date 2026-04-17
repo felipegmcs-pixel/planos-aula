@@ -5408,24 +5408,32 @@ def _gerar_vinhetas_individuais(estrutura, tema):
         idx, sec = idx_sec
         desc = sec.get('ilustracao_en') or f'educational watercolor about {tema}'
         prompt = f'{desc}. {STYLE}'
-        try:
-            resp = client_openai.images.generate(
-                model='dall-e-3',
-                prompt=prompt[:4000],
-                size='1792x1024',   # paisagem — evita distorção no oval
-                quality='standard',
-                n=1,
-            )
-            url = resp.data[0].url
-            r = _req.get(url, timeout=30)
-            r.raise_for_status()
-            return idx, Image.open(io.BytesIO(r.content)).convert('RGB')
-        except Exception as e:
-            logger.error('Vinheta %d falhou: %s', idx, e)
-            return idx, Image.new('RGB', (1024, 1024), (245, 245, 240))
+        import time as _t
+        for attempt in range(3):
+            try:
+                if attempt > 0:
+                    _t.sleep(6 * attempt)   # backoff: 6s, 12s
+                resp = client_openai.images.generate(
+                    model='dall-e-3',
+                    prompt=prompt[:4000],
+                    size='1792x1024',   # paisagem — evita distorção no oval
+                    quality='standard',
+                    n=1,
+                )
+                url = resp.data[0].url
+                r = _req.get(url, timeout=45)
+                r.raise_for_status()
+                return idx, Image.open(io.BytesIO(r.content)).convert('RGB')
+            except Exception as e:
+                logger.warning('Vinheta %d tentativa %d falhou: %s', idx, attempt + 1, str(e)[:200])
+        # Fallback vísivel: cinza médio com borda (debug)
+        logger.error('Vinheta %d: todas as tentativas falharam — usando placeholder', idx)
+        ph = Image.new('RGB', (1792, 1024), (200, 210, 220))
+        return idx, ph
 
     panels = [None] * 5
-    with ThreadPoolExecutor(max_workers=5) as ex:
+    # max_workers=3 para evitar rate-limit do DALL-E 3 (1792x1024 custa mais quota)
+    with ThreadPoolExecutor(max_workers=3) as ex:
         for idx, img in ex.map(_um, enumerate(secoes)):
             panels[idx] = img
     return panels
@@ -5542,22 +5550,6 @@ def _compositar_poster(panels, estrutura, tema):
         OVL_X = sx + TXT_W + 18*S     # oval começa após texto + gap
         OVL_Y = sy + (sh - OVL_H) // 2
 
-        # ── Arco "C" na esquerda do oval ──────────────────────────────────
-        A_EXP  = 22*S
-        arc_cx = OVL_X + OVL_W // 2
-        arc_cy = OVL_Y + OVL_H // 2
-        arc_rx = OVL_W // 2 + A_EXP
-        arc_ry = OVL_H // 2 + A_EXP
-        a_s, a_e = _m.radians(252), _m.radians(108)
-        steps = 40
-        pts = [
-            (arc_cx + arc_rx * _m.cos(a_s + (a_e - a_s) * k / steps),
-             arc_cy + arc_ry * _m.sin(a_s + (a_e - a_s) * k / steps))
-            for k in range(steps + 1)
-        ]
-        for k in range(len(pts) - 1):
-            draw.line([pts[k], pts[k + 1]], fill=BLUE, width=9*S)
-
         # ── Oval feathered ────────────────────────────────────────────────
         from PIL import ImageOps
         vig    = ImageOps.fit(panel, (OVL_W, OVL_H), Image.LANCZOS)  # center-crop, sem distorção
@@ -5567,6 +5559,15 @@ def _compositar_poster(panels, estrutura, tema):
         )
         mask_e = mask_e.filter(ImageFilter.GaussianBlur(radius=int(FEATHER * 0.65)))
         poster.paste(vig, (OVL_X, OVL_Y), mask=mask_e)
+
+        # ── Contorno oval completo (ambos os lados) ───────────────────────
+        BRD = 5*S          # espessura da borda
+        EXP = 6*S          # expansão além da área feathered
+        draw.ellipse(
+            [OVL_X + FEATHER - EXP,     OVL_Y + FEATHER - EXP,
+             OVL_X + OVL_W - FEATHER + EXP, OVL_Y + OVL_H - FEATHER + EXP],
+            outline=BLUE, width=BRD
+        )
 
         # ── Label parallelogram ───────────────────────────────────────────
         nome       = sec.get('nome', '')
