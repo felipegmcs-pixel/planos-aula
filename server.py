@@ -5315,42 +5315,49 @@ def _prompt_infografico_dalle(tema, estrutura=None):
 
 
 # ── Fontes para overlay Pillow ─────────────────────────────────────────────
-# Sans-serif: estilo moderno/científico
+_FONT_CACHE_DIR = '/tmp/pia_fonts'
+
+_LATO_URLS = {
+    'Lato-Bold.ttf':        'https://github.com/google/fonts/raw/main/ofl/lato/Lato-Bold.ttf',
+    'Lato-Regular.ttf':     'https://github.com/google/fonts/raw/main/ofl/lato/Lato-Regular.ttf',
+    'Lato-BlackItalic.ttf': 'https://github.com/google/fonts/raw/main/ofl/lato/Lato-BlackItalic.ttf',
+}
+
+def _ensure_lato():
+    """Baixa Lato (Google Fonts) para /tmp/pia_fonts se ainda não existe."""
+    import pathlib, urllib.request
+    d = pathlib.Path(_FONT_CACHE_DIR)
+    d.mkdir(exist_ok=True)
+    for fname, url in _LATO_URLS.items():
+        dest = d / fname
+        if not dest.exists():
+            try:
+                urllib.request.urlretrieve(url, str(dest))
+                logger.info('Font baixada: %s', fname)
+            except Exception as e:
+                logger.warning('Font download falhou %s: %s', fname, e)
+
+# Inicia download em background para não bloquear o startup
+import threading as _th
+_th.Thread(target=_ensure_lato, daemon=True).start()
+
+# Fallback: fontes do sistema
 _FONTS_BOLD = [
-    '/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf',
+    f'{_FONT_CACHE_DIR}/Lato-Bold.ttf',
     '/usr/share/fonts/truetype/liberation/LiberationSans-Bold.ttf',
-    '/usr/share/fonts/truetype/freefont/FreeSansBold.ttf',
+    '/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf',
 ]
 _FONTS_REGULAR = [
-    '/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf',
+    f'{_FONT_CACHE_DIR}/Lato-Regular.ttf',
     '/usr/share/fonts/truetype/liberation/LiberationSans-Regular.ttf',
-    '/usr/share/fonts/truetype/freefont/FreeSans.ttf',
-]
-# Serif: estilo clássico/histórico/literário (com fallback sans)
-_FONTS_BOLD_SERIF = [
-    '/usr/share/fonts/truetype/dejavu/DejaVuSerif-Bold.ttf',
-    '/usr/share/fonts/truetype/liberation/LiberationSerif-Bold.ttf',
-    '/usr/share/fonts/truetype/freefont/FreeSerifBold.ttf',
-    '/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf',    # fallback
-]
-_FONTS_REGULAR_SERIF = [
-    '/usr/share/fonts/truetype/dejavu/DejaVuSerif.ttf',
-    '/usr/share/fonts/truetype/liberation/LiberationSerif-Regular.ttf',
-    '/usr/share/fonts/truetype/freefont/FreeSerif.ttf',
-    '/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf',          # fallback
+    '/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf',
 ]
 
 
 def _pil_font(size, bold=True, estilo='moderno'):
-    """Retorna fonte Pillow adequada ao estilo temático.
-    estilo='classico' → serif (história, literatura, geografia)
-    estilo='moderno'  → sans-serif (ciências, tecnologia, matemática)
-    """
+    """Retorna fonte Pillow. Prioriza Lato; fallback para fontes do sistema."""
     from PIL import ImageFont
-    if estilo == 'classico':
-        paths = _FONTS_BOLD_SERIF if bold else _FONTS_REGULAR_SERIF
-    else:
-        paths = _FONTS_BOLD if bold else _FONTS_REGULAR
+    paths = _FONTS_BOLD if bold else _FONTS_REGULAR
     for p in paths:
         try:
             return ImageFont.truetype(p, size)
@@ -5394,9 +5401,15 @@ def _gerar_vinhetas_individuais(estrutura, tema):
     while len(secoes) < 5:
         secoes.append({'ilustracao_en': f'educational watercolor about {tema}'})
 
+    # Estilo watercolor que imita a referência ProfessorIA™
     STYLE = (
-        'Educational watercolor illustration, pure white background (#FFFFFF), '
-        'clean ink outlines, bright vibrant colors, no text, no letters, no numbers.'
+        'Traditional hand-painted watercolor illustration on pure white background. '
+        'Realistic figures and objects in period-appropriate style. '
+        'Warm earth tones (ochre, sienna, umber) with accents of steel blue. '
+        'Loose, expressive brushwork with fine ink outlines defining the main subjects. '
+        'Horizontal landscape composition — subjects centered, no cropping. '
+        'Soft natural lighting, museum-quality educational illustration. '
+        'Absolutely NO text, NO letters, NO numbers, NO speech bubbles anywhere.'
     )
 
     def _um(idx_sec):
@@ -5407,7 +5420,7 @@ def _gerar_vinhetas_individuais(estrutura, tema):
             resp = client_openai.images.generate(
                 model='dall-e-3',
                 prompt=prompt[:4000],
-                size='1024x1024',
+                size='1792x1024',   # paisagem — evita distorção no oval
                 quality='standard',
                 n=1,
             )
@@ -5456,10 +5469,19 @@ def _compositar_poster(panels, estrutura, tema):
     WHITE  = (255, 255, 255)
     est    = estrutura or {}
 
-    BLUE   = _hex_to_rgb(est.get('cor_primaria', ''), (35, 100, 205))
-    NAVY   = _hex_to_rgb(est.get('cor_escura',   ''), (10,  22,  58))
+    # Cores: LLM sugere, mas valida e garante mínimo de contraste com branco
+    _BLUE_DEFAULT = (35, 100, 205)   # azul referência ProfessorIA™
+    _NAVY_DEFAULT = (10,  22,  58)   # navy referência
+    def _validate_blue(c):
+        """Rejeita azuis muito claros (baixo contraste com fundo branco)."""
+        r, g, b = c
+        luminance = 0.299*r + 0.587*g + 0.114*b
+        return c if luminance < 160 else _BLUE_DEFAULT
+
+    BLUE   = _validate_blue(_hex_to_rgb(est.get('cor_primaria', ''), _BLUE_DEFAULT))
+    NAVY   = _hex_to_rgb(est.get('cor_escura',   ''), _NAVY_DEFAULT)
     SHADOW = _lighten(BLUE, 0.55)
-    estilo = est.get('estilo_fonte', 'moderno')   # 'classico' | 'moderno'
+    estilo = 'moderno'   # Lato é sempre melhor; ignorar sugestão LLM
 
     poster = Image.new('RGB', (PW, PH), WHITE)
     draw   = ImageDraw.Draw(poster)
@@ -5553,7 +5575,8 @@ def _compositar_poster(panels, estrutura, tema):
             draw.line([pts[k], pts[k + 1]], fill=BLUE, width=9*S)
 
         # ── Oval feathered ────────────────────────────────────────────────
-        vig    = panel.resize((OVL_W, OVL_H), Image.LANCZOS)
+        from PIL import ImageOps
+        vig    = ImageOps.fit(panel, (OVL_W, OVL_H), Image.LANCZOS)  # center-crop, sem distorção
         mask_e = Image.new('L', (OVL_W, OVL_H), 0)
         ImageDraw.Draw(mask_e).ellipse(
             [FEATHER, FEATHER, OVL_W - FEATHER - 1, OVL_H - FEATHER - 1], fill=255
