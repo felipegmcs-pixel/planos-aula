@@ -535,6 +535,8 @@
     .msg-bubble code { background: var(--pre-bg); padding: 2px 6px; font-size: .8em; font-family: 'Courier New', monospace; border-radius: 4px; }
     .msg-bubble pre { background: var(--pre-bg); border: 1px solid var(--linha-f); padding: 14px; overflow-x: auto; margin: 10px 0; font-family: 'Courier New', monospace; font-size: .78rem; line-height: 1.6; border-radius: 8px; }
     .msg-bubble pre code { background: none; padding: 0; }
+    /* Esconde pre.mermaid bruto — renderizarMermaid() o substitui por cards */
+    pre.mermaid:not([data-processed]) { visibility: hidden; height: 0; overflow: hidden; margin: 0; padding: 0; border: none; }
     .msg-bubble table { border-collapse: collapse; width: 100%; margin: 10px 0; font-size: .8rem; }
     .msg-bubble th,.msg-bubble td { border: 1px solid var(--linha-f); padding: 8px 12px; text-align: left; }
     .msg-bubble th { background: var(--pre-bg); font-weight: 700; font-size: .7rem; letter-spacing: .5px; color: var(--text2); }
@@ -1760,7 +1762,8 @@
       replaceBubble(html) {
         bubble.innerHTML = html;
         scroll();
-      }
+      },
+      getEl() { return bubble; }
     };
   }
 
@@ -2099,8 +2102,10 @@
 
         // Monta DOM programaticamente — NUNCA colocar data URL no innerHTML
         // (href com data:... de vários MB causa about:blank no Chrome ao clicar)
-        stream.setHtml('<div class="mapa-mental-resultado"></div>');
-        const resultadoDiv = bubble.querySelector('.mapa-mental-resultado');
+        const resultadoDiv = document.createElement('div');
+        resultadoDiv.className = 'mapa-mental-resultado';
+        stream.getEl().innerHTML = '';
+        stream.getEl().appendChild(resultadoDiv);
 
         const imgEl = document.createElement('img');
         imgEl.className = 'mapa-mental-img';
