@@ -5471,13 +5471,14 @@ def _compositar_poster(panels, estrutura, tema):
     # ── Setup ─────────────────────────────────────────────────────────────
     S      = 2          # fator de escala — saída em 3584×2048 (≈ 2K nativo)
     PW, PH = 1792*S, 1024*S
-    WHITE  = (255, 255, 255)
     est    = estrutura or {}
 
-    # Cores: sempre azul ProfessorIA™ — identidade visual da marca, independente do tema
-    BLUE   = (27, 108, 168)   # azul acadêmico ProfessorIA™
-    NAVY   = (10,  22,  58)   # navy para texto
-    SHADOW = _lighten(BLUE, 0.55)
+    # ── Paleta "Noites de Alexandria" — identidade ProfessorIA™ ──────────
+    WHITE  = (255, 255, 250)   # Marfim Quente  #FFFFFA  — fundo
+    BLUE   = ( 30,  90,  99)   # Turquesa Profundo #1E5A63 — ribbon, labels
+    GOLD   = (212, 175,  55)   # Dourado Envelhecido #D4AF37 — bullets, acentos
+    NAVY   = ( 26,  47,  51)   # Chumbo Teal #1A2F33 — texto
+    SHADOW = _lighten(BLUE, 0.45)
     estilo = 'moderno'   # Lato é sempre melhor
 
     poster = Image.new('RGB', (PW, PH), WHITE)
@@ -5607,7 +5608,7 @@ def _compositar_poster(panels, estrutura, tema):
                 break
             ax  = sx + 8*S
             acy = y_cur + bf_lh // 2
-            draw.polygon([(ax, acy-7*S), (ax+14*S, acy), (ax, acy+7*S)], fill=BLUE)
+            draw.polygon([(ax, acy-7*S), (ax+14*S, acy), (ax, acy+7*S)], fill=GOLD)
             for ln in _wrap(topico, bf, bw_max, draw)[:3]:
                 if y_cur + bf_lh <= cy_lim:
                     draw.text((sx + 27*S, y_cur), ln, font=bf, fill=NAVY)
@@ -5615,7 +5616,6 @@ def _compositar_poster(panels, estrutura, tema):
             y_cur += 8*S
 
     # ── FOOTER: logo ProfessorIA™ + texto de marca ────────────────────────
-    GOLD         = (212, 175, 55)    # Dourado Envelhecido — paleta Noites de Alexandria
     LOGO_MARGIN  = 24*S
     logo_h       = FOOTER_H - 10*S  # logo bem maior
     logo_w       = logo_h
