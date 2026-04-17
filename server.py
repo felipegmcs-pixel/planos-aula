@@ -5219,7 +5219,10 @@ def _gerar_estrutura_infografico(tema):
         '  Exemplos para Revolução Industrial: "Pioneirismo Inglês", '
         '"A Mudança Técnica", "Impacto Social – Os Cercamentos", '
         '"A Exploração do Trabalho", "A Reação Operária"\n'
-        '- 2 a 4 tópicos por seção: curtos, máx 7 palavras cada\n'
+        '- 3 a 5 tópicos por seção: explicativos, máx 10 palavras cada. '
+        'Prefira frases informativas e específicas, não palavras soltas. '
+        'Exemplos bons: "Da manufatura artesanal à produção mecanizada", "Uso intensivo de carvão e ferro". '
+        'Exemplos ruins: "Industrialização", "Impacto social".\n'
         '- "ilustracao_en": cena watercolor com objetos/personagens marcantes do subtema\n'
         '- "fonte": referência REAL e verificável para cada seção. '
         'Formato: AUTOR. Título. Editora, Ano. — OU — BNCC: EF09HI01 — descrição. '
@@ -5506,10 +5509,10 @@ def _compositar_poster(panels, estrutura, tema):
         tf_sz -= S*2
         tf = _pil_font(tf_sz, bold=True, estilo=estilo)
 
-    sf = _pil_font(20*S, bold=True,  estilo=estilo)   # label seção
-    bf = _pil_font(16*S, bold=False, estilo=estilo)    # bullets
-    sf_lh = 24*S
-    bf_lh = 24*S
+    sf = _pil_font(24*S, bold=True,  estilo=estilo)   # label seção
+    bf = _pil_font(20*S, bold=False, estilo=estilo)    # bullets
+    sf_lh = 29*S   # line-height label (~120%)
+    bf_lh = 26*S   # line-height bullets (~130%)
 
     # ── TÍTULO: parallelogram ribbon ──────────────────────────────────────
     bb    = draw.textbbox((0, 0), titulo, font=tf)
@@ -5533,10 +5536,10 @@ def _compositar_poster(panels, estrutura, tema):
         sec   = secoes[i]
         panel = panels[i]
 
-        OVL_W = int(sw * 0.52)
-        OVL_H = sh - 16*S
-        TXT_W = sw - OVL_W - 14*S
-        OVL_X = sx + TXT_W + 14*S
+        OVL_W = int(sw * 0.44)         # 44% oval (≈ proporção da referência)
+        OVL_H = sh - 10*S              # quase altura total da seção
+        TXT_W = sw - OVL_W - 18*S     # área de texto mais larga
+        OVL_X = sx + TXT_W + 18*S     # oval começa após texto + gap
         OVL_Y = sy + (sh - OVL_H) // 2
 
         # ── Arco "C" na esquerda do oval ──────────────────────────────────
@@ -5593,17 +5596,17 @@ def _compositar_poster(panels, estrutura, tema):
         cy_lim = sy + sh - 8*S
         bw_max = TXT_W - 28*S
 
-        for topico in sec.get('topicos', [])[:4]:
+        for topico in sec.get('topicos', [])[:5]:
             if y_cur + bf_lh > cy_lim:
                 break
             ax  = sx + 8*S
             acy = y_cur + bf_lh // 2
-            draw.polygon([(ax, acy-5*S), (ax+11*S, acy), (ax, acy+5*S)], fill=BLUE)
-            for ln in _wrap(topico, bf, bw_max, draw)[:2]:
+            draw.polygon([(ax, acy-7*S), (ax+14*S, acy), (ax, acy+7*S)], fill=BLUE)
+            for ln in _wrap(topico, bf, bw_max, draw)[:3]:
                 if y_cur + bf_lh <= cy_lim:
-                    draw.text((sx + 22*S, y_cur), ln, font=bf, fill=NAVY)
+                    draw.text((sx + 27*S, y_cur), ln, font=bf, fill=NAVY)
                     y_cur += bf_lh
-            y_cur += 5*S
+            y_cur += 7*S
 
     # ── FOOTER: logo ProfessorIA™ ─────────────────────────────────────────
     brand_f = _pil_font(20*S, bold=True, estilo=estilo)
