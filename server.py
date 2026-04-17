@@ -5408,34 +5408,45 @@ def _gerar_vinhetas_individuais(estrutura, tema):
 
     def _um(idx_sec):
         idx, sec = idx_sec
-        desc = sec.get('ilustracao_en') or f'educational watercolor about {tema}'
-        prompt = f'{desc}. {STYLE}'
         import time as _t
-        for attempt in range(3):
+        desc = sec.get('ilustracao_en') or f'educational watercolor about {tema}'
+
+        # Prompts em ordem de tentativa: original → neutro → genérico
+        prompts = [
+            f'{desc}. {STYLE}',
+            # Fallback neutro: remove termos que podem acionar content policy
+            f'Educational watercolor illustration depicting {tema} — peaceful historical '
+            f'setting with period-appropriate people, buildings and objects. {STYLE}',
+            # Fallback final: cena genérica segura
+            f'Academic watercolor illustration — historical educational scene with people '
+            f'in period costume, symbolic objects, soft earth tones. {STYLE}',
+        ]
+        for attempt, prompt in enumerate(prompts):
             try:
                 if attempt > 0:
-                    _t.sleep(6 * attempt)   # backoff: 6s, 12s
+                    _t.sleep(3)
                 resp = client_openai.images.generate(
                     model='dall-e-3',
                     prompt=prompt[:4000],
-                    size='1792x1024',   # paisagem — evita distorção no oval
+                    size='1792x1024',
                     quality='standard',
                     n=1,
                 )
                 url = resp.data[0].url
-                r = _req.get(url, timeout=45)
+                r = _req.get(url, timeout=60)
                 r.raise_for_status()
                 return idx, Image.open(io.BytesIO(r.content)).convert('RGB')
             except Exception as e:
+                err = str(e).lower()
                 logger.warning('Vinheta %d tentativa %d falhou: %s', idx, attempt + 1, str(e)[:200])
-        # Fallback vísivel: cinza médio com borda (debug)
-        logger.error('Vinheta %d: todas as tentativas falharam — usando placeholder', idx)
-        ph = Image.new('RGB', (1792, 1024), (200, 210, 220))
-        return idx, ph
+                if 'content_policy' not in err and 'safety' not in err and attempt == 0:
+                    _t.sleep(5)   # pausa antes de reusar mesmo prompt
+        logger.error('Vinheta %d: todas as tentativas falharam', idx)
+        return idx, Image.new('RGB', (1792, 1024), (200, 210, 220))
 
+    # Geração SEQUENCIAL — evita rate-limit do DALL-E 3 (1792x1024 tem quota restrita)
     panels = [None] * 5
-    # max_workers=3 para evitar rate-limit do DALL-E 3 (1792x1024 custa mais quota)
-    with ThreadPoolExecutor(max_workers=3) as ex:
+    with ThreadPoolExecutor(max_workers=1) as ex:
         for idx, img in ex.map(_um, enumerate(secoes)):
             panels[idx] = img
     return panels
@@ -5601,15 +5612,26 @@ def _compositar_poster(panels, estrutura, tema):
                     y_cur += bf_lh
             y_cur += 8*S
 
-    # ── FOOTER: logo ProfessorIA™ ─────────────────────────────────────────
-    brand_f = _pil_font(20*S, bold=True, estilo=estilo)
-    LCX = PW - 155*S
-    LCY = PH - FOOTER_H // 2
-    R, OFF = 14*S, 11*S
-    draw.ellipse([LCX-R, LCY-R, LCX+R, LCY+R], outline=BLUE, width=3*S)
-    draw.ellipse([LCX+OFF-R, LCY-R, LCX+OFF+R, LCY+R], outline=BLUE, width=3*S)
-    draw.text((LCX+OFF+R+8*S, LCY), 'ProfessorIA™',
-              font=brand_f, fill=NAVY, anchor='lm')
+    # ── FOOTER: logo ProfessorIA™ (arquivo PNG oficial) ───────────────────
+    brand_f = _pil_font(22*S, bold=True, estilo=estilo)
+    logo_h  = FOOTER_H - 6*S          # altura do logo = footer menos margem
+    logo_w  = logo_h                   # logo quadrado 1:1
+    LOGO_MARGIN = 18*S                 # margem direita
+    try:
+        import os as _os
+        logo_path = _os.path.join(_os.path.dirname(__file__), 'static', 'logo-oficial.png')
+        logo_img  = Image.open(logo_path).convert('RGBA')
+        logo_img  = logo_img.resize((logo_w, logo_h), Image.LANCZOS)
+        lx = PW - LOGO_MARGIN - logo_w
+        ly = PH - FOOTER_H + (FOOTER_H - logo_h) // 2
+        poster.paste(logo_img, (lx, ly), mask=logo_img.split()[3])
+    except Exception as _e:
+        logger.warning('Logo PNG não carregado: %s', _e)
+        # fallback minimalista
+        lx = PW - LOGO_MARGIN - logo_w
+        ly = PH - FOOTER_H + (FOOTER_H - logo_h) // 2
+        R2 = logo_h // 2
+        draw.ellipse([lx, ly, lx + R2*2, ly + R2*2], outline=BLUE, width=3*S)
 
     # ── Serialização ──────────────────────────────────────────────────────
     buf = io.BytesIO()
