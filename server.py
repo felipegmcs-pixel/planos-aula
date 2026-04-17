@@ -5219,10 +5219,12 @@ def _gerar_estrutura_infografico(tema):
         '  Exemplos para Revolução Industrial: "Pioneirismo Inglês", '
         '"A Mudança Técnica", "Impacto Social – Os Cercamentos", '
         '"A Exploração do Trabalho", "A Reação Operária"\n'
-        '- 3 a 5 tópicos por seção: explicativos, máx 10 palavras cada. '
-        'Prefira frases informativas e específicas, não palavras soltas. '
-        'Exemplos bons: "Da manufatura artesanal à produção mecanizada", "Uso intensivo de carvão e ferro". '
-        'Exemplos ruins: "Industrialização", "Impacto social".\n'
+        '- 4 a 6 tópicos por seção: frases completas e informativas, máx 12 palavras cada. '
+        'Cada tópico deve ensinar algo concreto ao aluno, não apenas nomear um conceito. '
+        'Exemplos excelentes: "Da manufatura artesanal à produção mecanizada em série", '
+        '"Uso intensivo de carvão e ferro como matérias-primas essenciais", '
+        '"Êxodo rural: trabalhadores deixam o campo pelas fábricas urbanas". '
+        'Exemplos ruins (NÃO USE): "Industrialização", "Impacto social", "Causas do conflito".\n'
         '- "ilustracao_en": cena watercolor com objetos/personagens marcantes do subtema\n'
         '- "fonte": referência REAL e verificável para cada seção. '
         'Formato: AUTOR. Título. Editora, Ano. — OU — BNCC: EF09HI01 — descrição. '
@@ -5449,19 +5451,9 @@ def _compositar_poster(panels, estrutura, tema):
     Retorna 'data:image/jpeg;base64,...'.
     """
     from PIL import Image, ImageDraw, ImageFilter
-    import math as _m
 
     def _lighten(c, f):
         return tuple(int(x + (255 - x) * f) for x in c)
-
-    def _hex_to_rgb(h, default):
-        try:
-            h = h.strip().lstrip('#')
-            if len(h) == 6:
-                return tuple(int(h[i:i+2], 16) for i in (0, 2, 4))
-        except Exception:
-            pass
-        return default
 
     # ── Setup ─────────────────────────────────────────────────────────────
     S      = 2          # fator de escala — saída em 3584×2048 (≈ 2K nativo)
@@ -5483,17 +5475,17 @@ def _compositar_poster(panels, estrutura, tema):
     while len(secoes) < 5:
         secoes.append({'nome': f'Seção {len(secoes)+1}', 'topicos': []})
 
-    # ── Dimensões × S ─────────────────────────────────────────────────────
-    TITLE_H  = 82*S
-    FOOTER_H = 44*S
-    H_PAD    = 20*S
-    COL_GAP  = 10*S
-    ROW_GAP  = 10*S
+    # ── Dimensões: gaps mínimos para maximizar área de conteúdo ──────────
+    TITLE_H  = 72*S    # ribbon mais compacto
+    FOOTER_H = 36*S    # rodapé mínimo
+    H_PAD    = 12*S    # padding lateral reduzido
+    COL_GAP  = 8*S     # gap entre colunas
+    ROW_GAP  = 8*S     # gap entre linhas
 
     content_h = PH - TITLE_H - ROW_GAP - FOOTER_H
     ROW_H     = (content_h - ROW_GAP * 2) // 3
     HALF_W    = (PW - H_PAD * 2 - COL_GAP) // 2
-    BOT_W     = 980*S
+    BOT_W     = 1320*S   # card inferior mais largo (≈ 74% da largura)
 
     ROW1_Y = TITLE_H + ROW_GAP
     ROW2_Y = ROW1_Y + ROW_H + ROW_GAP
@@ -5507,20 +5499,20 @@ def _compositar_poster(panels, estrutura, tema):
         ((PW - BOT_W) // 2,        ROW3_Y, BOT_W,  ROW_H),
     ]
 
-    # ── Fontes (escala × S, estilo temático) ─────────────────────────────
+    # ── Fontes (escala × S) — grandes para preencher o espaço ────────────
     tf_sz = 50*S
     tf = _pil_font(tf_sz, bold=True, estilo=estilo)
     for _ in range(20):
         bb = draw.textbbox((0, 0), titulo, font=tf)
-        if bb[2] - bb[0] <= PW - 200*S:
+        if bb[2] - bb[0] <= PW - 160*S:
             break
         tf_sz -= S*2
         tf = _pil_font(tf_sz, bold=True, estilo=estilo)
 
-    sf = _pil_font(24*S, bold=True,  estilo=estilo)   # label seção
-    bf = _pil_font(20*S, bold=False, estilo=estilo)    # bullets
-    sf_lh = 29*S   # line-height label (~120%)
-    bf_lh = 26*S   # line-height bullets (~130%)
+    sf = _pil_font(26*S, bold=True,  estilo=estilo)   # label seção
+    bf = _pil_font(22*S, bold=False, estilo=estilo)    # bullets
+    sf_lh = 32*S   # line-height label
+    bf_lh = 30*S   # line-height bullets
 
     # ── TÍTULO: parallelogram ribbon ──────────────────────────────────────
     bb    = draw.textbbox((0, 0), titulo, font=tf)
@@ -5544,10 +5536,10 @@ def _compositar_poster(panels, estrutura, tema):
         sec   = secoes[i]
         panel = panels[i]
 
-        OVL_W = int(sw * 0.44)         # 44% oval (≈ proporção da referência)
-        OVL_H = sh - 10*S              # quase altura total da seção
-        TXT_W = sw - OVL_W - 18*S     # área de texto mais larga
-        OVL_X = sx + TXT_W + 18*S     # oval começa após texto + gap
+        OVL_W = int(sw * 0.48)         # 48% oval — equilibra arte e texto
+        OVL_H = sh - 4*S               # praticamente altura total da seção
+        TXT_W = sw - OVL_W - 16*S     # área de texto
+        OVL_X = sx + TXT_W + 16*S     # oval logo após texto
         OVL_Y = sy + (sh - OVL_H) // 2
 
         # ── Oval feathered ────────────────────────────────────────────────
@@ -5593,11 +5585,11 @@ def _compositar_poster(panels, estrutura, tema):
             y_t += sf_lh
 
         # ── Bullets com seta → ────────────────────────────────────────────
-        y_cur  = ly2 + 12*S
-        cy_lim = sy + sh - 8*S
-        bw_max = TXT_W - 28*S
+        y_cur  = ly2 + 10*S
+        cy_lim = sy + sh - 6*S
+        bw_max = TXT_W - 32*S
 
-        for topico in sec.get('topicos', [])[:5]:
+        for topico in sec.get('topicos', [])[:6]:
             if y_cur + bf_lh > cy_lim:
                 break
             ax  = sx + 8*S
@@ -5607,7 +5599,7 @@ def _compositar_poster(panels, estrutura, tema):
                 if y_cur + bf_lh <= cy_lim:
                     draw.text((sx + 27*S, y_cur), ln, font=bf, fill=NAVY)
                     y_cur += bf_lh
-            y_cur += 7*S
+            y_cur += 8*S
 
     # ── FOOTER: logo ProfessorIA™ ─────────────────────────────────────────
     brand_f = _pil_font(20*S, bold=True, estilo=estilo)
