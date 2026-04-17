@@ -5430,7 +5430,7 @@ def _gerar_vinhetas_individuais(estrutura, tema):
                     model='dall-e-3',
                     prompt=prompt[:4000],
                     size='1024x1024',   # cota 5-7× mais generosa → paralelo seguro
-                    quality='standard',
+                    quality='hd',       # mesma qualidade do 1792x1024 standard, mesmo custo
                     n=1,
                 )
                 url = resp.data[0].url
