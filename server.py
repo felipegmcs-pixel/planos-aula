@@ -5429,8 +5429,8 @@ def _gerar_vinhetas_individuais(estrutura, tema):
                 resp = client_openai.images.generate(
                     model='dall-e-3',
                     prompt=prompt[:4000],
-                    size='1024x1024',   # cota 5-7× mais generosa → paralelo seguro
-                    quality='hd',       # mesma qualidade do 1792x1024 standard, mesmo custo
+                    size='1024x1024',
+                    quality='standard',
                     n=1,
                 )
                 url = resp.data[0].url
@@ -5440,17 +5440,25 @@ def _gerar_vinhetas_individuais(estrutura, tema):
             except Exception as e:
                 err = str(e).lower()
                 logger.warning('Vinheta %d tentativa %d falhou: %s', idx, attempt + 1, str(e)[:200])
-                if 'rate_limit' in err and attempt == 0:
-                    _t.sleep(10)   # back-off específico para rate-limit
+                if attempt == 0:
+                    _t.sleep(8)
         logger.error('Vinheta %d: todas as tentativas falharam', idx)
-        return idx, Image.new('RGB', (1024, 1024), (200, 210, 220))
+        return idx, None   # None sinaliza falha real — não mascara com cinza
 
-    # Geração PARALELA (max_workers=3) — 1024×1024 tem cota muito mais generosa
-    # que 1792×1024, permitindo paralelismo sem rate-limit. Tempo: ~25s vs ~90s anterior.
     panels = [None] * 5
-    with ThreadPoolExecutor(max_workers=3) as ex:
+    with ThreadPoolExecutor(max_workers=2) as ex:
         for idx, img in ex.map(_um, enumerate(secoes)):
             panels[idx] = img
+
+    # Se mais de 2 imagens falharam, aborta com erro claro ao usuário
+    falhas = sum(1 for p in panels if p is None)
+    if falhas > 2:
+        raise RuntimeError(f'DALL-E falhou em {falhas}/5 imagens — verifique cota/créditos OpenAI.')
+
+    # Substitui None restantes por cinza visível
+    for i in range(len(panels)):
+        if panels[i] is None:
+            panels[i] = Image.new('RGB', (1024, 1024), (200, 210, 220))
     return panels
 
 
@@ -5715,7 +5723,7 @@ def api_generate_mapa_mental():
         try:
             estrutura = _gerar_estrutura_infografico(tema)
             if not estrutura:
-                logger.warning('Estrutura LLM None para "%s" — usando fallback.', tema[:60])
+                raise RuntimeError('LLM não retornou conteúdo — verifique cota/créditos OpenAI.')
 
             # Gera 5 ilustrações individuais em paralelo (1 DALL-E por seção)
             logger.info('Gerando 5 vinhetas individuais uid=%s tema="%s"', uid, tema[:50])
