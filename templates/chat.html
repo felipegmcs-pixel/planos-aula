@@ -2097,16 +2097,35 @@
             <div class="mapa-fontes-aviso">⚠ Conteúdo gerado por IA — verifique as informações antes de utilizar em sala de aula.</div>
           </div>` : '';
 
-        stream.replaceBubble(`
-          <div class="mapa-mental-resultado">
-            <img src="${imageUrl}" class="mapa-mental-img" alt="Infográfico: ${escapeHtml(_tema)}"
-                 loading="lazy" onclick="window.open(this.src,'_blank')">
-            <div class="mapa-mental-acoes">
-              <a href="${imageUrl}" download="infografico-${escapeHtml(_tema)}.png"
-                 target="_blank" class="btn-dl-mapa">⬇ Baixar Imagem</a>
-            </div>
-            ${fontesHtml}
-          </div>`);
+        // Monta DOM programaticamente — NUNCA colocar data URL no innerHTML
+        // (href com data:... de vários MB causa about:blank no Chrome ao clicar)
+        stream.setHtml('<div class="mapa-mental-resultado"></div>');
+        const resultadoDiv = bubble.querySelector('.mapa-mental-resultado');
+
+        const imgEl = document.createElement('img');
+        imgEl.className = 'mapa-mental-img';
+        imgEl.alt = `Infográfico: ${_tema}`;
+        imgEl.loading = 'lazy';
+        imgEl.style.cursor = 'zoom-in';
+        imgEl.onclick = () => _piaAbrirImagem(imageUrl);
+        imgEl.src = imageUrl;  // img.src suporta data URLs de qualquer tamanho
+        resultadoDiv.appendChild(imgEl);
+
+        const acoesDiv = document.createElement('div');
+        acoesDiv.className = 'mapa-mental-acoes';
+        const dlBtn = document.createElement('button');
+        dlBtn.className = 'btn-dl-mapa';
+        dlBtn.textContent = '⬇ Baixar Imagem';
+        dlBtn.onclick = () => _piaBaixarDataUrl(imageUrl, `infografico-${_tema}`);
+        acoesDiv.appendChild(dlBtn);
+        resultadoDiv.appendChild(acoesDiv);
+
+        if (fontesHtml) {
+          const tmp = document.createElement('div');
+          tmp.innerHTML = fontesHtml;
+          resultadoDiv.appendChild(tmp.firstElementChild);
+        }
+
         historico.push({role:'assistant', content: `[Infográfico visual gerado: ${_tema}]`});
       } catch(e) {
         stream.replaceBubble(`<p style="color:var(--text2)">⚠️ ${escapeHtml(e.message || 'Não foi possível gerar o infográfico. Tente novamente.')}</p>`);
@@ -2572,6 +2591,37 @@
     </div>`;
   }
 
+  // ── Utilitários de imagem ─────────────────────────────────────────────────
+  function _piaAbrirImagem(dataUrl) {
+    // Abre via blob URL (data: em window.open é bloqueado por popup blockers)
+    const blob = _dataUrlToBlob(dataUrl);
+    const url  = URL.createObjectURL(blob);
+    window.open(url, '_blank');
+    setTimeout(() => URL.revokeObjectURL(url), 10000);
+  }
+
+  function _piaBaixarDataUrl(dataUrl, nomeBase) {
+    const blob   = _dataUrlToBlob(dataUrl);
+    const blobUrl = URL.createObjectURL(blob);
+    const ext    = blob.type.includes('jpeg') ? 'jpg' : 'png';
+    const a      = Object.assign(document.createElement('a'), {
+      href: blobUrl,
+      download: `${nomeBase.replace(/[^a-zA-Z0-9\-_]/g, '-').slice(0, 50)}.${ext}`
+    });
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(() => { URL.revokeObjectURL(blobUrl); a.remove(); }, 5000);
+  }
+
+  function _dataUrlToBlob(dataUrl) {
+    const [header, b64] = dataUrl.split(',');
+    const mime = (header.match(/:(.*?);/) || [])[1] || 'image/jpeg';
+    const bin  = atob(b64);
+    const arr  = new Uint8Array(bin.length);
+    for (let i = 0; i < bin.length; i++) arr[i] = bin.charCodeAt(i);
+    return new Blob([arr], { type: mime });
+  }
+
   // ── Gerar infográfico premium via DALL-E (polling) ────────────────────────
   async function gerarMapaMentalVisual(btn) {
     const wrap = btn.closest('.pia-mindmap-wrap');
@@ -2585,7 +2635,6 @@
     btn.innerHTML = '⏳ Gerando ilustrações…';
 
     try {
-      // Inicia job em background
       const startResp = await fetch('/api/generate/mapa-mental', {
         method: 'POST', headers: {'Content-Type': 'application/json'},
         body: JSON.stringify({ tema })
@@ -2597,7 +2646,6 @@
 
       btn.innerHTML = '⏳ Pintando aquarela…';
 
-      // Polling a cada 3s (máx 60 tentativas = 3 min)
       let imageUrl = null;
       for (let i = 0; i < 60; i++) {
         await new Promise(r => setTimeout(r, 3000));
@@ -2611,8 +2659,9 @@
       if (!imageUrl) throw new Error('Tempo esgotado. Tente novamente.');
 
       img.src = imageUrl;
-      downloadLink.href = imageUrl;
-      downloadLink.download = `mapa-mental-${tema.replace(/[^a-zA-Z0-9]/g,'-').slice(0,30)}.png`;
+      // Download via blob URL — data: URLs no href causam about:blank
+      downloadLink.removeAttribute('href');
+      downloadLink.onclick = (e) => { e.preventDefault(); _piaBaixarDataUrl(imageUrl, `mapa-mental-${tema}`); };
       imgWrap.style.display = 'block';
       btn.style.display = 'none';
       imgWrap.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
