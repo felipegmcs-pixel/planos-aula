@@ -5543,36 +5543,36 @@ def _compositar_poster(panels, estrutura, tema):
               font=tf, fill=WHITE, anchor='mm')
 
     # ── SEÇÕES ────────────────────────────────────────────────────────────
-    FEATHER = 22*S
-
     for i, (sx, sy, sw, sh) in enumerate(sections_geo):
         sec   = secoes[i]
         panel = panels[i]
 
-        OVL_W = int(sw * 0.60)         # 60% oval — mais visual, mais impacto
-        OVL_H = sh - 4*S               # praticamente altura total da seção
-        TXT_W = sw - OVL_W - 16*S     # área de texto
-        OVL_X = sx + TXT_W + 16*S     # oval logo após texto
-        OVL_Y = sy + (sh - OVL_H) // 2
+        IMG_W = int(sw * 0.62)         # 62% da largura — grande e visual
+        IMG_H = sh - 2*S               # altura total da seção
+        TXT_W = sw - IMG_W - 14*S     # área de texto
+        IMG_X = sx + TXT_W + 14*S     # imagem logo após texto
+        IMG_Y = sy + (sh - IMG_H) // 2
 
-        # ── Oval feathered ────────────────────────────────────────────────
+        # ── Vinheta aquarela — sangra no papel, sem recorte geométrico ───
         from PIL import ImageOps
-        vig    = ImageOps.fit(panel, (OVL_W, OVL_H), Image.LANCZOS)  # center-crop, sem distorção
-        mask_e = Image.new('L', (OVL_W, OVL_H), 0)
-        ImageDraw.Draw(mask_e).ellipse(
-            [FEATHER, FEATHER, OVL_W - FEATHER - 1, OVL_H - FEATHER - 1], fill=255
-        )
-        mask_e = mask_e.filter(ImageFilter.GaussianBlur(radius=int(FEATHER * 0.65)))
-        poster.paste(vig, (OVL_X, OVL_Y), mask=mask_e)
+        vig = ImageOps.fit(panel, (IMG_W, IMG_H), Image.LANCZOS)
 
-        # ── Contorno oval completo (ambos os lados) ───────────────────────
-        BRD = 5*S          # espessura da borda
-        EXP = 6*S          # expansão além da área feathered
-        draw.ellipse(
-            [OVL_X + FEATHER - EXP,     OVL_Y + FEATHER - EXP,
-             OVL_X + OVL_W - FEATHER + EXP, OVL_Y + OVL_H - FEATHER + EXP],
-            outline=BLUE, width=BRD
+        # Máscara retangular com fade nas quatro bordas:
+        # borda esquerda (junto ao texto) desfoca mais para integrar suavemente;
+        # bordas direita/superior/inferior desfocam menos para preservar a imagem.
+        FL = 38*S   # fade left  (transição suave em direção ao texto)
+        FR = 18*S   # fade right
+        FT = 18*S   # fade top
+        FB = 18*S   # fade bottom
+        BLUR_R = 28*S
+
+        mask_v = Image.new('L', (IMG_W, IMG_H), 0)
+        ImageDraw.Draw(mask_v).rectangle(
+            [FL, FT, IMG_W - FR - 1, IMG_H - FB - 1], fill=255
         )
+        mask_v = mask_v.filter(ImageFilter.GaussianBlur(radius=BLUR_R))
+        poster.paste(vig, (IMG_X, IMG_Y), mask=mask_v)
+        # Sem contorno geométrico — a imagem respira naturalmente no papel
 
         # ── Label parallelogram ───────────────────────────────────────────
         nome       = sec.get('nome', '')
