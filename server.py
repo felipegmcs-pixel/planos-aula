@@ -5200,8 +5200,6 @@ def _gerar_estrutura_infografico(tema):
         'JSON OBRIGATÓRIO:\n'
         '{\n'
         '  "titulo": "TÍTULO EM MAIÚSCULAS com contexto temporal/geográfico (máx 55 chars)",\n'
-        '  "cor_primaria": "#RRGGBB",\n'
-        '  "cor_escura":   "#RRGGBB",\n'
         '  "estilo_fonte": "classico",\n'
         '  "secoes": [\n'
         '    { "nome": "Nome específico ao tema (ex: Pioneirismo Inglês)",\n'
@@ -5211,15 +5209,6 @@ def _gerar_estrutura_infografico(tema):
         '    ... (5 seções no total)\n'
         '  ]\n'
         '}\n\n'
-
-        'PALETA TEMÁTICA (obrigatório):\n'
-        '- "cor_primaria": cor que REPRESENTA o tema. '
-        'História/guerra → "#B8252A"; biologia → "#2E8B3A"; '
-        'física/tecnologia → "#1B5FA8"; geografia → "#C67C2A"; '
-        'literatura → "#6B3FA0"; matemática → "#1A7A8A"; '
-        'química → "#8B4E0A"; artes → "#C2185B"; '
-        'Revolução Industrial / industrialização → "#2364C8".\n'
-        '- "cor_escura": versão navy/escura da mesma cor para texto.\n\n'
 
         'GUIA PEDAGÓGICO — 5 seções nessa ordem:\n'
         + ramos_desc + '\n\n'
@@ -5469,19 +5458,11 @@ def _compositar_poster(panels, estrutura, tema):
     WHITE  = (255, 255, 255)
     est    = estrutura or {}
 
-    # Cores: LLM sugere, mas valida e garante mínimo de contraste com branco
-    _BLUE_DEFAULT = (35, 100, 205)   # azul referência ProfessorIA™
-    _NAVY_DEFAULT = (10,  22,  58)   # navy referência
-    def _validate_blue(c):
-        """Rejeita azuis muito claros (baixo contraste com fundo branco)."""
-        r, g, b = c
-        luminance = 0.299*r + 0.587*g + 0.114*b
-        return c if luminance < 160 else _BLUE_DEFAULT
-
-    BLUE   = _validate_blue(_hex_to_rgb(est.get('cor_primaria', ''), _BLUE_DEFAULT))
-    NAVY   = _hex_to_rgb(est.get('cor_escura',   ''), _NAVY_DEFAULT)
+    # Cores: sempre azul ProfessorIA™ — identidade visual da marca, independente do tema
+    BLUE   = (27, 108, 168)   # azul acadêmico ProfessorIA™
+    NAVY   = (10,  22,  58)   # navy para texto
     SHADOW = _lighten(BLUE, 0.55)
-    estilo = 'moderno'   # Lato é sempre melhor; ignorar sugestão LLM
+    estilo = 'moderno'   # Lato é sempre melhor
 
     poster = Image.new('RGB', (PW, PH), WHITE)
     draw   = ImageDraw.Draw(poster)
