@@ -5219,7 +5219,7 @@ def _gerar_estrutura_infografico(tema):
         '  Exemplos para Revolução Industrial: "Pioneirismo Inglês", '
         '"A Mudança Técnica", "Impacto Social – Os Cercamentos", '
         '"A Exploração do Trabalho", "A Reação Operária"\n'
-        '- 4 a 6 tópicos por seção: frases completas e informativas, máx 12 palavras cada. '
+        '- 7 a 8 tópicos por seção: frases completas e informativas, máx 14 palavras cada. '
         'Cada tópico deve ensinar algo concreto ao aluno, não apenas nomear um conceito. '
         'Exemplos excelentes: "Da manufatura artesanal à produção mecanizada em série", '
         '"Uso intensivo de carvão e ferro como matérias-primas essenciais", '
@@ -5244,7 +5244,7 @@ def _gerar_estrutura_infografico(tema):
                 {"role": "system", "content": sistema},
                 {"role": "user",   "content": prompt},
             ],
-            max_tokens=2000,
+            max_tokens=3200,
             temperature=0.65,
         )
         data = json.loads(resp.choices[0].message.content)
@@ -5257,7 +5257,7 @@ def _gerar_estrutura_infografico(tema):
                 s = secoes_llm[i]
                 secoes_final.append({
                     'nome':          s.get('nome', f'Seção {i + 1}'),
-                    'topicos':       s.get('topicos', [])[:4],
+                    'topicos':       s.get('topicos', [])[:8],
                     'ilustracao_en': s.get('ilustracao_en',
                                           f'{ramo["ilus"]} about {tema}'),
                     'fonte':         s.get('fonte', ''),
@@ -5603,7 +5603,7 @@ def _compositar_poster(panels, estrutura, tema):
         cy_lim = sy + sh - 6*S
         bw_max = TXT_W - 32*S
 
-        for topico in sec.get('topicos', [])[:6]:
+        for topico in sec.get('topicos', [])[:8]:
             if y_cur + bf_lh > cy_lim:
                 break
             ax  = sx + 8*S
