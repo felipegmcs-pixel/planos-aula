@@ -1156,6 +1156,64 @@
       border: 3px solid var(--linha-f); border-top-color: var(--indigo);
       border-radius: 50%; animation: btnSpin .8s linear infinite;
     }
+  /* ── Mapa Mental — Card Layout ──────────────────────────────────────── */
+  .pia-mindmap-wrap {
+    background: #FFFEF7; border-radius: 12px; padding: 20px 18px 14px;
+    border: 1px solid #D6EAF8; box-shadow: 0 2px 12px rgba(0,0,0,.10);
+    font-family: 'Inter', 'Segoe UI', sans-serif;
+  }
+  .pia-mindmap-banner {
+    background: linear-gradient(135deg, #1A4F6E 0%, #2471A3 100%);
+    border-radius: 8px; padding: 14px 20px; margin-bottom: 18px;
+    box-shadow: 0 2px 8px rgba(26,79,110,.30);
+  }
+  .pia-mindmap-banner h3 {
+    color: #fff; font-size: 1.1rem; font-weight: 800;
+    letter-spacing: .5px; margin: 0; text-shadow: 0 1px 3px rgba(0,0,0,.25);
+  }
+  .pia-mindmap-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  .pia-mindmap-card {
+    border: 2px solid #2471A3; border-radius: 40px 40px 40px 40px / 30px 30px 30px 30px;
+    padding: 14px 18px; background: #fff; box-shadow: 0 1px 6px rgba(36,113,163,.12);
+  }
+  .pia-mindmap-card:last-child:nth-child(odd) {
+    grid-column: 1 / -1; max-width: 55%; margin: 0 auto;
+  }
+  .pia-mindmap-card-title {
+    font-weight: 700; font-size: .88rem; color: #1A4F6E;
+    margin-bottom: 7px; padding-bottom: 5px; border-bottom: 1px solid #D6EAF8;
+  }
+  .pia-mindmap-items { list-style: none; padding: 0; margin: 0; }
+  .pia-mindmap-items li {
+    font-size: .80rem; color: #2C3E50; padding: 2px 0;
+    display: flex; align-items: flex-start; gap: 4px;
+  }
+  .pia-mindmap-items li::before { content: '→'; color: #2471A3; font-weight: 700; flex-shrink: 0; }
+  .pia-mindmap-footer {
+    display: flex; justify-content: space-between; align-items: center;
+    margin-top: 16px; padding-top: 8px; border-top: 1px solid #eee;
+  }
+  .pia-mindmap-footer span { font-size: .68rem; color: #aaa; }
+  .pia-mindmap-btn-premium {
+    background: #D4AF37; color: #0D2327; border: none;
+    padding: 6px 14px; border-radius: 20px; font-size: .78rem;
+    font-weight: 700; cursor: pointer; font-family: inherit; transition: opacity .2s;
+  }
+  .pia-mindmap-btn-premium:hover { opacity: .85; }
+  .pia-mindmap-btn-premium:disabled { opacity: .5; cursor: wait; }
+  .pia-mindmap-img-wrap { margin-top: 14px; display: none; }
+  .pia-mindmap-img-wrap img {
+    width: 100%; border-radius: 10px;
+    border: 1px solid rgba(0,0,0,.08); box-shadow: 0 4px 16px rgba(0,0,0,.12); display: block;
+  }
+  .pia-mindmap-download {
+    display: inline-block; margin-top: 8px; font-size: .72rem;
+    color: #2471A3; text-decoration: underline; cursor: pointer;
+  }
+  @media (max-width: 600px) {
+    .pia-mindmap-grid { grid-template-columns: 1fr; }
+    .pia-mindmap-card:last-child:nth-child(odd) { max-width: 100%; }
+  }
   </style>
   <link rel="stylesheet" href="/static/theme.css"/>
   <!-- Meta Pixel Code -->
@@ -2446,27 +2504,15 @@
     if (!blocos.length) return;
     for (const el of blocos) {
       try {
-        // Se for um mindmap, vamos oferecer a opção de gerar a versão visual premium
         if (el.textContent.includes('mindmap')) {
-          const temaMatch = el.textContent.match(/root\(\((.*?)\)\)/);
-          const tema = temaMatch ? temaMatch[1] : 'Mapa Mental';
-          
-          const container = document.createElement('div');
-          container.className = 'mindmap-visual-container';
-          container.style.marginTop = '15px';
-          container.innerHTML = `
-            <button class="btn-action" onclick="gerarMapaMentalVisual('${tema.replace(/'/g, "\\'")}', this)" 
-                    style="background: #D4AF37; color: #0D2327; border: none; padding: 8px 15px; border-radius: 8px; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 8px; font-family: 'Inter', sans-serif;">
-              <span>🎨 Gerar Mapa Mental Visual Premium</span>
-            </button>
-            <div class="mapa-visual-result" style="margin-top: 15px; display: none;">
-              <img src="" alt="Mapa Mental Visual" style="width: 100%; border-radius: 12px; border: 1px solid rgba(255,255,255,0.1); box-shadow: 0 10px 30px rgba(0,0,0,0.3);">
-              <a href="" download="Mapa_Mental_${tema}.png" class="btn-action" style="margin-top: 10px; display: inline-block; font-size: 0.75rem; text-decoration: underline; color: #D4AF37;">Baixar Imagem</a>
-            </div>
-          `;
-          el.parentNode.insertBefore(container, el.nextSibling);
+          // Intercepta mindmap: renderiza como layout de cards (instantâneo, sem custo de API)
+          const estrutura = _parseMermaidMindmap(el.textContent);
+          const cardHtml  = _buildMindmapCardHtml(estrutura);
+          const wrapper   = document.createElement('div');
+          wrapper.innerHTML = cardHtml;
+          el.parentNode.replaceChild(wrapper.firstElementChild, el);
+          continue;
         }
-
         const { svg } = await m.render('mermaid-' + Math.random().toString(36).slice(2), el.textContent);
         el.innerHTML = svg;
         el.setAttribute('data-processed', '1');
@@ -2477,33 +2523,99 @@
     }
   }
 
-  async function gerarMapaMentalVisual(tema, btn) {
-    const container = btn.closest('.mindmap-visual-container');
-    const resultDiv = container.querySelector('.mapa-visual-result');
-    const img = resultDiv.querySelector('img');
-    const downloadLink = resultDiv.querySelector('a');
-    
+  // ── Parse Mermaid mindmap syntax ──────────────────────────────────────────
+  function _parseMermaidMindmap(text) {
+    const rootM = text.match(/root\s*\(\((.+)\)\)/i);
+    const titulo = rootM ? rootM[1].trim() : 'Mapa Mental';
+    const categorias = [];
+    let currentCat = null;
+    for (const rawLine of text.split('\n')) {
+      const stripped = rawLine.trim();
+      if (!stripped || stripped === 'mindmap' || /root\s*\(\(/.test(stripped)) continue;
+      const indent  = rawLine.length - rawLine.trimStart().length;
+      const content = stripped.replace(/^["[({]+|[")\]{}]+$/g, '').replace(/[*_`]/g, '').trim();
+      if (!content) continue;
+      if (indent <= 4) {
+        currentCat = { titulo: content, itens: [] };
+        categorias.push(currentCat);
+      } else if (currentCat) {
+        currentCat.itens.push(content);
+      }
+    }
+    return { titulo, categorias };
+  }
+
+  // ── Build card HTML from estrutura ────────────────────────────────────────
+  function _buildMindmapCardHtml(estrutura) {
+    const { titulo, categorias } = estrutura;
+    const cards = categorias.map(cat => {
+      const itens = cat.itens.slice(0, 6).map(it => `<li>${escapeHtml(it)}</li>`).join('');
+      return `<div class="pia-mindmap-card">
+        <div class="pia-mindmap-card-title">${escapeHtml(cat.titulo)}</div>
+        <ul class="pia-mindmap-items">${itens}</ul>
+      </div>`;
+    }).join('');
+    const estruturaJson = JSON.stringify({titulo, categorias}).replace(/"/g, '&quot;');
+    return `<div class="pia-mindmap-wrap" data-tema="${escapeHtml(titulo)}" data-estrutura="${estruturaJson}">
+      <div class="pia-mindmap-banner"><h3>${escapeHtml(titulo)}</h3></div>
+      <div class="pia-mindmap-grid">${cards}</div>
+      <div class="pia-mindmap-footer">
+        <span>ProfessorIA™</span>
+        <button class="pia-mindmap-btn-premium" onclick="gerarMapaMentalVisual(this)">
+          🎨 Gerar versão com ilustrações
+        </button>
+      </div>
+      <div class="pia-mindmap-img-wrap">
+        <img src="" alt="Mapa Mental Visual"/>
+        <a class="pia-mindmap-download" download="mapa-mental.png">↓ Baixar imagem</a>
+      </div>
+    </div>`;
+  }
+
+  // ── Gerar infográfico premium via DALL-E (polling) ────────────────────────
+  async function gerarMapaMentalVisual(btn) {
+    const wrap = btn.closest('.pia-mindmap-wrap');
+    const imgWrap = wrap.querySelector('.pia-mindmap-img-wrap');
+    const img = imgWrap.querySelector('img');
+    const downloadLink = imgWrap.querySelector('a');
+    const tema = wrap.dataset.tema || wrap.querySelector('.pia-mindmap-banner h3')?.textContent || 'Mapa Mental';
+
     const originalContent = btn.innerHTML;
     btn.disabled = true;
-    btn.innerHTML = '<span>⏳ Pintando Aquarela...</span>';
-    
+    btn.innerHTML = '⏳ Gerando ilustrações…';
+
     try {
-      const resp = await fetch('/api/generate/mapa-mental', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+      // Inicia job em background
+      const startResp = await fetch('/api/generate/mapa-mental', {
+        method: 'POST', headers: {'Content-Type': 'application/json'},
         body: JSON.stringify({ tema })
       });
-      
-      const data = await resp.json();
-      if (!resp.ok) throw new Error(data.erro || 'Erro ao gerar mapa');
-      
-      img.src = data.url;
-      downloadLink.href = data.url;
-      resultDiv.style.display = 'block';
+      const startData = await startResp.json();
+      if (!startResp.ok || startData.erro) throw new Error(startData.erro || `Erro ${startResp.status}`);
+      const job_id = startData.job_id;
+      if (!job_id) throw new Error('Servidor não retornou job_id.');
+
+      btn.innerHTML = '⏳ Pintando aquarela…';
+
+      // Polling a cada 3s (máx 60 tentativas = 3 min)
+      let imageUrl = null;
+      for (let i = 0; i < 60; i++) {
+        await new Promise(r => setTimeout(r, 3000));
+        const pollResp = await fetch(`/api/generate/mapa-mental/status/${job_id}`);
+        const data = await pollResp.json().catch(() => ({}));
+        if (data.erro) throw new Error(data.erro);
+        if (data.url)  { imageUrl = data.url; break; }
+        if (i === 6)  btn.innerHTML = '⏳ Quase lá…';
+        if (i === 14) btn.innerHTML = '⏳ Aguardando servidor…';
+      }
+      if (!imageUrl) throw new Error('Tempo esgotado. Tente novamente.');
+
+      img.src = imageUrl;
+      downloadLink.href = imageUrl;
+      downloadLink.download = `mapa-mental-${tema.replace(/[^a-zA-Z0-9]/g,'-').slice(0,30)}.png`;
+      imgWrap.style.display = 'block';
       btn.style.display = 'none';
-      
-      // Scroll suave para a imagem
-      resultDiv.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      imgWrap.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     } catch (e) {
       alert(e.message);
       btn.disabled = false;
