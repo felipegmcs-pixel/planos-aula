@@ -5548,7 +5548,7 @@ def _compositar_poster(panels, estrutura, tema):
         sec   = secoes[i]
         panel = panels[i]
 
-        IMG_W = int(sw * 0.62)         # 62% da largura — grande e visual
+        IMG_W = int(sw * 0.52)         # 52% — equilibra visual e conteúdo
         IMG_H = sh - 2*S               # altura total da seção
         TXT_W = sw - IMG_W - 14*S     # área de texto
         IMG_X = sx + TXT_W + 14*S     # imagem logo após texto
