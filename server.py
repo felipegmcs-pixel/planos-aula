@@ -5490,7 +5490,7 @@ def _compositar_poster(panels, estrutura, tema):
 
     # ── Dimensões: gaps mínimos para maximizar área de conteúdo ──────────
     TITLE_H  = 72*S    # ribbon mais compacto
-    FOOTER_H = 36*S    # rodapé mínimo
+    FOOTER_H = 56*S    # rodapé generoso para logo + texto de marca
     H_PAD    = 12*S    # padding lateral reduzido
     COL_GAP  = 8*S     # gap entre colunas
     ROW_GAP  = 8*S     # gap entre linhas
@@ -5614,26 +5614,52 @@ def _compositar_poster(panels, estrutura, tema):
                     y_cur += bf_lh
             y_cur += 8*S
 
-    # ── FOOTER: logo ProfessorIA™ (arquivo PNG oficial) ───────────────────
-    brand_f = _pil_font(22*S, bold=True, estilo=estilo)
-    logo_h  = FOOTER_H - 6*S          # altura do logo = footer menos margem
-    logo_w  = logo_h                   # logo quadrado 1:1
-    LOGO_MARGIN = 18*S                 # margem direita
+    # ── FOOTER: logo ProfessorIA™ + texto de marca ────────────────────────
+    GOLD         = (212, 175, 55)    # Dourado Envelhecido — paleta Noites de Alexandria
+    LOGO_MARGIN  = 24*S
+    logo_h       = FOOTER_H - 10*S  # logo bem maior
+    logo_w       = logo_h
+
+    # Linha separadora dourada acima do footer
+    sep_y = PH - FOOTER_H
+    draw.line([(H_PAD, sep_y), (PW - H_PAD, sep_y)], fill=GOLD, width=2*S)
+
+    # Texto "ProfessorIA™" em Lato Bold
+    brand_f   = _pil_font(28*S, bold=True,  estilo='moderno')  # Lato sempre
+    brand_tm  = _pil_font(18*S, bold=False, estilo='moderno')  # ™ menor
+    brand_txt = 'ProfessorIA'
+    tm_txt    = '\u2122'
+
+    bb_b  = draw.textbbox((0, 0), brand_txt, font=brand_f)
+    bw    = bb_b[2] - bb_b[0]
+    bh    = bb_b[3] - bb_b[1]
+    bb_tm = draw.textbbox((0, 0), tm_txt,    font=brand_tm)
+    tmw   = bb_tm[2] - bb_tm[0]
+
+    # Bloco logo + texto alinhado à direita
+    GAP        = 10*S
+    block_w    = logo_w + GAP + bw + tmw + 4*S
+    block_x    = PW - LOGO_MARGIN - block_w
+    block_cy   = PH - FOOTER_H + FOOTER_H // 2   # centro vertical do footer
+
+    # Logo PNG
+    lx = block_x
+    ly = block_cy - logo_h // 2
     try:
         import os as _os
         logo_path = _os.path.join(_os.path.dirname(__file__), 'static', 'logo-oficial.png')
         logo_img  = Image.open(logo_path).convert('RGBA')
         logo_img  = logo_img.resize((logo_w, logo_h), Image.LANCZOS)
-        lx = PW - LOGO_MARGIN - logo_w
-        ly = PH - FOOTER_H + (FOOTER_H - logo_h) // 2
         poster.paste(logo_img, (lx, ly), mask=logo_img.split()[3])
     except Exception as _e:
         logger.warning('Logo PNG não carregado: %s', _e)
-        # fallback minimalista
-        lx = PW - LOGO_MARGIN - logo_w
-        ly = PH - FOOTER_H + (FOOTER_H - logo_h) // 2
-        R2 = logo_h // 2
-        draw.ellipse([lx, ly, lx + R2*2, ly + R2*2], outline=BLUE, width=3*S)
+        draw.ellipse([lx, ly, lx + logo_w, ly + logo_h], outline=BLUE, width=3*S)
+
+    # Texto da marca: "ProfessorIA" NAVY + "™" GOLD
+    tx = lx + logo_w + GAP
+    ty = block_cy - bh // 2 - bb_b[1]
+    draw.text((tx,            ty), brand_txt, font=brand_f,  fill=NAVY)
+    draw.text((tx + bw + 2*S, ty), tm_txt,    font=brand_tm, fill=GOLD)
 
     # ── Serialização ──────────────────────────────────────────────────────
     buf = io.BytesIO()
