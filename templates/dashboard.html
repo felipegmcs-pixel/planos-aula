@@ -252,7 +252,7 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js" integrity="sha384-e6nUZLBkQ86NJ6TVVKAeSaK8jWa3NhkYWZFomE39AvDbQWeie9PlQqM3pmYW5d1g" crossorigin="anonymous"></script>
 <script>
 let currentPeriod = 30;
-let lineChart, doughnutChart;
+let lineChart;
 
 function setPeriod(days, btn) {
   currentPeriod = days;
@@ -341,28 +341,6 @@ function renderCharts(d) {
     }
   });
 
-  if (doughnutChart) doughnutChart.destroy();
-  const labels = Object.keys(tipos).map(k => ({plano_aula:'Plano de Aula',prova:'Prova',questao:'Questão'}[k]||k));
-  const values = Object.values(tipos);
-  doughnutChart = new Chart(document.getElementById('chartDoughnut'), {
-    type: 'doughnut',
-    data: {
-      labels: labels.length ? labels : ['Nenhum dado'],
-      datasets: [{
-        data: values.length ? values : [1],
-        backgroundColor: ['#1E5A63','#164A52','#10b981','#D4AF37'],
-        borderWidth: 0,
-        hoverOffset: 6,
-      }]
-    },
-    options: {
-      responsive: true,
-      cutout: '68%',
-      plugins: {
-        legend: { position: 'bottom', labels: { padding: 14, font: { size: 11 }, color: c.text } }
-      }
-    }
-  });
 }
 
 function renderActivity(items) {
@@ -435,7 +413,7 @@ loadDashboard();
 
 // Re-render charts on theme change
 new MutationObserver(() => {
-  if (lineChart || doughnutChart) loadDashboard();
+  if (lineChart) loadDashboard();
 }).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
 </script>
 <script src="/static/toast.js"></script>
