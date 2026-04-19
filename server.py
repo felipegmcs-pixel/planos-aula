@@ -2986,47 +2986,55 @@ def gerar_plano_aula_docx(texto, meta=None, logo_estado_path=None):
 
     doc.add_paragraph().paragraph_format.space_after = Pt(2)
 
-    # ── TÍTULO E METADADOS ──────────────────────────────────────────────
-    titulo_p = doc.add_paragraph()
-    titulo_p.alignment = WD_ALIGN_PARAGRAPH.CENTER
-    titulo_p.paragraph_format.space_before = Pt(2)
-    titulo_p.paragraph_format.space_after  = Pt(4)
-    _pr(titulo_p, f'PLANEJAMENTO DA AULA  {datetime.now().year}', bold=True, size=11, color='0a0a0a')
+    # ── TÍTULO (caixa com borda preta) ──────────────────────────────────
+    titulo_tbl = doc.add_table(rows=1, cols=1)
+    titulo_tbl.style = 'Table Grid'
+    titulo_cell = titulo_tbl.cell(0, 0)
+    _set_cell_borders_plano(titulo_cell, '000000')
+    tp = titulo_cell.paragraphs[0]
+    tp.alignment = WD_ALIGN_PARAGRAPH.CENTER
+    tp.paragraph_format.space_before = Pt(3)
+    tp.paragraph_format.space_after  = Pt(3)
+    _pr(tp, f'PLANEJAMENTO DA AULA  {datetime.now().year}', bold=True, size=11, color='0a0a0a')
 
-    # Linha de metadados 1: Professor | Componente | Nº aulas
-    meta1 = doc.add_table(rows=1, cols=3)
-    _pia_no_borders(meta1)
-    meta1.columns[0].width = Cm(5.5)
-    meta1.columns[1].width = Cm(7.0)
-    meta1.columns[2].width = Cm(5.5)
-
+    # ── METADADOS (tabelas com bordas pretas) ────────────────────────────
     def _meta_field(cell, label, value):
+        _set_cell_borders_plano(cell, '000000')
         p = cell.paragraphs[0]
-        p.paragraph_format.space_before = Pt(0)
-        p.paragraph_format.space_after  = Pt(0)
-        _pr(p, f'{label}', bold=True, size=8, color='333333')
+        p.paragraph_format.space_before = Pt(2)
+        p.paragraph_format.space_after  = Pt(2)
+        _pr(p, f'{label}', bold=True, size=8, color='000000')
         run = p.add_run(value or '________________________________')
         run.font.size = Pt(8)
         run.font.bold = False
 
+    # Linha 1: Professor (full width)
+    meta1 = doc.add_table(rows=1, cols=1)
+    meta1.style = 'Table Grid'
     _meta_field(meta1.cell(0, 0), 'Professor(a): ', professor)
-    _meta_field(meta1.cell(0, 1), 'Componente Curricular: ', disciplina)
-    _meta_field(meta1.cell(0, 2), 'Nº de aulas: ', num_aulas)
 
-    # Linha de metadados 2: Série/Turma | Período | Data
-    _pia_hrule(doc, thick=False, color='cccccc')
-    meta2 = doc.add_table(rows=1, cols=3)
-    _pia_no_borders(meta2)
-    meta2.columns[0].width = Cm(5.5)
-    meta2.columns[1].width = Cm(7.0)
-    meta2.columns[2].width = Cm(5.5)
+    # Linha 2: Componente Curricular (full width)
+    meta2 = doc.add_table(rows=1, cols=1)
+    meta2.style = 'Table Grid'
+    _meta_field(meta2.cell(0, 0), 'Componente Curricular: ', disciplina)
 
-    _meta_field(meta2.cell(0, 0), 'Ano/Série/Turma: ', serie_turma)
-    _meta_field(meta2.cell(0, 1), 'Período do plano: ', periodo)
-    _meta_field(meta2.cell(0, 2), 'Data: ', data_range)
+    # Linha 3: Nº de aulas (full width)
+    meta3 = doc.add_table(rows=1, cols=1)
+    meta3.style = 'Table Grid'
+    _meta_field(meta3.cell(0, 0), 'Nº de aulas: ', num_aulas)
+
+    # Linha 4: Série | Período | Data
+    meta4 = doc.add_table(rows=1, cols=3)
+    meta4.style = 'Table Grid'
+    meta4.columns[0].width = Cm(5.0)
+    meta4.columns[1].width = Cm(5.5)
+    meta4.columns[2].width = Cm(7.5)
+    _meta_field(meta4.cell(0, 0), 'Ano/Série/Turma: ', serie_turma)
+    _meta_field(meta4.cell(0, 1), 'Período do plano: ', periodo)
+    _meta_field(meta4.cell(0, 2), 'Data: ', data_range)
 
     ep = doc.add_paragraph()
-    ep.paragraph_format.space_after = Pt(4)
+    ep.paragraph_format.space_after = Pt(2)
 
     # ── TABELA PRINCIPAL 5 COLUNAS ──────────────────────────────────────
     COL_HEADERS = [
@@ -3046,22 +3054,22 @@ def gerar_plano_aula_docx(texto, meta=None, logo_estado_path=None):
         for row in tbl.rows:
             row.cells[ci].width = w
 
-    # Linha de cabeçalho
+    # Linha de cabeçalho (fundo preto, texto branco — padrão SEDUC-SP)
     hrow = tbl.rows[0]
     for ci, hdr_txt in enumerate(COL_HEADERS):
         cell = hrow.cells[ci]
-        _set_cell_bg_plano(cell, 'e8eaf6')  # azul lavanda claro
-        _set_cell_borders_plano(cell, '9fa8da')
+        _set_cell_bg_plano(cell, '000000')
+        _set_cell_borders_plano(cell, '000000')
         p = cell.paragraphs[0]
         p.alignment = WD_ALIGN_PARAGRAPH.CENTER
-        p.paragraph_format.space_before = Pt(2)
-        p.paragraph_format.space_after  = Pt(2)
+        p.paragraph_format.space_before = Pt(3)
+        p.paragraph_format.space_after  = Pt(3)
         for line in hdr_txt.split('\n'):
             run = p.add_run(line + ('\n' if '\n' in hdr_txt and line == hdr_txt.split('\n')[0] else ''))
             run.font.bold = True
             run.font.size = Pt(7)
             run.font.name = 'Arial'
-            run.font.color.rgb = RGBColor(0x1a, 0x23, 0x7e)
+            run.font.color.rgb = RGBColor(0xff, 0xff, 0xff)
 
     # Linhas de conteúdo
     if not aulas:
@@ -3082,7 +3090,7 @@ def gerar_plano_aula_docx(texto, meta=None, logo_estado_path=None):
         ]
         for ci, txt in enumerate(fields):
             cell = row.cells[ci]
-            _set_cell_borders_plano(cell, 'bbbbbb')
+            _set_cell_borders_plano(cell, '000000')
             p = cell.paragraphs[0]
             p.paragraph_format.space_before = Pt(2)
             p.paragraph_format.space_after  = Pt(2)
