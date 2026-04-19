@@ -131,19 +131,20 @@
 
     /* ─── ProfessorIA icon mark (estilo Apple) ─── */
     .pia-mark {
-      width: 32px; height: 32px; border-radius: 50%; flex-shrink: 0;
-      background: #0D2327 !important;
-      border: 1px solid #1E5A63;
+      width: 40px; height: 40px; border-radius: 50%; flex-shrink: 0;
+      background: #fff;
+      border: 1px solid rgba(30,90,99,.2);
       overflow: hidden;
       display: flex; align-items: center; justify-content: center;
-      transition: filter .3s, transform .3s;
+      transition: background .3s, border-color .3s, transform .3s;
     }
     .pia-mark-img { width: 100%; height: 100%; object-fit: cover; transform: scale(1.1); }
     .pia-mark svg g { stroke: currentColor; }
     .pia-mark svg g circle { fill: #0f172a !important; }
     .pia-mark svg g path { stroke: #0f172a !important; }
     [data-theme="dark"] .pia-mark {
-      
+      background: #0D2327;
+      border-color: #1E5A63;
     }
     .sidebar-nav { padding: 16px 12px 10px; flex-shrink: 0; display: flex; flex-direction: column; gap: 3px; }
     .nav-item {
@@ -264,8 +265,8 @@
     ════════════════════════════════════════ */
     .welcome {
       display: flex; flex-direction: column; align-items: flex-start;
-      justify-content: center; min-height: calc(100dvh - 200px);
-      padding: 40px 0; position: relative; overflow: hidden;
+      justify-content: center; min-height: auto;
+      padding: 20px 0 12px; position: relative; overflow: hidden;
     }
 
     /* Decorative 3D cube background */
@@ -307,9 +308,9 @@
     .welcome-eyebrow::before { content: ''; width: 16px; height: 2px; background: var(--indigo); border-radius: 2px; }
 
     .welcome h1 {
-      font-size: clamp(2.2rem, 5.5vw, 3.5rem); font-weight: 900;
-      letter-spacing: -2.5px; line-height: 1.04; color: var(--text);
-      margin-bottom: 16px;
+      font-size: clamp(1.8rem, 4vw, 2.6rem); font-weight: 900;
+      letter-spacing: -2px; line-height: 1.04; color: var(--text);
+      margin-bottom: 10px;
       animation: welcomeIn .55s .15s both;
     }
     .welcome h1 .wname {
@@ -319,8 +320,8 @@
       animation: gradShift 5s ease infinite;
     }
     .welcome-sub {
-      font-size: .9rem; color: var(--text2); line-height: 1.75;
-      max-width: 480px; margin-bottom: 32px;
+      font-size: .85rem; color: var(--text2); line-height: 1.6;
+      max-width: 480px; margin-bottom: 16px;
       animation: welcomeIn .55s .25s both;
     }
 
@@ -328,8 +329,8 @@
        FEATURE CARDS
     ════════════════════════════════════════ */
     .feature-grid {
-      display: grid; grid-template-columns: repeat(3, 1fr);
-      gap: 10px; width: 100%; max-width: 620px;
+      display: grid; grid-template-columns: repeat(4, 1fr);
+      gap: 10px; width: 100%; max-width: 780px;
       animation: welcomeIn .5s .35s both;
     }
     .feature-card {
@@ -887,7 +888,7 @@
       border-radius: 10px; cursor: pointer; transition: border-color .2s, color .2s;
     }
     .ob-btn-skip:hover { border-color: rgba(255,255,255,.25); color: rgba(255,255,255,.6); }
-    .pia-mark-img { height: 32px; width: auto; object-fit: contain; }
+    .pia-mark-img { height: 40px; width: auto; object-fit: contain; }
 
     /* ════════════════════════════════════════
        ORÁCULO DE ÁUDIO (EXPERIÊNCIA IMERSIVA)
@@ -1456,29 +1457,11 @@
               <div class="feature-card-title">Planejamento Anual</div>
               <div class="feature-card-desc">Bimestral, BNCC</div>
             </div>
-            <div class="feature-card" onclick="iniciar('Crie uma atividade para minha turma.')">
-              <div class="feature-icon">🎯</div>
-              <div class="feature-card-num">07</div>
-              <div class="feature-card-title">Atividade</div>
-              <div class="feature-card-desc">Exercícios e dinâmicas</div>
-            </div>
-            <div class="feature-card" onclick="iniciar('Preciso escrever um bilhete para os pais dos alunos. Sobre o que é?')">
-              <div class="feature-icon">✉️</div>
-              <div class="feature-card-num">08</div>
-              <div class="feature-card-title">Bilhete</div>
-              <div class="feature-card-desc">Comunicado para os pais</div>
-            </div>
             <div class="feature-card" onclick="iniciar('Faça um resumo de conteúdo para os alunos. Qual o tema e a série?')">
               <div class="feature-icon">📖</div>
-              <div class="feature-card-num">09</div>
+              <div class="feature-card-num">07</div>
               <div class="feature-card-title">Resumo</div>
               <div class="feature-card-desc">Material de estudo</div>
-            </div>
-            <div class="feature-card" onclick="iniciar('Crie uma rubrica de avaliação. Qual atividade ou disciplina?')">
-              <div class="feature-icon">✅</div>
-              <div class="feature-card-num">10</div>
-              <div class="feature-card-title">Rubrica</div>
-              <div class="feature-card-desc">Critérios de avaliação</div>
             </div>
             <div class="feature-card nee-card" onclick="abrirNEE()">
               <div class="feature-icon">♾️</div>
