@@ -57,7 +57,7 @@
     input::placeholder{color:var(--text3);font-weight:400}
     .btn{width:100%;padding:13px;background:linear-gradient(135deg,#1E5A63,#164A52);color:#FFFFFA;border:none;font-size:.9rem;font-weight:700;font-family:'Inter',sans-serif;border-radius:var(--r);cursor:pointer;transition:opacity .2s,transform .2s;margin-top:8px;box-shadow:0 4px 18px rgba(30,90,99,.3)}
     .btn:hover{opacity:.9;transform:translateY(-1px)}
-    .links{margin-top:24px;padding-top:24px;border-top:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;font-size:.82rem}
+    .links{margin-top:24px;padding-top:24px;border-top:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;font-size:.82rem;text-decoration:none;cursor:pointer}
     .link-label{color:var(--text2);font-weight:500}
     .link-a{color:var(--indigo);font-weight:700;text-decoration:none;transition:opacity .2s}
     .link-a:hover{opacity:.75}
@@ -153,10 +153,10 @@
         <button type="submit" class="btn" id="cadastroBtn">Criar conta grátis →</button>
       </form>
 
-      <div class="links">
+      <a class="links" href="/login">
         <span class="link-label">Já tem conta?</span>
-        <a class="link-a" href="/login">Fazer login →</a>
-      </div>
+        <span class="link-a">Fazer login →</span>
+      </a>
     </div>
   </div>
 </div>
