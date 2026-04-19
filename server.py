@@ -3,6 +3,7 @@ import io
 import re
 import json
 import math
+import html as _html
 import base64
 import secrets
 import smtplib
@@ -4696,9 +4697,10 @@ def admin_leads():
         )
 
     senha = request.args.get('senha', '')
+    e = _html.escape  # escapa XSS em dados de leads
     rows  = ''.join(
-        f"<tr><td>{l['id']}</td><td>{l['nome']}</td><td>{l['email']}</td>"
-        f"<td>{l['whatsapp'] or '—'}</td><td>{l['criado_em']}</td></tr>"
+        f"<tr><td>{l['id']}</td><td>{e(l['nome'])}</td><td>{e(l['email'])}</td>"
+        f"<td>{e(l['whatsapp'] or '—')}</td><td>{e(l['criado_em'])}</td></tr>"
         for l in leads
     )
     html = f"""<!DOCTYPE html>
