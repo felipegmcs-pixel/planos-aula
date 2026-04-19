@@ -77,6 +77,8 @@
       transition:all .2s;display:flex;align-items:center;justify-content:center;gap:8px}
     .btn-unlock:hover:not(:disabled){transform:translateY(-1px);box-shadow:0 6px 20px rgba(30,90,99,.35)}
     .btn-unlock:disabled{opacity:.6;cursor:not-allowed}
+    .modal-erro{background:#fff0f0;border:1px solid #fca5a5;color:#dc2626;
+      padding:10px 14px;border-radius:8px;font-size:.85rem;margin-bottom:12px;display:none}
 
     /* RESULTADO */
     .resultado{max-width:700px;margin:48px auto 0;display:none}
@@ -166,6 +168,7 @@
     <input type="text" id="inp-nome" placeholder="Ex: Maria Silva" maxlength="100"/>
     <label>E-mail ou WhatsApp</label>
     <input type="text" id="inp-contato" placeholder="Ex: maria@email.com ou (11) 99999-9999" maxlength="200"/>
+    <div class="modal-erro" id="modal-erro"></div>
     <button class="btn-unlock" id="btn-unlock" onclick="liberarPlano()">
       <span id="unlock-txt">Liberar meu planejamento agora 🔓</span>
       <span class="loader" id="loader-unlock"></span>
@@ -236,7 +239,7 @@ async function liberarPlano() {
     const data = await res.json();
 
     if (!res.ok || data.erro) {
-      alert(data.erro || 'Erro ao gerar. Tente novamente.');
+      mostrarErroModal(data.erro || 'Erro ao gerar. Tente novamente.');
       btn.disabled = false;
       txt.style.display = 'block';
       ldr.style.display = 'none';
@@ -264,11 +267,17 @@ async function liberarPlano() {
     }, 600);
 
   } catch(e) {
-    alert('Erro de conexão. Tente novamente.');
+    mostrarErroModal('Erro de conexão. Tente novamente.');
     btn.disabled = false;
     txt.style.display = 'block';
     ldr.style.display = 'none';
   }
+}
+
+function mostrarErroModal(msg) {
+  const el = document.getElementById('modal-erro');
+  el.textContent = msg;
+  el.style.display = 'block';
 }
 
 // Permite enter nos campos do modal

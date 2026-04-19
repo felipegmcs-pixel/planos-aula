@@ -131,6 +131,7 @@
       {% endfor %}
 
       <form method="POST" id="cadastroForm">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
         <div class="field">
           <label>Nome completo</label>
           <input type="text" name="nome" placeholder="Seu nome" required autofocus/>
@@ -141,7 +142,7 @@
         </div>
         <div class="field">
           <label>Senha</label>
-          <input type="password" name="senha" placeholder="Mínimo 6 caracteres" required minlength="6"/>
+          <input type="password" name="senha" placeholder="Mínimo 6 caracteres" required minlength="6" autocomplete="new-password"/>
         </div>
         <div class="lgpd-wrap">
           <label class="lgpd-label">

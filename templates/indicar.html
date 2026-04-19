@@ -7,59 +7,9 @@
   <title>ProfessorIA — Indicar Amigos</title>
   <link rel="icon" type="image/svg+xml" href="/static/logo-oficial.png"/>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="/static/app.css"/>
   <style>
-    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-    :root{
-      --bg:#0b0d14;--bg2:#0f1120;--bg3:#131526;
-      --text:#e5e7eb;--text2:#9ca3af;--text3:#4b5563;
-      --indigo:#1E5A63;--violet:#164A52;--indigo-l:#5FBFBF;
-      --linha:rgba(255,255,255,.07);--linha-f:rgba(255,255,255,.12);
-      --card:rgba(255,255,255,.04);--card-h:rgba(255,255,255,.07);
-      --sb-bg:#0a0c18;--sidebar-w:240px;
-      --green:#10b981;--amber:#f59e0b;
-    }
-    [data-theme="light"]{
-      --bg:#f8f9ff;--bg2:#ffffff;--bg3:#f1f2f8;
-      --text:#111827;--text2:#6b7280;--text3:#9ca3af;
-      --linha:rgba(17,24,39,.07);--linha-f:rgba(17,24,39,.13);
-      --card:rgba(255,255,255,.9);--card-h:rgba(255,255,255,1);
-      --sb-bg:#f7f8ff;
-    }
-    html,body{height:100%;font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);overflow:hidden}
-    #bg3d{position:fixed;inset:0;z-index:0;pointer-events:none;opacity:.4}
-    .app{display:flex;height:100%;position:relative;z-index:1}
-
-    /* Sidebar */
-    .sidebar{width:var(--sidebar-w);flex-shrink:0;background:var(--sb-bg);border-right:1px solid var(--linha);display:flex;flex-direction:column;height:100%;overflow-y:auto;transition:transform .3s cubic-bezier(.16,1,.3,1)}
-    .sidebar-header{padding:20px 16px 12px;border-bottom:1px solid var(--linha)}
-    .logo{display:flex;align-items:center;gap:8px;text-decoration:none}
-    .pia-mark{width:34px;height:34px;border-radius:9px;background:#fff;display:flex;align-items:center;justify-content:center;flex-shrink:0}
-    .logo-p{font-size:.95rem;font-weight:800;letter-spacing:-.5px;color:var(--text)}
-    .logo-ia{font-size:.95rem;font-weight:500;color:var(--indigo-l)}
-    .sidebar-nav{padding:12px 8px;display:flex;flex-direction:column;gap:2px}
-    .nav-item{display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:10px;text-decoration:none;font-size:.8rem;font-weight:500;color:rgba(255,255,255,.5);transition:all .18s}
-    [data-theme="light"] .nav-item{color:rgba(17,24,39,.5)}
-    .nav-item:hover{background:rgba(255,255,255,.06);color:var(--text)}
-    [data-theme="light"] .nav-item:hover{background:rgba(17,24,39,.05);color:var(--text)}
-    .nav-item.active{background:rgba(30,90,99,.18);color:#5FBFBF;font-weight:600}
-    [data-theme="light"] .nav-item.active{background:rgba(30,90,99,.1);color:var(--indigo)}
-    .nav-icon{width:16px;height:16px;stroke:currentColor;fill:none;stroke-linecap:round;stroke-linejoin:round;flex-shrink:0}
-    .sidebar-spacer{flex:1}
-    .sidebar-footer{padding:12px 8px;border-top:1px solid var(--linha)}
-    .user-card{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:10px;text-decoration:none;transition:background .18s}
-    .user-card:hover{background:rgba(255,255,255,.06)}
-    [data-theme="light"] .user-card:hover{background:rgba(17,24,39,.05)}
-    .user-avatar{width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,#1E5A63,#164A52);display:flex;align-items:center;justify-content:center;font-size:.75rem;font-weight:800;color:#fff;flex-shrink:0}
-    .user-name{font-size:.78rem;font-weight:600;color:var(--text)}
-    .user-plan{font-size:.65rem;color:var(--text2)}
-
-    /* Main */
-    .main{flex:1;overflow-y:auto;display:flex;flex-direction:column;min-width:0}
-    .topbar-spacer{width:22px;flex-shrink:0}
-    .btn-topbar-nav{background:none;border:none;cursor:pointer;color:var(--text);display:flex;align-items:center;justify-content:center;padding:8px;min-width:44px;min-height:44px;border-radius:8px}
-    .btn-topbar-nav:hover{background:rgba(0,0,0,.06)}
-    .topbar-title{font-size:.85rem;font-weight:700}
-    .topbar{display:none;padding:14px 16px;border-bottom:1px solid var(--linha);align-items:center;justify-content:space-between;background:var(--bg2);position:sticky;top:0;z-index:50}
+    /* ── Estilos exclusivos da página Indicar ── */
 
     /* Hero */
     .hero{
@@ -138,20 +88,11 @@
     .how-text{font-size:.8rem;line-height:1.6;color:var(--text)}
     .how-text strong{color:var(--indigo-l)}
 
-    /* Toast */
-    .toast{position:fixed;bottom:24px;right:24px;z-index:500;padding:12px 20px;background:#111827;border:1px solid rgba(255,255,255,.1);border-radius:12px;font-size:.78rem;font-weight:600;color:#fff;box-shadow:0 8px 32px rgba(0,0,0,.4);transform:translateY(20px);opacity:0;transition:all .3s cubic-bezier(.16,1,.3,1);pointer-events:none}
-    .toast.show{transform:translateY(0);opacity:1}
-    .toast.success{border-color:rgba(16,185,129,.3);color:#34d399}
-
     @media(max-width:640px){
-      .sidebar{position:fixed;left:0;top:0;bottom:0;z-index:200;transform:translateX(-100%)}
-      .sidebar.open{transform:translateX(0)}
-      .topbar{display:flex}
       .hero{padding:24px 16px 0}
       .hero-title{font-size:1.6rem}
       .link-box,.stats-row,.how-section{padding:0 16px;margin-left:0;margin-right:0;max-width:100%}
     }
-    @keyframes fadeUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
     .hero{animation:fadeUp .5s cubic-bezier(.16,1,.3,1) both}
     .link-box{animation:fadeUp .5s cubic-bezier(.16,1,.3,1) .1s both}
     .stats-row{animation:fadeUp .5s cubic-bezier(.16,1,.3,1) .2s both}
@@ -177,9 +118,6 @@
 </head>
 <body>
 
-<canvas id="bg3d"></canvas>
-<div class="toast" id="toast"></div>
-
 <div class="app">
   <aside class="sidebar" id="sidebar">
     <div class="sidebar-header">
@@ -195,8 +133,12 @@
         <svg class="nav-icon" viewBox="0 0 24 24" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>Chat</a>
       <a class="nav-item" href="/dashboard">
         <svg class="nav-icon" viewBox="0 0 24 24" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>Dashboard</a>
+      <a class="nav-item" href="/prova">
+        <svg class="nav-icon" viewBox="0 0 24 24" stroke-width="2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>Criar Prova</a>
       <a class="nav-item" href="/banco-questoes">
         <svg class="nav-icon" viewBox="0 0 24 24" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>Banco de Questões</a>
+      <a class="nav-item" href="/planejamento">
+        <svg class="nav-icon" viewBox="0 0 24 24" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>Planejamento Anual</a>
       <a class="nav-item" href="/historico">
         <svg class="nav-icon" viewBox="0 0 24 24" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>Histórico</a>
       <a class="nav-item active" href="/indicar">
@@ -294,7 +236,6 @@
   </div>
 </div>
 
-<script src="/static/bg3d.js"></script>
 <script>
 const LINK = document.getElementById('linkInput').value;
 
@@ -334,13 +275,6 @@ function compartilharNativo() {
   }
 }
 
-function showToast(msg, type) {
-  const t = document.getElementById('toast');
-  t.textContent = msg;
-  t.className = 'toast show ' + (type || '');
-  setTimeout(() => t.className = 'toast', 3000);
-}
-
 // Load stats
 fetch('/api/referral/stats').then(r => r.json()).then(d => {
   if (d.usos !== undefined) document.getElementById('statUsos').textContent = d.usos;
@@ -348,5 +282,7 @@ fetch('/api/referral/stats').then(r => r.json()).then(d => {
   if (d.creditos !== undefined) document.getElementById('statCreditos').textContent = d.creditos;
 }).catch(() => {});
 </script>
+<script src="/static/toast.js"></script>
+<script src="/static/theme.js"></script>
 </body>
 </html>

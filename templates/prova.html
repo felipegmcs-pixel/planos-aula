@@ -4,7 +4,7 @@
   <meta charset="UTF-8"/>
   <script>!function(){var t=localStorage.getItem("pia-theme")||"dark",a="system"===t?(window.matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light"):t;document.documentElement.setAttribute("data-theme",a),document.documentElement.style.colorScheme=a}();</script>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>ProfessorIA — Sabedoria e Tempo para Você</title>
+  <title>Criar Prova — ProfessorIA</title>
   <link rel="icon" href="{{ url_for('static', filename='logooficial.png') }}" type="image/png">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet"/>
   <style>
@@ -283,6 +283,7 @@
   </div>
 </div>
 
+<script src="/static/toast.js"></script>
 <script src="/static/theme.js"></script>
 <script>
   let _provaDados = null;
@@ -295,7 +296,7 @@
     const numDisc = parseInt(document.getElementById('f-disc').value) || 2;
 
     if (!tema || !disc || !ano) {
-      alert('Preencha Tema, Disciplina e Ano para continuar.');
+      showToast('Preencha Tema, Disciplina e Ano para continuar.', 'erro');
       return;
     }
 
@@ -313,12 +314,12 @@
 
       if (resp.status === 403) {
         const d = await resp.json();
-        alert(d.mensagem || 'Limite de gerações atingido. Faça upgrade para continuar.');
+        showToast(d.mensagem || 'Limite de gerações atingido. Faça upgrade para continuar.', 'erro');
         return;
       }
       if (!resp.ok) {
         const d = await resp.json();
-        alert(d.erro || 'Erro ao gerar prova.');
+        showToast(d.erro || 'Erro ao gerar prova.', 'erro');
         return;
       }
 
@@ -327,7 +328,7 @@
       renderizarProva(_provaDados);
 
     } catch(e) {
-      alert('Erro de conexão. Tente novamente.');
+      showToast('Erro de conexão. Tente novamente.', 'erro');
     } finally {
       btn.disabled = false; btn.textContent = 'Gerar Prova →';
       document.getElementById('loading').classList.remove('visible');
@@ -415,7 +416,7 @@
       a.click();
       window.URL.revokeObjectURL(url);
     } catch (e) {
-      alert('Erro ao gerar o arquivo Word. Tente novamente.');
+      showToast('Erro ao gerar o arquivo Word. Tente novamente.', 'erro');
     } finally {
       btn.disabled = false;
       btn.textContent = originalText;

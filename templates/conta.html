@@ -168,6 +168,7 @@
       {% endif %}
 
       <form method="POST" action="/conta/escola">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
         <div class="form-grid">
           <div class="field field-full">
             <label>GOVERNO / ESTADO</label>
@@ -208,9 +209,10 @@
     <div class="secao-titulo">SEGURANCA</div>
     <div>
       <form method="POST" action="/conta/senha">
-        <div class="field"><label>SENHA ATUAL</label><input type="password" name="senha_atual" placeholder="********" required/></div>
-        <div class="field"><label>NOVA SENHA</label><input type="password" name="senha_nova" placeholder="********" required minlength="6"/></div>
-        <div class="field"><label>CONFIRMAR NOVA SENHA</label><input type="password" name="senha_conf" placeholder="********" required minlength="6"/></div>
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+        <div class="field"><label>SENHA ATUAL</label><input type="password" name="senha_atual" placeholder="********" required autocomplete="current-password"/></div>
+        <div class="field"><label>NOVA SENHA</label><input type="password" name="senha_nova" placeholder="********" required minlength="6" autocomplete="new-password"/></div>
+        <div class="field"><label>CONFIRMAR NOVA SENHA</label><input type="password" name="senha_conf" placeholder="********" required minlength="6" autocomplete="new-password"/></div>
         <button type="submit" class="btn">ATUALIZAR SENHA</button>
       </form>
     </div>

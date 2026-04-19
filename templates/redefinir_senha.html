@@ -117,13 +117,14 @@
       {% endfor %}
 
       <form method="POST" id="redefinirForm">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
         <div class="field">
           <label>Nova senha</label>
-          <input type="password" name="senha" placeholder="Mínimo 6 caracteres" required autofocus/>
+          <input type="password" name="senha" placeholder="Mínimo 6 caracteres" required autofocus autocomplete="new-password"/>
         </div>
         <div class="field">
           <label>Confirmar senha</label>
-          <input type="password" name="confirma" placeholder="Repita a senha" required/>
+          <input type="password" name="confirma" placeholder="Repita a senha" required autocomplete="new-password"/>
         </div>
         <button type="submit" class="btn" id="redefinirBtn">Salvar nova senha →</button>
       </form>

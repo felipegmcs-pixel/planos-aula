@@ -46,10 +46,15 @@
     toast.className = 'pia-toast pia-toast-' + cat;
     toast.setAttribute('role', 'alert');
     toast.setAttribute('aria-live', 'polite');
-    toast.innerHTML =
-      iconSVG(cat) +
-      '<span style="flex:1">' + msg + '</span>' +
-      '<div class="pia-toast-bar" style="animation-duration:' + DURATION + 'ms"></div>';
+    var msgSpan = document.createElement('span');
+    msgSpan.style.flex = '1';
+    msgSpan.textContent = msg;
+    var bar = document.createElement('div');
+    bar.className = 'pia-toast-bar';
+    bar.style.animationDuration = DURATION + 'ms';
+    toast.innerHTML = iconSVG(cat);
+    toast.appendChild(msgSpan);
+    toast.appendChild(bar);
 
     toast.addEventListener('click', function () { dismiss(toast); });
 

@@ -119,6 +119,7 @@
       {% endfor %}
 
       <form method="POST" id="esqueciForm">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
         <div class="field">
           <label>E-mail cadastrado</label>
           <input type="email" name="email" placeholder="seu@email.com" required autofocus/>

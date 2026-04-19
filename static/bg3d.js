@@ -16,6 +16,8 @@
     if (window.THREE) { cb(); return; }
     var s = document.createElement('script');
     s.src = 'https://cdn.jsdelivr.net/npm/three@0.158.0/build/three.min.js';
+    s.integrity = 'sha384-5UGTcMIxVUKFeJH0zOS3lqMAZNBG+fCXJbi3UglUq6ABO4MQJu6rxNa+MPP+qtwq';
+    s.crossOrigin = 'anonymous';
     s.onload = cb;
     document.head.appendChild(s);
   }

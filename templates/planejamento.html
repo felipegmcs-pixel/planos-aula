@@ -5,7 +5,7 @@
   <script>!function(){var t=localStorage.getItem("pia-theme")||"light",a="system"===t?(window.matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light"):t;document.documentElement.setAttribute("data-theme",a),document.documentElement.style.colorScheme=a}();</script>
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Planejamento Anual — ProfeIA</title>
+  <title>Planejamento Anual — ProfessorIA</title>
   <link rel="icon" href="{{ url_for('static', filename='favicon.ico') }}" type="image/x-icon">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet"/>
   <style>
@@ -98,10 +98,10 @@
 <body>
 <div class="top-bar"></div>
 <nav>
-  <a class="nav-logo" href="/">Profe<span>IA</span></a>
+  <a class="nav-logo" href="/">Professor<span>IA</span></a>
   <div class="nav-links">
     <a class="nav-link" href="/chat">Chat</a>
-    <a class="nav-link" href="/">Plano de Aula</a>
+    <a class="nav-link" href="/dashboard">Dashboard</a>
     <a class="nav-link active" href="/planejamento">Planejamento Anual</a>
     <a class="nav-link" href="/historico">Histórico</a>
     <a class="nav-link" href="/logout">Sair →</a>
@@ -174,7 +174,7 @@
     const fim          = document.getElementById('fim').value.trim();
 
     if (!disciplina || !turma) {
-      alert('Preencha a disciplina e a turma.');
+      showToast('Preencha a disciplina e a turma.', 'erro');
       return;
     }
 
@@ -200,7 +200,7 @@
       resultado.style.display = 'block';
       resultado.scrollIntoView({ behavior: 'smooth', block: 'start' });
     } catch (err) {
-      alert('Erro: ' + err.message);
+      showToast('Erro: ' + err.message, 'erro');
     } finally {
       btn.disabled = false;
       loading.style.display = 'none';
@@ -215,6 +215,7 @@
     setTimeout(() => btn.textContent = 'Copiar tudo', 2000);
   }
 </script>
+<script src="/static/toast.js"></script>
 <script src="/static/theme.js"></script>
 </body>
 </html>

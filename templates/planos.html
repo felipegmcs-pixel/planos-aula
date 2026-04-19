@@ -215,7 +215,11 @@
         <li>Adaptações NEE <span class="xck">—</span></li>
         <li>Exportar DOCX <span class="xck">—</span></li>
       </ul>
-      <a href="#" onclick="abrirModalVip();return false;" class="btn-plan o">Começar grátis</a>
+      {% if assinatura_ativa %}
+        <span class="btn-plan o" style="opacity:.45;cursor:default">Plano inferior</span>
+      {% else %}
+        <a href="/chat" class="btn-plan o">Ir para o Chat →</a>
+      {% endif %}
     </div>
 
     <!-- BASIC — destaque -->

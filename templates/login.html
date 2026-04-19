@@ -101,6 +101,16 @@
     }
     .btn:hover{opacity:.9;transform:translateY(-1px)}
 
+    /* Checkbox lembrar */
+    .remember-row{display:flex;align-items:center;gap:8px;margin-top:16px;margin-bottom:4px}
+    .remember-row input[type=checkbox]{
+      width:16px;height:16px;accent-color:var(--indigo);cursor:pointer;flex-shrink:0
+    }
+    .remember-row label{
+      font-size:.82rem;font-weight:500;color:var(--text2);cursor:pointer;
+      text-transform:none;letter-spacing:0;margin:0
+    }
+
     .links{margin-top:24px;padding-top:24px;border-top:1px solid var(--line);display:flex;flex-direction:column;gap:12px}
     .link-row{display:flex;align-items:center;justify-content:space-between;font-size:.82rem}
     .link-label{color:var(--text2);font-weight:500}
@@ -169,13 +179,18 @@
       {% endfor %}
 
       <form method="POST" id="loginForm">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
         <div class="field">
           <label>E-mail</label>
           <input type="email" name="email" placeholder="seu@email.com" required autofocus/>
         </div>
         <div class="field">
           <label>Senha</label>
-          <input type="password" name="senha" placeholder="••••••••" required/>
+          <input type="password" name="senha" placeholder="••••••••" required autocomplete="current-password"/>
+        </div>
+        <div class="remember-row">
+          <input type="checkbox" id="lembrar" name="lembrar" value="1"/>
+          <label for="lembrar">Lembrar de mim por 30 dias</label>
         </div>
         <button type="submit" class="btn" id="loginBtn">Entrar →</button>
       </form>
