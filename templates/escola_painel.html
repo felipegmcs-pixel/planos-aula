@@ -232,6 +232,8 @@
 </div>
 
 <script>
+const escHtml = s => String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+
 let allProfs = [];
 
 async function loadRelatorio() {
@@ -260,12 +262,12 @@ function renderProfs(list) {
   }
   body.innerHTML = list.map(p => `
     <tr>
-      <td class="td-name">${p.nome || '—'}</td>
-      <td class="td-email">${p.email || '—'}</td>
+      <td class="td-name">${escHtml(p.nome || '—')}</td>
+      <td class="td-email">${escHtml(p.email || '—')}</td>
       <td><span class="td-badge ${p.ativo ? 'badge-ativo' : 'badge-inativo'}">${p.ativo ? 'Ativo' : 'Inativo'}</span></td>
-      <td class="td-num">${p.materiais || 0}</td>
-      <td>${p.disciplinas || '—'}</td>
-      <td class="td-date">${p.ultimo_uso || '—'}</td>
+      <td class="td-num">${escHtml(p.materiais || 0)}</td>
+      <td>${escHtml(p.disciplinas || '—')}</td>
+      <td class="td-date">${escHtml(p.ultimo_uso || '—')}</td>
     </tr>`).join('');
 }
 

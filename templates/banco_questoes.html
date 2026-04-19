@@ -295,6 +295,8 @@
 </div>
 
 <script>
+const escHtml = s => String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+
 let allQuestoes = [];
 
 async function loadQuestoes() {
@@ -361,8 +363,8 @@ function renderQuestoes(list) {
       altsHtml = '<div class="q-alternativas">' +
         Object.entries(alts).map(([letra, txt]) =>
           `<div class="q-alt ${letra === q.resposta_correta ? 'correta' : ''}">
-            <span class="q-alt-letra">${letra}</span>
-            <span>${txt}</span>
+            <span class="q-alt-letra">${escHtml(letra)}</span>
+            <span>${escHtml(txt)}</span>
           </div>`
         ).join('') + '</div>';
     }
@@ -370,10 +372,10 @@ function renderQuestoes(list) {
       <div class="q-card" style="animation-delay:${i*0.04}s">
         <div class="q-header">
           <div class="q-tags">
-            ${q.disciplina ? `<span class="q-tag tag-disc">${q.disciplina}</span>` : ''}
-            ${q.serie ? `<span class="q-tag tag-serie">${q.serie}</span>` : ''}
-            <span class="q-tag tag-tipo">${tipoLabel[q.tipo]||q.tipo}</span>
-            ${q.dificuldade ? `<span class="q-tag" style="background:rgba(245,158,11,.12);color:#fbbf24">${difLabel[q.dificuldade]||q.dificuldade}</span>` : ''}
+            ${q.disciplina ? `<span class="q-tag tag-disc">${escHtml(q.disciplina)}</span>` : ''}
+            ${q.serie ? `<span class="q-tag tag-serie">${escHtml(q.serie)}</span>` : ''}
+            <span class="q-tag tag-tipo">${escHtml(tipoLabel[q.tipo]||q.tipo)}</span>
+            ${q.dificuldade ? `<span class="q-tag" style="background:rgba(245,158,11,.12);color:#fbbf24">${escHtml(difLabel[q.dificuldade]||q.dificuldade)}</span>` : ''}
           </div>
           <div class="q-actions">
             <button class="q-action-btn copy" onclick="copiarQuestao(${q.id})" title="Copiar">
@@ -384,11 +386,11 @@ function renderQuestoes(list) {
             </button>
           </div>
         </div>
-        <div class="q-text">${q.enunciado}</div>
+        <div class="q-text">${escHtml(q.enunciado)}</div>
         ${altsHtml}
         <div class="q-footer">
-          <span class="q-bncc">${q.bncc_codigo ? 'BNCC: ' + q.bncc_codigo : ''}</span>
-          <span class="q-date">${q.criado_em || ''}</span>
+          <span class="q-bncc">${q.bncc_codigo ? 'BNCC: ' + escHtml(q.bncc_codigo) : ''}</span>
+          <span class="q-date">${escHtml(q.criado_em || '')}</span>
         </div>
       </div>`;
   }).join('');

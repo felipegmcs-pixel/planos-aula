@@ -251,6 +251,8 @@
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js" integrity="sha384-e6nUZLBkQ86NJ6TVVKAeSaK8jWa3NhkYWZFomE39AvDbQWeie9PlQqM3pmYW5d1g" crossorigin="anonymous"></script>
 <script>
+const escHtml = s => String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+
 let currentPeriod = 30;
 let lineChart;
 
@@ -359,8 +361,8 @@ function renderActivity(items) {
       <div class="history-card">
         <div class="h-card-icon">${icon}</div>
         <div class="h-card-content">
-          <div class="h-card-title">${item.titulo || item.disciplina || 'Material gerado'}</div>
-          <div class="h-card-meta">${label} · ${item.data || ''}</div>
+          <div class="h-card-title">${escHtml(item.titulo || item.disciplina || 'Material gerado')}</div>
+          <div class="h-card-meta">${escHtml(label)} · ${escHtml(item.data || '')}</div>
         </div>
         <div class="h-card-actions">
           <a href="/historico/${item.id}" class="h-card-btn view" title="Ver Material">👁️</a>
@@ -383,9 +385,9 @@ function renderBNCC(stats) {
   }
   el.innerHTML = stats.map(s => `
     <div style="display: flex; align-items: center; gap: 12px; padding: 8px; background: rgba(255,255,255,0.03); border-radius: 8px; border: 1px solid rgba(30,90,99,0.2);">
-      <div style="background: #D4AF37; color: #0D2327; font-size: 0.6rem; font-weight: 800; padding: 4px 8px; border-radius: 4px;">${s.codigo_bncc}</div>
-      <div style="flex: 1; font-size: 0.7rem; color: #7A9499; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${s.descricao || 'Habilidade BNCC'}</div>
-      <div style="font-size: 0.75rem; font-weight: 800; color: #FFFFFF;">${s.total}x</div>
+      <div style="background: #D4AF37; color: #0D2327; font-size: 0.6rem; font-weight: 800; padding: 4px 8px; border-radius: 4px;">${escHtml(s.codigo_bncc)}</div>
+      <div style="flex: 1; font-size: 0.7rem; color: #7A9499; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${escHtml(s.descricao || 'Habilidade BNCC')}</div>
+      <div style="font-size: 0.75rem; font-weight: 800; color: #FFFFFF;">${escHtml(s.total)}x</div>
     </div>
   `).join('');
 }

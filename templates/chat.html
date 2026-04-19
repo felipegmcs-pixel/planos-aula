@@ -1904,7 +1904,10 @@
       const img = document.createElement('img'); img.className = 'anexo-thumb'; img.src = thumbSrc; thumbWrap.appendChild(img);
     } else {
       const ext = nome.split('.').pop().toUpperCase().slice(0,4);
-      thumbWrap.innerHTML = `<div class="anexo-thumb-doc">${ext}</div>`;
+      const thumbDoc = document.createElement('div');
+      thumbDoc.className = 'anexo-thumb-doc';
+      thumbDoc.textContent = ext;
+      thumbWrap.appendChild(thumbDoc);
     }
     preview.classList.add('visivel');
     document.getElementById('btnAttach').classList.add('ativo');

@@ -42,9 +42,8 @@ import stripe as stripe_lib
 from anthropic import Anthropic
 from openai import OpenAI
 from docx import Document
-from docx.shared import Pt, RGBColor, Cm, Inches
+from docx.shared import Pt, RGBColor, Cm
 from docx.enum.text import WD_ALIGN_PARAGRAPH
-from docx.enum.table import WD_ALIGN_VERTICAL
 from docx.oxml.ns import qn
 from docx.oxml import OxmlElement
 from pdf_generator import gerar_plano_pdf
@@ -927,12 +926,14 @@ def ativar_assinatura(usuario_id, plano_id):
     dias = PLANOS[plano_id]['dias']
     valido_ate = (datetime.now() + timedelta(days=dias)).strftime('%Y-%m-%d')
     conn = get_db()
-    conn.execute(
-        'UPDATE usuarios SET ativo = 1, plano = ?, valido_ate = ? WHERE id = ?',
-        (plano_id, valido_ate, usuario_id)
-    )
-    conn.commit()
-    conn.close()
+    try:
+        conn.execute(
+            'UPDATE usuarios SET ativo = 1, plano = ?, valido_ate = ? WHERE id = ?',
+            (plano_id, valido_ate, usuario_id)
+        )
+        conn.commit()
+    finally:
+        conn.close()
     logger.info('Assinatura ativada: usuário %s → plano %s até %s', usuario_id, plano_id, valido_ate)
     return True
 
@@ -1426,15 +1427,17 @@ def conta_escola():
     fone     = f.get('escola_fone', '').strip()[:50]
     email_e  = f.get('escola_email', '').strip()[:200]
     conn = get_db()
-    conn.execute(
-        "UPDATE usuarios SET escola_nome=?, professor_nome=?,"
-        " escola_governo=?, escola_secretaria=?, escola_diretoria=?,"
-        " escola_endereco=?, escola_fone=?, escola_email=?"
-        " WHERE id=?",
-        (escola, prof, gov, sec, dire, ender, fone, email_e, current_user.id)
-    )
-    conn.commit()
-    conn.close()
+    try:
+        conn.execute(
+            "UPDATE usuarios SET escola_nome=?, professor_nome=?,"
+            " escola_governo=?, escola_secretaria=?, escola_diretoria=?,"
+            " escola_endereco=?, escola_fone=?, escola_email=?"
+            " WHERE id=?",
+            (escola, prof, gov, sec, dire, ender, fone, email_e, current_user.id)
+        )
+        conn.commit()
+    finally:
+        conn.close()
     flash('Dados da escola salvos com sucesso!', 'ok')
     return redirect(url_for('conta'))
 
@@ -1479,9 +1482,11 @@ def api_profile():
 
     params.append(current_user.id)
     conn = get_db()
-    conn.execute(f"UPDATE usuarios SET {', '.join(updates)} WHERE id = ?", params)
-    conn.commit()
-    conn.close()
+    try:
+        conn.execute(f"UPDATE usuarios SET {', '.join(updates)} WHERE id = ?", params)
+        conn.commit()
+    finally:
+        conn.close()
     return jsonify({'ok': True})
 
 
@@ -1550,10 +1555,12 @@ def download_historico(item_id):
 @assinatura_required
 def deletar_historico(item_id):
     conn = get_db()
-    conn.execute('DELETE FROM historico WHERE id = ? AND usuario_id = ?',
-                 (item_id, current_user.id))
-    conn.commit()
-    conn.close()
+    try:
+        conn.execute('DELETE FROM historico WHERE id = ? AND usuario_id = ?',
+                     (item_id, current_user.id))
+        conn.commit()
+    finally:
+        conn.close()
     return jsonify({'ok': True})
 
 # ─── API Plano de Aula — Structured Output ────────────────────────────────────
@@ -1712,14 +1719,16 @@ def api_gerar_plano():
 
     # Contabiliza geração
     conn = get_db()
-    conn.execute(
-        "INSERT INTO chat_messages (usuario_id, role, content, criado_em) VALUES (?, ?, ?, ?)",
-        (current_user.id, 'assistant',
-         f'[plano estruturado] {tema} — {disciplina} {ano}',
-         datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
-    )
-    conn.commit()
-    conn.close()
+    try:
+        conn.execute(
+            "INSERT INTO chat_messages (usuario_id, role, content, criado_em) VALUES (?, ?, ?, ?)",
+            (current_user.id, 'assistant',
+             f'[plano estruturado] {tema} — {disciplina} {ano}',
+             datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
+        )
+        conn.commit()
+    finally:
+        conn.close()
 
     return jsonify(plano_json)
 
@@ -1750,13 +1759,15 @@ def salvar_template():
     # Mantém compatibilidade com campo legado
     template = data.get('template', '').strip()[:5000]
     conn = get_db()
-    conn.execute(
-        "UPDATE usuarios SET escola_template = ?, escola_nome = ?, professor_nome = ?,"
-        " default_segment = ?, onboarding_done = 1 WHERE id = ?",
-        (template, escola_nome, professor_nome, default_segment, current_user.id)
-    )
-    conn.commit()
-    conn.close()
+    try:
+        conn.execute(
+            "UPDATE usuarios SET escola_template = ?, escola_nome = ?, professor_nome = ?,"
+            " default_segment = ?, onboarding_done = 1 WHERE id = ?",
+            (template, escola_nome, professor_nome, default_segment, current_user.id)
+        )
+        conn.commit()
+    finally:
+        conn.close()
     return jsonify({'ok': True})
 
 @app.route('/chat')
@@ -1813,9 +1824,7 @@ def processar_arquivo():
     if (mime == 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
             or nome_lower.endswith('.docx')):
         try:
-            from docx import Document as _Doc
-            import io as _io
-            doc = _Doc(_io.BytesIO(dados))
+            doc = Document(io.BytesIO(dados))
             texto = '\n'.join(p.text for p in doc.paragraphs if p.text.strip())
             return jsonify({'tipo': 'documento', 'texto': texto[:20000], 'nome': nome})
         except Exception as e:
@@ -1866,13 +1875,15 @@ def api_chat():
     db_content = db_content[:4000]  # cap para armazenamento no banco
 
     conn = get_db()
-    conn.execute(
-        "INSERT INTO chat_messages (usuario_id, role, content, criado_em) VALUES (?, ?, ?, ?)",
-        (current_user.id, 'user', db_content,
-         datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
-    )
-    conn.commit()
-    conn.close()
+    try:
+        conn.execute(
+            "INSERT INTO chat_messages (usuario_id, role, content, criado_em) VALUES (?, ?, ?, ?)",
+            (current_user.id, 'user', db_content,
+             datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
+        )
+        conn.commit()
+    finally:
+        conn.close()
 
     # Prepara sistema e mensagens antes de entrar no generator
     sistema = SYSTEM_PROMPT
@@ -2117,7 +2128,6 @@ def _pr(paragraph, text, bold=False, size=10, color='0a0a0a',
 
 def _pr_fmt(paragraph, text, size=10, font='Arial'):
     """Adiciona texto com suporte a **bold**, *italic* e `code` inline."""
-    import re
     parts = re.split(r'(\*\*.*?\*\*|\*[^*]+?\*|`[^`]+`)', text)
     for part in parts:
         if part.startswith('**') and part.endswith('**') and len(part) > 4:
@@ -2187,7 +2197,6 @@ def _pia_section_box(doc, title):
 
 def _is_letter_grid(code):
     """Returns True if code block is a caça-palavras letter grid."""
-    import re
     lines = [l for l in code.strip().split('\n') if l.strip()]
     if len(lines) < 5:
         return False
@@ -2206,7 +2215,6 @@ def _is_letter_grid(code):
 
 def _pia_caca_palavras_table(doc, code):
     """Renders a caça-palavras letter grid as a proper bordered Word table."""
-    import re
     lines = [l for l in code.strip().split('\n') if l.strip()]
 
     grid = []
@@ -2289,7 +2297,6 @@ def _pia_code_block(doc, code):
 
 def _pia_md_table(doc, lines):
     """Renderiza tabela Markdown como tabela Word estilizada."""
-    import re
     rows = []
     for line in lines:
         stripped = line.strip()
@@ -2475,7 +2482,6 @@ def _parse_mapa_mental(texto):
     Parses structured mind map text into (titulo, categorias).
     Returns (str, list of {'titulo': str, 'cor_idx': int, 'itens': [str]})
     """
-    import re
     texto = _limpar_codigo_sujo(texto)
     titulo = 'MAPA MENTAL'
     m = re.search(r'##\s+🧠\s+TEMA\s+CENTRAL\s*:\s*(.+)', texto, re.IGNORECASE)
@@ -2565,7 +2571,6 @@ def gerar_mapa_mental_docx(texto, meta=None):
     """Gera DOCX visual de mapa mental no estilo infográfico Descomplica.
     Suporta formato Mermaid mindmap e legado (## 🧠).
     Layout: grid 3 colunas com header sólido colorido + área de itens clara."""
-    import re
     if meta is None:
         meta = {}
     escola     = meta.get('escola', '').strip()
@@ -2748,7 +2753,6 @@ def _parse_plano_aula(texto):
     Extrai metadados e seções de aula do texto estruturado gerado pela IA.
     Retorna (meta_extra, aulas) onde aulas é lista de dicts.
     """
-    import re
     texto = _limpar_preamble_plano(texto)
     meta_extra = {}
 
@@ -2831,269 +2835,6 @@ def _set_cell_bg_plano(cell, hex_color):
     tcPr.append(shd)
 
 
-def _gerar_pdf_mermaid(codigo_mermaid, titulo='Mapa Mental'):
-    """Gera PDF A4 landscape com imagem do Mermaid (via mermaid.ink)."""
-    from reportlab.pdfgen import canvas as rl_canvas
-    from reportlab.lib.pagesizes import A4, landscape
-    from reportlab.lib.colors import HexColor, white
-    from reportlab.lib.utils import ImageReader
-    import io
-
-    png_bytes = _mermaid_para_png(codigo_mermaid)
-
-    W, H = landscape(A4)
-    buf  = io.BytesIO()
-    c    = rl_canvas.Canvas(buf, pagesize=(W, H))
-
-    # Fundo branco
-    c.setFillColor(white)
-    c.rect(0, 0, W, H, fill=1, stroke=0)
-
-    # Barra superior
-    c.setFillColor(HexColor('#1E3A5F'))
-    c.rect(0, H - 36, W, 36, fill=1, stroke=0)
-    c.setFont('Helvetica-Bold', 13)
-    c.setFillColor(white)
-    c.drawCentredString(W / 2, H - 23, titulo.upper())
-
-    # Rodapé
-    c.setFont('Helvetica', 7)
-    c.setFillColor(HexColor('#6b7280'))
-    c.drawCentredString(W / 2, 14, f'Gerado por ProfessorIA™  ·  {datetime.now().strftime("%d/%m/%Y")}')
-
-    if png_bytes:
-        img_buf = io.BytesIO(png_bytes)
-        img     = ImageReader(img_buf)
-        iw, ih  = img.getSize()
-        # Escala proporcional dentro da área útil
-        margin  = 24
-        max_w   = W - margin * 2
-        max_h   = H - 36 - 28 - margin  # topo + rodapé + margem
-        scale   = min(max_w / iw, max_h / ih)
-        dw, dh  = iw * scale, ih * scale
-        dx      = (W - dw) / 2
-        dy      = 28 + margin + (max_h - dh) / 2
-        c.drawImage(img, dx, dy, width=dw, height=dh, mask='auto')
-    else:
-        # Fallback: mensagem de erro
-        c.setFont('Helvetica', 10)
-        c.setFillColor(HexColor('#374151'))
-        c.drawCentredString(W / 2, H / 2, 'Não foi possível renderizar o mapa mental. Tente novamente.')
-
-    c.save()
-    return buf.getvalue()
-
-
-def gerar_mapa_mental_pdf(texto, meta=None):
-    """Gera PDF visual de mapa mental.
-    Suporta Mermaid (```mermaid mindmap```) e formato legado ## 🧠."""
-    from reportlab.pdfgen import canvas as rl_canvas
-    from reportlab.lib.pagesizes import A4, landscape
-    from reportlab.lib.colors import HexColor, white
-    import io, math
-
-    if meta is None:
-        meta = {}
-
-    # ── Mermaid mindmap — caminho novo ────────────────────────────────────────
-    codigo_mermaid = _extrair_mermaid(texto)
-    if codigo_mermaid and 'mindmap' in codigo_mermaid.lower():
-        titulo_m = re.search(r'root\(\((.+?)\)\)', codigo_mermaid)
-        titulo   = titulo_m.group(1).strip() if titulo_m else 'Mapa Mental'
-        return _gerar_pdf_mermaid(codigo_mermaid, titulo=titulo)
-
-    # ── Formato legado ## 🧠 — caminho existente ─────────────────────────────
-
-    titulo, categorias = _parse_mapa_mental(texto)
-    W, H = landscape(A4)   # 841.89 x 595.28 pts
-    cx, cy = W / 2, H / 2  # 420.94, 297.64
-
-    C_NAVY  = HexColor('#1E3A5F')
-    C_BLUE  = HexColor('#1E40AF')
-    C_LBLUE = HexColor('#BFDBFE')
-    C_GRAY  = HexColor('#374151')
-    C_LGRAY = HexColor('#F0F7FF')
-    C_LINE  = HexColor('#93C5FD')
-
-    buf = io.BytesIO()
-    c = rl_canvas.Canvas(buf, pagesize=(W, H))
-
-    # Fundo branco
-    c.setFillColor(white)
-    c.rect(0, 0, W, H, fill=1, stroke=0)
-
-    # Blocos de cor nos cantos
-    c.setFillColor(C_LGRAY)
-    for rx, ry in [(0, H * 0.72), (W * 0.78, H * 0.72), (0, 0), (W * 0.78, 0)]:
-        c.rect(rx, ry, W * 0.22, H * 0.28, fill=1, stroke=0)
-
-    # Borda superior
-    c.setFillColor(C_NAVY)
-    c.rect(0, H - 7, W, 7, fill=1, stroke=0)
-    c.setFillColor(C_BLUE)
-    c.rect(0, H - 9, W, 2, fill=1, stroke=0)
-
-    ORX, ORY   = 128, 60
-    BOX_W      = 188
-    HEADER_H   = 26
-    ITEM_H     = 20
-    MAX_ITEMS  = 6
-
-    # Posições [bottom-left x, y] — suporta até 6 categorias
-    POS = [
-        (22,             H * 0.62),   # topo-esquerda
-        (W - BOX_W - 22, H * 0.62),   # topo-direita
-        (22,             H * 0.32),   # meio-esquerda
-        (W - BOX_W - 22, H * 0.32),   # meio-direita
-        (22,             H * 0.04),   # baixo-esquerda
-        (W - BOX_W - 22, H * 0.04),   # baixo-direita
-    ]
-
-    n = min(len(categorias), 6)
-
-    # ── Linhas de conexão (desenhadas antes das caixas) ──
-    for i in range(n):
-        cat = categorias[i]
-        bx, by = POS[i]
-        n_items = min(len(cat['itens']), MAX_ITEMS)
-        box_h   = HEADER_H + n_items * ITEM_H + 6
-        bcx     = bx + BOX_W / 2
-        bcy     = by + box_h / 2
-        angle   = math.atan2(bcy - cy, bcx - cx)
-        ox      = cx + math.cos(angle) * ORX
-        oy      = cy + math.sin(angle) * ORY
-        mid_y   = (oy + bcy) / 2
-
-        c.saveState()
-        c.setStrokeColor(C_LINE)
-        c.setLineWidth(2.2)
-        p = c.beginPath()
-        p.moveTo(ox, oy)
-        p.curveTo(ox, mid_y, bcx, mid_y, bcx, bcy)
-        c.drawPath(p, stroke=1, fill=0)
-        c.setFillColor(C_LINE)
-        c.circle(bcx, bcy, 4, fill=1, stroke=0)
-        c.restoreState()
-
-    # ── Caixas de categoria ──
-    for i in range(n):
-        cat    = categorias[i]
-        bx, by = POS[i]
-        items  = cat['itens'][:MAX_ITEMS]
-        items_h = len(items) * ITEM_H + 6
-
-        # Fundo dos itens
-        c.saveState()
-        c.setFillColor(HexColor('#F8FAFF'))
-        c.setStrokeColor(C_LBLUE)
-        c.setLineWidth(0.8)
-        c.roundRect(bx, by, BOX_W, items_h, 5, fill=1, stroke=1)
-        c.restoreState()
-
-        # Cabeçalho
-        c.saveState()
-        c.setFillColor(C_NAVY)
-        c.roundRect(bx, by + items_h, BOX_W, HEADER_H, 6, fill=1, stroke=0)
-        c.setFillColor(white)
-        title_str = cat['titulo']
-        fs = 8.5
-        c.setFont('Helvetica-Bold', fs)
-        if c.stringWidth(title_str, 'Helvetica-Bold', fs) > BOX_W - 10:
-            fs = 7
-            c.setFont('Helvetica-Bold', fs)
-        tw = c.stringWidth(title_str, 'Helvetica-Bold', fs)
-        c.drawString(bx + (BOX_W - tw) / 2, by + items_h + 9, title_str)
-        c.restoreState()
-
-        # Itens com quebra de linha
-        iy = by + items_h - 4
-        for item in items:
-            c.saveState()
-            c.setFillColor(C_BLUE)
-            c.setFont('Helvetica-Bold', 9)
-            c.drawString(bx + 7, iy - ITEM_H + 6, '›')
-            c.setFillColor(C_GRAY)
-            c.setFont('Helvetica', 7.5)
-            max_w = BOX_W - 22
-            words  = item.split()
-            l1, l2 = '', ''
-            for w in words:
-                test = l1 + (' ' if l1 else '') + w
-                if c.stringWidth(test, 'Helvetica', 7.5) <= max_w:
-                    l1 = test
-                else:
-                    test2 = l2 + (' ' if l2 else '') + w
-                    if c.stringWidth(test2, 'Helvetica', 7.5) <= max_w:
-                        l2 = test2
-                    else:
-                        l2 = (l2[:-1] + '…') if l2 else w
-                        break
-            base = iy - ITEM_H + 7 + (4 if not l2 else 0)
-            if l1:
-                c.drawString(bx + 19, base, l1)
-            if l2:
-                c.drawString(bx + 19, base - 9, l2)
-            c.restoreState()
-            iy -= ITEM_H
-
-    # ── Oval central — sombra ──
-    c.saveState()
-    c.setFillColor(HexColor('#C8D5E8'))
-    c.ellipse(cx - ORX + 5, cy - ORY - 5, cx + ORX + 5, cy + ORY - 5, fill=1, stroke=0)
-    c.restoreState()
-
-    # Oval principal
-    c.saveState()
-    c.setFillColor(C_NAVY)
-    c.setStrokeColor(C_BLUE)
-    c.setLineWidth(3)
-    c.ellipse(cx - ORX, cy - ORY, cx + ORX, cy + ORY, fill=1, stroke=1)
-    c.restoreState()
-
-    # Texto do título no oval
-    c.saveState()
-    c.setFillColor(white)
-    words = titulo.split() or ['MAPA MENTAL']
-    fs = 16
-    c.setFont('Helvetica-Bold', fs)
-    tw = c.stringWidth(titulo, 'Helvetica-Bold', fs)
-    if tw <= ORX * 2 - 24:
-        c.drawString(cx - tw / 2, cy - fs * 0.35, titulo)
-    else:
-        mid = len(words) // 2
-        l1, l2 = ' '.join(words[:mid]), ' '.join(words[mid:])
-        fs = 13
-        c.setFont('Helvetica-Bold', fs)
-        while max(c.stringWidth(l1, 'Helvetica-Bold', fs),
-                  c.stringWidth(l2, 'Helvetica-Bold', fs)) > ORX * 2 - 20 and fs > 8:
-            fs -= 1
-            c.setFont('Helvetica-Bold', fs)
-        c.drawString(cx - c.stringWidth(l1, 'Helvetica-Bold', fs) / 2, cy + 5, l1)
-        c.drawString(cx - c.stringWidth(l2, 'Helvetica-Bold', fs) / 2, cy - fs - 3, l2)
-    c.restoreState()
-
-    # ── Cabeçalho escola/professor ──
-    parts = []
-    if meta.get('escola'): parts.append(meta['escola'].strip())
-    if meta.get('professor'): parts.append(f"Prof(a). {meta['professor'].strip()}")
-    if parts:
-        c.saveState()
-        c.setFillColor(HexColor('#6B7280'))
-        c.setFont('Helvetica', 7)
-        c.drawString(22, H - 20, '  ·  '.join(parts))
-        c.restoreState()
-
-    # ── Marca ProfessorIA ──
-    c.saveState()
-    c.setFillColor(C_NAVY)
-    c.setFont('Helvetica-Bold', 8.5)
-    brand = 'ProfessorIA™'
-    c.drawString(W - c.stringWidth(brand, 'Helvetica-Bold', 8.5) - 18, 16, brand)
-    c.restoreState()
-
-    c.save()
-    buf.seek(0)
-    return buf.read()
 
 
 def gerar_plano_aula_docx(texto, meta=None, logo_estado_path=None):
@@ -3106,7 +2847,6 @@ def gerar_plano_aula_docx(texto, meta=None, logo_estado_path=None):
     - Entrada esperada: texto Markdown com ### AULA N gerado pelo SYSTEM_PROMPT (chat)
     - NÃO usar com JSON do /api/gerar-plano — esse fluxo vai para gerar_plano_pdf()
     """
-    import re
     if meta is None:
         meta = {}
 
@@ -3375,7 +3115,6 @@ def gerar_docx_pia(texto, meta=None, logo_path=None):
     Black & white — imprime bem em qualquer impressora.
     meta dict: escola, professor, disciplina, bimestre, serie
     """
-    import re
     if meta is None:
         meta = {}
 
@@ -3621,7 +3360,6 @@ def gerar_docx_pia(texto, meta=None, logo_path=None):
 @limiter.limit('20 per minute')
 def api_chat_download():
     """Converte o texto de uma mensagem do chat em DOCX com design ProfessorIA."""
-    import os, traceback
     data = request.json or {}
     texto = data.get('texto', '').strip()
     if not texto:
@@ -3670,9 +3408,32 @@ def api_chat_download():
             download_name = 'material-ProfessorIA.docx'
         buf = io.BytesIO()
         doc.save(buf)
-        buf.seek(0)
+        file_bytes = buf.getvalue()
+
+        # Salva no histórico para exibir em /historico e no dashboard
+        try:
+            temas = [t for t in [meta.get('disciplina', ''), meta.get('serie', '')] if t]
+            conn_h = get_db()
+            try:
+                conn_h.execute(
+                    '''INSERT INTO historico
+                       (usuario_id, data, professor, escola, disciplina, turma,
+                        num_aulas, periodo, datas, temas, arquivo, nome_arquivo)
+                       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)''',
+                    (current_user.id, datetime.now().strftime('%d/%m/%Y %H:%M'),
+                     meta.get('professor', ''), meta.get('escola', ''),
+                     meta.get('disciplina', ''), meta.get('serie', ''),
+                     1, '', '', json.dumps(temas, ensure_ascii=False),
+                     file_bytes, download_name)
+                )
+                conn_h.commit()
+            finally:
+                conn_h.close()
+        except Exception:
+            pass  # não bloquear o download por falha no histórico
+
         return send_file(
-            buf, as_attachment=True,
+            io.BytesIO(file_bytes), as_attachment=True,
             download_name=download_name,
             mimetype='application/vnd.openxmlformats-officedocument.wordprocessingml.document'
         )
@@ -3709,14 +3470,17 @@ def api_config_escola():
     fone     = data.get('escola_fone', '').strip()[:50]
     email_e  = data.get('escola_email', '').strip()[:200]
     conn = get_db()
-    conn.execute(
-        "UPDATE usuarios SET escola_nome=?, professor_nome=?,"
-        " escola_governo=?, escola_secretaria=?, escola_diretoria=?,"
-        " escola_endereco=?, escola_fone=?, escola_email=?"
-        " WHERE id=?",
-        (escola, prof, gov, sec, dire, ender, fone, email_e, current_user.id)
-    )
-    conn.commit(); conn.close()
+    try:
+        conn.execute(
+            "UPDATE usuarios SET escola_nome=?, professor_nome=?,"
+            " escola_governo=?, escola_secretaria=?, escola_diretoria=?,"
+            " escola_endereco=?, escola_fone=?, escola_email=?"
+            " WHERE id=?",
+            (escola, prof, gov, sec, dire, ender, fone, email_e, current_user.id)
+        )
+        conn.commit()
+    finally:
+        conn.close()
     return jsonify({'ok': True})
 
 
@@ -3749,8 +3513,11 @@ def _salvar_logo(f, prefixo, campo_db):
         fp.write(data)
     rel = f'static/logos/{fname}'
     conn = get_db()
-    conn.execute(_LOGO_SQL[campo_db], (rel, current_user.id))
-    conn.commit(); conn.close()
+    try:
+        conn.execute(_LOGO_SQL[campo_db], (rel, current_user.id))
+        conn.commit()
+    finally:
+        conn.close()
     return rel, None
 
 
@@ -4052,12 +3819,14 @@ def api_degustacao():
     # Salva o lead no banco
     try:
         conn = get_db()
-        conn.execute(
-            'INSERT INTO leads (nome, contato, tema_pesquisado, criado_em) VALUES (?, ?, ?, ?)',
-            (nome, contato, tema, datetime.now().isoformat())
-        )
-        conn.commit()
-        conn.close()
+        try:
+            conn.execute(
+                'INSERT INTO leads (nome, contato, tema_pesquisado, criado_em) VALUES (?, ?, ?, ?)',
+                (nome, contato, tema, datetime.now().isoformat())
+            )
+            conn.commit()
+        finally:
+            conn.close()
     except Exception as e:
         logger.warning('api_degustacao — erro ao salvar lead: %s', e)
 
@@ -4155,13 +3924,15 @@ Formato: texto estruturado e claro, pronto para entregar à coordenação."""
         return jsonify({'erro': f'Erro ao gerar planejamento: {str(e)[:200]}'}), 500
 
     conn = get_db()
-    conn.execute(
-        "INSERT INTO planejamento_anual (usuario_id, disciplina, turma, ano, conteudo, criado_em) VALUES (?, ?, ?, ?, ?, ?)",
-        (current_user.id, disciplina, turma, ano, conteudo,
-         datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
-    )
-    conn.commit()
-    conn.close()
+    try:
+        conn.execute(
+            "INSERT INTO planejamento_anual (usuario_id, disciplina, turma, ano, conteudo, criado_em) VALUES (?, ?, ?, ?, ?, ?)",
+            (current_user.id, disciplina, turma, ano, conteudo,
+             datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
+        )
+        conn.commit()
+    finally:
+        conn.close()
 
     return jsonify({'conteudo': conteudo})
 
@@ -4240,31 +4011,35 @@ def api_salvar_questao():
     tipo = d.get('tipo', 'multipla_escolha')
 
     conn = get_db()
-    conn.execute(
-        """INSERT INTO questions_bank
-           (usuario_id, enunciado, alternativas, gabarito, ano_serie, disciplina, habilidade_bncc, tipo, criado_em)
-           VALUES (?,?,?,?,?,?,?,?,?)""",
-        (current_user.id,
-         enunciado,
-         json.dumps(alternativas, ensure_ascii=False),
-         gabarito,
-         serie,
-         disciplina,
-         bncc,
-         tipo,
-         datetime.now().strftime('%d/%m/%Y %H:%M'))
-    )
-    conn.commit()
-    conn.close()
+    try:
+        conn.execute(
+            """INSERT INTO questions_bank
+               (usuario_id, enunciado, alternativas, gabarito, ano_serie, disciplina, habilidade_bncc, tipo, criado_em)
+               VALUES (?,?,?,?,?,?,?,?,?)""",
+            (current_user.id,
+             enunciado,
+             json.dumps(alternativas, ensure_ascii=False),
+             gabarito,
+             serie,
+             disciplina,
+             bncc,
+             tipo,
+             datetime.now().strftime('%d/%m/%Y %H:%M'))
+        )
+        conn.commit()
+    finally:
+        conn.close()
     return jsonify({'ok': True})
 
 @app.route('/api/questoes/<int:qid>', methods=['DELETE'])
 @login_required
 def api_deletar_questao(qid):
     conn = get_db()
-    conn.execute("DELETE FROM questions_bank WHERE id = ? AND usuario_id = ?", (qid, current_user.id))
-    conn.commit()
-    conn.close()
+    try:
+        conn.execute("DELETE FROM questions_bank WHERE id = ? AND usuario_id = ?", (qid, current_user.id))
+        conn.commit()
+    finally:
+        conn.close()
     return jsonify({'ok': True})
 
 @app.route('/api/questoes/extrair-do-chat', methods=['POST'])
@@ -4565,12 +4340,14 @@ def api_onboarding_completar():
     serie = d.get('serie', '')[:50]
     template = d.get('template', '')[:5000]
     conn = get_db()
-    conn.execute(
-        """UPDATE usuarios SET onboarding_done = 1, escola_template = ? WHERE id = ?""",
-        (template, current_user.id)
-    )
-    conn.commit()
-    conn.close()
+    try:
+        conn.execute(
+            """UPDATE usuarios SET onboarding_done = 1, escola_template = ? WHERE id = ?""",
+            (template, current_user.id)
+        )
+        conn.commit()
+    finally:
+        conn.close()
     from urllib.parse import urlencode
     return jsonify({'ok': True, 'redirect': '/chat?' + urlencode({'disciplina': disciplina, 'serie': serie})})
 
@@ -4601,12 +4378,14 @@ def api_gerar_gratis():
     # Salva o lead
     try:
         conn = get_db()
-        conn.execute(
-            'INSERT INTO lista_vip (nome, email, whatsapp, criado_em) VALUES (%s, %s, %s, %s)',
-            (nome, email or '', whatsapp, datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
-        )
-        conn.commit()
-        conn.close()
+        try:
+            conn.execute(
+                'INSERT INTO lista_vip (nome, email, whatsapp, criado_em) VALUES (%s, %s, %s, %s)',
+                (nome, email or '', whatsapp, datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
+            )
+            conn.commit()
+        finally:
+            conn.close()
         logger.info('Novo lead grátis: %s <%s> %s', nome, email, whatsapp)
         _capi_event('Lead', user_data={'email': email, 'phone': whatsapp, 'name': nome},
                     custom_data={'content_name': 'geracao_gratis'})
@@ -4926,37 +4705,6 @@ def _gerar_estrutura_infografico(tema):
     except Exception as e:
         logger.error('_gerar_estrutura_infografico falhou: %s', e)
         return None
-
-
-def _prompt_infografico_dalle(tema, estrutura=None):
-    """Gera 5 vinhetas de ilustração em grid 3×2 — sem texto, fundo branco.
-    6ª célula (inferior-direita) fica em branco.
-    DALL-E faz APENAS as ilustrações; Pillow constrói TODO o poster.
-    """
-    secoes = (estrutura or {}).get('secoes', [])[:5]
-
-    descs = [s.get('ilustracao_en') or f'educational watercolor about {tema}'
-             for s in secoes]
-    while len(descs) < 5:
-        descs.append(f'educational watercolor about {tema}')
-
-    return (
-        f'Exactly 5 educational watercolor illustration panels about "{tema}", '
-        'arranged in a 3-column × 2-row grid (6 cells total). '
-        'The 6th cell (bottom-right) must be completely white/blank — leave it empty. '
-        'CRITICAL: pure white (#FFFFFF) background everywhere — between panels, '
-        'behind illustrations, and in gutters. Each panel separated by a white border. '
-        'ABSOLUTELY NO TEXT, NO LETTERS, NO NUMBERS, NO LABELS anywhere in the image. '
-        'Each panel: single clear scene, clean ink outlines, bright watercolor fills. '
-        f'Panel 1 (row 1 col 1): {descs[0]}. '
-        f'Panel 2 (row 1 col 2): {descs[1]}. '
-        f'Panel 3 (row 1 col 3): {descs[2]}. '
-        f'Panel 4 (row 2 col 1): {descs[3]}. '
-        f'Panel 5 (row 2 col 2): {descs[4]}. '
-        'Panel 6 (row 2 col 3): white blank — no illustration. '
-        'Style: professional educational publisher watercolor, clean ink lines, '
-        'vibrant harmonious palette. Each scene visually distinct from the others.'
-    )
 
 
 # ── Fontes para overlay Pillow ─────────────────────────────────────────────
@@ -5305,8 +5053,7 @@ def _compositar_poster(panels, estrutura, tema):
     lx = block_x
     ly = block_cy - logo_h // 2
     try:
-        import os as _os
-        logo_path = _os.path.join(_os.path.dirname(__file__), 'static', 'logo-oficial.png')
+        logo_path = os.path.join(os.path.dirname(__file__), 'static', 'logo-oficial.png')
         logo_img  = Image.open(logo_path).convert('RGBA')
         logo_img  = logo_img.resize((logo_w, logo_h), Image.LANCZOS)
         poster.paste(logo_img, (lx, ly), mask=logo_img.split()[3])
@@ -5449,10 +5196,6 @@ def api_prova_docx():
     disc       = prova.get('questoes_dissertativas', [])
     gabarito   = str(prova.get('gabarito_geral', ''))
 
-    from docx import Document
-    from docx.shared import Pt, RGBColor, Cm
-    from docx.enum.text import WD_ALIGN_PARAGRAPH
-
     doc = Document()
     section = doc.sections[0]
     section.page_height = Cm(29.7)
@@ -5508,11 +5251,33 @@ def api_prova_docx():
 
     buf = io.BytesIO()
     doc.save(buf)
-    buf.seek(0)
+    file_bytes = buf.getvalue()
+    download_name_prova = f"Prova_{titulo[:40].replace(' ','_')}.docx"
+
+    # Salva no histórico
+    try:
+        conn_h = get_db()
+        try:
+            conn_h.execute(
+                '''INSERT INTO historico
+                   (usuario_id, data, professor, escola, disciplina, turma,
+                    num_aulas, periodo, datas, temas, arquivo, nome_arquivo)
+                   VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)''',
+                (current_user.id, datetime.now().strftime('%d/%m/%Y %H:%M'),
+                 current_user.professor_nome or '', current_user.escola_nome or '',
+                 titulo, '', 1, '', '', json.dumps([], ensure_ascii=False),
+                 file_bytes, download_name_prova)
+            )
+            conn_h.commit()
+        finally:
+            conn_h.close()
+    except Exception:
+        pass  # não bloquear o download por falha no histórico
+
     return send_file(
-        buf,
+        io.BytesIO(file_bytes),
         as_attachment=True,
-        download_name=f"Prova_{titulo[:40].replace(' ','_')}.docx",
+        download_name=download_name_prova,
         mimetype='application/vnd.openxmlformats-officedocument.wordprocessingml.document'
     )
 
@@ -5855,14 +5620,16 @@ def api_generate_prova():
 
     # Contabiliza geração
     conn = get_db()
-    conn.execute(
-        "INSERT INTO chat_messages (usuario_id, role, content, criado_em) VALUES (?, ?, ?, ?)",
-        (current_user.id, 'assistant',
-         f'[prova estruturada] {tema} — {disciplina} {ano}',
-         datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
-    )
-    conn.commit()
-    conn.close()
+    try:
+        conn.execute(
+            "INSERT INTO chat_messages (usuario_id, role, content, criado_em) VALUES (?, ?, ?, ?)",
+            (current_user.id, 'assistant',
+             f'[prova estruturada] {tema} — {disciplina} {ano}',
+             datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
+        )
+        conn.commit()
+    finally:
+        conn.close()
 
     return jsonify(prova_json)
 

@@ -161,6 +161,8 @@
 </div>
 
 <script>
+const escHtml = s => String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+
 let todos = [];
 
 async function carregar() {
@@ -187,7 +189,7 @@ function populateFilter() {
   const sel = document.getElementById('filterDisc');
   const discs = [...new Set(todos.map(i => i.disciplina).filter(Boolean))].sort();
   sel.innerHTML = '<option value="">Todas as disciplinas</option>' +
-    discs.map(d => `<option value="${d}">${d}</option>`).join('');
+    discs.map(d => `<option value="${escHtml(d)}">${escHtml(d)}</option>`).join('');
 }
 
 function filtrar() {
@@ -217,7 +219,7 @@ function renderLista(lista) {
   const temas = (item) => {
     if (!item.temas) return '';
     const arr = Array.isArray(item.temas) ? item.temas : (typeof item.temas === 'string' ? item.temas.split(',').map(t=>t.trim()).filter(Boolean) : []);
-    return arr.slice(0,3).map(t => `<span class="hist-tag">${t}</span>`).join('') +
+    return arr.slice(0,3).map(t => `<span class="hist-tag">${escHtml(t)}</span>`).join('') +
       (arr.length > 3 ? `<span class="hist-tag">+${arr.length-3}</span>` : '');
   };
 
@@ -227,10 +229,10 @@ function renderLista(lista) {
         <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
       </div>
       <div class="hist-body">
-        <div class="hist-title">${item.disciplina || '—'} — ${item.turma || '—'}</div>
+        <div class="hist-title">${escHtml(item.disciplina || '—')} — ${escHtml(item.turma || '—')}</div>
         <div class="hist-meta">
-          ${item.professor ? `<span class="hist-meta-item"><svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>${item.professor}</span>` : ''}
-          ${item.escola ? `<span class="hist-meta-item"><svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>${item.escola}</span>` : ''}
+          ${item.professor ? `<span class="hist-meta-item"><svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>${escHtml(item.professor)}</span>` : ''}
+          ${item.escola ? `<span class="hist-meta-item"><svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>${escHtml(item.escola)}</span>` : ''}
           <span class="hist-meta-item"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>${item.data || '—'}</span>
           <span class="hist-meta-item">${item.num_aulas || 0} aula${item.num_aulas != 1 ? 's' : ''}</span>
         </div>
