@@ -1010,7 +1010,6 @@ def enviar_email(to, subject, body_html):
 
 @app.route('/login', methods=['GET', 'POST'])
 @limiter.limit('10 per minute', methods=['POST'])
-@csrf.protect
 def login():
     if current_user.is_authenticated:
         return redirect(url_for('chat'))
@@ -1041,7 +1040,6 @@ def logout():
 
 @app.route('/cadastro', methods=['GET', 'POST'])
 @limiter.limit('5 per minute', methods=['POST'])
-@csrf.protect
 def cadastro():
     if current_user.is_authenticated:
         return redirect(url_for('chat'))
@@ -1097,7 +1095,6 @@ def cadastro():
 
 @app.route('/esqueci-senha', methods=['GET', 'POST'])
 @limiter.limit('5 per minute', methods=['POST'])
-@csrf.protect
 def esqueci_senha():
     if request.method == 'POST':
         email = request.form.get('email', '').strip().lower()
@@ -1127,7 +1124,6 @@ def esqueci_senha():
 
 @app.route('/redefinir-senha/<token>', methods=['GET', 'POST'])
 @limiter.limit('5 per 10 minutes', methods=['POST'])
-@csrf.protect
 def redefinir_senha(token):
     _MSG_INVALIDO = 'Link inválido, expirado ou já utilizado. Solicite um novo.'
     conn = get_db()
@@ -1334,7 +1330,6 @@ def admin():
 
 @app.route('/admin/update', methods=['POST'])
 @admin_required
-@csrf.protect
 def admin_update():
     data   = request.json or {}
     uid    = data.get('uid')
@@ -1384,7 +1379,6 @@ def conta():
 
 @app.route('/perfil/senha', methods=['POST'])
 @login_required
-@csrf.protect
 @limiter.limit('5 per 10 minutes', methods=['POST'])
 def conta_senha():
     senha_atual = request.form.get('senha_atual', '')
@@ -1414,7 +1408,6 @@ def conta_senha():
 
 @app.route('/conta/escola', methods=['POST'])
 @login_required
-@csrf.protect
 def conta_escola():
     """Salva os dados da escola enviados pelo formulário HTML da página Minha Conta."""
     f = request.form
@@ -1444,7 +1437,6 @@ def conta_escola():
 
 @app.route('/conta/senha', methods=['POST'])
 @login_required
-@csrf.protect
 @limiter.limit('5 per 10 minutes', methods=['POST'])
 def conta_senha_alias():
     """Alias de /perfil/senha para compatibilidade com o formulário da página Minha Conta."""
@@ -2810,6 +2802,65 @@ def _parse_plano_aula(texto):
     return meta_extra, aulas
 
 
+def _markdown_to_plano_tpl_ctx(texto, meta):
+    """Converte Markdown do chat no contexto exato do template plano_de_aula.docx (docxtpl).
+
+    Usado por api_chat_download para gerar o DOCX via template oficial em vez do builder
+    python-docx. Os campos da escola vêm de meta (que já inclui os valores do perfil).
+    """
+    meta_extra, aulas_parsed = _parse_plano_aula(texto)
+
+    # Disciplina: tenta meta → cabeçalho Componente Curricular no texto
+    disciplina = meta.get('disciplina', '').strip()
+    if not disciplina:
+        m = re.search(
+            r'componente\s+curricular[^*\n]*?\*\*\s*[:\s]+([^\n|*]{3,80})',
+            texto, re.IGNORECASE
+        )
+        if m:
+            disciplina = re.sub(r'\*+', '', m.group(1)).strip(' |,')
+        if not disciplina:
+            # Tenta linha do título: # PLANEJAMENTO DA AULA — [DISC] | [SÉRIE]
+            m2 = re.search(r'planejamento\s+da\s+aula\s+[—-]\s*([^|\n]+)', texto, re.IGNORECASE)
+            if m2:
+                disciplina = re.sub(r'[#*]', '', m2.group(1)).strip()
+
+    turma    = meta_extra.get('serie_turma', '') or meta.get('serie', '')
+    num_aulas = meta_extra.get('num_aulas', '3 semanais')
+
+    aulas = []
+    for a in aulas_parsed:
+        aulas.append({
+            'data':        '',
+            'conteudo':    a.get('conteudo', ''),
+            'estrategias': a.get('estrategias', ''),
+            'recursos':    a.get('recursos', ''),
+            'avaliacao':   a.get('avaliacao', ''),
+        })
+
+    return {
+        'disciplina':           disciplina,
+        'num_aulas':            num_aulas,
+        'turma':                turma,
+        'aulas':                aulas,
+        'professor':            meta.get('professor', ''),
+        'data_plano':           datetime.now().strftime('%d/%m/%Y'),
+        # Cabeçalho oficial da escola
+        'escola_nome':          meta.get('escola', ''),
+        'escola_governo':       meta.get('escola_governo', ''),
+        'escola_secretaria':    meta.get('escola_secretaria', ''),
+        'escola_diretoria':     meta.get('escola_diretoria', ''),
+        'escola_endereco':      meta.get('escola_endereco', ''),
+        'escola_fone':          meta.get('escola_fone', ''),
+        'escola_email':         meta.get('escola_email', ''),
+        # Campos extras usados pelo template (vazios por padrão)
+        'avaliacao_criterios':  '',
+        'avaliacao_metodo':     '',
+        'infografico_titulo':   '',
+        'infografico_topicos':  '',
+    }
+
+
 def _set_cell_borders_plano(cell, color='cccccc'):
     """Adiciona bordas simples a uma célula da tabela de plano de aula."""
     tc = cell._tc
@@ -3409,6 +3460,16 @@ def api_chat_download():
             doc = gerar_mapa_mental_docx(texto, meta=meta)
             download_name = 'mapa-mental-ProfessorIA.docx'
         elif doc_type == 'plano_aula':
+            # Usa o template oficial docxtpl (plano_de_aula.docx) quando disponível
+            if os.path.exists(PLANO_TEMPLATE_PATH):
+                ctx = _markdown_to_plano_tpl_ctx(texto, meta)
+                docx_bytes = _renderizar_docx_tpl(PLANO_TEMPLATE_PATH, ctx)
+                return send_file(
+                    io.BytesIO(docx_bytes), as_attachment=True,
+                    download_name='plano-de-aula-ProfessorIA.docx',
+                    mimetype='application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+                )
+            # Fallback: builder python-docx
             doc = gerar_plano_aula_docx(texto, meta=meta, logo_estado_path=logo_estado_abs)
             download_name = 'plano-de-aula-ProfessorIA.docx'
         else:

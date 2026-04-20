@@ -793,6 +793,16 @@
       border-radius: 4px; background: rgba(255,255,255,.08); padding: 2px;
     }
     .dl-logo-preview.dl-logo-visible { display: block; }
+    .dl-details { border: 1px solid rgba(255,255,255,.1); border-radius: 8px; margin-bottom: 12px; overflow: hidden; }
+    .dl-details-summary {
+      cursor: pointer; padding: 10px 14px; font-size: .72rem; font-weight: 600;
+      letter-spacing: .5px; color: #5FBFBF; list-style: none; user-select: none;
+      background: rgba(30,90,99,.15); display: flex; align-items: center; gap: 6px;
+    }
+    .dl-details-summary::-webkit-details-marker { display: none; }
+    .dl-details[open] .dl-details-summary { border-bottom: 1px solid rgba(255,255,255,.08); }
+    .dl-details-hint { color: rgba(255,255,255,.35); font-weight: 400; font-size: .68rem; }
+    .dl-details-body { padding: 12px 14px; display: flex; flex-direction: column; gap: 10px; }
     .dl-checkbox-row { display: flex; align-items: center; gap: 8px; margin-bottom: 16px; }
     .dl-checkbox { accent-color: #1E5A63; width: 14px; height: 14px; }
     .dl-actions { display: flex; gap: 10px; }
@@ -1207,6 +1217,38 @@
         <input id="dl-serie" type="text" class="dl-input" placeholder="8º Ano"/>
       </div>
     </div>
+    <!-- Cabeçalho oficial colapsável -->
+    <details id="dl-cabecalho-details" class="dl-details">
+      <summary class="dl-details-summary">▸ Cabeçalho oficial da escola <span class="dl-details-hint">(Governo, Secretaria, Diretoria…)</span></summary>
+      <div class="dl-details-body">
+        <div class="dl-field">
+          <label class="dl-label">Governo / Estado</label>
+          <input id="dl-governo" type="text" class="dl-input" placeholder="GOVERNO DO ESTADO DE SÃO PAULO"/>
+        </div>
+        <div class="dl-field">
+          <label class="dl-label">Secretaria</label>
+          <input id="dl-secretaria" type="text" class="dl-input" placeholder="SECRETARIA DE ESTADO DA EDUCAÇÃO"/>
+        </div>
+        <div class="dl-field">
+          <label class="dl-label">Diretoria de Ensino</label>
+          <input id="dl-diretoria" type="text" class="dl-input" placeholder="DIRETORIA DE ENSINO – REGIÃO DE JAÚ"/>
+        </div>
+        <div class="dl-field">
+          <label class="dl-label">Endereço da escola</label>
+          <input id="dl-endereco" type="text" class="dl-input" placeholder="Rua João Batista Módolo, nº 249 – CEP 17260-000 – Itaju"/>
+        </div>
+        <div class="dl-grid-2">
+          <div>
+            <label class="dl-label">Telefone</label>
+            <input id="dl-fone" type="text" class="dl-input" placeholder="(14) 3667-1126"/>
+          </div>
+          <div>
+            <label class="dl-label">E-mail da escola</label>
+            <input id="dl-email-escola" type="text" class="dl-input" placeholder="e025773a@educacao.sp.gov.br"/>
+          </div>
+        </div>
+      </div>
+    </details>
     <div class="dl-field">
       <label class="dl-label">Estado (para plano de aula oficial)</label>
       <input id="dl-estado" type="text" class="dl-input" placeholder="São Paulo"/>
@@ -1718,12 +1760,31 @@
     document.getElementById('dl-logo-estado-nome').textContent = 'Nenhum brasão carregado';
     document.getElementById('dl-logo-estado-preview').classList.remove('dl-logo-visible');
     document.getElementById('dl-logo-estado').value = '';
+    // Limpa campos do cabeçalho (serão preenchidos pelo perfil abaixo)
+    ['dl-governo','dl-secretaria','dl-diretoria','dl-endereco','dl-fone','dl-email-escola']
+      .forEach(id => { document.getElementById(id).value = ''; });
+    document.getElementById('dl-cabecalho-details').open = false;
 
     fetch('/api/config-escola').then(r => r.json()).then(d => {
       if (d.escola_nome    && !document.getElementById('dl-escola').value)    document.getElementById('dl-escola').value    = d.escola_nome;
       if (d.professor_nome && !document.getElementById('dl-professor').value) document.getElementById('dl-professor').value = d.professor_nome;
       if (d.logo_path) document.getElementById('dl-logo-nome').textContent = 'Logo salva no perfil ✓';
       if (d.logo_estado_path) document.getElementById('dl-logo-estado-nome').textContent = 'Brasão salvo no perfil ✓';
+      // Pré-preenche campos do cabeçalho oficial a partir do perfil
+      const cabFields = {
+        'dl-governo':     'escola_governo',
+        'dl-secretaria':  'escola_secretaria',
+        'dl-diretoria':   'escola_diretoria',
+        'dl-endereco':    'escola_endereco',
+        'dl-fone':        'escola_fone',
+        'dl-email-escola':'escola_email',
+      };
+      let algumCabecalho = false;
+      for (const [id, key] of Object.entries(cabFields)) {
+        const el = document.getElementById(id);
+        if (el && d[key] && !el.value) { el.value = d[key]; algumCabecalho = true; }
+      }
+      if (algumCabecalho) document.getElementById('dl-cabecalho-details').open = true;
     }).catch(() => {});
 
     document.getElementById('downloadModal').classList.add('open');
@@ -1838,6 +1899,13 @@
     const salvar          = document.getElementById('dl-salvar').checked;
     const logoFile        = document.getElementById('dl-logo').files[0];
     const logoEstadoFile  = document.getElementById('dl-logo-estado').files[0];
+    // Campos do cabeçalho oficial
+    const escola_governo    = document.getElementById('dl-governo').value.trim();
+    const escola_secretaria = document.getElementById('dl-secretaria').value.trim();
+    const escola_diretoria  = document.getElementById('dl-diretoria').value.trim();
+    const escola_endereco   = document.getElementById('dl-endereco').value.trim();
+    const escola_fone       = document.getElementById('dl-fone').value.trim();
+    const escola_email      = document.getElementById('dl-email-escola').value.trim();
 
     if (salvar) localStorage.setItem('pia-escola-cfg', JSON.stringify({ escola, professor, disciplina, bimestre, serie, estado }));
     btn.textContent = '⏳ Gerando...'; btn.disabled = true;
@@ -1845,11 +1913,25 @@
     try {
       if (logoFile) { const fd = new FormData(); fd.append('logo', logoFile); await fetch('/api/upload-logo', { method:'POST', body:fd }); }
       if (logoEstadoFile) { const fd2 = new FormData(); fd2.append('logo', logoEstadoFile); await fetch('/api/upload-logo-estado', { method:'POST', body:fd2 }); }
-      if (salvar && (escola || professor)) await fetch('/api/config-escola', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ escola_nome:escola, professor_nome:professor }) });
+      // Salva escola + cabeçalho oficial no perfil se marcou "lembrar"
+      if (salvar && (escola || professor || escola_governo)) {
+        await fetch('/api/config-escola', {
+          method:'POST', headers:{'Content-Type':'application/json'},
+          body: JSON.stringify({
+            escola_nome: escola, professor_nome: professor,
+            escola_governo, escola_secretaria, escola_diretoria,
+            escola_endereco, escola_fone, escola_email
+          })
+        });
+      }
 
       const resp = await fetch('/api/chat-download', {
         method:'POST', headers:{'Content-Type':'application/json'},
-        body: JSON.stringify({ texto: _dlTexto, escola, professor, disciplina, bimestre, serie, estado })
+        body: JSON.stringify({
+          texto: _dlTexto, escola, professor, disciplina, bimestre, serie, estado,
+          escola_governo, escola_secretaria, escola_diretoria,
+          escola_endereco, escola_fone, escola_email
+        })
       });
       if (!resp.ok) {
         let msg = 'Erro ao gerar arquivo.';
@@ -2576,8 +2658,106 @@
     } catch (e) {
       showToast(e.message, 'erro');
       btn.disabled = false;
-      btn.innerHTML = originalContent;
     }
+  }
+
+  function _renderMapaSVG(svg, estrutura) {
+    const W = 1792, H = 1024;
+    const cx = W / 2, cy = H / 2;
+    const titulo = (estrutura.titulo_central || '').toUpperCase();
+    const subs = (estrutura.subtopicos || []).slice(0, 6);
+    const n = subs.length;
+
+    // Section header color palette (matches reference style)
+    const PALETTE = ['#1B5E9B','#C0392B','#1E7A3C','#7B2D8B','#C47A1E','#16828A'];
+
+    const BOX_W = 330;
+    const BOX_H = 62;
+    const LEFT_X = 28;
+    const RIGHT_X = W - 28 - BOX_W;
+
+    // Up to 3 boxes per column; distribute evenly vertically
+    const leftSubs  = subs.slice(0, Math.ceil(n / 2));
+    const rightSubs = subs.slice(Math.ceil(n / 2));
+
+    // Vertical centers for up to 3 boxes per side
+    const colSlots = [200, 512, 824];
+
+    let els = `<defs>
+      <filter id="ms" x="-8%" y="-15%" width="116%" height="130%">
+        <feDropShadow dx="0" dy="3" stdDeviation="6" flood-color="rgba(0,0,0,0.28)"/>
+      </filter>
+      <filter id="ts" x="-5%" y="-30%" width="110%" height="160%">
+        <feDropShadow dx="0" dy="2" stdDeviation="8" flood-color="rgba(0,0,0,0.5)"/>
+      </filter>
+    </defs>`;
+
+    // === Title banner (top-center) ===
+    const TBW = Math.min(760, titulo.length * 22 + 80);
+    const TBH = 78;
+    const TBX = (W - TBW) / 2;
+    const TBY = 24;
+    els += `
+      <rect x="${TBX}" y="${TBY}" width="${TBW}" height="${TBH}" rx="6" fill="#0D2327" filter="url(#ts)"/>
+      <rect x="${TBX}" y="${TBY}" width="${TBW}" height="5" rx="0" fill="#D4AF37"/>
+      <rect x="${TBX}" y="${TBY + TBH - 5}" width="${TBW}" height="5" fill="#D4AF37"/>
+      <text x="${TBX + TBW / 2}" y="${TBY + TBH / 2 + 2}" text-anchor="middle" dominant-baseline="middle"
+            font-family="Georgia,'Times New Roman',serif" font-weight="700" font-size="32"
+            fill="#FFFFFF" letter-spacing="2" filter="url(#ts)">${_svgEsc(titulo)}</text>`;
+
+    // === Helper: draw one section box + connector ===
+    function drawBox(sub, idx, x, y, colorIdx, isLeft) {
+      const color = PALETTE[colorIdx % PALETTE.length];
+      const edgeX = isLeft ? x + BOX_W : x;
+      const edgeY = y + BOX_H / 2;
+      const cpX1 = isLeft ? edgeX + 120 : edgeX - 120;
+      const cpX2 = isLeft ? cx - 200 : cx + 200;
+
+      // Connector curve
+      els += `<path d="M${edgeX},${edgeY} C${cpX1},${edgeY} ${cpX2},${cy} ${cx},${cy}"
+                fill="none" stroke="${color}" stroke-width="2.5" stroke-opacity="0.55" stroke-dasharray="9 5"/>`;
+      // Box shadow strip
+      els += `<rect x="${x+3}" y="${y+3}" width="${BOX_W}" height="${BOX_H}" rx="7" fill="rgba(0,0,0,0.18)"/>`;
+      // Box body
+      els += `<rect x="${x}" y="${y}" width="${BOX_W}" height="${BOX_H}" rx="7" fill="${color}" filter="url(#ms)"/>`;
+      // Left accent stripe
+      if (!isLeft) {
+        els += `<rect x="${x}" y="${y}" width="8" height="${BOX_H}" rx="7" fill="rgba(255,255,255,0.25)"/>`;
+      } else {
+        els += `<rect x="${x + BOX_W - 8}" y="${y}" width="8" height="${BOX_H}" rx="7" fill="rgba(255,255,255,0.25)"/>`;
+      }
+      // Label text
+      const label = sub.toUpperCase();
+      els += `<text x="${x + BOX_W / 2}" y="${y + BOX_H / 2 + 1}" text-anchor="middle" dominant-baseline="middle"
+                font-family="'Inter','Helvetica Neue',Arial,sans-serif" font-weight="800"
+                font-size="17" fill="#FFFFFF" letter-spacing="0.8">${_svgEsc(label)}</text>`;
+    }
+
+    leftSubs.forEach((sub, i) => {
+      const y = colSlots[i] - BOX_H / 2;
+      drawBox(sub, i, LEFT_X, y, i, true);
+    });
+    rightSubs.forEach((sub, i) => {
+      const colorIdx = leftSubs.length + i;
+      const y = colSlots[i] - BOX_H / 2;
+      drawBox(sub, i, RIGHT_X, y, colorIdx, false);
+    });
+
+    // === Central dot (anchor point for connectors) ===
+    els += `<circle cx="${cx}" cy="${cy}" r="10" fill="rgba(255,255,255,0.7)" stroke="#D4AF37" stroke-width="2.5"/>`;
+
+    // === ProfessorIA logo (bottom-right) ===
+    const LOGO = 72;
+    els += `
+      <image href="/static/logo-oficial.png" x="${W - LOGO - 14}" y="${H - LOGO - 14}"
+             width="${LOGO}" height="${LOGO}" opacity="0.92"
+             style="filter:drop-shadow(0 2px 5px rgba(0,0,0,0.35))"/>`;
+
+    svg.innerHTML = els;
+  }
+
+  function _svgEsc(str) {
+    return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
   }
 </script>
 
